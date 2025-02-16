@@ -1,3 +1,7 @@
+# IDE, OS
+.idea
+.DS_Store
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -128,7 +132,7 @@ dmypy.json
 # Pyre type checker
 .pyre/
 koreainvestment.key
-mojito/token.dat
+kis/token.dat
 examples/koreainvestment/*.xlsx
 examples/koreainvestment/*.mst
 examples/koreainvestment/*.tmp

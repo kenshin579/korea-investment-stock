@@ -8,7 +8,7 @@
 # 설치 
 
 ```sh
-$ pip install mojito2
+$ pip install kis
 ```
 
 # 지원 API 
@@ -29,30 +29,30 @@ https://wikidocs.net/book/7845
 현재가 조회
 
 ```py
-import mojito
+import kis
 import pprint
 
 key = "발급받은 API KEY"
 secret = "발급받은 API SECRET"
 acc_no = "12345678-01"
 
-broker = mojito.KoreaInvestment(api_key=key, api_secret=secret, acc_no=acc_no)
+broker = kis.KoreaInvestment(api_key=key, api_secret=secret, acc_no=acc_no)
 resp = broker.fetch_price("005930")
 pprint.pprint(resp)
 
 ```
 
-일봉 데이터 조회 
+일봉 데이터 조회
 
 ```py
-import mojito
+import kis
 import pprint
 
 key = "발급받은 API KEY"
 secret = "발급받은 API SECRET"
 acc_no = "12345678-01"
 
-broker = mojito.KoreaInvestment(api_key=key, api_secret=secret, acc_no=acc_no)
+broker = kis.KoreaInvestment(api_key=key, api_secret=secret, acc_no=acc_no)
 resp = broker.fetch_daily_price("005930")
 pprint.pprint(resp)
 ```
@@ -98,18 +98,18 @@ print(resp)
 ```
 
 웹소켓
+
 ```py
 import pprint
-import mojito
+import kis
 
 with open("../../koreainvestment.key", encoding="utf-8") as f:
     lines = f.readlines()
 key = lines[0].strip()
 secret = lines[1].strip()
 
-
 if __name__ == "__main__":
-    broker_ws = mojito.KoreaInvestmentWS(key, secret, ["H0STCNT0", "H0STASP0"], ["005930", "000660"], user_id="idjhh82")
+    broker_ws = kis.KoreaInvestmentWS(key, secret, ["H0STCNT0", "H0STASP0"], ["005930", "000660"], user_id="idjhh82")
     broker_ws.start()
     while True:
         data_ = broker_ws.get()
