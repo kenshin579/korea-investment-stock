@@ -3,7 +3,7 @@ requires = ["setuptools", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "kis"
+name = "korea_investment_stock"
 version = "0.1.7"
 description = "python wrapper for korea broker's REST API services"
 authors = [
@@ -22,5 +22,5 @@ dependencies = [
 ]
 
 [project.urls]
-"Github" = "https://github.com/kenshin579/koreainvestment"
-"Bug Tracker" = "https://github.com/kenshin579/koreainvestment/issues"
+"Github" = "https://github.com/kenshin579/korea-investment-stock"
+"Bug Tracker" = "https://github.com/kenshin579/korea-investment-stock/issues"
