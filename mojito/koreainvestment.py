@@ -1550,6 +1550,9 @@ class KoreaInvestment:
         resp = requests.get(url, headers=headers, params=params)
         return resp.json()
 
+    def fetch_stock_info(self, symbol: str):
+        print("fetch_stock info")
+        pass
 
 if __name__ == "__main__":
     import pprint
