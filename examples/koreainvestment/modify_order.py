@@ -1,7 +1,7 @@
 """modify_order
 """
 import pprint
-import mojito
+import kis
 
 with open("../../koreainvestment.key", encoding="utf-8") as f:
     lines = f.readlines()
@@ -10,7 +10,7 @@ key = lines[0].strip()
 secret = lines[1].strip()
 ACC_NO = "63398082-01"
 
-broker = mojito.KoreaInvestment(
+broker = kis.KoreaInvestment(
     api_key=key,
     api_secret=secret,
     acc_no=ACC_NO

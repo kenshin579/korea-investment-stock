@@ -1,5 +1,5 @@
 import pprint
-import mojito
+import kis
 
 with open("../../koreainvestment.key", encoding="utf-8") as f:
     lines = f.readlines()
@@ -8,7 +8,7 @@ secret = lines[1].strip()
 
 
 if __name__ == "__main__":
-    broker_ws = mojito.KoreaInvestmentWS(key, secret, ["H0STCNT0", "H0STASP0"], ["005930", "000660"], user_id="idjhh82")
+    broker_ws = kis.KoreaInvestmentWS(key, secret, ["H0STCNT0", "H0STASP0"], ["005930", "000660"], user_id="idjhh82")
     broker_ws.start()
     while True:
         data_ = broker_ws.get()

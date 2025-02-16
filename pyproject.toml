@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "kis"
+version = "0.1.7"
+description = "python wrapper for korea broker's REST API services"
+authors = [
+    { name = "Jonghun Yoo", email = "jonghun.yoo@pyquant.co.kr" },
+    { name = "Brayden Jo", email = "brayden.jo@pyquant.co.kr" },
+    { name = "Frank Oh", email = "kenshin579@gmail.com" }
+]
+license = { text = "MIT" }
+readme = "README.md"
+requires-python = ">=3.9"
+dependencies = [
+    "requests", # 의존성 패키지
+    "pandas",
+    "websockets",
+    "pycryptodome"
+]
+
+[project.urls]
+"Github" = "https://github.com/kenshin579/koreainvestment"
+"Bug Tracker" = "https://github.com/kenshin579/koreainvestment/issues"

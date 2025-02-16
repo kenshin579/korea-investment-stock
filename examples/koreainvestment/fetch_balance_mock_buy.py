@@ -1,5 +1,5 @@
 # 주식잔고조회
-import mojito
+import kis
 import pprint
 import time
 
@@ -10,7 +10,7 @@ key = lines[0].strip()
 secret = lines[1].strip()
 acc_no = "50074923-01"
 
-broker = mojito.KoreaInvestment(
+broker = kis.KoreaInvestment(
     api_key=key,
     api_secret=secret,
     acc_no=acc_no,
