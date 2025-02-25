@@ -1,4 +1,4 @@
-import kis
+import korea_investment_stock
 import pprint
 
 with open("../../koreainvestment.key") as f:
@@ -9,7 +9,7 @@ secret = lines[1].strip()
 ACC_NO = "63398082-01"
 SYMBOL = "005930"
 
-broker = kis.KoreaInvestment(
+broker = korea_investment_stock.KoreaInvestment(
     api_key=key,
     api_secret=secret,
     acc_no=ACC_NO

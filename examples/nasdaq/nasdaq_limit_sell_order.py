@@ -2,7 +2,7 @@
 나스닥 지정가 매수
 """
 import pprint
-import kis
+import korea_investment_stock
 
 with open("../../../koreainvestment.key", encoding='utf-8') as f:
     lines = f.readlines()
@@ -11,7 +11,7 @@ key = lines[0].strip()
 secret = lines[1].strip()
 acc_no = lines[2].strip()
 
-broker = kis.KoreaInvestment(
+broker = korea_investment_stock.KoreaInvestment(
     api_key=key,
     api_secret=secret,
     acc_no=acc_no,
