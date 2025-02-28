@@ -1551,8 +1551,22 @@ class KoreaInvestment:
         return resp.json()
 
     def fetch_stock_info(self, symbol: str):
-        print("fetch_stock info")
-        pass
+        path = "uapi/domestic-stock/v1/quotations/search-info"
+        url = f"{self.base_url}/{path}"
+        headers = {
+            "content-type": "application/json",
+            "authorization": self.access_token,
+            "appKey": self.api_key,
+            "appSecret": self.api_secret,
+            "tr_id": "CTPF1604R"
+        }
+        params = {
+            "PDNO": symbol,
+            "PRDT_TYPE_CD": "300"
+        }
+
+        resp = requests.get(url, headers=headers, params=params)
+        return resp.json()
 
 if __name__ == "__main__":
     import pprint
