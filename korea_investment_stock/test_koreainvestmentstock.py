@@ -1,7 +1,10 @@
 import os
 from unittest import TestCase
 
+from parameterized import parameterized
+
 from korea_investment_stock import KoreaInvestment
+from korea_investment_stock.koreainvestmentstock import RETURN_CD
 
 class TestKoreaInvestment(TestCase):
     @classmethod
@@ -13,6 +16,13 @@ class TestKoreaInvestment(TestCase):
         )
 
     def test_stock_info(self):
-        info = self.kis.fetch_stock_info("005930")
-        print(info)
+        test_cases = [
+            ("samsung", "005930", "KR"),
+            ("apple", "AAPL", "US")
+        ]
 
+        for name, ticker, market in test_cases:
+            with self.subTest(name=name):
+                resp = self.kis.fetch_stock_info(ticker, market)
+                self.assertEqual(resp['rt_cd'], RETURN_CD["SUCCESS"])
+                self.assertEqual(resp['output']['shtn_pdno'], ticker)
