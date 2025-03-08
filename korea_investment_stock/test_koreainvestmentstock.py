@@ -69,3 +69,7 @@ class TestKoreaInvestment(TestCase):
     def test_fetch_kospi_symbols(self):
         resp = self.kis_korea.fetch_kospi_symbols()
         print(resp)
+
+    def test_fetch_price_detail_oversea(self):
+        resp = self.kis_nasdaq.fetch_price_detail_oversea("AAPL")
+        print(resp)
