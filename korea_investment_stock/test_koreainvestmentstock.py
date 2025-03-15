@@ -19,6 +19,7 @@ class TestKoreaInvestment(TestCase):
             exchange='서울'
         )
 
+        # todo: exchange 구분없이 동작을 했으면 한다
         cls.kis_nasdaq = KoreaInvestment(
             api_key=api_key,
             api_secret=api_secret,
