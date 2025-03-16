@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "korea-investment-stock"
-version = "0.1.10"
+version = "0.1.11"
 description = "python wrapper for korea broker's REST API services"
 authors = [
     { name = "Jonghun Yoo", email = "jonghun.yoo@pyquant.co.kr" },
