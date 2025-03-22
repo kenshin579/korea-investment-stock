@@ -16,7 +16,7 @@ class TestKoreaInvestment(TestCase):
             api_key=api_key,
             api_secret=api_secret,
             acc_no=acc_no,
-            exchange='서울'
+            exchange='서울' # todo: exchange는 제거 예정
         )
 
         # todo: exchange 구분없이 동작을 했으면 한다
@@ -24,7 +24,7 @@ class TestKoreaInvestment(TestCase):
             api_key=api_key,
             api_secret=api_secret,
             acc_no=acc_no,
-            exchange='나스닥'
+            exchange='나스닥' # todo: exchange는 제거 예정
         )
 
     def test_stock_info(self):

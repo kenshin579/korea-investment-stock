@@ -368,13 +368,14 @@ class KoreaInvestment:
     '''
 
     def __init__(self, api_key: str, api_secret: str, acc_no: str,
-                 exchange: str = "서울", mock: bool = False):
+                 exchange: str = "서울", # todo: exchange는 제거 예정
+                 mock: bool = False):
         """생성자
         Args:
             api_key (str): 발급받은 API key
             api_secret (str): 발급받은 API secret
             acc_no (str): 계좌번호 체계의 앞 8자리-뒤 2자리
-            exchange (str): "서울", "나스닥", "뉴욕", "아멕스", "홍콩", "상해", "심천",
+            exchange (str): "서울", "나스닥", "뉴욕", "아멕스", "홍콩", "상해", "심천", # todo: exchange는 제거 예정
                             "도쿄", "하노이", "호치민"
             mock (bool): True (mock trading), False (real trading)
         """
@@ -388,7 +389,7 @@ class KoreaInvestment:
         self.acc_no_prefix = acc_no.split('-')[0]
         self.acc_no_postfix = acc_no.split('-')[1]
 
-        self.exchange = exchange
+        # self.exchange = exchange # todo: exchange는 제거 예정
 
         # access token
         self.token_file = Path("~/.cache/mojito2/token.dat").expanduser()
@@ -1639,7 +1640,7 @@ if __name__ == "__main__":
         api_key=key,
         api_secret=secret,
         acc_no=acc_no,
-        exchange="나스닥"
+        exchange="나스닥" # todo: exchange는 제거 예정
     )
 
     balance = broker.fetch_present_balance()
