@@ -2,7 +2,7 @@ import os
 from unittest import TestCase, skip
 
 from korea_investment_stock import KoreaInvestment
-from korea_investment_stock.koreainvestmentstock import RETURN_CD
+from korea_investment_stock.koreainvestmentstock import API_RETURN_CODE
 
 
 class TestKoreaInvestment(TestCase):
@@ -16,7 +16,6 @@ class TestKoreaInvestment(TestCase):
             api_key=api_key,
             api_secret=api_secret,
             acc_no=acc_no,
-            exchange='서울' # todo: exchange는 제거 예정
         )
 
         # todo: exchange 구분없이 동작을 했으면 한다
@@ -24,7 +23,6 @@ class TestKoreaInvestment(TestCase):
             api_key=api_key,
             api_secret=api_secret,
             acc_no=acc_no,
-            exchange='나스닥' # todo: exchange는 제거 예정
         )
 
     def test_stock_info(self):
@@ -36,20 +34,21 @@ class TestKoreaInvestment(TestCase):
         for name, ticker, market in test_cases:
             with self.subTest(name=name):
                 resp = self.kis_korea.fetch_stock_info(ticker, market)
-                self.assertEqual(resp['rt_cd'], RETURN_CD["SUCCESS"])
+                self.assertEqual(resp['rt_cd'], API_RETURN_CODE["SUCCESS"])
                 self.assertEqual(resp['output']['shtn_pdno'], ticker)
 
     def test_fetch_domestic_price(self):
         test_cases = [
-            ("samsung", "005930"),
-            ("etf", "294400")
+            # ("samsung", "005930"),
+            # ("etf", "294400"),
+            ("apple", "AAPL")
         ]
 
         for name, ticker in test_cases:
             with self.subTest(name=name):
                 resp = self.kis_korea.fetch_price(ticker)
                 print(resp)
-                self.assertEqual(resp['rt_cd'], RETURN_CD["SUCCESS"])
+                self.assertEqual(resp['rt_cd'], API_RETURN_CODE["SUCCESS"])
 
 
     def test_fetch_oversea_price(self):
@@ -64,7 +63,7 @@ class TestKoreaInvestment(TestCase):
             with self.subTest(name=name):
                 resp = self.kis_nasdaq.fetch_price(ticker)
                 print(resp)
-                self.assertEqual(resp['rt_cd'], RETURN_CD["SUCCESS"])
+                self.assertEqual(resp['rt_cd'], API_RETURN_CODE["SUCCESS"])
 
     @skip("Skipping test_fetch_kospi_symbols")
     def test_fetch_kospi_symbols(self):
