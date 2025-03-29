@@ -1624,6 +1624,42 @@ class KoreaInvestment:
                     continue
                 raise e
 
+    def fetch_search_stock_info(self, symbol: str, market: str = "KR"):
+        """
+        국내 주식만 제공하는 API이다
+        """
+        path = "uapi/domestic-stock/v1/quotations/search-stock-info"
+        url = f"{self.base_url}/{path}"
+        headers = {
+            "content-type": "application/json",
+            "authorization": self.access_token,
+            "appKey": self.api_key,
+            "appSecret": self.api_secret,
+            "tr_id": "CTPF1002R"
+        }
+
+        if market != "KR" and market != "KRX":
+            raise ValueError("Market must be either 'KR' or 'KRX'.")
+
+        for market_ in MARKET_TYPE_MAP[market]:
+            try:
+                params = {
+                    "PDNO": symbol,
+                    "PRDT_TYPE_CD": market_
+                }
+                resp = requests.get(url, headers=headers, params=params)
+                resp_json = resp.json()
+
+                if resp_json['rt_cd'] == RETURN_CD['NO_DATA']:
+                    continue
+                return resp_json
+
+            except Exception as e:
+                print(e)
+                if resp_json['rt_cd'] != RETURN_CD['SUCCESS']:
+                    continue
+                raise e
+
 
 if __name__ == "__main__":
     import pprint
