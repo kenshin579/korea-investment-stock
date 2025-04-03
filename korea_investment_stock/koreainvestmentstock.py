@@ -1711,13 +1711,13 @@ class KoreaInvestment:
                 resp = requests.get(url, headers=headers, params=params)
                 resp_json = resp.json()
 
-                if resp_json['rt_cd'] == RETURN_CD['NO_DATA']:
+                if resp_json['rt_cd'] == API_RETURN_CODE['NO_DATA']:
                     continue
                 return resp_json
 
             except Exception as e:
                 print(e)
-                if resp_json['rt_cd'] != RETURN_CD['SUCCESS']:
+                if resp_json['rt_cd'] != API_RETURN_CODE['SUCCESS']:
                     continue
                 raise e
 
