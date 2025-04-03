@@ -589,7 +589,7 @@ class KoreaInvestment:
 
         # request header
         headers = {
-            "content-type": "application/resp_json",
+            "content-type": "application/json",
             "authorization": self.access_token,
             "appKey": self.api_key,
             "appSecret": self.api_secret,

@@ -18,7 +18,6 @@ class TestKoreaInvestment(TestCase):
             acc_no=acc_no,
         )
 
-
     def test_stock_info(self):
         test_cases = [
             ("samsung", "005930", "KR"),
@@ -30,6 +29,21 @@ class TestKoreaInvestment(TestCase):
                 resp = self.kis.fetch_stock_info(ticker, market)
                 self.assertEqual(resp['rt_cd'], API_RETURN_CODE["SUCCESS"])
                 self.assertEqual(resp['output']['shtn_pdno'], ticker)
+
+    def test_fetch_search_stock_info(self):
+        test_cases = [
+            ("samsung", "005930"),
+            ("etf", "294400")
+        ]
+
+        for name, ticker in test_cases:
+            with self.subTest(name=name):
+                resp = self.kis.fetch_search_stock_info(ticker)
+                print(resp)
+                self.assertEqual(resp['rt_cd'], API_RETURN_CODE["SUCCESS"])
+                self.assertIn('output', resp)
+                self.assertIn('frbd_mket_lstg_dt', resp['output'])
+
 
     def test_fetch_price(self):
         test_cases = [
