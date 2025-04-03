@@ -71,3 +71,4 @@ class TestKoreaInvestment(TestCase):
         self.assertEqual(resp['rt_cd'], API_RETURN_CODE["SUCCESS"])
         self.assertNotEqual(resp['output']['rsym'], None)
 
+
