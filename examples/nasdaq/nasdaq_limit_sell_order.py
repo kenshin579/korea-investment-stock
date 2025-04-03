@@ -15,7 +15,7 @@ broker = korea_investment_stock.KoreaInvestment(
     api_key=key,
     api_secret=secret,
     acc_no=acc_no,
-    exchange='나스닥'
+    # exchange='나스닥' # todo: exchange는 제거 예정
 )
 
 resp = broker.create_limit_sell_order(

@@ -11,6 +11,7 @@ from base64 import b64decode
 from multiprocessing import Process, Queue
 from pathlib import Path
 from zoneinfo import ZoneInfo  # Requires Python 3.9+
+from typing import Literal
 
 import pandas as pd
 import requests
@@ -104,10 +105,53 @@ MARKET_TYPE_MAP = {
     "CN": ["551", "552"]
 }
 
-RETURN_CD = {
-    "SUCCESS": "0", # 조회되었습니다
-    "EXPIRED_TOKEN": "1", # 기간이 만료된 token 입니다
-    "NO_DATA": "7", # 조회할 자료가 없습니다
+MARKET_TYPE = Literal[
+    "KRX",
+    "NASDAQ",
+    "NYSE",
+    "AMEX",
+    "TYO",
+    "HKEX",
+    "HNX",
+    "HSX",
+    "SSE",
+    "SZSE",
+]
+
+EXCHANGE_TYPE = Literal[
+    "NAS",
+    "NYS",
+    "AMS"
+]
+
+
+MARKET_CODE_MAP: dict[str, MARKET_TYPE] = {
+    "300": "KRX",
+    "301": "KRX",
+    "302": "KRX",
+    "512": "NASDAQ",
+    "513": "NYSE",
+    "529": "AMEX",
+    "515": "TYO",
+    "501": "HKEX",
+    "543": "HKEX",
+    "558": "HKEX",
+    "507": "HNX",
+    "508": "HSX",
+    "551": "SSE",
+    "552": "SZSE",
+}
+
+EXCHANGE_CODE_MAP: dict[str, EXCHANGE_TYPE] = {
+    "NASDAQ": "NAS",
+    "NYSE": "NYS",
+    "AMEX": "AMS"
+}
+
+API_RETURN_CODE = {
+    "SUCCESS": "0",  # 조회되었습니다
+    "EXPIRED_TOKEN": "1",  # 기간이 만료된 token 입니다
+    "NO_DATA": "7",  # 조회할 자료가 없습니다
 }
 
 execution_items = [
@@ -368,13 +412,14 @@ class KoreaInvestment:
     '''
 
     def __init__(self, api_key: str, api_secret: str, acc_no: str,
-                 exchange: str = "서울", mock: bool = False):
+                 # exchange: str = "서울", # todo: exchange는 제거 예정
+                 mock: bool = False):
         """생성자
         Args:
             api_key (str): 발급받은 API key
             api_secret (str): 발급받은 API secret
             acc_no (str): 계좌번호 체계의 앞 8자리-뒤 2자리
-            exchange (str): "서울", "나스닥", "뉴욕", "아멕스", "홍콩", "상해", "심천",
+            exchange (str): "서울", "나스닥", "뉴욕", "아멕스", "홍콩", "상해", "심천", # todo: exchange는 제거 예정
                             "도쿄", "하노이", "호치민"
             mock (bool): True (mock trading), False (real trading)
         """
@@ -388,7 +433,7 @@ class KoreaInvestment:
         self.acc_no_prefix = acc_no.split('-')[0]
         self.acc_no_postfix = acc_no.split('-')[1]
 
-        self.exchange = exchange
+        # self.exchange = exchange # todo: exchange는 제거 예정
 
         # access token
         self.token_file = Path("~/.cache/mojito2/token.dat").expanduser()
@@ -500,10 +545,13 @@ class KoreaInvestment:
         Returns:
             dict: _description_
         """
-        if self.exchange == "서울":
-            return self.fetch_domestic_price("J", symbol)
+
+        # todo: KR, US만 지원함
+        if symbol.isalpha():
+            resp_json = self.fetch_oversea_price(symbol)
         else:
-            return self.fetch_oversea_price(symbol)
+            resp_json = self.fetch_domestic_price("J", symbol)
+        return resp_json
 
     def fetch_domestic_price(self, market_code: str, symbol: str) -> dict:
         """주식현재가시세
@@ -548,15 +596,21 @@ class KoreaInvestment:
             "tr_id": "HHDFS00000300"
         }
 
-        # query parameter
-        exchange_code = EXCHANGE_CODE[self.exchange]
-        params = {
-            "AUTH": "",
-            "EXCD": exchange_code,
-            "SYMB": symbol
-        }
-        resp = requests.get(url, headers=headers, params=params)
-        return resp.json()
+        for market_code in MARKET_TYPE_MAP["US"]:
+            print("market_code", market_code)
+            market_type = MARKET_CODE_MAP[market_code]
+            exchange_code = EXCHANGE_CODE_MAP[market_type]
+            params = {
+                "AUTH": "",
+                "EXCD": exchange_code,
+                "SYMB": symbol
+            }
+            resp = requests.get(url, headers=headers, params=params)
+            resp_json = resp.json()
+            if resp_json['rt_cd'] != API_RETURN_CODE["SUCCESS"] or resp_json['output']['rsym'] == '':
+                continue
+
+            return resp_json
 
     def fetch_today_1m_ohlcv(self, symbol: str, to: str = ""):
         """국내주식시세/주식당일분봉조회
@@ -646,7 +700,7 @@ class KoreaInvestment:
         Returns:
             dict: _description_
         """
-        if self.exchange == '서울':
+        if self.exchange == '서울':  # todo: exchange는 제거 예정
             resp = self.fetch_ohlcv_domestic(symbol, timeframe, start_day, end_day, adj_price)
         else:
             resp = self.fetch_ohlcv_overesea(symbol, timeframe, end_day, adj_price)
@@ -687,7 +741,7 @@ class KoreaInvestment:
         Returns:
             pd.DataFrame: pandas dataframe
         """
-        if self.exchange == "서울":
+        if self.exchange == "서울":  # todo: exchange는 제거 예정
             df = self.fetch_kospi_symbols()
             kospi_df = df[['단축코드', '한글명', '그룹코드']].copy()
             kospi_df['시장'] = '코스피'
@@ -957,7 +1011,7 @@ class KoreaInvestment:
         Returns:
             dict: response data
         """
-        if self.exchange == '서울':
+        if self.exchange == '서울':  # todo: exchange는 제거 예정
             output = {}
 
             data = self.fetch_balance_domestic()
@@ -1048,6 +1102,7 @@ class KoreaInvestment:
 
         # query parameter
         nation_code = "000"
+        # todo: exchange는 제거 예정
         if self.exchange in ["나스닥", "뉴욕", "아멕스"]:
             nation_code = "840"
         elif self.exchange == "홍콩":
@@ -1126,13 +1181,13 @@ class KoreaInvestment:
         }
 
         # query parameter
-        exchange_cd = EXCHANGE_CODE2[self.exchange]
+        exchange_cd = EXCHANGE_CODE2[self.exchange]  # todo: exchange는 제거 예정
         currency_cd = CURRENCY_CODE[self.exchange]
 
         params = {
             'CANO': self.acc_no_prefix,
             'ACNT_PRDT_CD': self.acc_no_postfix,
-            'OVRS_EXCG_CD': exchange_cd,
+            'OVRS_EXCG_CD': exchange_cd,  # todo: exchange는 제거 예정
             'TR_CRCY_CD': currency_cd,
             'CTX_AREA_FK200': ctx_area_fk200,
             'CTX_AREA_NK200': ctx_area_nk200
@@ -1216,7 +1271,7 @@ class KoreaInvestment:
         Returns:
             dict: _description_
         """
-        if self.exchange == "서울":
+        if self.exchange == "서울":  # todo: exchange는 제거 예정
             resp = self.create_order("buy", symbol, 0, quantity, "01")
         else:
             resp = self.create_oversea_order("buy", symbol, "0", quantity, "00")
@@ -1232,7 +1287,7 @@ class KoreaInvestment:
         Returns:
             dict: _description_
         """
-        if self.exchange == "서울":
+        if self.exchange == "서울":  # todo: exchange는 제거 예정
             resp = self.create_order("sell", symbol, 0, quantity, "01")
         else:
             resp = self.create_oversea_order("sell", symbol, "0", quantity, "00")
@@ -1249,7 +1304,7 @@ class KoreaInvestment:
         Returns:
             dict: _description_
         """
-        if self.exchange == "서울":
+        if self.exchange == "서울":  # todo: exchange는 제거 예정
             resp = self.create_order("buy", symbol, price, quantity, "00")
         else:
             resp = self.create_oversea_order("buy", symbol, price, quantity, "00")
@@ -1267,7 +1322,7 @@ class KoreaInvestment:
         Returns:
             dict: _description_
         """
-        if self.exchange == "서울":
+        if self.exchange == "서울":  # todo: exchange는 제거 예정
             resp = self.create_order("sell", symbol, price, quantity, "00")
         else:
             resp = self.create_oversea_order("sell", symbol, price, quantity, "00")
@@ -1410,7 +1465,7 @@ class KoreaInvestment:
         tr_id = None
         if self.mock:
             # 모의투자
-            if self.exchange in ["나스닥", "뉴욕", "아멕스"]:
+            if self.exchange in ["나스닥", "뉴욕", "아멕스"]:  # todo: exchange는 제거 예정
                 tr_id = "VTTT1002U" if side == "buy" else "VTTT1001U"
             elif self.exchange == '도쿄':
                 tr_id = "VTTS0308U" if side == "buy" else "VTTS0307U"
@@ -1437,7 +1492,7 @@ class KoreaInvestment:
             else:
                 tr_id = "TTTS0311U" if side == "buy" else "TTTS0310U"
 
-        exchange_cd = EXCHANGE_CODE3[self.exchange]
+        exchange_cd = EXCHANGE_CODE3[self.exchange]  # todo: exchange는 제거 예정
 
         ord_dvsn = "00"
         if tr_id == "JTTT1002U":
@@ -1464,7 +1519,7 @@ class KoreaInvestment:
         data = {
             "CANO": self.acc_no_prefix,
             "ACNT_PRDT_CD": self.acc_no_postfix,
-            "OVRS_EXCG_CD": exchange_cd,
+            "OVRS_EXCG_CD": exchange_cd,  # todo: exchange는 제거 예정
             "PDNO": symbol,
             "ORD_QTY": str(quantity),
             "OVRS_ORD_UNPR": str(price),
@@ -1554,11 +1609,11 @@ class KoreaInvestment:
             now = datetime.datetime.now()
             end_day = now.strftime("%Y%m%d")
 
-        exchange_code = EXCHANGE_CODE4[self.exchange]
+        exchange_code = EXCHANGE_CODE4[self.exchange]  # todo: exchange는 제거 예정
 
         params = {
             "AUTH": "",
-            "EXCD": exchange_code,
+            "EXCD": exchange_code,  # todo: exchange는 제거 예정
             "SYMB": symbol,
             "GUBN": timeframe_lookup.get(timeframe, "0"),
             "BYMD": end_day,
@@ -1584,15 +1639,21 @@ class KoreaInvestment:
             "tr_id": "HHDFS76200200"
         }
 
-        exchange_code = EXCHANGE_CODE4[self.exchange]
+        for market_code in MARKET_TYPE_MAP["US"]:
+            print("market_code", market_code)
+            market_type = MARKET_CODE_MAP[market_code]
+            exchange_code = EXCHANGE_CODE_MAP[market_type]
+            params = {
+                "AUTH": "",
+                "EXCD": exchange_code,
+                "SYMB": symbol
+            }
+            resp = requests.get(url, headers=headers, params=params)
+            resp_json = resp.json()
+            if resp_json['rt_cd'] != API_RETURN_CODE["SUCCESS"] or resp_json['output']['rsym'] == '':
+                continue
 
-        params = {
-            "AUTH": "",
-            "EXCD": exchange_code,
-            "SYMB": symbol,
-        }
-        resp = requests.get(url, headers=headers, params=params)
-        return resp.json()
+            return resp_json
 
     def fetch_stock_info(self, symbol: str, market: str = "KR"):
         path = "uapi/domestic-stock/v1/quotations/search-info"
@@ -1605,22 +1666,22 @@ class KoreaInvestment:
             "tr_id": "CTPF1604R"
         }
 
-        for market_ in MARKET_TYPE_MAP[market]:
+        for market_code in MARKET_TYPE_MAP[market]:
             try:
                 params = {
                     "PDNO": symbol,
-                    "PRDT_TYPE_CD": market_
+                    "PRDT_TYPE_CD": market_code
                 }
                 resp = requests.get(url, headers=headers, params=params)
                 resp_json = resp.json()
 
-                if resp_json['rt_cd'] == RETURN_CD['NO_DATA']:
+                if resp_json['rt_cd'] == API_RETURN_CODE['NO_DATA']:
                     continue
                 return resp_json
 
             except Exception as e:
                 print(e)
-                if resp_json['rt_cd'] != RETURN_CD['SUCCESS']:
+                if resp_json['rt_cd'] != API_RETURN_CODE['SUCCESS']:
                     continue
                 raise e
 
@@ -1675,7 +1736,7 @@ if __name__ == "__main__":
         api_key=key,
         api_secret=secret,
         acc_no=acc_no,
-        exchange="나스닥"
+        # exchange="나스닥" # todo: exchange는 제거 예정
     )
 
     balance = broker.fetch_present_balance()
