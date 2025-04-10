@@ -6,12 +6,16 @@ import datetime
 import json
 import os
 import pickle
+import threading
+import time
 import zipfile
 from base64 import b64decode
+from collections import deque, defaultdict
+from concurrent.futures import ThreadPoolExecutor
 from multiprocessing import Process, Queue
 from pathlib import Path
-from zoneinfo import ZoneInfo  # Requires Python 3.9+
 from typing import Literal
+from zoneinfo import ZoneInfo  # Requires Python 3.9+
 
 import pandas as pd
 import requests
@@ -123,7 +127,6 @@ EXCHANGE_TYPE = Literal[
     "NYS",
     "AMS"
 ]
-
 
 MARKET_CODE_MAP: dict[str, MARKET_TYPE] = {
     "300": "KRX",
@@ -412,7 +415,6 @@ class KoreaInvestment:
     '''
 
     def __init__(self, api_key: str, api_secret: str, acc_no: str,
-                 # exchange: str = "서울", # todo: exchange는 제거 예정
                  mock: bool = False):
         """생성자
         Args:
@@ -432,8 +434,10 @@ class KoreaInvestment:
         self.acc_no = acc_no
         self.acc_no_prefix = acc_no.split('-')[0]
         self.acc_no_postfix = acc_no.split('-')[1]
+        max_calls = 20
 
-        # self.exchange = exchange # todo: exchange는 제거 예정
+        self.rate_limiter = RateLimiter(max_calls, 1)
+        self.executor = ThreadPoolExecutor(max_workers=max_calls)
 
         # access token
         self.token_file = Path("~/.cache/mojito2/token.dat").expanduser()
@@ -442,6 +446,17 @@ class KoreaInvestment:
             self.load_access_token()
         else:
             self.issue_access_token()
+
+    def __execute_concurrent_requests(self, method, stock_list):
+        futures = [self.executor.submit(method, symbol_id, market) for symbol_id, market in stock_list]
+        results = [future.result() for future in futures]
+
+        self.rate_limiter.print_stats()
+
+        return results
+
+    def shutdown(self):
+        self.executor.shutdown(wait=True)
 
     def set_base_url(self, mock: bool = True):
         """테스트(모의투자) 서버 사용 설정
@@ -535,7 +550,13 @@ class KoreaInvestment:
         haskkey = resp.json()["HASH"]
         return haskkey
 
-    def fetch_price(self, symbol: str) -> dict:
+    def fetch_search_stock_info_list(self, stock_market_list):
+        return self.__execute_concurrent_requests(self.__fetch_search_stock_info, stock_market_list)
+
+    def fetch_price_list(self, stock_list):
+        return self.__execute_concurrent_requests(self.__fetch_price, stock_list)
+
+    def __fetch_price(self, symbol: str, market: str = "KR") -> dict:
         """국내주식시세/주식현재가 시세
            해외주식현재가/해외주식 현재체결가
 
@@ -546,11 +567,13 @@ class KoreaInvestment:
             dict: _description_
         """
 
-        # todo: KR, US만 지원함
-        if symbol.isalpha():
+        if market == "KR" or market == "KRX":
+            resp_json = self.fetch_domestic_price("J", symbol)
+        elif market == "US":
             resp_json = self.fetch_oversea_price(symbol)
         else:
-            resp_json = self.fetch_domestic_price("J", symbol)
+            raise ValueError("Unsupported market type")
+
         return resp_json
 
     def fetch_domestic_price(self, market_code: str, symbol: str) -> dict:
@@ -1622,12 +1645,17 @@ class KoreaInvestment:
         resp = requests.get(url, headers=headers, params=params)
         return resp.json()
 
-    def fetch_price_detail_oversea(self, symbol: str):
+    def fetch_price_detail_oversea_list(self, stock_market_list):
+        return self.__execute_concurrent_requests(self.__fetch_price_detail_oversea, stock_market_list)
+
+    def __fetch_price_detail_oversea(self, symbol: str, market: str = "KR"):
         """해외주식 현재가상세
 
         Args:
             symbol (str): symbol
         """
+        self.rate_limiter.acquire()
+
         path = "/uapi/overseas-price/v1/quotations/price-detail"
         url = f"{self.base_url}/{path}"
 
@@ -1639,7 +1667,11 @@ class KoreaInvestment:
             "tr_id": "HHDFS76200200"
         }
 
-        for market_code in MARKET_TYPE_MAP["US"]:
+        if market == "KR" or market == "KRX":
+            # API 호출해서 실제로 확인은 못해봄, overasea 이라서 안될 것으로 판단해서 조건문 추가함
+            raise ValueError("Market cannot be either 'KR' or 'KRX'.")
+
+        for market_code in MARKET_TYPE_MAP[market]:
             print("market_code", market_code)
             market_type = MARKET_CODE_MAP[market_code]
             exchange_code = EXCHANGE_CODE_MAP[market_type]
@@ -1655,7 +1687,12 @@ class KoreaInvestment:
 
             return resp_json
 
-    def fetch_stock_info(self, symbol: str, market: str = "KR"):
+    def fetch_stock_info_list(self, stock_market_list):
+        return self.__execute_concurrent_requests(self.__fetch_stock_info, stock_market_list)
+
+    def __fetch_stock_info(self, symbol: str, market: str = "KR"):
+        self.rate_limiter.acquire()
+
         path = "uapi/domestic-stock/v1/quotations/search-info"
         url = f"{self.base_url}/{path}"
         headers = {
@@ -1685,10 +1722,16 @@ class KoreaInvestment:
                     continue
                 raise e
 
-    def fetch_search_stock_info(self, symbol: str, market: str = "KR"):
+    def fetch_search_stock_info_list(self, stock_market_list):
+        return self.__execute_concurrent_requests(self.__fetch_search_stock_info, stock_market_list)
+
+    def __fetch_search_stock_info(self, symbol: str, market: str = "KR"):
         """
         국내 주식만 제공하는 API이다
         """
+
+        self.rate_limiter.acquire()
+
         path = "uapi/domestic-stock/v1/quotations/search-stock-info"
         url = f"{self.base_url}/{path}"
         headers = {
@@ -1722,9 +1765,67 @@ class KoreaInvestment:
                 raise e
 
 
-if __name__ == "__main__":
-    import pprint
+class RateLimiter:
+    def __init__(self, max_calls, per_seconds):
+        self.max_calls = max_calls
+        self.per_seconds = per_seconds
+        self.lock = threading.Lock()
+        self.call_timestamps = deque()
 
+        # 호출 통계 추적을 위한 딕셔너리
+        self.calls_per_second = defaultdict(int)
+
+    def acquire(self):
+        with self.lock:
+            now = time.time()
+
+            # 만료된 타임스탬프 제거
+            while self.call_timestamps and self.call_timestamps[0] <= now - self.per_seconds:
+                self.call_timestamps.popleft()
+
+            # 호출 제한에 도달했다면 대기
+            if len(self.call_timestamps) >= self.max_calls:
+                wait_time = self.per_seconds - (now - self.call_timestamps[0])
+                if wait_time > 0:
+                    time.sleep(wait_time)
+                    now = time.time()  # 대기 후 시간 업데이트
+
+            # 호출 기록
+            current_second = int(now)
+            self.calls_per_second[current_second] += 1
+            self.call_timestamps.append(now)
+
+    def get_stats(self):
+        """호출 통계 분석 결과 반환"""
+        stats = {
+            "calls_per_second": dict(self.calls_per_second),
+            "max_calls_in_one_second": max(self.calls_per_second.values()) if self.calls_per_second else 0,
+            "total_calls": sum(self.calls_per_second.values()),
+            "seconds_tracked": len(self.calls_per_second)
+        }
+        return stats
+
+    def print_stats(self):
+        """호출 통계 출력"""
+        if not self.calls_per_second:
+            print("호출 데이터가 없습니다.")
+            return
+
+        print("\n===== 초당 API 호출 횟수 분석 =====")
+        max_calls = max(self.calls_per_second.values())
+
+        for second, count in sorted(self.calls_per_second.items()):
+            timestamp = datetime.datetime.fromtimestamp(second).strftime('%H:%M:%S')
+            print(f"시간: {timestamp}, 호출 수: {count}")
+
+        print(f"\n최대 초당 호출 횟수: {max_calls}")
+        print(f"설정된 max_calls: {self.max_calls}")
+        print(f"제한 준수 여부: {'준수' if max_calls <= self.max_calls else '초과'}")
+        print(f"총 호출 횟수: {sum(self.calls_per_second.values())}")
+        print("================================\n")
+
+
+if __name__ == "__main__":
     with open("../koreainvestment.key", encoding='utf-8') as key_file:
         lines = key_file.readlines()
 

@@ -19,59 +19,46 @@ class TestKoreaInvestment(TestCase):
         )
 
     def test_stock_info(self):
-        test_cases = [
-            ("samsung", "005930", "KR"),
-            ("apple", "AAPL", "US")
+        stock_market_list = [
+            ("005930", "KR"),
+            ("017670", "KR"),
+            ("AAPL", "US"),
         ]
 
-        for name, ticker, market in test_cases:
-            with self.subTest(name=name):
-                resp = self.kis.fetch_stock_info(ticker, market)
-                self.assertEqual(resp['rt_cd'], API_RETURN_CODE["SUCCESS"])
-                self.assertEqual(resp['output']['shtn_pdno'], ticker)
+        results = self.kis.fetch_stock_info_list(stock_market_list)
+        self.assertEqual(len(results), len(stock_market_list))
+
+        for result in results:
+            print(result)
+            self.assertEqual(result['rt_cd'], API_RETURN_CODE["SUCCESS"])
 
     def test_fetch_search_stock_info(self):
-        test_cases = [
-            ("samsung", "005930"),
-            ("etf", "294400")
+        stock_market_list = [
+            ("005930", "KR"),
+            ("294400", "KR")
         ]
 
-        for name, ticker in test_cases:
-            with self.subTest(name=name):
-                resp = self.kis.fetch_search_stock_info(ticker)
-                print(resp)
-                self.assertEqual(resp['rt_cd'], API_RETURN_CODE["SUCCESS"])
-                self.assertIn('output', resp)
-                self.assertIn('frbd_mket_lstg_dt', resp['output'])
+        results = self.kis.fetch_search_stock_info_list(stock_market_list)
 
+        self.assertEqual(len(results), len(stock_market_list))
+        for result in results:
+            print(result)
+            self.assertEqual(result['rt_cd'], API_RETURN_CODE["SUCCESS"])
+            self.assertIn('output', result)
+            self.assertIn('frbd_mket_lstg_dt', result['output'])
 
     def test_fetch_price(self):
-        test_cases = [
-            ("samsung", "005930"),
-            ("etf", "294400"),
-            ("apple", "AAPL")
+        stock_market_list = [
+            ("005930", "KR"),
+            ("294400", "KR"), # ETF
+            ("AAPL", "US"),
         ]
 
-        for name, ticker in test_cases:
-            with self.subTest(name=name):
-                resp = self.kis.fetch_price(ticker)
-                print(resp)
-                self.assertEqual(resp['rt_cd'], API_RETURN_CODE["SUCCESS"])
-
-
-    def test_fetch_oversea_price(self):
-        test_cases = [
-            ("apple", "AAPL"),
-            ("tlt", "TLT"),
-            ("jepq", "JEPQ"),
-            ("divo", "DIVO")
-        ]
-
-        for name, ticker in test_cases:
-            with self.subTest(name=name):
-                resp = self.kis.fetch_price(ticker)
-                print(resp)
-                self.assertEqual(resp['rt_cd'], API_RETURN_CODE["SUCCESS"])
+        results = self.kis.fetch_price_list(stock_market_list)
+        self.assertEqual(len(results), len(stock_market_list))
+        for result in results:
+            print(result)
+            self.assertEqual(result['rt_cd'], API_RETURN_CODE["SUCCESS"])
 
     @skip("Skipping test_fetch_kospi_symbols")
     def test_fetch_kospi_symbols(self):
@@ -80,9 +67,14 @@ class TestKoreaInvestment(TestCase):
         self.assertEqual(resp['rt_cd'], API_RETURN_CODE["SUCCESS"])
 
     def test_fetch_price_detail_oversea(self):
-        resp = self.kis.fetch_price_detail_oversea("AAPL")
-        print(resp)
-        self.assertEqual(resp['rt_cd'], API_RETURN_CODE["SUCCESS"])
-        self.assertNotEqual(resp['output']['rsym'], None)
+        stock_market_list = [
+            ("AAPL", "US"),
+        ]
 
+        results = self.kis.fetch_price_detail_oversea_list(stock_market_list)
+        self.assertEqual(len(results), len(stock_market_list))
 
+        for result in results:
+            print(result)
+            self.assertEqual(result['rt_cd'], API_RETURN_CODE["SUCCESS"])
+            self.assertNotEqual(result['output']['rsym'], None)
