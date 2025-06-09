@@ -18,7 +18,8 @@ dependencies = [
     "requests", # 의존성 패키지
     "pandas",
     "websockets",
-    "pycryptodome"
+    "pycryptodome",
+    "crypto>=1.4.1",
 ]
 
 [project.urls]
