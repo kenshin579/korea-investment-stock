@@ -583,7 +583,7 @@ class KoreaInvestment:
 
     def __get_symbol_type(self, symbol_info):
         symbol_type = symbol_info['output']['prdt_clsf_name']
-        if symbol_type == '주권' or symbol_type == '상장REITS':
+        if symbol_type == '주권' or symbol_type == '상장REITS' or symbol_type == '사회간접자본투융자회사':
             return 'Stock'
         elif symbol_type == 'ETF':
             return 'ETF'
