@@ -568,13 +568,52 @@ class KoreaInvestment:
         """
 
         if market == "KR" or market == "KRX":
-            resp_json = self.fetch_domestic_price("J", symbol)
+            stock_info = self.__fetch_stock_info(symbol, market)
+            symbol_type = self.__get_symbol_type(stock_info)
+            if symbol_type == "ETF":
+                resp_json = self.fetch_etf_domestic_price("J", symbol)
+            else:
+                resp_json = self.fetch_domestic_price("J", symbol)
         elif market == "US":
             resp_json = self.fetch_oversea_price(symbol)
         else:
             raise ValueError("Unsupported market type")
 
         return resp_json
+
+    def __get_symbol_type(self, symbol_info):
+        symbol_type = symbol_info['output']['prdt_clsf_name']
+        if symbol_type == '주권' or symbol_type == '상장REITS' or symbol_type == '사회간접자본투융자회사':
+            return 'Stock'
+        elif symbol_type == 'ETF':
+            return 'ETF'
+
+        return "Unknown"
+
+    def fetch_etf_domestic_price(self, market_code: str, symbol: str) -> dict:
+        """주식현재가시세
+        Args:
+            market_code (str): 시장 분류코드
+            symbol (str): 종목코드
+        Returns:
+            dict: API 개발 가이드 참조
+        """
+        path = "uapi/domestic-stock/v1/quotations/inquire-price"
+        url = f"{self.base_url}/{path}"
+        headers = {
+            "content-type": "application/json",
+            "authorization": self.access_token,
+            "appKey": self.api_key,
+            "appSecret": self.api_secret,
+            "tr_id": "FHPST02400000"
+        }
+        params = {
+            "fid_cond_mrkt_div_code": market_code,
+            "fid_input_iscd": symbol
+        }
+        resp = requests.get(url, headers=headers, params=params)
+        return resp.json()
+
 
     def fetch_domestic_price(self, market_code: str, symbol: str) -> dict:
         """주식현재가시세

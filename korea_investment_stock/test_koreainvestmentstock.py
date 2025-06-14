@@ -8,9 +8,9 @@ from korea_investment_stock.koreainvestmentstock import API_RETURN_CODE
 class TestKoreaInvestment(TestCase):
     @classmethod
     def setUpClass(cls):
-        api_key = os.getenv('STOCK_API_KOREA_INVESTMENT_API_KEY')
-        api_secret = os.getenv('STOCK_API_KOREA_INVESTMENT_API_SECRET')
-        acc_no = os.getenv('STOCK_API_KOREA_INVESTMENT_ACCOUNT_NO')
+        api_key = os.getenv('KOREA_INVESTMENT_API_KEY')
+        api_secret = os.getenv('KOREA_INVESTMENT_API_SECRET')
+        acc_no = os.getenv('KOREA_INVESTMENT_ACCOUNT_NO')
 
         cls.kis = KoreaInvestment(
             api_key=api_key,
