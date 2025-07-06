@@ -1,8 +1,8 @@
 import os
 from unittest import TestCase, skip
 
-from korea_investment_stock import KoreaInvestment
-from korea_investment_stock.koreainvestmentstock import API_RETURN_CODE
+from . import KoreaInvestment
+from .koreainvestmentstock import API_RETURN_CODE
 
 
 class TestKoreaInvestment(TestCase):
