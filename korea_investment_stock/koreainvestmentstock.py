@@ -234,11 +234,13 @@ class KoreaInvestment:
     def __execute_concurrent_requests(self, method, stock_list, 
                                      batch_size: Optional[int] = None,
                                      batch_delay: float = 0.0,
-                                     progress_interval: int = 10):
+                                     progress_interval: int = 10,
+                                     dynamic_batch_controller=None):
         """병렬 요청 실행 (개선된 버전 with 에러 처리 강화 및 배치 처리)
         
         Phase 3.4: ThreadPoolExecutor 에러 처리 통합
         Phase 4.1: 배치 크기 파라미터화
+        Phase 4.2: 동적 배치 조정
         
         Args:
             method: 실행할 메서드
@@ -246,6 +248,7 @@ class KoreaInvestment:
             batch_size: 배치 크기 (None이면 전체를 한 번에 처리)
             batch_delay: 배치 간 대기 시간 (초)
             progress_interval: 진행 상황 출력 간격
+            dynamic_batch_controller: DynamicBatchController 인스턴스 (동적 조정용)
         """
         from .enhanced_retry_decorator import RateLimitError, APIError
         from .enhanced_backoff_strategy import get_backoff_strategy
@@ -263,6 +266,13 @@ class KoreaInvestment:
                 return method(symbol, market)
         
         # 배치 처리 설정
+        if dynamic_batch_controller:
+            # 동적 배치 조정 사용
+            current_batch_size, current_batch_delay = dynamic_batch_controller.get_current_parameters()
+            batch_size = current_batch_size
+            batch_delay = current_batch_delay
+            print(f"🎯 동적 배치 조정 모드: 초기 배치 크기={batch_size}, 대기 시간={batch_delay:.1f}s")
+        
         if batch_size is None:
             batches = [stock_list]  # 전체를 하나의 배치로
         else:
@@ -282,19 +292,51 @@ class KoreaInvestment:
             
             # 배치별로 처리
             for batch_idx, batch in enumerate(batches):
+                # 동적 배치 조정: 각 배치마다 새로운 파라미터 가져오기
+                if dynamic_batch_controller and batch_idx > 0:
+                    new_batch_size, new_batch_delay = dynamic_batch_controller.get_current_parameters()
+                    if new_batch_size != batch_size or new_batch_delay != batch_delay:
+                        batch_size = new_batch_size
+                        batch_delay = new_batch_delay
+                        print(f"📊 배치 파라미터 업데이트: 크기={batch_size}, 대기={batch_delay:.1f}s")
+                        # 새로운 배치 크기로 재구성이 필요한 경우 (다음 루프에서 적용)
+                
                 if len(batches) > 1:
                     print(f"\n🔄 배치 {batch_idx + 1}/{len(batches)} 처리 중... ({len(batch)}개 항목)")
                 
-                # 배치 내 모든 작업 제출
+                # 배치 시작 시간 기록
+                batch_start_time = time.time()
+                
+                # 배치 내 순차적 제출로 초기 버스트 방지
                 batch_futures = {}
-                for symbol, market in batch:
+                submit_delay = 0.01  # 각 제출 간 10ms 대기
+                
+                # 배치 통계 초기화
+                batch_stats = {
+                    'batch_idx': batch_idx,
+                    'batch_size': len(batch),
+                    'submit_start': time.time(),
+                    'symbols': []
+                }
+                
+                for idx, (symbol, market) in enumerate(batch):
+                    # 순차적 제출로 초기 버스트 방지
+                    if idx > 0 and submit_delay > 0:
+                        time.sleep(submit_delay)
+                    
                     future = self.executor.submit(wrapped_method, symbol, market)
                     batch_futures[future] = (symbol, market)
                     futures[future] = (symbol, market)
+                    batch_stats['symbols'].append(symbol)
+                
+                batch_stats['submit_end'] = time.time()
+                batch_stats['submit_duration'] = batch_stats['submit_end'] - batch_stats['submit_start']
                 
                 # 배치 내 작업 완료 대기
                 batch_completed = 0
                 batch_total = len(batch)
+                batch_success_count = 0
+                batch_error_count = 0
                 
                 try:
                     for future in as_completed(batch_futures, timeout=30):  # 30초 타임아웃
@@ -304,6 +346,7 @@ class KoreaInvestment:
                         try:
                             result = future.result()
                             results.append(result)
+                            batch_success_count += 1
                             
                             # 진행 상황 출력
                             if batch_completed % progress_interval == 0 or batch_completed == batch_total:
@@ -344,6 +387,7 @@ class KoreaInvestment:
                             # 일반 에러 처리
                             print(f"❌ 에러 발생 - {symbol} ({market}): {e}")
                             results.append(error_info)
+                            batch_error_count += 1
                             
                             # Rate limit 에러인 경우 기록
                             if hasattr(self.rate_limiter, 'record_error'):
@@ -352,6 +396,41 @@ class KoreaInvestment:
                     # Rate Limit 에러가 발생한 경우 배치 처리 중단
                     if rate_limit_error_occurred:
                         break
+                    
+                    # 동적 배치 조정: 배치 결과 기록
+                    if dynamic_batch_controller:
+                        batch_elapsed_time = time.time() - batch_start_time
+                        dynamic_batch_controller.record_batch_result(
+                            batch_size=len(batch),
+                            success_count=batch_success_count,
+                            error_count=batch_error_count,
+                            elapsed_time=batch_elapsed_time
+                        )
+                    
+                    # 배치별 결과 통계 수집 및 로깅
+                    batch_elapsed_time = time.time() - batch_start_time
+                    batch_stats['process_end'] = time.time()
+                    batch_stats['total_duration'] = batch_elapsed_time
+                    batch_stats['success_count'] = batch_success_count
+                    batch_stats['error_count'] = batch_error_count
+                    batch_stats['throughput'] = (batch_success_count + batch_error_count) / batch_elapsed_time if batch_elapsed_time > 0 else 0
+                    
+                    # 배치 처리 결과 로깅
+                    if len(batches) > 1:
+                        print(f"\n📊 배치 {batch_idx + 1} 통계:")
+                        print(f"   - 제출 시간: {batch_stats['submit_duration']:.2f}초 ({len(batch)}개)")
+                        print(f"   - 처리 시간: {batch_elapsed_time:.2f}초")
+                        print(f"   - 성공/실패: {batch_success_count}/{batch_error_count}")
+                        print(f"   - 처리량: {batch_stats['throughput']:.1f} TPS")
+                        
+                        # 에러가 있으면 에러 타입별로 분석
+                        if batch_error_count > 0:
+                            error_types = {}
+                            for r in results[-len(batch):]:  # 현재 배치의 결과만
+                                if r.get('error'):
+                                    error_type = r.get('error_type', 'Unknown')
+                                    error_types[error_type] = error_types.get(error_type, 0) + 1
+                            print(f"   - 에러 타입: {error_types}")
                     
                     # 배치 간 대기 (마지막 배치 제외)
                     if batch_delay > 0 and batch_idx < len(batches) - 1:
@@ -372,6 +451,7 @@ class KoreaInvestment:
                                 'market': market,
                                 'error_type': 'TimeoutError'
                             })
+                            batch_error_count += 1
                     # 타임아웃이 발생하면 전체 처리 중단
                     rate_limit_error_occurred = True
                     break
@@ -432,6 +512,16 @@ class KoreaInvestment:
         # 배치 처리 통계
         if len(batches) > 1:
             print(f"   배치 수: {len(batches)}, 배치 크기: {batch_size}")
+        
+        # 동적 배치 조정 통계
+        if dynamic_batch_controller:
+            controller_stats = dynamic_batch_controller.get_stats()
+            print(f"\n🎯 동적 배치 조정 통계:")
+            print(f"   최종 배치 크기: {controller_stats['current_batch_size']}")
+            print(f"   최종 대기 시간: {controller_stats['current_batch_delay']:.1f}s")
+            print(f"   파라미터 조정 횟수: {controller_stats['adjustment_count']}")
+            print(f"   목표 에러율: {controller_stats['target_error_rate']:.1%}")
+            print(f"   실제 에러율: {controller_stats['overall_error_rate']:.1%}")
         
         return results
     
@@ -607,6 +697,51 @@ class KoreaInvestment:
 
     def fetch_price_list(self, stock_list):
         return self.__execute_concurrent_requests(self.__fetch_price, stock_list)
+
+    def fetch_price_list_with_batch(self, stock_list, batch_size=50, batch_delay=1.0, progress_interval=10):
+        """가격 목록 조회 (배치 처리 지원)
+        
+        Args:
+            stock_list: (symbol, market) 튜플 리스트
+            batch_size: 배치 크기 (기본값: 50)
+            batch_delay: 배치 간 대기 시간 (초, 기본값: 1.0)
+            progress_interval: 진행 상황 출력 간격 (기본값: 10)
+        
+        Returns:
+            list: 조회 결과 리스트
+        """
+        return self.__execute_concurrent_requests(
+            self.__fetch_price, 
+            stock_list,
+            batch_size=batch_size,
+            batch_delay=batch_delay,
+            progress_interval=progress_interval
+        )
+    
+    def fetch_price_list_with_dynamic_batch(self, stock_list, dynamic_batch_controller=None):
+        """가격 목록 조회 (동적 배치 조정)
+        
+        Args:
+            stock_list: (symbol, market) 튜플 리스트
+            dynamic_batch_controller: DynamicBatchController 인스턴스
+                                     (None이면 자동 생성)
+        
+        Returns:
+            list: 조회 결과 리스트
+        """
+        if dynamic_batch_controller is None:
+            from .dynamic_batch_controller import DynamicBatchController
+            dynamic_batch_controller = DynamicBatchController(
+                initial_batch_size=50,
+                initial_batch_delay=1.0,
+                target_error_rate=0.01
+            )
+        
+        return self.__execute_concurrent_requests(
+            self.__fetch_price,
+            stock_list,
+            dynamic_batch_controller=dynamic_batch_controller
+        )
 
     def __fetch_price(self, symbol: str, market: str = "KR") -> dict:
         """국내주식시세/주식현재가 시세
