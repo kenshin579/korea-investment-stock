@@ -13,23 +13,31 @@ Rate Limiting 개선과 함께 API 호출 횟수를 근본적으로 줄이기 �
 
 ## 2. 캐시 적용 대상 분석
 
-### 2.1 캐시 가능 API
+### 2.1 캐시 가능 API (실제 코드베이스 기준)
 | API 메서드 | 추천 TTL | 캐시 키 | 비고 |
 |-----------|---------|---------|-----|
-| `fetch_price()` | 1-5초 | symbol + market | 실시간성 중요 |
-| `fetch_oversea_price()` | 5-10초 | symbol + exchange | 해외는 지연 존재 |
-| `fetch_daily_price()` | 5분-1시간 | symbol + period + count | 과거 데이터는 변경 없음 |
-| `fetch_minute_price()` | 30초-1분 | symbol + period | 분봉은 자주 업데이트 |
-| `get_market_cap()` | 1시간 | symbol | 시가총액은 천천히 변함 |
-| `get_stock_info()` | 24시간 | symbol | 종목 정보는 거의 불변 |
+| `fetch_domestic_price()` | 5분 | market_code + symbol | 5분 단위 갱신으로 충분한 실시간성 |
+| `fetch_etf_domestic_price()` | 5분 | market_code + symbol | ETF도 5분 단위 갱신 |
+| `fetch_price_list()` | 5분 | 개별 symbol + market 조합 | 병렬 처리, 개별 캐싱 |
+| `fetch_price_detail_oversea_list()` | 5분 | 개별 symbol + market 조합 | 해외도 5분 단위로 통일 |
+| `fetch_stock_info_list()` | 5시간 | symbol + market | 종목 정보는 하루 몇 번 갱신이면 충분 |
+| `fetch_search_stock_info_list()` | 5시간 | symbol + market | 종목 검색 정보도 동일 |
+| `fetch_kospi_symbols()` | 3일 | "kospi_symbols" | 종목 변경은 매우 드물어 3일 캐싱 적합 |
+| `fetch_kosdaq_symbols()` | 3일 | "kosdaq_symbols" | 종목 변경은 매우 드물어 3일 캐싱 적합 |
+| `fetch_symbols()` | 3일 | "all_symbols" | 전체 종목 목록은 거의 변경되지 않음 |
 
 ### 2.2 캐시 불가 API
 | API 메서드 | 이유 |
 |-----------|-----|
-| `fetch_balance()` | 실시간 잔고 정보 |
-| `create_*_order()` | 주문 실행 |
-| `cancel_order()` | 주문 취소 |
-| `fetch_orders()` | 주문 내역 (실시간) |
+| `issue_access_token()` | 인증 토큰 발급 |
+| `issue_hashkey()` | 해시키 발급 |
+| 주문 관련 메서드들 | 실시간 거래 (현재 코드에는 구현 안됨) |
+| 잔고 관련 메서드들 | 실시간 잔고 (현재 코드에는 구현 안됨) |
+
+### 2.3 특별 고려사항
+- `*_list()` 메서드들은 내부적으로 개별 API를 병렬 호출하므로, 개별 결과를 캐싱하는 것이 효율적
+- 국내 시장(장중/장외)과 해외 시장의 거래 시간을 고려한 동적 TTL 적용 필요
+- 종목 코드 목록은 거의 변경되지 않으므로 3일 TTL 적용 권장
 
 ## 3. 기능 요구사항
 
@@ -37,10 +45,10 @@ Rate Limiting 개선과 함께 API 호출 횟수를 근본적으로 줄이기 �
 
 ```python
 class TTLCache:
-    def __init__(self, default_ttl: int = 60, max_size: int = 10000):
+    def __init__(self, default_ttl: int = 300, max_size: int = 10000):
         """
         Args:
-            default_ttl: 기본 TTL (초)
+            default_ttl: 기본 TTL (초, 기본값: 300초=5분)
             max_size: 최대 캐시 항목 수
         """
         self._cache: Dict[str, CacheEntry] = {}
@@ -64,23 +72,34 @@ class CacheEntry:
 
 #### 3.2.1 TTL 전략
 ```python
-# API별 기본 TTL 설정
+# API별 기본 TTL 설정 (실제 메서드 기준)
 CACHE_TTL_CONFIG = {
-    'fetch_price': 3,              # 3초
-    'fetch_oversea_price': 10,     # 10초
-    'fetch_daily_price': 300,      # 5분
-    'fetch_minute_price': 60,      # 1분
-    'get_market_cap': 3600,        # 1시간
-    'get_stock_info': 86400,       # 24시간
+    'fetch_domestic_price': 300,            # 5분
+    'fetch_etf_domestic_price': 300,        # 5분
+    'fetch_price_list': 300,                # 5분 (개별 항목)
+    'fetch_price_detail_oversea_list': 300, # 5분 (개별 항목)
+    'fetch_stock_info_list': 18000,         # 5시간 (개별 항목)
+    'fetch_search_stock_info_list': 18000,  # 5시간 (개별 항목)
+    'fetch_kospi_symbols': 259200,          # 3일
+    'fetch_kosdaq_symbols': 259200,         # 3일
+    'fetch_symbols': 259200,                # 3일
 }
 
 # 장 시간대별 동적 TTL
-def get_dynamic_ttl(method_name: str, market_hours: bool) -> int:
-    base_ttl = CACHE_TTL_CONFIG.get(method_name, 60)
-    if market_hours:
+def get_dynamic_ttl(method_name: str, market_status: str = 'regular') -> int:
+    """
+    market_status: 'regular' (장중), 'after_hours' (장외), 'weekend' (주말/공휴일)
+    """
+    base_ttl = CACHE_TTL_CONFIG.get(method_name, 300)
+    
+    if market_status == 'regular':
         return base_ttl
-    else:
+    elif market_status == 'after_hours':
         return base_ttl * 3  # 장외 시간은 3배 TTL
+    elif market_status == 'weekend':
+        return base_ttl * 10  # 주말/공휴일은 10배 TTL
+    else:
+        return base_ttl
 ```
 
 #### 3.2.2 캐시 키 생성
@@ -90,9 +109,10 @@ def generate_cache_key(method_name: str, *args, **kwargs) -> str:
     메서드명과 파라미터를 조합하여 유니크한 캐시 키 생성
     
     예시:
-    - fetch_price:005930:KR
-    - fetch_daily_price:005930:D:100
-    - get_market_cap:AAPL:NASD
+    - fetch_domestic_price:J:005930
+    - fetch_etf_domestic_price:J:294400
+    - fetch_stock_info:005930:KR
+    - fetch_kospi_symbols
     """
     key_parts = [method_name]
     key_parts.extend(str(arg) for arg in args)
@@ -115,19 +135,56 @@ def cacheable(ttl: Optional[int] = None,
         key_generator: 커스텀 캐시 키 생성 함수
     
     사용 예:
-    @cacheable(ttl=5)
-    def fetch_price(self, symbol: str) -> dict:
+    @cacheable(ttl=300)  # 5분
+    def fetch_domestic_price(self, market_code: str, symbol: str) -> dict:
         ...
     
-    @cacheable(cache_condition=lambda result: result.get('rt_cd') == '0')
-    def fetch_daily_price(self, symbol: str) -> dict:
+    @cacheable(ttl=259200, cache_condition=lambda result: result.get('rt_cd') == '0')  # 3일
+    def fetch_kospi_symbols(self) -> pd.DataFrame:
         ...
     """
 ```
 
-### 3.4 캐시 관리 기능
+### 3.4 리스트 메서드의 캐시 처리
 
-#### 3.4.1 수동 캐시 제어
+```python
+def __execute_concurrent_requests_with_cache(self, method, stock_list, **kwargs):
+    """
+    병렬 요청 실행 시 캐시 통합
+    
+    1. 캐시에서 먼저 조회
+    2. 캐시 미스 항목만 API 호출
+    3. 결과를 캐시에 저장
+    """
+    cached_results = {}
+    uncached_items = []
+    
+    # 캐시 확인
+    for item in stock_list:
+        cache_key = self._generate_item_cache_key(method.__name__, item)
+        cached_value = self._cache.get(cache_key)
+        if cached_value:
+            cached_results[item] = cached_value
+        else:
+            uncached_items.append(item)
+    
+    # 캐시되지 않은 항목만 API 호출
+    if uncached_items:
+        api_results = self.__execute_concurrent_requests(method, uncached_items, **kwargs)
+        
+        # 결과 캐싱
+        for item, result in zip(uncached_items, api_results):
+            if result.get('rt_cd') == '0':  # 성공한 경우만 캐싱
+                cache_key = self._generate_item_cache_key(method.__name__, item)
+                self._cache.set(cache_key, result)
+    
+    # 전체 결과 조합
+    return self._combine_results(stock_list, cached_results, api_results)
+```
+
+### 3.5 캐시 관리 기능
+
+#### 3.5.1 수동 캐시 제어
 ```python
 class KoreaInvestment:
     def clear_cache(self, pattern: Optional[str] = None):
@@ -149,7 +206,7 @@ class KoreaInvestment:
         """자주 사용하는 종목 미리 캐싱"""
 ```
 
-#### 3.4.2 자동 정리
+#### 3.5.2 자동 정리
 ```python
 class TTLCache:
     def _cleanup_expired(self):
@@ -162,9 +219,9 @@ class TTLCache:
         """LFU(Least Frequently Used) 정책으로 제거"""
 ```
 
-### 3.5 메모리 관리
+### 3.6 메모리 관리
 
-#### 3.5.1 크기 제한
+#### 3.6.1 크기 제한
 ```python
 class CacheSizeLimit:
     MAX_ENTRIES = 10000  # 최대 항목 수
@@ -174,7 +231,7 @@ class CacheSizeLimit:
         """크기 제한 확인 및 필요시 제거"""
 ```
 
-#### 3.5.2 메모리 효율적 저장
+#### 3.6.2 메모리 효율적 저장
 ```python
 # 큰 응답은 압축하여 저장
 def _store_value(self, value: Any) -> Any:
@@ -223,11 +280,12 @@ broker = KoreaInvestment(api_key, api_secret, acc_no, cache_enabled=False)
 
 # 커스텀 캐시 설정
 cache_config = {
-    'default_ttl': 60,
+    'default_ttl': 300,
     'max_size': 5000,
     'ttl_config': {
-        'fetch_price': 5,
-        'fetch_daily_price': 600,
+        'fetch_domestic_price': 300,     # 5분
+        'fetch_stock_info_list': 18000,  # 5시간
+        'fetch_kospi_symbols': 259200,   # 3일
     }
 }
 broker = KoreaInvestment(api_key, api_secret, acc_no, cache_config=cache_config)
@@ -236,18 +294,18 @@ broker = KoreaInvestment(api_key, api_secret, acc_no, cache_config=cache_config)
 ### 5.2 고급 사용법
 ```python
 # 특정 호출에 대해 캐시 무시
-price = broker.fetch_price("005930", use_cache=False)
+price = broker.fetch_domestic_price("J", "005930", use_cache=False)
 
 # 캐시 통계 확인
 stats = broker.get_cache_stats()
 print(f"캐시 적중률: {stats['hit_rate']:.1%}")
 
 # 특정 종목 캐시 삭제
-broker.clear_cache("fetch_price:005930:*")
+broker.clear_cache("fetch_domestic_price:J:005930")
 
 # 자주 사용하는 종목 미리 로드
 top_symbols = ["005930", "000660", "035720"]
-broker.preload_cache(top_symbols)
+broker.preload_cache(top_symbols, market="KR")
 ```
 
 ## 6. 성능 목표
@@ -308,24 +366,25 @@ logger.info(f"Cache stats - Hit rate: {hit_rate:.1%}, Size: {cache_size}")
 
 1. **Phase 1 (핵심)**
    - 기본 TTL 캐시 구현
-   - 주요 조회 API에 적용
+   - 주요 조회 API에 적용 (가격 조회 중심)
    - 캐시 통계 수집
 
 2. **Phase 2 (확장)**
-   - 동적 TTL 조정
+   - 리스트 메서드의 개별 항목 캐싱
+   - 동적 TTL 조정 (장중/장외)
    - 고급 제거 정책 (LRU/LFU)
-   - 캐시 워밍업 기능
 
 3. **Phase 3 (최적화)**
    - 메모리 압축
-   - 분산 캐시 지원
-   - 영구 저장소 연동
+   - 캐시 워밍업 기능
+   - 분산 캐시 지원 (Redis 등)
 
 ## 10. 주의사항
 
 ### 10.1 데이터 일관성
-- 실시간성이 중요한 데이터는 짧은 TTL 또는 캐시 제외
-- 주문/잔고 관련 API는 절대 캐시하지 않음
+- 가격 데이터는 5분 TTL로 실시간성과 효율성 균형
+- 종목 정보는 긴 TTL 적용 가능 (5시간 이상)
+- 인증/주문 관련 API는 절대 캐시하지 않음
 
 ### 10.2 메모리 관리
 - 대량 데이터 캐싱 시 메모리 사용량 모니터링 필수
@@ -333,4 +392,19 @@ logger.info(f"Cache stats - Hit rate: {hit_rate:.1%}, Size: {cache_size}")
 
 ### 10.3 장애 대응
 - 캐시 장애 시에도 정상 동작 보장
-- 캐시는 성능 향상 도구일 뿐, 필수 의존성 아님 
+- 캐시는 성능 향상 도구일 뿐, 필수 의존성 아님
+
+## 11. TTL 설정 가이드라인
+
+### 11.1 권장 TTL 요약
+| 데이터 유형 | TTL | 근거 |
+|------------|-----|------|
+| 가격 정보 (국내) | 5분 | 5분 단위 갱신으로 실시간성과 효율성 균형 |
+| 가격 정보 (해외) | 5분 | 국내외 통일된 5분 TTL 적용 |
+| 종목 정보 | 5시간 | 종목 기본 정보는 자주 변경되지 않음 |
+| 종목 코드 목록 | 3일 | 상장/폐지는 매우 드물어 3일 캐싱이 적절 |
+
+### 11.2 동적 TTL 조정
+- **장중 시간**: 기본 TTL 사용
+- **장외 시간**: 기본 TTL × 3 (가격 변동이 없으므로)
+- **주말/공휴일**: 기본 TTL × 10 (시장이 닫혀있으므로) 
