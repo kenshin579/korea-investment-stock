@@ -9,16 +9,20 @@ import random
 import threading
 import time
 import zipfile
+import logging
 from collections import deque, defaultdict
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from functools import wraps
 from pathlib import Path
-from typing import Literal, Optional
+from typing import Literal, Optional, List
 from zoneinfo import ZoneInfo  # Requires Python 3.9+
 import atexit
 
 import pandas as pd
 import requests
+
+# 로거 설정
+logger = logging.getLogger(__name__)
 
 # Enhanced RateLimiter import
 try:
@@ -27,12 +31,14 @@ try:
     from .rate_limiting.enhanced_retry_decorator import retry_on_rate_limit, retry_on_network_error
     from .error_handling.error_recovery_system import get_error_recovery_system
     from .monitoring.stats_manager import get_stats_manager
+    from .caching import TTLCache, cacheable, CACHE_TTL_CONFIG
 except ImportError:
     from rate_limiting.enhanced_rate_limiter import EnhancedRateLimiter
     from rate_limiting.enhanced_backoff_strategy import get_backoff_strategy
     from rate_limiting.enhanced_retry_decorator import retry_on_rate_limit, retry_on_network_error
     from error_handling.error_recovery_system import get_error_recovery_system
     from monitoring.stats_manager import get_stats_manager
+    from caching import TTLCache, cacheable, CACHE_TTL_CONFIG
 
 EXCHANGE_CODE = {
     "홍콩": "HKS",
@@ -179,7 +185,8 @@ class KoreaInvestment:
     '''
 
     def __init__(self, api_key: str, api_secret: str, acc_no: str,
-                 mock: bool = False):
+                 mock: bool = False, cache_enabled: bool = True, 
+                 cache_config: Optional[dict] = None):
         """생성자
         Args:
             api_key (str): 발급받은 API key
@@ -188,6 +195,8 @@ class KoreaInvestment:
             exchange (str): "서울", "나스닥", "뉴욕", "아멕스", "홍콩", "상해", "심천", # todo: exchange는 제거 예정
                             "도쿄", "하노이", "호치민"
             mock (bool): True (mock trading), False (real trading)
+            cache_enabled (bool): True if cache is enabled, False otherwise
+            cache_config (dict, optional): Configuration for the cache
         """
         self.mock = mock
         self.set_base_url(mock)
@@ -223,6 +232,29 @@ class KoreaInvestment:
             self.load_access_token()
         else:
             self.issue_access_token()
+
+        # Cache configuration
+        self._cache_enabled = cache_enabled
+        if cache_enabled:
+            # 캐시 설정 병합
+            default_cache_config = {
+                'default_ttl': 300,  # 5분
+                'max_size': 10000,
+                'ttl_config': CACHE_TTL_CONFIG
+            }
+            if cache_config:
+                default_cache_config.update(cache_config)
+            
+            # TTLCache 인스턴스 생성
+            self._cache = TTLCache(
+                default_ttl=default_cache_config['default_ttl'],
+                max_size=default_cache_config['max_size']
+            )
+            logger.info(f"TTL 캐시 활성화 (기본 TTL: {default_cache_config['default_ttl']}초, "
+                       f"최대 크기: {default_cache_config['max_size']})")
+        else:
+            self._cache = None
+            logger.info("TTL 캐시 비활성화")
 
     def __enter__(self):
         """컨텍스트 매니저 진입"""
@@ -453,7 +485,6 @@ class KoreaInvestment:
                                 'market': market,
                                 'error_type': 'TimeoutError'
                             })
-                            batch_error_count += 1
                     # 타임아웃이 발생하면 전체 처리 중단
                     rate_limit_error_occurred = True
                     break
@@ -586,6 +617,20 @@ class KoreaInvestment:
             print(f"- Circuit Open 횟수: {backoff_stats['circuit_opens']}")
             print(f"- 평균 백오프 시간: {backoff_stats['avg_backoff_time']:.2f}초")
         
+        # 캐시 통계 출력 (Phase 8.7)
+        if self._cache_enabled and self._cache:
+            cache_stats = self.get_cache_stats()
+            if cache_stats['total_entries'] > 0 or cache_stats['hit_count'] > 0:
+                print(f"\n최종 캐시 통계:")
+                print(f"- 활성화 여부: {'예' if cache_stats['enabled'] else '아니오'}")
+                print(f"- 총 항목 수: {cache_stats['total_entries']}")
+                print(f"- 캐시 적중: {cache_stats['hit_count']}")
+                print(f"- 캐시 미스: {cache_stats['miss_count']}")
+                print(f"- 적중률: {cache_stats['hit_rate']:.1%}")
+                print(f"- 메모리 사용량: {cache_stats['memory_usage']:.1f}MB")
+                print(f"- 만료된 항목: {cache_stats['expired_count']}")
+                print(f"- 제거된 항목: {cache_stats['eviction_count']}")
+        
         # 에러 복구 시스템 통계 출력
         recovery_system = get_error_recovery_system()
         error_summary = recovery_system.get_error_summary(hours=24)
@@ -615,7 +660,8 @@ class KoreaInvestment:
             rate_limiter=self.rate_limiter if hasattr(self, 'rate_limiter') else None,
             backoff_strategy=backoff_strategy,
             error_recovery=recovery_system,
-            batch_controller=batch_controller
+            batch_controller=batch_controller,
+            cache=self._cache if self._cache_enabled and self._cache else None
         )
         
         # JSON 형식으로 저장
@@ -642,6 +688,13 @@ class KoreaInvestment:
         print(f"- 전체 API 호출: {summary.get('total_api_calls', 0):,}")
         print(f"- 전체 에러: {summary.get('total_errors', 0):,}")
         print(f"- 전체 에러율: {summary.get('overall_error_rate', 0):.2%}")
+        
+        # 캐시 정리 (Phase 8.7)
+        if self._cache_enabled and self._cache:
+            # 백그라운드 스레드 정지
+            if hasattr(self._cache, 'stop_cleanup_thread'):
+                self._cache.stop_cleanup_thread()
+            logger.info("캐시 백그라운드 스레드 정리 완료")
 
     def set_base_url(self, mock: bool = True):
         """테스트(모의투자) 서버 사용 설정
@@ -737,10 +790,10 @@ class KoreaInvestment:
         return haskkey
 
     def fetch_search_stock_info_list(self, stock_market_list):
-        return self.__execute_concurrent_requests(self.__fetch_search_stock_info, stock_market_list)
+        return self.__execute_concurrent_requests_with_cache(self.__fetch_search_stock_info, stock_market_list)
 
     def fetch_price_list(self, stock_list):
-        return self.__execute_concurrent_requests(self.__fetch_price, stock_list)
+        return self.__execute_concurrent_requests_with_cache(self.__fetch_price, stock_list)
 
     def fetch_price_list_with_batch(self, stock_list, batch_size=50, batch_delay=1.0, progress_interval=10):
         """가격 목록 조회 (배치 처리 지원)
@@ -821,6 +874,10 @@ class KoreaInvestment:
 
         return "Unknown"
 
+    @cacheable(
+        ttl=300,  # 5분
+        key_generator=lambda self, market_code, symbol: f"fetch_etf_domestic_price:{market_code}:{symbol}"
+    )
     @retry_on_rate_limit()
     def fetch_etf_domestic_price(self, market_code: str, symbol: str) -> dict:
         """주식현재가시세
@@ -846,7 +903,10 @@ class KoreaInvestment:
         resp = requests.get(url, headers=headers, params=params)
         return resp.json()
 
-
+    @cacheable(
+        ttl=300,  # 5분
+        key_generator=lambda self, market_code, symbol: f"fetch_domestic_price:{market_code}:{symbol}"
+    )
     @retry_on_rate_limit()
     def fetch_domestic_price(self, market_code: str, symbol: str) -> dict:
         """주식현재가시세
@@ -871,6 +931,57 @@ class KoreaInvestment:
         }
         resp = requests.get(url, headers=headers, params=params)
         return resp.json()
+
+    @cacheable(
+        ttl=259200,  # 3일
+        key_generator=lambda self: "fetch_kospi_symbols"
+    )
+    def fetch_kospi_symbols(self):
+        """코스피 종목 코드
+
+        실제 필요한 종목: ST, RT, EF, IF
+
+        ST	주권
+        MF	증권투자회사
+        RT	부동산투자회사
+        SC	선박투자회사
+        IF	사회간접자본투융자회사
+        DR	주식예탁증서
+        EW	ELW
+        EF	ETF
+        SW	신주인수권증권
+        SR	신주인수권증서
+        BC	수익증권
+        FE	해외ETF
+        FS	외국주권
+
+
+        Returns:
+            DataFrame:
+        """
+        base_dir = os.getcwd()
+        file_name = "kospi_code.mst.zip"
+        url = "https://new.real.download.dws.co.kr/common/master/" + file_name
+        self.download_master_file(base_dir, file_name, url)
+        df = self.parse_kospi_master(base_dir)
+        return df
+
+    @cacheable(
+        ttl=259200,  # 3일
+        key_generator=lambda self: "fetch_kosdaq_symbols"
+    )
+    def fetch_kosdaq_symbols(self):
+        """코스닥 종목 코드
+
+        Returns:
+            DataFrame:
+        """
+        base_dir = os.getcwd()
+        file_name = "kosdaq_code.mst.zip"
+        url = "https://new.real.download.dws.co.kr/common/master/" + file_name
+        self.download_master_file(base_dir, file_name, url)
+        df = self.parse_kosdaq_master(base_dir)
+        return df
 
     def fetch_symbols(self):
         """fetch symbols from the exchange
@@ -1065,52 +1176,13 @@ class KoreaInvestment:
         os.remove(tmp_fil2)
         return df
 
-    def fetch_kospi_symbols(self):
-        """코스피 종목 코드
-
-        실제 필요한 종목: ST, RT, EF, IF
-
-        ST	주권
-        MF	증권투자회사
-        RT	부동산투자회사
-        SC	선박투자회사
-        IF	사회간접자본투융자회사
-        DR	주식예탁증서
-        EW	ELW
-        EF	ETF
-        SW	신주인수권증권
-        SR	신주인수권증서
-        BC	수익증권
-        FE	해외ETF
-        FS	외국주권
-
-
-        Returns:
-            DataFrame:
-        """
-        base_dir = os.getcwd()
-        file_name = "kospi_code.mst.zip"
-        url = "https://new.real.download.dws.co.kr/common/master/" + file_name
-        self.download_master_file(base_dir, file_name, url)
-        df = self.parse_kospi_master(base_dir)
-        return df
-
-    def fetch_kosdaq_symbols(self):
-        """코스닥 종목 코드
-
-        Returns:
-            DataFrame:
-        """
-        base_dir = os.getcwd()
-        file_name = "kosdaq_code.mst.zip"
-        url = "https://new.real.download.dws.co.kr/common/master/" + file_name
-        self.download_master_file(base_dir, file_name, url)
-        df = self.parse_kosdaq_master(base_dir)
-        return df
-
     def fetch_price_detail_oversea_list(self, stock_market_list):
-        return self.__execute_concurrent_requests(self.__fetch_price_detail_oversea, stock_market_list)
+        return self.__execute_concurrent_requests_with_cache(self.__fetch_price_detail_oversea, stock_market_list)
 
+    @cacheable(
+        ttl=300,  # 5분 
+        key_generator=lambda self, symbol, market: f"fetch_price_detail_oversea:{market}:{symbol}"
+    )
     @retry_on_rate_limit()
     def __fetch_price_detail_oversea(self, symbol: str, market: str = "KR"):
         """해외주식 현재가상세
@@ -1152,8 +1224,12 @@ class KoreaInvestment:
             return resp_json
 
     def fetch_stock_info_list(self, stock_market_list):
-        return self.__execute_concurrent_requests(self.__fetch_stock_info, stock_market_list)
+        return self.__execute_concurrent_requests_with_cache(self.__fetch_stock_info, stock_market_list)
 
+    @cacheable(
+        ttl=18000,  # 5시간
+        key_generator=lambda self, symbol, market: f"fetch_stock_info:{market}:{symbol}"
+    )
     @retry_on_rate_limit()
     def __fetch_stock_info(self, symbol: str, market: str = "KR"):
         self.rate_limiter.acquire()
@@ -1188,8 +1264,12 @@ class KoreaInvestment:
                 raise e
 
     def fetch_search_stock_info_list(self, stock_market_list):
-        return self.__execute_concurrent_requests(self.__fetch_search_stock_info, stock_market_list)
+        return self.__execute_concurrent_requests_with_cache(self.__fetch_search_stock_info, stock_market_list)
 
+    @cacheable(
+        ttl=18000,  # 5시간
+        key_generator=lambda self, symbol, market: f"fetch_search_stock_info:{market}:{symbol}"
+    )
     @retry_on_rate_limit()
     def __fetch_search_stock_info(self, symbol: str, market: str = "KR"):
         """
@@ -1229,6 +1309,192 @@ class KoreaInvestment:
                 if resp_json['rt_cd'] != API_RETURN_CODE['SUCCESS']:
                     continue
                 raise e
+
+    def __execute_concurrent_requests_with_cache(self, method, stock_list,
+                                                  batch_size: Optional[int] = None,
+                                                  batch_delay: float = 0.0,
+                                                  progress_interval: int = 10,
+                                                  use_cache: bool = True):
+        """캐시를 활용한 병렬 요청 실행
+        
+        Phase 8.4: 리스트 메서드 캐시 처리
+        
+        Args:
+            method: 실행할 메서드
+            stock_list: (symbol, market) 튜플 리스트
+            batch_size: 배치 크기 (None이면 전체를 한 번에 처리)
+            batch_delay: 배치 간 대기 시간 (초)
+            progress_interval: 진행 상황 출력 간격
+            use_cache: 캐시 사용 여부
+        
+        Returns:
+            list: 조회 결과 리스트
+        """
+        if not use_cache or not hasattr(self, '_cache') or not self._cache_enabled:
+            # 캐시가 비활성화되어 있으면 기존 메서드 사용
+            return self.__execute_concurrent_requests(
+                method, stock_list, batch_size, batch_delay, progress_interval
+            )
+        
+        # 결과를 순서대로 저장하기 위한 딕셔너리
+        cached_results = {}
+        uncached_items = []
+        result_order = []  # 원래 순서 유지용
+        
+        # 1. 캐시에서 먼저 조회
+        cache_hits = 0
+        cache_misses = 0
+        
+        for idx, (symbol, market) in enumerate(stock_list):
+            result_order.append((idx, symbol, market))
+            
+            # 캐시 키 생성
+            method_name = getattr(method, '__name__', str(method)).replace('_KoreaInvestment__', '')
+            cache_key = f"{method_name}:{market}:{symbol}"
+            
+            # 캐시에서 조회
+            cached_value = self._cache.get(cache_key)
+            if cached_value is not None:
+                cached_results[idx] = cached_value
+                cache_hits += 1
+            else:
+                uncached_items.append((symbol, market))
+                cache_misses += 1
+        
+        if cache_hits > 0:
+            print(f"💾 캐시 적중: {cache_hits}개 ({cache_hits/len(stock_list)*100:.1f}%), "
+                  f"캐시 미스: {cache_misses}개 ({cache_misses/len(stock_list)*100:.1f}%)")
+        
+        # 2. 캐시되지 않은 항목만 API 호출
+        api_results = []
+        if uncached_items:
+            print(f"🔄 API 호출 필요: {len(uncached_items)}개 항목")
+            api_results = self.__execute_concurrent_requests(
+                method, uncached_items, batch_size, batch_delay, progress_interval
+            )
+            
+            # 3. API 호출 결과를 캐시에 저장
+            method_name = getattr(method, '__name__', str(method)).replace('_KoreaInvestment__', '')
+            for (symbol, market), result in zip(uncached_items, api_results):
+                # 성공한 경우만 캐싱
+                if result.get('rt_cd') == '0':
+                    cache_key = f"{method_name}:{market}:{symbol}"
+                    # 메서드별 TTL은 cacheable 데코레이터에서 처리
+                    # 여기서는 기본 TTL 사용
+                    self._cache.set(cache_key, result)
+        
+        # 4. 전체 결과 조합 (원래 순서대로)
+        final_results = []
+        api_result_idx = 0
+        
+        for idx, symbol, market in result_order:
+            if idx in cached_results:
+                # 캐시된 결과 사용
+                final_results.append(cached_results[idx])
+            else:
+                # API 호출 결과 사용
+                if api_result_idx < len(api_results):
+                    final_results.append(api_results[api_result_idx])
+                    api_result_idx += 1
+                else:
+                    # 예외적인 경우 (API 호출 실패 등)
+                    final_results.append({
+                        'rt_cd': '9',
+                        'error': True,
+                        'symbol': symbol,
+                        'market': market,
+                        'msg1': 'Failed to fetch data'
+                    })
+        
+        # 캐시 통계 업데이트
+        if hasattr(self._cache, 'print_stats') and cache_hits > 0:
+            print(f"📊 API 호출 절감: {cache_hits}회")
+        
+        return final_results
+    
+    # Phase 8.6: 캐시 관리 메서드
+    def clear_cache(self, pattern: Optional[str] = None):
+        """캐시 삭제
+        
+        Args:
+            pattern: 삭제할 캐시 키 패턴 (None이면 전체 삭제)
+                    예: "fetch_domestic_price:J:005930"
+        """
+        if not self._cache_enabled or not self._cache:
+            return
+        
+        if pattern is None:
+            # 전체 캐시 삭제
+            self._cache.clear()
+            logger.info("전체 캐시 삭제 완료")
+        else:
+            # 패턴에 맞는 캐시 삭제
+            deleted_count = self._cache.delete_pattern(pattern)
+            logger.info(f"{pattern} 패턴의 캐시 {deleted_count}개 삭제 완료")
+    
+    def get_cache_stats(self) -> dict:
+        """캐시 통계 조회
+        
+        Returns:
+            dict: 캐시 통계 정보
+        """
+        if not self._cache_enabled or not self._cache:
+            return {
+                'enabled': False,
+                'hit_rate': 0.0,
+                'total_entries': 0,
+                'memory_usage': 0,
+                'expired_count': 0
+            }
+        
+        stats = self._cache.get_stats()
+        return {
+            'enabled': True,
+            'hit_rate': stats.get('hit_rate', 0.0),
+            'total_entries': stats.get('size', 0),
+            'memory_usage': stats.get('memory_usage_mb', 0),
+            'expired_count': stats.get('expired_count', 0),
+            'hit_count': stats.get('hit_count', 0),
+            'miss_count': stats.get('miss_count', 0),
+            'eviction_count': stats.get('eviction_count', 0)
+        }
+    
+    def set_cache_enabled(self, enabled: bool):
+        """캐시 기능 on/off
+        
+        Args:
+            enabled: True면 캐시 활성화, False면 비활성화
+        """
+        self._cache_enabled = enabled
+        logger.info(f"캐시 {'활성화' if enabled else '비활성화'}")
+    
+    def preload_cache(self, symbols: List[str], market: str = "KR"):
+        """자주 사용하는 종목 미리 캐싱
+        
+        Args:
+            symbols: 종목 코드 리스트
+            market: 시장 코드 (기본값: "KR")
+        """
+        if not self._cache_enabled or not self._cache:
+            logger.warning("캐시가 비활성화되어 있어 preload를 수행할 수 없습니다")
+            return
+        
+        print(f"🔄 {len(symbols)}개 종목 캐시 사전 로드 시작...")
+        
+        # 종목 정보 로드
+        stock_info_list = [(symbol, market) for symbol in symbols]
+        self.fetch_stock_info_list(stock_info_list)
+        
+        # 현재가 정보 로드
+        price_list = [(symbol, market) for symbol in symbols]
+        self.fetch_price_list(price_list)
+        
+        print(f"✅ {len(symbols)}개 종목 캐시 사전 로드 완료")
+        
+        # 캐시 통계 출력
+        stats = self.get_cache_stats()
+        print(f"📊 캐시 상태: {stats['total_entries']}개 항목, "
+              f"메모리 사용량: {stats['memory_usage']:.1f}MB")
 
 
 # RateLimiter 클래스는 enhanced_rate_limiter.py로 이동됨

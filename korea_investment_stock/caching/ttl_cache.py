@@ -72,8 +72,14 @@ class TTLCache:
         
         # 메모리 관리
         self._total_memory = 0
-        self._cleanup_interval = 60  # 60초마다 정리
+        self._cleanup_interval = 60  # 1분마다 정리
         self._last_cleanup = time.time()
+        self._expired_count = 0
+        
+        # 백그라운드 정리 스레드
+        self._stop_cleanup = False
+        self._cleanup_thread = None
+        self.start_cleanup_thread()
         
         # 압축 설정
         self._compression_threshold = 1024  # 1KB 이상 압축
@@ -209,22 +215,19 @@ class TTLCache:
     
     def _cleanup_expired(self) -> None:
         """만료된 항목 정리"""
-        expired_keys = []
-        
-        for key, entry in self._cache.items():
-            if entry.is_expired():
-                expired_keys.append(key)
-        
-        for key in expired_keys:
-            entry = self._cache[key]
-            self._total_memory -= entry.size
-            del self._cache[key]
-            self._eviction_count += 1
-        
-        self._last_cleanup = time.time()
-        
-        if expired_keys:
-            logger.debug(f"Cleaned up {len(expired_keys)} expired entries")
+        with self._lock:
+            expired_keys = []
+            for key, entry in list(self._cache.items()):
+                if entry.is_expired():
+                    expired_keys.append(key)
+            
+            for key in expired_keys:
+                self._remove_entry(key)
+                self._expired_count += 1
+            
+            self._last_cleanup = time.time()
+            if expired_keys:
+                logger.debug(f"{len(expired_keys)}개의 만료된 항목 제거")
     
     def _evict_lru(self) -> None:
         """LRU (Least Recently Used) 정책으로 항목 제거"""
@@ -232,15 +235,11 @@ class TTLCache:
             return
         
         # 가장 오래 사용하지 않은 항목 찾기
-        lru_key = min(self._cache.keys(), 
-                      key=lambda k: self._cache[k].last_accessed)
-        
-        entry = self._cache[lru_key]
-        self._total_memory -= entry.size
-        del self._cache[lru_key]
+        oldest_key = min(self._cache.keys(), 
+                        key=lambda k: self._cache[k].last_accessed)
+        self._remove_entry(oldest_key)
         self._eviction_count += 1
-        
-        logger.debug(f"Evicted LRU item: {lru_key}")
+        logger.debug(f"LRU 제거: {oldest_key}")
     
     def _evict_lfu(self) -> None:
         """LFU (Least Frequently Used) 정책으로 항목 제거"""
@@ -248,15 +247,11 @@ class TTLCache:
             return
         
         # 가장 적게 사용된 항목 찾기
-        lfu_key = min(self._cache.keys(), 
-                      key=lambda k: self._cache[k].access_count)
-        
-        entry = self._cache[lfu_key]
-        self._total_memory -= entry.size
-        del self._cache[lfu_key]
+        least_used_key = min(self._cache.keys(), 
+                            key=lambda k: self._cache[k].access_count)
+        self._remove_entry(least_used_key)
         self._eviction_count += 1
-        
-        logger.debug(f"Evicted LFU item: {lfu_key}")
+        logger.debug(f"LFU 제거: {least_used_key}")
     
     def get_stats(self) -> dict:
         """캐시 통계 조회"""
@@ -307,6 +302,35 @@ class TTLCache:
         """만료된 항목 수"""
         with self._lock:
             return sum(1 for entry in self._cache.values() if entry.is_expired())
+
+    def start_cleanup_thread(self):
+        """백그라운드 정리 스레드 시작"""
+        if not self._cleanup_thread or not self._cleanup_thread.is_alive():
+            self._cleanup_thread = threading.Thread(target=self._cleanup_worker, daemon=True)
+            self._cleanup_thread.start()
+            logger.debug("캐시 정리 스레드 시작")
+    
+    def stop_cleanup_thread(self):
+        """백그라운드 정리 스레드 정지"""
+        self._stop_cleanup = True
+        if self._cleanup_thread and self._cleanup_thread.is_alive():
+            self._cleanup_thread.join(timeout=5)
+            logger.debug("캐시 정리 스레드 정지")
+    
+    def _cleanup_worker(self):
+        """백그라운드 정리 워커"""
+        while not self._stop_cleanup:
+            time.sleep(self._cleanup_interval)
+            if not self._stop_cleanup:
+                self._cleanup_expired()
+                logger.debug(f"캐시 정리 완료 - 만료된 항목: {self._expired_count}개")
+
+    def _remove_entry(self, key: str):
+        """캐시 항목 제거 (내부 사용)"""
+        if key in self._cache:
+            entry = self._cache[key]
+            self._total_memory -= entry.size
+            del self._cache[key]
 
 
 # API별 기본 TTL 설정 (실제 메서드 기준)

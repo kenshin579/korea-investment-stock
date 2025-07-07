@@ -50,7 +50,8 @@ class StatsManager:
                          rate_limiter=None,
                          backoff_strategy=None,
                          error_recovery=None,
-                         batch_controller=None) -> Dict[str, Any]:
+                         batch_controller=None,
+                         cache=None) -> Dict[str, Any]:
         """모든 모듈의 통계 수집
         
         Args:
@@ -58,6 +59,7 @@ class StatsManager:
             backoff_strategy: EnhancedBackoffStrategy 인스턴스
             error_recovery: ErrorRecoverySystem 인스턴스
             batch_controller: DynamicBatchController 인스턴스
+            cache: TTLCache 인스턴스
             
         Returns:
             통합된 통계 딕셔너리
@@ -84,6 +86,10 @@ class StatsManager:
         if batch_controller and hasattr(batch_controller, 'get_stats'):
             stats['modules']['batch_controller'] = batch_controller.get_stats()
         
+        # Cache 통계
+        if cache and hasattr(cache, 'get_stats'):
+            stats['modules']['cache'] = cache.get_stats()
+        
         # 전체 요약
         stats['summary'] = self._generate_summary(stats['modules'])
         
@@ -96,7 +102,9 @@ class StatsManager:
             'total_errors': 0,
             'overall_error_rate': 0,
             'avg_tps': 0,
-            'system_health': 'UNKNOWN'
+            'system_health': 'UNKNOWN',
+            'cache_hit_rate': 0,
+            'api_calls_saved': 0
         }
         
         # Rate Limiter 정보
@@ -110,6 +118,13 @@ class StatsManager:
         if 'error_recovery' in modules:
             er = modules['error_recovery']
             summary['total_errors'] += er.get('total_errors', 0)
+        
+        # Cache 정보
+        if 'cache' in modules:
+            cache = modules['cache']
+            summary['cache_hit_rate'] = cache.get('hit_rate', 0)
+            summary['api_calls_saved'] = cache.get('hit_count', 0)
+            summary['cache_entries'] = cache.get('size', 0)
         
         # 전체 에러율 계산
         if summary['total_api_calls'] > 0:
