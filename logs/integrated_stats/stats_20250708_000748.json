@@ -1,0 +1,57 @@
+{
+  "timestamp": "2025-07-08T00:07:48.225858",
+  "timestamp_epoch": 1751900868.22586,
+  "modules": {
+    "rate_limiter": {
+      "total_calls": 0,
+      "error_count": 0,
+      "message": "아직 호출 데이터가 없습니다."
+    },
+    "backoff_strategy": {
+      "state": "CLOSED",
+      "total_attempts": 0,
+      "total_failures": 0,
+      "success_rate": 1.0,
+      "circuit_opens": 0,
+      "current_failure_count": 0,
+      "avg_backoff_time": 0,
+      "config": {
+        "base_delay": 1.0,
+        "max_delay": 32.0,
+        "failure_threshold": 10,
+        "success_threshold": 3,
+        "circuit_timeout": 60.0
+      }
+    },
+    "error_recovery": {
+      "period_hours": 24,
+      "total_errors": 0,
+      "by_severity": {},
+      "by_type": {},
+      "recovery_rate": 0,
+      "most_common": []
+    },
+    "cache": {
+      "hit_count": 1,
+      "miss_count": 1,
+      "hit_rate": 0.5,
+      "miss_rate": 0.5,
+      "total_entries": 1,
+      "eviction_count": 0,
+      "avg_entry_age": 0.0005209445953369141,
+      "memory_usage_mb": 0.00017547607421875,
+      "api_calls_saved": 1
+    }
+  },
+  "summary": {
+    "total_api_calls": 0,
+    "total_errors": 0,
+    "overall_error_rate": 0,
+    "avg_tps": 0,
+    "system_health": "HEALTHY",
+    "cache_hit_rate": 0.5,
+    "api_calls_saved": 1,
+    "max_tps": 0,
+    "cache_entries": 0
+  }
+}
