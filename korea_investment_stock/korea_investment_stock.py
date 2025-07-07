@@ -22,15 +22,17 @@ import requests
 
 # Enhanced RateLimiter import
 try:
-    from .enhanced_rate_limiter import EnhancedRateLimiter
-    from .enhanced_backoff_strategy import get_backoff_strategy
-    from .enhanced_retry_decorator import retry_on_rate_limit, retry_on_network_error
-    from .error_recovery_system import get_error_recovery_system
+    from .rate_limiting.enhanced_rate_limiter import EnhancedRateLimiter
+    from .rate_limiting.enhanced_backoff_strategy import get_backoff_strategy
+    from .rate_limiting.enhanced_retry_decorator import retry_on_rate_limit, retry_on_network_error
+    from .error_handling.error_recovery_system import get_error_recovery_system
+    from .monitoring.stats_manager import get_stats_manager
 except ImportError:
-    from enhanced_rate_limiter import EnhancedRateLimiter
-    from enhanced_backoff_strategy import get_backoff_strategy
-    from enhanced_retry_decorator import retry_on_rate_limit, retry_on_network_error
-    from error_recovery_system import get_error_recovery_system
+    from rate_limiting.enhanced_rate_limiter import EnhancedRateLimiter
+    from rate_limiting.enhanced_backoff_strategy import get_backoff_strategy
+    from rate_limiting.enhanced_retry_decorator import retry_on_rate_limit, retry_on_network_error
+    from error_handling.error_recovery_system import get_error_recovery_system
+    from monitoring.stats_manager import get_stats_manager
 
 EXCHANGE_CODE = {
     "홍콩": "HKS",
@@ -250,8 +252,8 @@ class KoreaInvestment:
             progress_interval: 진행 상황 출력 간격
             dynamic_batch_controller: DynamicBatchController 인스턴스 (동적 조정용)
         """
-        from .enhanced_retry_decorator import RateLimitError, APIError
-        from .enhanced_backoff_strategy import get_backoff_strategy
+        from .rate_limiting.enhanced_retry_decorator import RateLimitError, APIError
+        from .rate_limiting.enhanced_backoff_strategy import get_backoff_strategy
         
         futures = {}
         results = []
@@ -598,6 +600,48 @@ class KoreaInvestment:
         
         # 에러 통계 파일로 저장
         recovery_system.save_stats()
+        
+        # 통합 통계 저장 (Phase 5.1)
+        print("\n통합 통계 저장 중...")
+        stats_manager = get_stats_manager()
+        
+        # DynamicBatchController가 있다면 포함
+        batch_controller = None
+        if hasattr(self, '_dynamic_batch_controller'):
+            batch_controller = self._dynamic_batch_controller
+        
+        # 모든 모듈의 통계 수집
+        all_stats = stats_manager.collect_all_stats(
+            rate_limiter=self.rate_limiter if hasattr(self, 'rate_limiter') else None,
+            backoff_strategy=backoff_strategy,
+            error_recovery=recovery_system,
+            batch_controller=batch_controller
+        )
+        
+        # JSON 형식으로 저장
+        json_path = stats_manager.save_stats(all_stats, format='json', include_timestamp=True)
+        print(f"- 통합 통계 저장됨 (JSON): {json_path}")
+        
+        # CSV 형식으로도 저장 (요약 정보)
+        csv_path = stats_manager.save_stats(all_stats, format='csv', include_timestamp=True)
+        print(f"- 통합 통계 저장됨 (CSV): {csv_path}")
+        
+        # 압축된 JSON Lines 형식으로 저장 (장기 보관용)
+        jsonl_gz_path = stats_manager.save_stats(
+            all_stats, 
+            format='jsonl', 
+            compress=True,
+            filename='stats_history',
+            include_timestamp=False
+        )
+        print(f"- 통계 이력 추가됨 (JSONL.GZ): {jsonl_gz_path}")
+        
+        # 시스템 상태 요약 출력
+        summary = all_stats.get('summary', {})
+        print(f"\n시스템 최종 상태: {summary.get('system_health', 'UNKNOWN')}")
+        print(f"- 전체 API 호출: {summary.get('total_api_calls', 0):,}")
+        print(f"- 전체 에러: {summary.get('total_errors', 0):,}")
+        print(f"- 전체 에러율: {summary.get('overall_error_rate', 0):.2%}")
 
     def set_base_url(self, mock: bool = True):
         """테스트(모의투자) 서버 사용 설정
@@ -730,7 +774,7 @@ class KoreaInvestment:
             list: 조회 결과 리스트
         """
         if dynamic_batch_controller is None:
-            from .dynamic_batch_controller import DynamicBatchController
+            from .batch_processing.dynamic_batch_controller import DynamicBatchController
             dynamic_batch_controller = DynamicBatchController(
                 initial_batch_size=50,
                 initial_batch_delay=1.0,

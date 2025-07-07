@@ -15,7 +15,7 @@ import time
 from typing import Callable, Optional, Any, Dict, Tuple
 
 from .enhanced_backoff_strategy import get_backoff_strategy
-from .error_recovery_system import (
+from ..error_handling.error_recovery_system import (
     get_error_recovery_system, 
     RecoveryAction,
     ErrorSeverity

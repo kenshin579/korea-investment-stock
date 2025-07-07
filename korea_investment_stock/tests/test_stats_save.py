@@ -12,7 +12,7 @@ Date: 2024-12-28
 import time
 import json
 from pathlib import Path
-from enhanced_rate_limiter import EnhancedRateLimiter
+from ..rate_limiting import EnhancedRateLimiter
 
 
 def test_manual_save():

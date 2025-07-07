@@ -14,8 +14,8 @@ import logging
 from unittest.mock import MagicMock, patch
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from korea_investment_stock.koreainvestmentstock import KoreaInvestment
-from korea_investment_stock.dynamic_batch_controller import DynamicBatchController
+from korea_investment_stock import KoreaInvestment
+from korea_investment_stock.batch_processing import DynamicBatchController
 
 # 로깅 설정
 logging.basicConfig(
@@ -58,7 +58,7 @@ def test_scenario_1_stable_requests():
     mock_ki.executor = MagicMock()
     
     # 실제 메서드 바인딩
-    from korea_investment_stock.koreainvestmentstock import KoreaInvestment
+    from korea_investment_stock import KoreaInvestment
     mock_ki._KoreaInvestment__execute_concurrent_requests = KoreaInvestment.__execute_concurrent_requests.__get__(mock_ki)
     mock_ki.concurrent_limit = MagicMock()
     

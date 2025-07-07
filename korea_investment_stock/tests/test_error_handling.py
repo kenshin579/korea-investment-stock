@@ -12,12 +12,12 @@ import unittest
 import time
 from unittest.mock import Mock, patch
 
-from .enhanced_backoff_strategy import (
+from ..rate_limiting.enhanced_backoff_strategy import (
     EnhancedBackoffStrategy,
     BackoffConfig,
     CircuitState
 )
-from .enhanced_retry_decorator import (
+from ..rate_limiting.enhanced_retry_decorator import (
     retry_on_rate_limit,
     enhanced_retry,
     retry_on_network_error,
@@ -242,7 +242,7 @@ class TestRetryLogic(unittest.TestCase):
         class AuthError(Exception):
             pass
         
-        from .enhanced_backoff_strategy import get_backoff_strategy
+        from ..rate_limiting.enhanced_backoff_strategy import get_backoff_strategy
         backoff = get_backoff_strategy()
         
         @enhanced_retry(max_retries=5)
@@ -262,7 +262,7 @@ class TestRetryLogic(unittest.TestCase):
         print("\n=== Circuit Breaker 재시도 테스트 ===")
         
         # Backoff 전략 리셋
-        from .enhanced_backoff_strategy import get_backoff_strategy
+        from ..rate_limiting.enhanced_backoff_strategy import get_backoff_strategy
         backoff = get_backoff_strategy()
         backoff.reset()
         

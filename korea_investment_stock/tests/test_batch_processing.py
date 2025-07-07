@@ -12,9 +12,9 @@ Date: 2024-12-28
 
 import time
 from unittest.mock import Mock, patch
-from enhanced_rate_limiter import EnhancedRateLimiter
 from concurrent.futures import ThreadPoolExecutor
 import threading
+from ..rate_limiting import EnhancedRateLimiter
 
 
 class MockKoreaInvestment:

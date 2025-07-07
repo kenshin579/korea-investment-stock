@@ -35,7 +35,7 @@ def test_rate_limit_detection():
     print("1. Rate Limit 에러 감지 테스트")
     print("="*60)
     
-    from .koreainvestmentstock import KoreaInvestment, API_RETURN_CODE
+    from .. import KoreaInvestment, API_RETURN_CODE
     
     # Mock KoreaInvestment
     api_key = "test_key"
@@ -118,7 +118,7 @@ def test_network_error_retry():
     print("2. 네트워크 에러 재시도 테스트")
     print("="*60)
     
-    from .koreainvestmentstock import KoreaInvestment
+    from .. import KoreaInvestment
     
     # Mock KoreaInvestment
     with patch.object(KoreaInvestment, 'issue_access_token'):
@@ -166,7 +166,7 @@ def test_error_statistics():
     print("3. 에러 통계 기록 테스트")
     print("="*60)
     
-    from .koreainvestmentstock import KoreaInvestment
+    from .. import KoreaInvestment
     
     # Mock KoreaInvestment
     with patch.object(KoreaInvestment, 'issue_access_token'):
@@ -210,7 +210,7 @@ def main():
     print("Phase 3.1 구현 검증")
     
     # 빠른 테스트를 위해 __handle_rate_limit_error를 mock
-    from .koreainvestmentstock import KoreaInvestment
+    from .. import KoreaInvestment
     original_method = KoreaInvestment._KoreaInvestment__handle_rate_limit_error
     
     def mock_rate_limit_handler(self, retry_count):

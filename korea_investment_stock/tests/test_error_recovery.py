@@ -11,7 +11,7 @@ import time
 from unittest.mock import Mock, patch
 from datetime import datetime, timedelta
 
-from .error_recovery_system import (
+from ..error_handling.error_recovery_system import (
     ErrorRecoverySystem,
     ErrorPattern,
     ErrorSeverity,
@@ -19,7 +19,7 @@ from .error_recovery_system import (
     handle_api_error,
     get_error_recovery_system
 )
-from .enhanced_retry_decorator import (
+from ..rate_limiting.enhanced_retry_decorator import (
     retry_on_rate_limit,
     enhanced_retry,
     RateLimitError,

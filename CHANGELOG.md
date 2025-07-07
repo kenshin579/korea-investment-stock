@@ -2,6 +2,21 @@
 
 ## [Unreleased] - 2024-12-28
 
+### 🏗️ 구조 개선
+
+#### 프로젝트 폴더 구조 재정리
+- **모듈 그룹화**: korea_investment_stock 패키지의 파일들을 기능별로 그룹화
+  - `rate_limiting/`: Rate Limiting 관련 모듈
+  - `error_handling/`: 에러 처리 관련 모듈
+  - `batch_processing/`: 배치 처리 관련 모듈
+  - `monitoring/`: 모니터링 및 통계 관련 모듈
+  - `tests/`: 모든 테스트 파일을 별도 폴더로 격리
+  - `utils/`: 헬퍼 함수와 내부 유틸리티 (기존 core에서 이름 변경)
+- **파일명 일관성**: `koreainvestmentstock.py` → `korea_investment_stock.py`로 변경
+- **메인 모듈 위치 변경**: Python 표준에 맞게 `korea_investment_stock.py`를 패키지 루트로 이동
+- **Import 구조 개선**: 각 모듈별 `__init__.py`에서 주요 클래스/함수 export
+- **하위 호환성 유지**: 공개 API는 변경 없이 내부 구조만 개선
+
 ### 🚀 추가된 기능
 
 #### Rate Limiting 시스템 전면 개선 (#27)
@@ -52,6 +67,14 @@
 ### 🗑️ 제거된 기능
 - WebSocket 관련 코드 제거 (더 이상 사용하지 않음)
 - 불필요한 레거시 메서드 제거
+
+### 🔧 개선된 기능
+- **환경 변수 지원**: 런타임 설정 조정 가능
+- **통합 통계 관리**: 모든 모듈의 통계를 다양한 형식으로 저장
+  - JSON, CSV, JSON Lines 형식 지원
+  - gzip 압축 옵션 (98%+ 압축률)
+  - 자동 파일 로테이션
+  - 시계열 데이터 분석 지원
 
 ## [이전 버전]
 

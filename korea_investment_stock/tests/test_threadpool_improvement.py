@@ -25,7 +25,7 @@ logging.basicConfig(
 class MockKoreaInvestment:
     def __init__(self, api_key, api_secret, acc_no, mock=True):
         # 필요한 최소한의 속성만 설정
-        from .enhanced_rate_limiter import EnhancedRateLimiter
+        from ..rate_limiting import EnhancedRateLimiter
         import threading
         from concurrent.futures import ThreadPoolExecutor
         

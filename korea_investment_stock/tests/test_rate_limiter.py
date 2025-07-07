@@ -16,7 +16,7 @@ from multiprocessing import Value
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime
 
-from .enhanced_rate_limiter import EnhancedRateLimiter
+from ..rate_limiting import EnhancedRateLimiter
 
 
 class TestEnhancedRateLimiter(unittest.TestCase):

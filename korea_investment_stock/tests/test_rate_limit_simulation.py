@@ -6,7 +6,7 @@ Enhanced RateLimiter가 실제로 Rate Limit을 초과하지 않는지 검증
 
 import time
 import threading
-from .enhanced_rate_limiter import EnhancedRateLimiter
+from ..rate_limiting import EnhancedRateLimiter
 from collections import defaultdict
 
 # matplotlib 옵션

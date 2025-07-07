@@ -17,7 +17,7 @@ from dataclasses import dataclass
 from typing import List, Dict, Any
 import json
 
-from .enhanced_rate_limiter import EnhancedRateLimiter
+from ..rate_limiting import EnhancedRateLimiter
 from .test_integration import MockAPIServer
 
 

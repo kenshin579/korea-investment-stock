@@ -16,7 +16,7 @@ os.environ['BACKOFF_MAX_DELAY'] = '4.0'
 os.environ['CIRCUIT_FAILURE_THRESHOLD'] = '3'  # 3번 실패 시 Circuit Open
 os.environ['CIRCUIT_TIMEOUT'] = '5.0'  # 5초 후 Half Open
 
-from .enhanced_backoff_strategy import (
+from ..rate_limiting.enhanced_backoff_strategy import (
     EnhancedBackoffStrategy, 
     BackoffConfig,
     CircuitState,
@@ -180,7 +180,8 @@ def test_integration_with_decorator():
     print("6. 데코레이터 통합 테스트")
     print("="*60)
     
-    from .koreainvestmentstock import retry_on_rate_limit, API_RETURN_CODE
+    from .korea_investment_stock import API_RETURN_CODE
+    from .enhanced_retry_decorator import retry_on_rate_limit
     
     # 백오프 전략 리셋
     strategy = get_backoff_strategy()

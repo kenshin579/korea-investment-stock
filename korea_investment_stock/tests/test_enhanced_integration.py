@@ -20,7 +20,7 @@ def test_rate_limiter_integration():
     """Rate Limiter 통합 테스트"""
     
     # Mock KoreaInvestment 인스턴스 생성을 위한 테스트
-    from .koreainvestmentstock import KoreaInvestment
+    from .korea_investment_stock import KoreaInvestment
     
     print("=" * 50)
     print("Enhanced RateLimiter 통합 테스트")
