@@ -1,0 +1,31 @@
+{
+  "timestamp": "2025-07-11T23:49:18.740349",
+  "timestamp_epoch": 1752245358.740372,
+  "modules": {
+    "rate_limiter": {
+      "total_calls": 10,
+      "error_count": 1,
+      "error_rate": 0.1,
+      "max_calls_per_second": 5,
+      "avg_wait_time": 9.465217590332032e-06,
+      "current_tokens": 11,
+      "current_window_size": 6,
+      "config": {
+        "nominal_max_calls": 15,
+        "effective_max_calls": 12,
+        "safety_margin": 0.8,
+        "min_interval": 0.06944444444444445
+      }
+    }
+  },
+  "summary": {
+    "total_api_calls": 10,
+    "total_errors": 1,
+    "overall_error_rate": 0.1,
+    "avg_tps": 0,
+    "system_health": "CRITICAL",
+    "cache_hit_rate": 0,
+    "api_calls_saved": 0,
+    "max_tps": 5
+  }
+}
