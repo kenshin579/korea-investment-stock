@@ -15,20 +15,27 @@ def basic_rate_limiting_example(broker):
     
     # 여러 종목 조회 - Rate Limiting이 자동으로 적용됨
     symbols = ["005930", "000660", "035720", "051910", "005380"]  # 삼성전자, SK하이닉스, 카카오, LG화학, 현대차
+    stock_list = [(symbol, "KR") for symbol in symbols]  # (symbol, market) 튜플 리스트로 변환
     
     print(f"조회할 종목 수: {len(symbols)}")
     print("Rate Limiting이 자동으로 적용되어 안전하게 처리됩니다.\n")
     
     start_time = time.time()
     
-    for symbol in symbols:
-        try:
-            result = broker.fetch_price(symbol)
-            price = result['output']['stck_prpr']
-            name = result['output']['prdy_vrss']
-            print(f"{symbol}: {price:,}원")
-        except Exception as e:
-            print(f"{symbol}: 에러 발생 - {e}")
+    try:
+        results = broker.fetch_price_list(stock_list)
+        for i, result in enumerate(results):
+            if result.get('rt_cd') == '0':
+                if 'output' in result:
+                    symbol = stock_list[i][0]
+                    price = result['output'].get('stck_prpr', 'N/A')
+                    print(f"{symbol}: {price}원")
+                else:
+                    print(f"{stock_list[i][0]}: 데이터 없음")
+            else:
+                print(f"{stock_list[i][0]}: 에러 - {result.get('msg1', '알 수 없는 에러')}")
+    except Exception as e:
+        print(f"전체 조회 중 에러 발생: {e}")
     
     elapsed = time.time() - start_time
     print(f"\n처리 시간: {elapsed:.2f}초")
@@ -47,7 +54,11 @@ def statistics_example(broker):
     print(f"\n상세 통계:")
     print(f"- 총 호출 수: {stats['total_calls']}")
     print(f"- 에러 수: {stats['error_count']}")
-    print(f"- 에러율: {stats['error_rate']:.1%}")
+    
+    # error_rate 계산
+    error_rate = stats['error_count'] / stats['total_calls'] if stats['total_calls'] > 0 else 0
+    print(f"- 에러율: {error_rate:.1%}")
+    
     print(f"- 최대 초당 호출: {stats['max_calls_per_second']}")
     print(f"- 평균 대기 시간: {stats['avg_wait_time']:.3f}초")
     
@@ -83,11 +94,10 @@ def batch_processing_example(broker):
     print(f"   처리 시간: {elapsed1:.2f}초")
     print(f"   성공: {sum(1 for r in results1 if r.get('rt_cd') == '0')}/{len(results1)}")
     
-    # 방법 2: 배치 처리 방식 (권장)
+    # 방법 2: 배치 처리 방식 (권장) - fetch_price_list_with_batch 사용
     print("\n2) 배치 처리 방식 (10개씩 나누어 처리):")
     start_time = time.time()
-    results2 = broker._KoreaInvestment__execute_concurrent_requests(
-        broker._KoreaInvestment__fetch_price,
+    results2 = broker.fetch_price_list_with_batch(
         stock_list,
         batch_size=10,      # 10개씩 처리
         batch_delay=1.0,    # 배치 간 1초 대기
@@ -95,7 +105,7 @@ def batch_processing_example(broker):
     )
     elapsed2 = time.time() - start_time
     print(f"\n   전체 처리 시간: {elapsed2:.2f}초")
-    print(f"   성공: {sum(1 for r in results2 if not r.get('error', False))}/{len(results2)}")
+    print(f"   성공: {sum(1 for r in results2 if r.get('rt_cd') == '0')}/{len(results2)}")
 
 
 def auto_save_example(broker):
@@ -155,8 +165,7 @@ def peak_hour_example(broker):
     # 예제 실행
     stock_list = [(f"{i:06d}", "KR") for i in range(5000, 5020)]
     
-    results = broker._KoreaInvestment__execute_concurrent_requests(
-        broker._KoreaInvestment__fetch_price,
+    results = broker.fetch_price_list_with_batch(
         stock_list,
         batch_size=batch_size,
         batch_delay=batch_delay
@@ -171,17 +180,22 @@ def error_monitoring_example(broker):
     
     # 일부러 에러를 발생시킬 잘못된 종목 코드 포함
     symbols = ["005930", "INVALID", "000660", "999999", "035720"]
+    stock_list = [(symbol, "KR") for symbol in symbols]
     
-    for symbol in symbols:
-        try:
-            result = broker.fetch_price(symbol)
-            print(f"✓ {symbol}: 성공")
-        except Exception as e:
-            print(f"✗ {symbol}: 실패 - {str(e)[:50]}...")
+    try:
+        results = broker.fetch_price_list(stock_list)
+        for i, result in enumerate(results):
+            symbol = symbols[i]
+            if result.get('rt_cd') == '0':
+                print(f"✓ {symbol}: 성공")
+            else:
+                print(f"✗ {symbol}: 실패 - {result.get('msg1', '알 수 없는 에러')[:50]}...")
+    except Exception as e:
+        print(f"에러 모니터링 중 예외 발생: {e}")
     
     # 에러율 확인
     stats = broker.rate_limiter.get_stats()
-    error_rate = stats['error_rate']
+    error_rate = stats['error_count'] / stats['total_calls'] if stats['total_calls'] > 0 else 0
     
     print(f"\n현재 에러율: {error_rate:.1%}")
     
@@ -202,12 +216,33 @@ def main():
     secret = "YOUR_API_SECRET"
     acc_no = "12345678-01"
     
+    # 환경 변수에서 API 키 가져오기 (선택적)
+    import os
+    key = os.getenv("KOREA_INVESTMENT_API_KEY", key)
+    secret = os.getenv("KOREA_INVESTMENT_API_SECRET", secret)
+    acc_no = os.getenv("KOREA_INVESTMENT_ACC_NO", acc_no)
+    
+    if key == "YOUR_API_KEY" or secret == "YOUR_API_SECRET":
+        print("\n⚠️  주의: API 키가 설정되지 않았습니다!")
+        print("다음 중 하나의 방법으로 API 키를 설정하세요:")
+        print("1. 이 파일의 key, secret, acc_no 변수를 직접 수정")
+        print("2. 환경 변수 설정:")
+        print("   export KOREA_INVESTMENT_API_KEY='your_api_key'")
+        print("   export KOREA_INVESTMENT_API_SECRET='your_api_secret'")
+        print("   export KOREA_INVESTMENT_ACC_NO='your_account_number'")
+        print("\nAPI 키는 한국투자증권 KIS Developers에서 발급받을 수 있습니다.")
+        print("https://apiportal.koreainvestment.com/")
+        return
+    
     # 브로커 객체 생성
+    print(f"\nAPI 키 확인: {key[:10]}...")
+    print(f"계좌 번호: {acc_no}")
+    
     broker = korea_investment_stock.KoreaInvestment(
         api_key=key, 
         api_secret=secret, 
         acc_no=acc_no,
-        mock=True  # 모의투자 서버 사용
+        mock=False  # 실제 서버 사용
     )
     
     try:
