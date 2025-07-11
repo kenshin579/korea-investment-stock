@@ -25,3 +25,6 @@ dependencies = [
 [project.urls]
 "Github" = "https://github.com/kenshin579/korea-investment-stock"
 "Bug Tracker" = "https://github.com/kenshin579/korea-investment-stock/issues"
+
+[tool.setuptools.packages.find]
+include = ["korea_investment_stock*"]
