@@ -1,0 +1,17 @@
+{
+  "total_calls": 5,
+  "error_count": 2,
+  "error_rate": 0.4,
+  "max_calls_per_second": 4,
+  "avg_wait_time": 9.822845458984376e-06,
+  "current_tokens": 7,
+  "current_window_size": 5,
+  "config": {
+    "nominal_max_calls": 10,
+    "effective_max_calls": 8,
+    "safety_margin": 0.8,
+    "min_interval": 0.10416666666666667
+  },
+  "timestamp": "2025-07-06T19:35:26.951242",
+  "timestamp_epoch": 1751798126.9512541
+}
