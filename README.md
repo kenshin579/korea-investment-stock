@@ -9,11 +9,12 @@
 ## 🌟 주요 특징
 
 ### ✨ 핵심 기능
-- **완전한 한국투자증권 API 지원**: 국내/해외 주식 조회, 주문, 잔고 확인
+- **한국투자증권 API 시세 조회**: 국내/해외 주식 시세 및 종목 정보 조회
 - **자동 Rate Limiting**: API 호출 제한(초당 20회)을 자동으로 관리
 - **스마트 재시도**: Exponential Backoff와 Circuit Breaker 패턴 구현
 - **배치 처리**: 대량 데이터 조회를 위한 최적화된 배치 처리
 - **실시간 모니터링**: 상세한 통계 및 성능 추적
+- **TTL 캐싱**: 자동 만료되는 캐시로 API 호출 최소화
 
 ### 🛡️ 안정성
 - **에러율 0%**: 프로덕션 환경에서 검증된 안정성
@@ -54,9 +55,9 @@ broker = KoreaInvestment(
 price_info = broker.fetch_price("005930")  # 삼성전자
 print(f"현재가: {price_info['output']['stck_prpr']}원")
 
-# 잔고 조회
-balance = broker.fetch_balance()
-print(balance)
+# 종목 정보 조회
+stock_info = broker.fetch_stock_info_list([("005930", "KR")])
+print(stock_info)
 ```
 
 ### Context Manager 사용 (권장)
@@ -77,43 +78,24 @@ with KoreaInvestment(api_key, api_secret, account_no) as broker:
 
 ```python
 # 국내 주식 현재가
-price = broker.fetch_price("005930")
+price = broker.fetch_domestic_price("J", "005930")
 
-# 해외 주식 현재가
-oversea_price = broker.fetch_oversea_price("AAPL", "NASD")
+# ETF 현재가
+etf_price = broker.fetch_etf_domestic_price("J", "069500")  # KODEX 200
 
-# 일봉 데이터
-daily_price = broker.fetch_daily_price("005930")
+# 종목 정보 조회
+stock_info = broker.fetch_stock_info_list([("005930", "KR")])
 
 # 여러 종목 동시 조회
 stock_list = [("005930", "KR"), ("000660", "KR"), ("035720", "KR")]
 prices = broker.fetch_price_list(stock_list)
+
+# 코스피/코스닥 전체 종목 조회
+kospi_symbols = broker.fetch_kospi_symbols()
+kosdaq_symbols = broker.fetch_kosdaq_symbols()
 ```
 
-### 2. 주문 및 잔고
-
-```python
-# 시장가 매수
-order = broker.create_market_buy_order("005930", 10)  # 10주
-
-# 지정가 매수
-order = broker.create_limit_buy_order("005930", 60000, 5)  # 60,000원에 5주
-
-# 주문 취소
-cancel = broker.cancel_order(
-    order_org_no="91252",
-    order_no="0000117057", 
-    order_type="00",
-    price=60000,
-    qty=5,
-    all_qty="Y"
-)
-
-# 잔고 조회
-balance = broker.fetch_balance()
-```
-
-### 3. 배치 처리 (대량 데이터)
+### 2. 배치 처리 (대량 데이터)
 
 ```python
 # 100개 종목 조회
@@ -131,7 +113,7 @@ results = broker.fetch_price_list_with_batch(
 results = broker.fetch_price_list_with_dynamic_batch(large_stock_list)
 ```
 
-### 4. Rate Limiting 관리
+### 3. Rate Limiting 관리
 
 ```python
 # Rate Limiter 통계 확인
@@ -145,6 +127,23 @@ print(f"평균 대기시간: {stats['avg_wait_time']:.3f}초")
 
 # 통계 저장
 broker.rate_limiter.save_stats()
+```
+
+### 4. 캐시 관리
+
+```python
+# 캐시 상태 확인
+cache_stats = broker.get_cache_stats()
+print(f"캐시 적중률: {cache_stats['hit_rate']:.1%}")
+print(f"메모리 사용량: {cache_stats['memory_usage']:.1f}MB")
+
+# 캐시 비우기
+broker.clear_cache()  # 전체 캐시 삭제
+broker.clear_cache("fetch_domestic_price:J:005930")  # 특정 항목만 삭제
+
+# 자주 사용하는 종목 미리 캐싱
+popular_stocks = ["005930", "000660", "035720", "051910", "005380"]
+broker.preload_cache(popular_stocks, market="KR")
 ```
 
 ### 5. 고급 기능
@@ -170,6 +169,32 @@ stats_mgr = get_stats_manager()
 stats_mgr.save_all_stats()  # 모든 통계 저장
 ```
 
+### 6. 모니터링 및 시각화
+
+```python
+# 실시간 모니터링 대시보드 생성
+dashboard = broker.create_monitoring_dashboard()
+broker.save_monitoring_dashboard("monitoring.html")
+
+# 시스템 헬스 체크
+health_chart = broker.get_system_health_chart()
+
+# API 사용량 차트
+usage_chart = broker.get_api_usage_chart(hours=24)
+
+# 통계 리포트 생성
+report_files = broker.create_stats_report("weekly_report")
+```
+
+## 🚧 개발 중인 기능
+
+다음 기능들은 향후 버전에서 추가될 예정입니다:
+
+- **주문 기능**: 시장가/지정가 주문, 주문 취소
+- **잔고 조회**: 보유 종목 및 예수금 조회
+- **차트 데이터**: 일봉, 분봉 등 OHLCV 데이터
+- **해외 주식**: 미국 주식 시세 조회 기능 확대
+
 ## 📁 프로젝트 구조
 
 ```
@@ -184,8 +209,15 @@ korea_investment_stock/
 │   └── error_recovery_system.py
 ├── batch_processing/              # 배치 처리 모듈
 │   └── dynamic_batch_controller.py
+├── caching/                       # 캐싱 모듈
+│   ├── ttl_cache.py
+│   └── market_hours.py
 ├── monitoring/                    # 모니터링 및 통계
 │   └── stats_manager.py
+├── visualization/                 # 시각화 모듈
+│   ├── charts.py
+│   ├── dashboard.py
+│   └── plotly_visualizer.py
 └── utils/                        # 유틸리티 함수
 ```
 
@@ -202,6 +234,10 @@ export RATE_LIMIT_SAFETY_MARGIN=0.8   # 안전 마진 (기본: 0.8)
 export BACKOFF_BASE_DELAY=1.0         # 기본 대기 시간
 export BACKOFF_MAX_DELAY=60.0         # 최대 대기 시간
 export CIRCUIT_FAILURE_THRESHOLD=5    # Circuit Breaker 임계값
+
+# 캐시 설정
+export CACHE_DEFAULT_TTL=300          # 기본 캐시 TTL (초)
+export CACHE_MAX_SIZE=10000          # 최대 캐시 크기
 ```
 
 ## 📈 성능 지표
@@ -211,6 +247,7 @@ export CIRCUIT_FAILURE_THRESHOLD=5    # Circuit Breaker 임계값
 - **100종목 조회**: ~8.5초
 - **메모리 사용**: < 100MB
 - **CPU 사용률**: < 5%
+- **캐시 적중률**: > 80% (일반적인 사용 패턴)
 
 ## 🤝 기여하기
 
@@ -252,6 +289,7 @@ pytest
 - 이 라이브러리는 한국투자증권 OpenAPI의 공식 라이브러리가 아닙니다
 - 실거래 사용 시 충분한 테스트를 거쳐 사용하세요
 - API 호출 제한을 준수하여 사용하세요
+- 현재는 시세 조회 기능만 지원합니다
 
 ## 📄 라이선스
 
