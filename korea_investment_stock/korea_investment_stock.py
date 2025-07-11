@@ -20,6 +20,7 @@ import atexit
 
 import pandas as pd
 import requests
+from typing import Dict, Any
 
 # 로거 설정
 logger = logging.getLogger(__name__)
@@ -39,6 +40,14 @@ except ImportError:
     from error_handling.error_recovery_system import get_error_recovery_system
     from monitoring.stats_manager import get_stats_manager
     from caching import TTLCache, cacheable, CACHE_TTL_CONFIG
+
+# Visualization 모듈
+try:
+    from .visualization import PlotlyVisualizer, DashboardManager
+    VISUALIZATION_AVAILABLE = True
+except ImportError:
+    VISUALIZATION_AVAILABLE = False
+    logger.warning("Visualization 모듈을 사용할 수 없습니다. plotly를 설치하세요.")
 
 EXCHANGE_CODE = {
     "홍콩": "HKS",
@@ -255,6 +264,17 @@ class KoreaInvestment:
         else:
             self._cache = None
             logger.info("TTL 캐시 비활성화")
+        
+        # Visualization 초기화
+        self.visualizer = None
+        self.dashboard_manager = None
+        if VISUALIZATION_AVAILABLE:
+            try:
+                self.visualizer = PlotlyVisualizer()
+                self.dashboard_manager = DashboardManager(self.visualizer)
+                logger.info("Visualization 모듈 초기화 완료")
+            except Exception as e:
+                logger.warning(f"Visualization 모듈 초기화 실패: {e}")
 
     def __enter__(self):
         """컨텍스트 매니저 진입"""
@@ -1495,6 +1515,155 @@ class KoreaInvestment:
         stats = self.get_cache_stats()
         print(f"📊 캐시 상태: {stats['total_entries']}개 항목, "
               f"메모리 사용량: {stats['memory_usage']:.1f}MB")
+    
+    # Visualization 메서드들
+    def create_monitoring_dashboard(self, 
+                                  stats_dir: str = "logs/integrated_stats",
+                                  update_interval: int = 5000) -> Optional[Any]:
+        """모니터링 대시보드 생성
+        
+        Args:
+            stats_dir: 통계 파일 디렉토리
+            update_interval: 업데이트 간격 (밀리초)
+            
+        Returns:
+            대시보드 Figure 객체 또는 None
+        """
+        if not self.dashboard_manager:
+            logger.error("Visualization 모듈이 초기화되지 않았습니다.")
+            return None
+        
+        try:
+            # 데이터 로드
+            self.visualizer.stats_dir = Path(stats_dir)
+            self.visualizer.load_history_data()
+            self.visualizer.load_latest_stats()
+            
+            # 대시보드 생성
+            dashboard = self.dashboard_manager.create_realtime_dashboard(update_interval)
+            
+            if dashboard:
+                logger.info("모니터링 대시보드 생성 완료")
+            
+            return dashboard
+            
+        except Exception as e:
+            logger.error(f"대시보드 생성 실패: {e}")
+            return None
+    
+    def save_monitoring_dashboard(self, 
+                                filename: str = "api_monitoring_dashboard.html") -> bool:
+        """모니터링 대시보드를 파일로 저장
+        
+        Args:
+            filename: 저장할 파일명
+            
+        Returns:
+            성공 여부
+        """
+        if not self.dashboard_manager:
+            logger.error("Visualization 모듈이 초기화되지 않았습니다.")
+            return False
+        
+        try:
+            path = self.dashboard_manager.save_dashboard(filename)
+            return bool(path)
+        except Exception as e:
+            logger.error(f"대시보드 저장 실패: {e}")
+            return False
+    
+    def create_stats_report(self, save_as: str = "monitoring_report") -> Dict[str, str]:
+        """통계 리포트 생성
+        
+        Args:
+            save_as: 저장할 파일명 (확장자 제외)
+            
+        Returns:
+            생성된 파일 경로들
+        """
+        if not self.dashboard_manager:
+            logger.error("Visualization 모듈이 초기화되지 않았습니다.")
+            return {}
+        
+        try:
+            paths = self.dashboard_manager.create_report(save_as)
+            logger.info(f"통계 리포트 생성 완료: {len(paths)}개 파일")
+            return paths
+        except Exception as e:
+            logger.error(f"리포트 생성 실패: {e}")
+            return {}
+    
+    def get_system_health_chart(self) -> Optional[Any]:
+        """시스템 헬스 차트 생성
+        
+        Returns:
+            헬스 인디케이터 Figure 또는 None
+        """
+        if not self.visualizer:
+            logger.error("Visualization 모듈이 초기화되지 않았습니다.")
+            return None
+        
+        try:
+            # 최신 통계 로드
+            if not self.visualizer.latest_stats:
+                self.visualizer.load_latest_stats()
+            
+            # 헬스 차트 생성
+            chart = self.visualizer.create_system_health_indicator()
+            return chart
+        except Exception as e:
+            logger.error(f"헬스 차트 생성 실패: {e}")
+            return None
+    
+    def get_api_usage_chart(self, hours: int = 24) -> Optional[Any]:
+        """API 사용량 차트 생성
+        
+        Args:
+            hours: 표시할 시간 범위
+            
+        Returns:
+            API 사용량 차트 Figure 또는 None
+        """
+        if not self.visualizer:
+            logger.error("Visualization 모듈이 초기화되지 않았습니다.")
+            return None
+        
+        try:
+            # 히스토리 데이터 로드
+            if not self.visualizer.history_data:
+                self.visualizer.load_history_data()
+            
+            # 데이터프레임 생성
+            df = self.visualizer.prepare_dataframe()
+            
+            # 시간 필터링
+            if not df.empty and 'timestamp' in df.columns:
+                from datetime import datetime, timedelta
+                cutoff_time = datetime.now() - timedelta(hours=hours)
+                df = df[df['timestamp'] >= cutoff_time]
+            
+            # API 호출 차트 생성
+            chart = self.visualizer.create_api_calls_chart(df)
+            return chart
+        except Exception as e:
+            logger.error(f"API 사용량 차트 생성 실패: {e}")
+            return None
+    
+    def show_monitoring_dashboard(self):
+        """모니터링 대시보드 표시 (브라우저에서 열기)"""
+        if not self.dashboard_manager:
+            logger.error("Visualization 모듈이 초기화되지 않았습니다.")
+            return
+        
+        try:
+            # 대시보드가 없으면 생성
+            if not self.dashboard_manager.dashboard:
+                self.create_monitoring_dashboard()
+            
+            # 대시보드 표시
+            self.dashboard_manager.show_dashboard()
+        except Exception as e:
+            logger.error(f"대시보드 표시 실패: {e}")
 
 
 # RateLimiter 클래스는 enhanced_rate_limiter.py로 이동됨
