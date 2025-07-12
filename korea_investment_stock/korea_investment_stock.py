@@ -10,12 +10,14 @@ import threading
 import time
 import zipfile
 import logging
+import re
 from collections import deque, defaultdict
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from functools import wraps
 from pathlib import Path
 from typing import Literal, Optional, List
 from zoneinfo import ZoneInfo  # Requires Python 3.9+
+from datetime import datetime, timedelta
 import atexit
 
 import pandas as pd
@@ -748,7 +750,7 @@ class KoreaInvestment:
         # Hence, we use 'access_token_token_expired' here.
         # This error is quite big. I've seen 4000 seconds.
         timezone = ZoneInfo('Asia/Seoul')
-        dt = datetime.datetime.strptime(resp_data['access_token_token_expired'], '%Y-%m-%d %H:%M:%S').replace(
+        dt = datetime.strptime(resp_data['access_token_token_expired'], '%Y-%m-%d %H:%M:%S').replace(
             tzinfo=timezone)
         resp_data['timestamp'] = int(dt.timestamp())
         resp_data['api_key'] = self.api_key
@@ -773,14 +775,14 @@ class KoreaInvestment:
             data = pickle.load(f)
 
         expire_epoch = data['timestamp']
-        now_epoch = int(datetime.datetime.now().timestamp())
+        now_epoch = int(datetime.now().timestamp())
         status = False
 
         if (data['api_key'] != self.api_key) or (data['api_secret'] != self.api_secret):
             return False
 
         good_until = data['timestamp']
-        ts_now = int(datetime.datetime.now().timestamp())
+        ts_now = int(datetime.now().timestamp())
         return ts_now < good_until
 
     def load_access_token(self):
@@ -1664,6 +1666,211 @@ class KoreaInvestment:
             self.dashboard_manager.show_dashboard()
         except Exception as e:
             logger.error(f"대시보드 표시 실패: {e}")
+
+    # IPO 관련 헬퍼 함수들
+    def _validate_date_format(self, date_str: str) -> bool:
+        """날짜 형식 검증 (YYYYMMDD)"""
+        if len(date_str) != 8:
+            return False
+        try:
+            datetime.strptime(date_str, "%Y%m%d")
+            return True
+        except ValueError:
+            return False
+
+    def _validate_date_range(self, from_date: str, to_date: str) -> bool:
+        """날짜 범위 유효성 검증"""
+        try:
+            start = datetime.strptime(from_date, "%Y%m%d")
+            end = datetime.strptime(to_date, "%Y%m%d")
+            return start <= end
+        except ValueError:
+            return False
+
+    @staticmethod
+    def parse_ipo_date_range(date_range_str: str) -> tuple:
+        """청약기간 문자열 파싱
+        
+        Args:
+            date_range_str: "2024.01.15~2024.01.16" 형식의 문자열
+            
+        Returns:
+            tuple: (시작일 datetime, 종료일 datetime) 또는 (None, None)
+        """
+        if not date_range_str:
+            return (None, None)
+        
+        # "2024.01.15~2024.01.16" 형식 파싱
+        pattern = r'(\d{4}\.\d{2}\.\d{2})~(\d{4}\.\d{2}\.\d{2})'
+        match = re.match(pattern, date_range_str)
+        
+        if match:
+            try:
+                start_str = match.group(1).replace('.', '')
+                end_str = match.group(2).replace('.', '')
+                start_date = datetime.strptime(start_str, "%Y%m%d")
+                end_date = datetime.strptime(end_str, "%Y%m%d")
+                return (start_date, end_date)
+            except ValueError:
+                pass
+        
+        return (None, None)
+
+    @staticmethod
+    def format_ipo_date(date_str: str) -> str:
+        """날짜 형식 변환 (YYYYMMDD -> YYYY-MM-DD)"""
+        if len(date_str) == 8:
+            return f"{date_str[:4]}-{date_str[4:6]}-{date_str[6:8]}"
+        elif '.' in date_str:
+            return date_str.replace('.', '-')
+        return date_str
+
+    @staticmethod
+    def calculate_ipo_d_day(ipo_date_str: str) -> int:
+        """청약일까지 남은 일수 계산"""
+        if '~' in ipo_date_str:
+            start_date, _ = KoreaInvestment.parse_ipo_date_range(ipo_date_str)
+            if start_date:
+                today = datetime.now()
+                return (start_date - today).days
+        return -999
+
+    @staticmethod
+    def get_ipo_status(subscr_dt: str) -> str:
+        """청약 상태 판단
+        
+        Returns:
+            str: "예정", "진행중", "마감", "알수없음"
+        """
+        start_date, end_date = KoreaInvestment.parse_ipo_date_range(subscr_dt)
+        if not start_date or not end_date:
+            return "알수없음"
+        
+        today = datetime.now()
+        if today < start_date:
+            return "예정"
+        elif start_date <= today <= end_date:
+            return "진행중"
+        else:
+            return "마감"
+
+    @staticmethod
+    def format_number(num_str: str) -> str:
+        """숫자 문자열에 천단위 콤마 추가"""
+        try:
+            return f"{int(num_str):,}"
+        except (ValueError, TypeError):
+            return num_str
+
+    # IPO Schedule API
+    @cacheable(
+        ttl=3600,  # 1시간
+        key_generator=lambda self, from_date=None, to_date=None, symbol="": f"fetch_ipo_schedule:{from_date or 'DEFAULT'}:{to_date or 'DEFAULT'}:{symbol or 'ALL'}"
+    )
+    @retry_on_rate_limit()
+    def fetch_ipo_schedule(self, from_date: str = None, to_date: str = None, symbol: str = "") -> dict:
+        """공모주 청약 일정 조회
+        
+        예탁원정보(공모주청약일정) API를 통해 공모주 정보를 조회합니다.
+        한국투자 HTS(eFriend Plus) > [0667] 공모주청약 화면과 동일한 기능입니다.
+        
+        Args:
+            from_date: 조회 시작일 (YYYYMMDD, 기본값: 오늘)
+            to_date: 조회 종료일 (YYYYMMDD, 기본값: 30일 후)
+            symbol: 종목코드 (선택, 공백시 전체 조회)
+            
+        Returns:
+            dict: 공모주 청약 일정 정보
+                {
+                    "rt_cd": "0",  # 성공여부
+                    "msg_cd": "응답코드",
+                    "msg1": "응답메시지",
+                    "output1": [
+                        {
+                            "record_date": "기준일",
+                            "sht_cd": "종목코드",
+                            "isin_name": "종목명",
+                            "fix_subscr_pri": "공모가",
+                            "face_value": "액면가",
+                            "subscr_dt": "청약기간",  # "2024.01.15~2024.01.16"
+                            "pay_dt": "납입일",
+                            "refund_dt": "환불일",
+                            "list_dt": "상장/등록일",
+                            "lead_mgr": "주간사",
+                            "pub_bf_cap": "공모전자본금",
+                            "pub_af_cap": "공모후자본금",
+                            "assign_stk_qty": "당사배정물량"
+                        }
+                    ]
+                }
+                
+        Raises:
+            ValueError: 모의투자 사용시 또는 날짜 형식 오류시
+            
+        Note:
+            - 모의투자는 지원하지 않습니다.
+            - 예탁원에서 제공한 자료이므로 정보용으로만 사용하시기 바랍니다.
+            - 실제 청약시에는 반드시 공식 공모주 청약 공고문을 확인하세요.
+            
+        Examples:
+            >>> # 전체 공모주 조회 (오늘부터 30일)
+            >>> ipos = broker.fetch_ipo_schedule()
+            
+            >>> # 특정 기간 조회
+            >>> ipos = broker.fetch_ipo_schedule(
+            ...     from_date="20240101",
+            ...     to_date="20240131"
+            ... )
+            
+            >>> # 특정 종목 조회
+            >>> ipo = broker.fetch_ipo_schedule(symbol="123456")
+        """
+        # 모의투자 체크
+        if self.mock:
+            raise ValueError("공모주청약일정 조회는 모의투자를 지원하지 않습니다.")
+            
+        self.rate_limiter.acquire()
+        
+        # 날짜 기본값 설정
+        if not from_date:
+            from_date = datetime.now().strftime("%Y%m%d")
+        if not to_date:
+            to_date = (datetime.now() + timedelta(days=30)).strftime("%Y%m%d")
+        
+        # 날짜 유효성 검증
+        if not self._validate_date_format(from_date) or not self._validate_date_format(to_date):
+            raise ValueError("날짜 형식은 YYYYMMDD 이어야 합니다.")
+        
+        if not self._validate_date_range(from_date, to_date):
+            raise ValueError("시작일은 종료일보다 이전이어야 합니다.")
+        
+        path = "uapi/domestic-stock/v1/ksdinfo/pub-offer"
+        url = f"{self.base_url}/{path}"
+        headers = {
+            "content-type": "application/json",
+            "authorization": self.access_token,
+            "appKey": self.api_key,
+            "appSecret": self.api_secret,
+            "tr_id": "HHKDB669108C0",
+            "custtype": "P"  # 개인
+        }
+        
+        params = {
+            "SHT_CD": symbol,
+            "CTS": "",
+            "F_DT": from_date,
+            "T_DT": to_date
+        }
+        
+        resp = requests.get(url, headers=headers, params=params)
+        resp_json = resp.json()
+        
+        # 에러 처리
+        if resp_json.get('rt_cd') != '0':
+            logger.error(f"공모주 조회 실패: {resp_json.get('msg1', 'Unknown error')}")
+            return resp_json
+        
+        return resp_json
 
 
 # RateLimiter 클래스는 enhanced_rate_limiter.py로 이동됨
