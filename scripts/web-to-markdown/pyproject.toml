@@ -1,0 +1,87 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "web-to-markdown"
+version = "1.0.0"
+description = "AI 친화적인 웹사이트 to Markdown 변환 도구"
+readme = "README.md"
+requires-python = ">=3.8"
+license = {text = "MIT"}
+authors = [
+    {name = "Your Name", email = "your.email@example.com"}
+]
+keywords = ["web-scraping", "markdown", "crawl4ai", "ai", "converter"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Internet :: WWW/HTTP",
+    "Topic :: Text Processing :: Markup",
+]
+
+dependencies = [
+    "crawl4ai>=0.2.77",
+    "beautifulsoup4>=4.12.0",
+    "markdownify>=0.11.6",
+    "requests>=2.31.0",
+    "lxml>=4.9.0",
+    "aiohttp>=3.9.0",
+]
+
+[project.optional-dependencies]
+ai = [
+    "openai>=1.0.0",
+]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-asyncio>=0.21.0",
+    "black>=23.0.0",
+    "flake8>=6.0.0",
+    "mypy>=1.0.0",
+]
+
+[project.scripts]
+web-to-markdown = "web_to_markdown:run"
+simple-web-to-markdown = "simple_web_to_markdown:run"
+ai-web-to-markdown = "ai_web_to_markdown:run"
+
+[project.urls]
+"Homepage" = "https://github.com/yourusername/web-to-markdown"
+"Bug Tracker" = "https://github.com/yourusername/web-to-markdown/issues"
+"Documentation" = "https://github.com/yourusername/web-to-markdown/blob/main/README.md"
+
+[tool.setuptools]
+py-modules = ["web_to_markdown", "simple_web_to_markdown", "ai_web_to_markdown"]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["*.py"]
+exclude = ["tests*"]
+
+[tool.black]
+line-length = 88
+target-version = ['py38', 'py39', 'py310', 'py311']
+include = '\.pyi?$'
+
+[tool.mypy]
+python_version = "3.8"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+minversion = "7.0"
+addopts = "-ra -q"
+testpaths = [
+    "tests",
+]
+asyncio_mode = "auto" 
