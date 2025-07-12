@@ -1,6 +1,6 @@
 """A Python port of Korea-Investment-Stock API"""
 
-__version__ = "0.4.0"
+__version__ = "0.4.1"
 
 # Core imports
 from .korea_investment_stock import KoreaInvestment, MARKET_CODE_MAP, EXCHANGE_CODE_MAP, API_RETURN_CODE
