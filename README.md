@@ -10,6 +10,7 @@
 
 ### ✨ 핵심 기능
 - **한국투자증권 API 시세 조회**: 국내/해외 주식 시세 및 종목 정보 조회
+- **공모주 청약 일정 조회**: 공모주 정보, 청약 일정, 상태 확인
 - **자동 Rate Limiting**: API 호출 제한(초당 20회)을 자동으로 관리
 - **스마트 재시도**: Exponential Backoff와 Circuit Breaker 패턴 구현
 - **배치 처리**: 대량 데이터 조회를 위한 최적화된 배치 처리
@@ -95,7 +96,37 @@ kospi_symbols = broker.fetch_kospi_symbols()
 kosdaq_symbols = broker.fetch_kosdaq_symbols()
 ```
 
-### 2. 배치 처리 (대량 데이터)
+### 2. 공모주 청약 일정 조회
+
+```python
+# 전체 공모주 일정 조회 (오늘부터 30일)
+ipo_schedule = broker.fetch_ipo_schedule()
+if ipo_schedule['rt_cd'] == '0':
+    for ipo in ipo_schedule['output1']:
+        print(f"{ipo['isin_name']} - 청약기간: {ipo['subscr_dt']}")
+        print(f"공모가: {broker.format_number(ipo['fix_subscr_pri'])}원")
+        print(f"주간사: {ipo['lead_mgr']}")
+
+# 특정 기간 공모주 조회
+ipos = broker.fetch_ipo_schedule(
+    from_date="20240101",
+    to_date="20240131"
+)
+
+# 특정 종목 공모주 정보 조회
+ipo_info = broker.fetch_ipo_schedule(symbol="123456")
+
+# 공모주 상태 확인 (예정/진행중/마감)
+for ipo in ipo_schedule['output1']:
+    status = broker.get_ipo_status(ipo['subscr_dt'])
+    d_day = broker.calculate_ipo_d_day(ipo['subscr_dt'])
+    print(f"{ipo['isin_name']}: {status}, D-{d_day}")
+
+# 주의: 모의투자는 지원하지 않습니다
+# 예탁원 제공 정보이므로 참고용으로만 사용하세요
+```
+
+### 3. 배치 처리 (대량 데이터)
 
 ```python
 # 100개 종목 조회
@@ -113,7 +144,7 @@ results = broker.fetch_price_list_with_batch(
 results = broker.fetch_price_list_with_dynamic_batch(large_stock_list)
 ```
 
-### 3. Rate Limiting 관리
+### 4. Rate Limiting 관리
 
 ```python
 # Rate Limiter 통계 확인
@@ -129,7 +160,7 @@ print(f"평균 대기시간: {stats['avg_wait_time']:.3f}초")
 broker.rate_limiter.save_stats()
 ```
 
-### 4. 캐시 관리
+### 5. 캐시 관리
 
 ```python
 # 캐시 상태 확인
@@ -146,7 +177,7 @@ popular_stocks = ["005930", "000660", "035720", "051910", "005380"]
 broker.preload_cache(popular_stocks, market="KR")
 ```
 
-### 5. 고급 기능
+### 6. 고급 기능
 
 ```python
 # Circuit Breaker 상태 확인
@@ -169,7 +200,7 @@ stats_mgr = get_stats_manager()
 stats_mgr.save_all_stats()  # 모든 통계 저장
 ```
 
-### 6. 모니터링 및 시각화
+### 7. 모니터링 및 시각화
 
 ```python
 # 실시간 모니터링 대시보드 생성
