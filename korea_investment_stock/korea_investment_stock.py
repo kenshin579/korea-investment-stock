@@ -881,7 +881,7 @@ class KoreaInvestment:
             else:
                 resp_json = self.fetch_domestic_price("J", symbol)
         elif market == "US":
-            resp_json = self.fetch_oversea_price(symbol)
+            resp_json = self.fetch_oversea_price(symbol) # todo: 해외 주식 구현이 필요하다
         else:
             raise ValueError("Unsupported market type")
 
