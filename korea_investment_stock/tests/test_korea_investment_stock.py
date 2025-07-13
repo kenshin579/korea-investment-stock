@@ -35,6 +35,7 @@ class TestKoreaInvestment(TestCase):
         stock_market_list = [
             ("005930", "KR"),
             ("294400", "KR")
+        #     국내 주식만 조회가 가능하다
         ]
 
         results = self.kis.fetch_search_stock_info_list(stock_market_list)
@@ -51,6 +52,8 @@ class TestKoreaInvestment(TestCase):
             ("005930", "KR"),
             ("294400", "KR"), # ETF
             ("AAPL", "US"),
+            ("QQQM", "US"), # ETF
+
         ]
 
         results = self.kis.fetch_price_list(stock_market_list)
@@ -65,9 +68,11 @@ class TestKoreaInvestment(TestCase):
         print(resp)
         self.assertEqual(resp['rt_cd'], API_RETURN_CODE["SUCCESS"])
 
+    # todo: 이 unit test는 정리가 필요하다
     def test_fetch_price_detail_oversea(self):
         stock_market_list = [
-            ("AAPL", "US"),
+            # ("AAPL", "US"),
+            ("QQQM", "US"), # ETF
         ]
 
         results = self.kis.fetch_price_detail_oversea_list(stock_market_list)

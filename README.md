@@ -9,7 +9,8 @@
 ## 🌟 주요 특징
 
 ### ✨ 핵심 기능
-- **한국투자증권 API 시세 조회**: 국내/해외 주식 시세 및 종목 정보 조회
+- **한국투자증권 API 시세 조회**: 국내/미국 주식 시세 및 종목 정보 조회 ✨
+- **통합 인터페이스**: 국내/미국 주식을 하나의 메서드로 조회 ✨ NEW
 - **공모주 청약 일정 조회**: 공모주 정보, 청약 일정, 상태 확인
 - **자동 Rate Limiting**: API 호출 제한(초당 20회)을 자동으로 관리
 - **스마트 재시도**: Exponential Backoff와 Circuit Breaker 패턴 구현
@@ -29,7 +30,7 @@ pip install korea-investment-stock
 ```
 
 ### 요구사항
-- Python 3.9 이상
+- Python 3.11 이상
 - 한국투자증권 API 계정
 
 ## 🚀 빠른 시작
@@ -87,9 +88,26 @@ etf_price = broker.fetch_etf_domestic_price("J", "069500")  # KODEX 200
 # 종목 정보 조회
 stock_info = broker.fetch_stock_info_list([("005930", "KR")])
 
-# 여러 종목 동시 조회
+# 여러 종목 동시 조회 (국내)
 stock_list = [("005930", "KR"), ("000660", "KR"), ("035720", "KR")]
 prices = broker.fetch_price_list(stock_list)
+
+# 미국 주식 조회 ✨ NEW
+us_stocks = [("AAPL", "US"), ("TSLA", "US"), ("NVDA", "US")]
+us_prices = broker.fetch_price_list(us_stocks)
+for stock, result in zip(us_stocks, us_prices):
+    if result['rt_cd'] == '0':
+        output = result['output']
+        print(f"{stock[0]}: ${output['last']} (PER: {output['perx']}, PBR: {output['pbrx']})")
+
+# 국내/미국 혼합 조회 ✨ NEW
+mixed_stocks = [
+    ("005930", "KR"),  # 삼성전자
+    ("AAPL", "US"),    # 애플
+    ("035720", "KR"),  # 카카오  
+    ("TSLA", "US")     # 테슬라
+]
+mixed_prices = broker.fetch_price_list(mixed_stocks)
 
 # 코스피/코스닥 전체 종목 조회
 kospi_symbols = broker.fetch_kospi_symbols()
@@ -217,6 +235,13 @@ usage_chart = broker.get_api_usage_chart(hours=24)
 report_files = broker.create_stats_report("weekly_report")
 ```
 
+## 🆕 최근 추가된 기능
+
+### v1.x.x (2025-01-13) ✨
+- **미국 주식 통합 지원**: `fetch_price_list()`로 국내/미국 주식 동시 조회
+- **추가 재무 정보**: 미국 주식의 PER, PBR, EPS, BPS 정보 제공
+- **향상된 에러 처리**: 거래소별 심볼 검색 실패 시 명확한 에러 메시지
+
 ## 🚧 개발 중인 기능
 
 다음 기능들은 향후 버전에서 추가될 예정입니다:
@@ -224,7 +249,7 @@ report_files = broker.create_stats_report("weekly_report")
 - **주문 기능**: 시장가/지정가 주문, 주문 취소
 - **잔고 조회**: 보유 종목 및 예수금 조회
 - **차트 데이터**: 일봉, 분봉 등 OHLCV 데이터
-- **해외 주식**: 미국 주식 시세 조회 기능 확대
+- **해외 주식 확대**: 중국, 일본 등 다른 해외 시장 지원
 
 ## 📁 프로젝트 구조
 
@@ -321,6 +346,12 @@ pytest
 - 실거래 사용 시 충분한 테스트를 거쳐 사용하세요
 - API 호출 제한을 준수하여 사용하세요
 - 현재는 시세 조회 기능만 지원합니다
+
+### 미국 주식 관련 주의사항
+- **모의투자 미지원**: 미국 주식은 실전투자 계정에서만 조회 가능합니다
+- **무료 시세**: 미국은 실시간 무료시세 제공 (나스닥 마켓센터 기준)
+- **거래소 자동 탐색**: NASDAQ, NYSE, AMEX 순서로 자동 검색
+- **추가 정보 제공**: PER, PBR, EPS, BPS 등 재무 정보 포함
 
 ## 📄 라이선스
 

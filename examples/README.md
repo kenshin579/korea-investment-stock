@@ -4,7 +4,16 @@
 
 ## 📚 예제 파일 설명
 
-### 1. **visualization_integrated_example.py** ⭐ 권장
+### 1. **us_stock_price_example.py** ✨ NEW
+- **목적**: 미국 주식 현재가 조회 기능 시연
+- **특징**:
+  - 국내/미국 주식 통합 조회
+  - PER, PBR, EPS, BPS 등 재무 정보 포함
+  - 에러 처리 예제
+  - 실전 계정 필요 (모의투자 미지원)
+- **실행**: `python us_stock_price_example.py`
+
+### 2. **visualization_integrated_example.py** ⭐ 권장
 - **목적**: 패키지에 통합된 시각화 기능 사용법
 - **특징**: 
   - 가장 간단하고 권장되는 사용법
@@ -12,7 +21,7 @@
   - 실시간 대시보드, 차트 생성
 - **실행**: `python visualization_integrated_example.py`
 
-### 2. **rate_limiting_example.py**
+### 3. **rate_limiting_example.py**
 - **목적**: Rate Limiting 기능 시연
 - **특징**:
   - 자동 속도 제한
@@ -21,7 +30,7 @@
   - 통계 수집
 - **실행**: `python rate_limiting_example.py`
 
-### 3. **stats_management_example.py**
+### 4. **stats_management_example.py**
 - **목적**: 통계 수집 및 관리 기능
 - **특징**:
   - 다양한 형식으로 통계 저장 (JSON, CSV, JSONL)
@@ -29,7 +38,7 @@
   - 파일 로테이션
 - **실행**: `python stats_management_example.py`
 
-### 4. **stats_visualization_plotly.py** (고급)
+### 5. **stats_visualization_plotly.py** (고급)
 - **목적**: 독립형 Plotly 시각화 예제
 - **특징**:
   - 고급 사용자를 위한 상세 구현
