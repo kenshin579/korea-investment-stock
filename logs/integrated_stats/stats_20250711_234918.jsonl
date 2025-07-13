@@ -1,1 +1,0 @@
-{"timestamp": "2024-12-28T10:00:00", "modules": {"rate_limiter": {"total_calls": 1000, "error_count": 5, "max_calls_per_second": 12}}, "summary": {"system_health": "HEALTHY", "overall_error_rate": 0.005}}

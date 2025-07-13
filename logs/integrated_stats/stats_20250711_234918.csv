@@ -1,2 +1,0 @@
-timestamp,modules_rate_limiter_total_calls,modules_rate_limiter_error_count,modules_rate_limiter_max_calls_per_second,summary_system_health,summary_overall_error_rate
-2024-12-28T10:00:00,1000,5,12,HEALTHY,0.005
