@@ -877,11 +877,14 @@ class KoreaInvestment:
             stock_info = self.__fetch_stock_info(symbol, market)
             symbol_type = self.__get_symbol_type(stock_info)
             if symbol_type == "ETF":
-                resp_json = self.fetch_etf_domestic_price("J", symbol)
+                resp_json = self.__fetch_etf_domestic_price("J", symbol)
             else:
-                resp_json = self.fetch_domestic_price("J", symbol)
+                resp_json = self.__fetch_domestic_price("J", symbol)
         elif market == "US":
-            resp_json = self.fetch_oversea_price(symbol) # todo: 해외 주식 구현이 필요하다
+            # 기존: resp_json = self.fetch_oversea_price(symbol)  # 메서드 없음
+            # 개선: 이미 구현된 __fetch_price_detail_oversea() 활용
+            resp_json = self.__fetch_price_detail_oversea(symbol, market)
+            # 참고: 이 API는 현재가 외에도 PER, PBR, EPS, BPS 등 추가 정보 제공
         else:
             raise ValueError("Unsupported market type")
 
@@ -901,8 +904,12 @@ class KoreaInvestment:
         key_generator=lambda self, market_code, symbol: f"fetch_etf_domestic_price:{market_code}:{symbol}"
     )
     @retry_on_rate_limit()
-    def fetch_etf_domestic_price(self, market_code: str, symbol: str) -> dict:
-        """주식현재가시세
+    def __fetch_etf_domestic_price(self, market_code: str, symbol: str) -> dict:
+        """주식현재가시세 (내부 메서드)
+        
+        Note: 이 메서드는 내부 사용을 위한 private 메서드입니다. 
+        사용자는 fetch_price_list() 통합 인터페이스를 사용하세요.
+        
         Args:
             market_code (str): 시장 분류코드
             symbol (str): 종목코드
@@ -930,8 +937,12 @@ class KoreaInvestment:
         key_generator=lambda self, market_code, symbol: f"fetch_domestic_price:{market_code}:{symbol}"
     )
     @retry_on_rate_limit()
-    def fetch_domestic_price(self, market_code: str, symbol: str) -> dict:
-        """주식현재가시세
+    def __fetch_domestic_price(self, market_code: str, symbol: str) -> dict:
+        """주식현재가시세 (내부 메서드)
+        
+        Note: 이 메서드는 내부 사용을 위한 private 메서드입니다. 
+        사용자는 fetch_price_list() 통합 인터페이스를 사용하세요.
+        
         Args:
             market_code (str): 시장 분류코드
             symbol (str): 종목코드
@@ -1244,6 +1255,9 @@ class KoreaInvestment:
                 continue
 
             return resp_json
+        
+        # 모든 거래소에서 실패한 경우
+        raise ValueError(f"Unable to fetch price for symbol '{symbol}' in any {market} exchange")
 
     def fetch_stock_info_list(self, stock_market_list):
         return self.__execute_concurrent_requests_with_cache(self.__fetch_stock_info, stock_market_list)
