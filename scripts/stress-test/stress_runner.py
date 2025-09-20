@@ -38,8 +38,15 @@ except Exception:  # pragma: no cover
 # Try import the library
 try:
     from korea_investment_stock.korea_investment_stock import KoreaInvestment
+    # Import EnhancedRateLimiter from the library to configure client-level throttling
+    try:
+        from korea_investment_stock.rate_limiting.enhanced_rate_limiter import EnhancedRateLimiter
+    except Exception:
+        # Fallback path if package structure differs
+        from rate_limiting.enhanced_rate_limiter import EnhancedRateLimiter  # type: ignore
 except Exception:
     KoreaInvestment = None  # type: ignore
+    EnhancedRateLimiter = None  # type: ignore
 
 
 @dataclass
@@ -232,6 +239,10 @@ def call_endpoint(client: Optional[KoreaInvestment], endpoint: str, batch: List[
                 return True, latency, "200", attempts
             else:
                 # Real calls: pass the whole batch to list endpoints
+                try:
+                    print(f"[API][CALL] ep={endpoint} batch={len(batch)} first={batch[0][0]}:{batch[0][1]} attempt={attempts}")
+                except Exception:
+                    print(f"[API][CALL] ep={endpoint} batch={len(batch)} attempt={attempts}")
                 if endpoint == "fetch_price_list":
                     _ = client.fetch_price_list(batch)
                 elif endpoint == "fetch_stock_info_list":
@@ -245,9 +256,14 @@ def call_endpoint(client: Optional[KoreaInvestment], endpoint: str, batch: List[
                 else:
                     raise ValueError(f"Unknown endpoint {endpoint}")
                 latency = (time.perf_counter() - start) * 1000.0
+                print(f"[API][OK] ep={endpoint} batch={len(batch)} latency_ms={latency:.2f} attempts={attempts}")
                 return True, latency, "200", attempts
         except Exception as e:  # handle retry
             last_err = type(e).__name__ + ": " + str(e)
+            try:
+                print(f"[API][ERR] ep={endpoint} attempt={attempts} error={last_err}")
+            except Exception:
+                print(f"[API][ERR] attempt={attempts} error")
             if attempts >= retry.max_attempts:
                 latency = (time.perf_counter() - start) * 1000.0
                 return False, latency, last_err, attempts
@@ -320,6 +336,14 @@ def main():
     if not dry_run:
         try:
             client = make_client(dry_run=False)
+            # Override the client's internal rate limiter with safer stress settings
+            if client is not None and EnhancedRateLimiter is not None:
+                client.rate_limiter = EnhancedRateLimiter(
+                    max_calls=7,
+                    per_seconds=1.0,
+                    safety_margin=0.9,
+                    enable_stats=True
+                )
         except Exception as e:
             print(f"[WARN] Falling back to dry-run: {e}")
             dry_run = True
@@ -346,9 +370,8 @@ def main():
         "fetch_search_stock_info_list",
     ]
 
-    # Global token bucket
-    bucket = TokenBucket(rate_per_sec=min(cfg.load_profile.target_rps, cfg.rate_limit_guard.global_rps_cap),
-                         capacity=max(cfg.rate_limit_guard.burst_size, 1))
+    # Use library-provided EnhancedRateLimiter via client instead of custom TokenBucket.
+    # Global throttling will be handled by client.rate_limiter configured below.
 
     # ThreadPoolExecutor based on max_concurrency
     max_workers = max(1, min(cfg.load_profile.max_concurrency, 200))
@@ -359,7 +382,7 @@ def main():
 
     def submit_task(ts_rel: float, scenario: str, endpoint: str, batch: List[Tuple[str, str]]):
         def task():
-            bucket.take(1)
+            # Throttling is handled by the library's EnhancedRateLimiter inside the client
             ok, latency_ms, status, attempts = call_endpoint(client, endpoint, batch, cfg.rate_limit_guard.retry, dry_run)
             # Use first symbol/market for compact logging
             first_sym, first_mk = batch[0]
