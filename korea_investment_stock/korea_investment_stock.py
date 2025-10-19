@@ -222,123 +222,10 @@ class KoreaInvestment:
         time.sleep(total_wait)
 
     def shutdown(self):
-        """리소스 정리 - ThreadPoolExecutor 종료"""
-        if hasattr(self, 'executor') and self.executor:
-            print("ThreadPoolExecutor 종료 중...")
-            self.executor.shutdown(wait=True)
-            self.executor = None
-            print("ThreadPoolExecutor 종료 완료")
-        
-        # Rate limiter 통계 최종 출력 및 저장
-        if hasattr(self, 'rate_limiter'):
-            if hasattr(self.rate_limiter, 'get_stats'):
-                stats = self.rate_limiter.get_stats()
-                if stats.get('total_calls', 0) > 0:
-                    print(f"\n최종 Rate Limiter 통계:")
-                    print(f"- 총 호출 수: {stats['total_calls']}")
-                    print(f"- 에러 수: {stats['error_count']}")
-                    print(f"- 에러율: {stats['error_rate']:.1%}")
-            
-            # 통계를 파일로 저장
-            if hasattr(self.rate_limiter, 'save_stats'):
-                filepath = self.rate_limiter.save_stats(include_timestamp=True)
-                if filepath:
-                    print(f"- 통계 저장됨: {filepath}")
-            
-            # 자동 저장 비활성화
-            if hasattr(self.rate_limiter, 'disable_auto_save'):
-                self.rate_limiter.disable_auto_save()
-        
-        # Backoff 전략 통계 출력
-        backoff_strategy = get_backoff_strategy()
-        backoff_stats = backoff_strategy.get_stats()
-        if backoff_stats['total_attempts'] > 0:
-            print(f"\n최종 Backoff 전략 통계:")
-            print(f"- Circuit 상태: {backoff_stats['state']}")
-            print(f"- 총 시도: {backoff_stats['total_attempts']}")
-            print(f"- 총 실패: {backoff_stats['total_failures']}")
-            print(f"- 성공률: {backoff_stats['success_rate']:.1%}")
-            print(f"- Circuit Open 횟수: {backoff_stats['circuit_opens']}")
-            print(f"- 평균 백오프 시간: {backoff_stats['avg_backoff_time']:.2f}초")
-        
-        # 캐시 통계 출력 (Phase 8.7)
-        if self._cache_enabled and self._cache:
-            cache_stats = self.get_cache_stats()
-            if cache_stats['total_entries'] > 0 or cache_stats['hit_count'] > 0:
-                print(f"\n최종 캐시 통계:")
-                print(f"- 활성화 여부: {'예' if cache_stats['enabled'] else '아니오'}")
-                print(f"- 총 항목 수: {cache_stats['total_entries']}")
-                print(f"- 캐시 적중: {cache_stats['hit_count']}")
-                print(f"- 캐시 미스: {cache_stats['miss_count']}")
-                print(f"- 적중률: {cache_stats['hit_rate']:.1%}")
-                print(f"- 메모리 사용량: {cache_stats['memory_usage']:.1f}MB")
-                print(f"- 만료된 항목: {cache_stats['expired_count']}")
-                print(f"- 제거된 항목: {cache_stats['eviction_count']}")
-        
-        # 에러 복구 시스템 통계 출력
-        recovery_system = get_error_recovery_system()
-        error_summary = recovery_system.get_error_summary(hours=24)
-        if error_summary['total_errors'] > 0:
-            print(f"\n최종 에러 복구 통계 (최근 24시간):")
-            print(f"- 총 에러 수: {error_summary['total_errors']}")
-            print(f"- 심각도별 분포: {error_summary['by_severity']}")
-            print(f"- 복구 성공률: {error_summary['recovery_rate']:.1%}")
-            print(f"- 가장 빈번한 에러:")
-            for error_info in error_summary['most_common'][:3]:
-                print(f"  - {error_info['error']}: {error_info['count']}회")
-        
-        # 에러 통계 파일로 저장
-        recovery_system.save_stats()
-        
-        # 통합 통계 저장 (Phase 5.1)
-        print("\n통합 통계 저장 중...")
-        stats_manager = get_stats_manager()
-        
-        # DynamicBatchController가 있다면 포함
-        batch_controller = None
-        if hasattr(self, '_dynamic_batch_controller'):
-            batch_controller = self._dynamic_batch_controller
-        
-        # 모든 모듈의 통계 수집
-        all_stats = stats_manager.collect_all_stats(
-            rate_limiter=self.rate_limiter if hasattr(self, 'rate_limiter') else None,
-            backoff_strategy=backoff_strategy,
-            error_recovery=recovery_system,
-            batch_controller=batch_controller,
-            cache=self._cache if self._cache_enabled and self._cache else None
-        )
-        
-        # JSON 형식으로 저장
-        json_path = stats_manager.save_stats(all_stats, format='json', include_timestamp=True)
-        print(f"- 통합 통계 저장됨 (JSON): {json_path}")
-        
-        # CSV 형식으로도 저장 (요약 정보)
-        csv_path = stats_manager.save_stats(all_stats, format='csv', include_timestamp=True)
-        print(f"- 통합 통계 저장됨 (CSV): {csv_path}")
-        
-        # 압축된 JSON Lines 형식으로 저장 (장기 보관용)
-        jsonl_gz_path = stats_manager.save_stats(
-            all_stats, 
-            format='jsonl', 
-            compress=True,
-            filename='stats_history',
-            include_timestamp=False
-        )
-        print(f"- 통계 이력 추가됨 (JSONL.GZ): {jsonl_gz_path}")
-        
-        # 시스템 상태 요약 출력
-        summary = all_stats.get('summary', {})
-        print(f"\n시스템 최종 상태: {summary.get('system_health', 'UNKNOWN')}")
-        print(f"- 전체 API 호출: {summary.get('total_api_calls', 0):,}")
-        print(f"- 전체 에러: {summary.get('total_errors', 0):,}")
-        print(f"- 전체 에러율: {summary.get('overall_error_rate', 0):.2%}")
-        
-        # 캐시 정리 (Phase 8.7)
-        if self._cache_enabled and self._cache:
-            # 백그라운드 스레드 정지
-            if hasattr(self._cache, 'stop_cleanup_thread'):
-                self._cache.stop_cleanup_thread()
-            logger.info("캐시 백그라운드 스레드 정리 완료")
+        """리소스 정리"""
+        # 컨텍스트 매니저 종료 시 호출됨
+        # 향후 필요한 정리 작업이 있으면 여기에 추가
+        pass
 
     def set_base_url(self, mock: bool = True):
         """테스트(모의투자) 서버 사용 설정
@@ -350,7 +237,6 @@ class KoreaInvestment:
         else:
             self.base_url = "https://openapi.koreainvestment.com:9443"
 
-    @retry_on_rate_limit(max_retries=3)  # 토큰 발급은 3회만 재시도
     def issue_access_token(self):
         """OAuth인증/접근토큰발급
         """
@@ -471,11 +357,6 @@ class KoreaInvestment:
 
         return "Unknown"
 
-    @cacheable(
-        ttl=300,  # 5분
-        key_generator=lambda self, market_code, symbol: f"fetch_etf_domestic_price:{market_code}:{symbol}"
-    )
-    @retry_on_rate_limit()
     def fetch_etf_domestic_price(self, market_code: str, symbol: str) -> dict:
         """ETF 주식현재가시세
 
@@ -501,11 +382,6 @@ class KoreaInvestment:
         resp = requests.get(url, headers=headers, params=params)
         return resp.json()
 
-    @cacheable(
-        ttl=300,  # 5분
-        key_generator=lambda self, market_code, symbol: f"fetch_domestic_price:{market_code}:{symbol}"
-    )
-    @retry_on_rate_limit()
     def fetch_domestic_price(self, market_code: str, symbol: str) -> dict:
         """국내 주식현재가시세
 
@@ -531,10 +407,6 @@ class KoreaInvestment:
         resp = requests.get(url, headers=headers, params=params)
         return resp.json()
 
-    @cacheable(
-        ttl=259200,  # 3일
-        key_generator=lambda self: "fetch_kospi_symbols"
-    )
     def fetch_kospi_symbols(self):
         """코스피 종목 코드
 
@@ -565,10 +437,6 @@ class KoreaInvestment:
         df = self.parse_kospi_master(base_dir)
         return df
 
-    @cacheable(
-        ttl=259200,  # 3일
-        key_generator=lambda self: "fetch_kosdaq_symbols"
-    )
     def fetch_kosdaq_symbols(self):
         """코스닥 종목 코드
 
@@ -775,11 +643,6 @@ class KoreaInvestment:
         os.remove(tmp_fil2)
         return df
 
-    @cacheable(
-        ttl=300,  # 5분
-        key_generator=lambda self, symbol, market: f"fetch_price_detail_oversea:{market}:{symbol}"
-    )
-    @retry_on_rate_limit()
     def fetch_price_detail_oversea(self, symbol: str, market: str = "KR"):
         """해외주식 현재가상세
 
@@ -822,11 +685,6 @@ class KoreaInvestment:
         # 모든 거래소에서 실패한 경우
         raise ValueError(f"Unable to fetch price for symbol '{symbol}' in any {market} exchange")
 
-    @cacheable(
-        ttl=18000,  # 5시간
-        key_generator=lambda self, symbol, market: f"fetch_stock_info:{market}:{symbol}"
-    )
-    @retry_on_rate_limit()
     def fetch_stock_info(self, symbol: str, market: str = "KR"):
         self.rate_limiter.acquire()
 
@@ -859,11 +717,6 @@ class KoreaInvestment:
                     continue
                 raise e
 
-    @cacheable(
-        ttl=18000,  # 5시간
-        key_generator=lambda self, symbol, market: f"fetch_search_stock_info:{market}:{symbol}"
-    )
-    @retry_on_rate_limit()
     def fetch_search_stock_info(self, symbol: str, market: str = "KR"):
         """
         국내 주식만 제공하는 API이다
@@ -902,240 +755,6 @@ class KoreaInvestment:
                 if resp_json['rt_cd'] != API_RETURN_CODE['SUCCESS']:
                     continue
                 raise e
-
-    
-    # Phase 8.6: 캐시 관리 메서드
-    def clear_cache(self, pattern: Optional[str] = None):
-        """캐시 삭제
-        
-        Args:
-            pattern: 삭제할 캐시 키 패턴 (None이면 전체 삭제)
-                    예: "fetch_domestic_price:J:005930"
-        """
-        if not self._cache_enabled or not self._cache:
-            return
-        
-        if pattern is None:
-            # 전체 캐시 삭제
-            self._cache.clear()
-            logger.info("전체 캐시 삭제 완료")
-        else:
-            # 패턴에 맞는 캐시 삭제
-            deleted_count = self._cache.delete_pattern(pattern)
-            logger.info(f"{pattern} 패턴의 캐시 {deleted_count}개 삭제 완료")
-    
-    def get_cache_stats(self) -> dict:
-        """캐시 통계 조회
-        
-        Returns:
-            dict: 캐시 통계 정보
-        """
-        if not self._cache_enabled or not self._cache:
-            return {
-                'enabled': False,
-                'hit_rate': 0.0,
-                'total_entries': 0,
-                'memory_usage': 0,
-                'expired_count': 0
-            }
-        
-        stats = self._cache.get_stats()
-        return {
-            'enabled': True,
-            'hit_rate': stats.get('hit_rate', 0.0),
-            'total_entries': stats.get('size', 0),
-            'memory_usage': stats.get('memory_usage_mb', 0),
-            'expired_count': stats.get('expired_count', 0),
-            'hit_count': stats.get('hit_count', 0),
-            'miss_count': stats.get('miss_count', 0),
-            'eviction_count': stats.get('eviction_count', 0)
-        }
-    
-    def set_cache_enabled(self, enabled: bool):
-        """캐시 기능 on/off
-        
-        Args:
-            enabled: True면 캐시 활성화, False면 비활성화
-        """
-        self._cache_enabled = enabled
-        logger.info(f"캐시 {'활성화' if enabled else '비활성화'}")
-    
-    def preload_cache(self, symbols: List[str], market: str = "KR"):
-        """자주 사용하는 종목 미리 캐싱
-        
-        Args:
-            symbols: 종목 코드 리스트
-            market: 시장 코드 (기본값: "KR")
-        """
-        if not self._cache_enabled or not self._cache:
-            logger.warning("캐시가 비활성화되어 있어 preload를 수행할 수 없습니다")
-            return
-        
-        print(f"🔄 {len(symbols)}개 종목 캐시 사전 로드 시작...")
-        
-        # 종목 정보 로드
-        stock_info_list = [(symbol, market) for symbol in symbols]
-        self.fetch_stock_info_list(stock_info_list)
-        
-        # 현재가 정보 로드
-        price_list = [(symbol, market) for symbol in symbols]
-        self.fetch_price_list(price_list)
-        
-        print(f"✅ {len(symbols)}개 종목 캐시 사전 로드 완료")
-        
-        # 캐시 통계 출력
-        stats = self.get_cache_stats()
-        print(f"📊 캐시 상태: {stats['total_entries']}개 항목, "
-              f"메모리 사용량: {stats['memory_usage']:.1f}MB")
-    
-    # Visualization 메서드들
-    def create_monitoring_dashboard(self, 
-                                  stats_dir: str = "logs/integrated_stats",
-                                  update_interval: int = 5000) -> Optional[Any]:
-        """모니터링 대시보드 생성
-        
-        Args:
-            stats_dir: 통계 파일 디렉토리
-            update_interval: 업데이트 간격 (밀리초)
-            
-        Returns:
-            대시보드 Figure 객체 또는 None
-        """
-        if not self.dashboard_manager:
-            logger.error("Visualization 모듈이 초기화되지 않았습니다.")
-            return None
-        
-        try:
-            # 데이터 로드
-            self.visualizer.stats_dir = Path(stats_dir)
-            self.visualizer.load_history_data()
-            self.visualizer.load_latest_stats()
-            
-            # 대시보드 생성
-            dashboard = self.dashboard_manager.create_realtime_dashboard(update_interval)
-            
-            if dashboard:
-                logger.info("모니터링 대시보드 생성 완료")
-            
-            return dashboard
-            
-        except Exception as e:
-            logger.error(f"대시보드 생성 실패: {e}")
-            return None
-    
-    def save_monitoring_dashboard(self, 
-                                filename: str = "api_monitoring_dashboard.html") -> bool:
-        """모니터링 대시보드를 파일로 저장
-        
-        Args:
-            filename: 저장할 파일명
-            
-        Returns:
-            성공 여부
-        """
-        if not self.dashboard_manager:
-            logger.error("Visualization 모듈이 초기화되지 않았습니다.")
-            return False
-        
-        try:
-            path = self.dashboard_manager.save_dashboard(filename)
-            return bool(path)
-        except Exception as e:
-            logger.error(f"대시보드 저장 실패: {e}")
-            return False
-    
-    def create_stats_report(self, save_as: str = "monitoring_report") -> Dict[str, str]:
-        """통계 리포트 생성
-        
-        Args:
-            save_as: 저장할 파일명 (확장자 제외)
-            
-        Returns:
-            생성된 파일 경로들
-        """
-        if not self.dashboard_manager:
-            logger.error("Visualization 모듈이 초기화되지 않았습니다.")
-            return {}
-        
-        try:
-            paths = self.dashboard_manager.create_report(save_as)
-            logger.info(f"통계 리포트 생성 완료: {len(paths)}개 파일")
-            return paths
-        except Exception as e:
-            logger.error(f"리포트 생성 실패: {e}")
-            return {}
-    
-    def get_system_health_chart(self) -> Optional[Any]:
-        """시스템 헬스 차트 생성
-        
-        Returns:
-            헬스 인디케이터 Figure 또는 None
-        """
-        if not self.visualizer:
-            logger.error("Visualization 모듈이 초기화되지 않았습니다.")
-            return None
-        
-        try:
-            # 최신 통계 로드
-            if not self.visualizer.latest_stats:
-                self.visualizer.load_latest_stats()
-            
-            # 헬스 차트 생성
-            chart = self.visualizer.create_system_health_indicator()
-            return chart
-        except Exception as e:
-            logger.error(f"헬스 차트 생성 실패: {e}")
-            return None
-    
-    def get_api_usage_chart(self, hours: int = 24) -> Optional[Any]:
-        """API 사용량 차트 생성
-        
-        Args:
-            hours: 표시할 시간 범위
-            
-        Returns:
-            API 사용량 차트 Figure 또는 None
-        """
-        if not self.visualizer:
-            logger.error("Visualization 모듈이 초기화되지 않았습니다.")
-            return None
-        
-        try:
-            # 히스토리 데이터 로드
-            if not self.visualizer.history_data:
-                self.visualizer.load_history_data()
-            
-            # 데이터프레임 생성
-            df = self.visualizer.prepare_dataframe()
-            
-            # 시간 필터링
-            if not df.empty and 'timestamp' in df.columns:
-                from datetime import datetime, timedelta
-                cutoff_time = datetime.now() - timedelta(hours=hours)
-                df = df[df['timestamp'] >= cutoff_time]
-            
-            # API 호출 차트 생성
-            chart = self.visualizer.create_api_calls_chart(df)
-            return chart
-        except Exception as e:
-            logger.error(f"API 사용량 차트 생성 실패: {e}")
-            return None
-    
-    def show_monitoring_dashboard(self):
-        """모니터링 대시보드 표시 (브라우저에서 열기)"""
-        if not self.dashboard_manager:
-            logger.error("Visualization 모듈이 초기화되지 않았습니다.")
-            return
-        
-        try:
-            # 대시보드가 없으면 생성
-            if not self.dashboard_manager.dashboard:
-                self.create_monitoring_dashboard()
-            
-            # 대시보드 표시
-            self.dashboard_manager.show_dashboard()
-        except Exception as e:
-            logger.error(f"대시보드 표시 실패: {e}")
 
     # IPO 관련 헬퍼 함수들
     def _validate_date_format(self, date_str: str) -> bool:
@@ -1233,11 +852,6 @@ class KoreaInvestment:
             return num_str
 
     # IPO Schedule API
-    @cacheable(
-        ttl=3600,  # 1시간
-        key_generator=lambda self, from_date=None, to_date=None, symbol="": f"fetch_ipo_schedule:{from_date or 'DEFAULT'}:{to_date or 'DEFAULT'}:{symbol or 'ALL'}"
-    )
-    @retry_on_rate_limit()
     def fetch_ipo_schedule(self, from_date: str = None, to_date: str = None, symbol: str = "") -> dict:
         """공모주 청약 일정 조회
         
