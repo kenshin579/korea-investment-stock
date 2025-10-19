@@ -321,53 +321,19 @@ def main():
             acc_no=acc_no,
             mock=False  # 실전투자 (공모주 조회는 모의투자 미지원)
         )
-        
-        # 통계 저장 비활성화
-        if hasattr(broker.rate_limiter, 'enable_stats'):
-            broker.rate_limiter.enable_stats = False
-        if hasattr(broker.rate_limiter, 'disable_auto_save'):
-            broker.rate_limiter.disable_auto_save()
-        
-        # atexit 핸들러 제거 (통계 저장 방지)
-        # atexit에 등록된 모든 핸들러 중 broker.shutdown 관련 제거
-        try:
-            # atexit 내부 리스트 접근 (Python 버전에 따라 다를 수 있음)
-            if hasattr(atexit, '_exithandlers'):
-                # shutdown 관련 핸들러 제거
-                atexit._exithandlers = [
-                    (func, args, kwargs) 
-                    for func, args, kwargs in atexit._exithandlers 
-                    if not (hasattr(func, '__self__') and func.__self__ == broker)
-                ]
-        except:
-            pass
-        
-        # shutdown 메서드를 빈 함수로 오버라이드 (통계 저장 방지)
-        def empty_shutdown():
-            if hasattr(broker, 'executor') and broker.executor:
-                print("ThreadPoolExecutor 종료 중...")
-                broker.executor.shutdown(wait=True)
-                broker.executor = None
-                print("ThreadPoolExecutor 종료 완료")
-        
-        broker.shutdown = empty_shutdown
-            
+
         print("\n✅ API 연결 성공!")
-        
+
         # 예제 실행
         example_basic_ipo_query(broker)
         example_period_query(broker)
         example_upcoming_ipos(broker)
         example_ipo_details(broker)
         example_save_to_file(broker)
-        
+
         print("\n" + "="*60)
         print("✅ 모든 예제 실행 완료!")
         print("="*60)
-        
-        # 강제 종료 (통계 저장 방지)
-        import os
-        os._exit(0)
             
     except ValueError as e:
         if "모의투자를 지원하지 않습니다" in str(e):
