@@ -6,19 +6,14 @@ import json
 import os
 import pickle
 import random
-import threading
 import time
 import zipfile
 import logging
 import re
-from collections import deque, defaultdict
-from concurrent.futures import ThreadPoolExecutor, as_completed
-from functools import wraps
 from pathlib import Path
 from typing import Literal, Optional, List
 from zoneinfo import ZoneInfo  # Requires Python 3.9+
 from datetime import datetime, timedelta
-import atexit
 
 import pandas as pd
 import requests
@@ -26,30 +21,6 @@ from typing import Dict, Any
 
 # 로거 설정
 logger = logging.getLogger(__name__)
-
-# Enhanced RateLimiter import
-try:
-    from .rate_limiting.enhanced_rate_limiter import EnhancedRateLimiter
-    from .rate_limiting.enhanced_backoff_strategy import get_backoff_strategy
-    from .rate_limiting.enhanced_retry_decorator import retry_on_rate_limit, retry_on_network_error
-    from .error_handling.error_recovery_system import get_error_recovery_system
-    from .monitoring.stats_manager import get_stats_manager
-    from .caching import TTLCache, cacheable, CACHE_TTL_CONFIG
-except ImportError:
-    from rate_limiting.enhanced_rate_limiter import EnhancedRateLimiter
-    from rate_limiting.enhanced_backoff_strategy import get_backoff_strategy
-    from rate_limiting.enhanced_retry_decorator import retry_on_rate_limit, retry_on_network_error
-    from error_handling.error_recovery_system import get_error_recovery_system
-    from monitoring.stats_manager import get_stats_manager
-    from caching import TTLCache, cacheable, CACHE_TTL_CONFIG
-
-# Visualization 모듈
-try:
-    from .visualization import PlotlyVisualizer, DashboardManager
-    VISUALIZATION_AVAILABLE = True
-except ImportError:
-    VISUALIZATION_AVAILABLE = False
-    logger.warning("Visualization 모듈을 사용할 수 없습니다. plotly를 설치하세요.")
 
 EXCHANGE_CODE = {
     "홍콩": "HKS",
@@ -195,19 +166,14 @@ class KoreaInvestment:
     한국투자증권 REST API
     '''
 
-    def __init__(self, api_key: str, api_secret: str, acc_no: str,
-                 mock: bool = False, cache_enabled: bool = True, 
-                 cache_config: Optional[dict] = None):
-        """생성자
+    def __init__(self, api_key: str, api_secret: str, acc_no: str, mock: bool = False):
+        """한국투자증권 API 클라이언트 초기화
+
         Args:
             api_key (str): 발급받은 API key
             api_secret (str): 발급받은 API secret
-            acc_no (str): 계좌번호 체계의 앞 8자리-뒤 2자리
-            exchange (str): "서울", "나스닥", "뉴욕", "아멕스", "홍콩", "상해", "심천", # todo: exchange는 제거 예정
-                            "도쿄", "하노이", "호치민"
+            acc_no (str): 계좌번호 체계의 앞 8자리-뒤 2자리 (예: "12345678-01")
             mock (bool): True (mock trading), False (real trading)
-            cache_enabled (bool): True if cache is enabled, False otherwise
-            cache_config (dict, optional): Configuration for the cache
         """
         self.mock = mock
         self.set_base_url(mock)
@@ -218,23 +184,6 @@ class KoreaInvestment:
         self.acc_no = acc_no
         self.acc_no_prefix = acc_no.split('-')[0]
         self.acc_no_postfix = acc_no.split('-')[1]
-        
-        # Enhanced RateLimiter 설정
-        self.rate_limiter = EnhancedRateLimiter(
-            max_calls=15,  # 기본값 20에서 15로 감소
-            per_seconds=1.0,
-            safety_margin=0.8,  # 실제로는 12회/초
-            enable_min_interval=True,  # 최소 간격 보장
-            enable_stats=True  # 통계 수집 활성화
-        )
-        
-        # ThreadPoolExecutor 개선
-        # 동시 실행 제한을 위한 세마포어 (최대 3개만 동시 실행)
-        self.concurrent_limit = threading.Semaphore(3)
-        # 워커 수 감소 (8 -> 3)
-        self.executor = ThreadPoolExecutor(max_workers=3)
-        # 프로그램 종료 시 자동 정리
-        atexit.register(self.shutdown)
 
         # access token
         self.token_file = Path("~/.cache/mojito2/token.dat").expanduser()
@@ -243,40 +192,6 @@ class KoreaInvestment:
             self.load_access_token()
         else:
             self.issue_access_token()
-
-        # Cache configuration
-        self._cache_enabled = cache_enabled
-        if cache_enabled:
-            # 캐시 설정 병합
-            default_cache_config = {
-                'default_ttl': 300,  # 5분
-                'max_size': 10000,
-                'ttl_config': CACHE_TTL_CONFIG
-            }
-            if cache_config:
-                default_cache_config.update(cache_config)
-            
-            # TTLCache 인스턴스 생성
-            self._cache = TTLCache(
-                default_ttl=default_cache_config['default_ttl'],
-                max_size=default_cache_config['max_size']
-            )
-            logger.info(f"TTL 캐시 활성화 (기본 TTL: {default_cache_config['default_ttl']}초, "
-                       f"최대 크기: {default_cache_config['max_size']})")
-        else:
-            self._cache = None
-            logger.info("TTL 캐시 비활성화")
-        
-        # Visualization 초기화
-        self.visualizer = None
-        self.dashboard_manager = None
-        if VISUALIZATION_AVAILABLE:
-            try:
-                self.visualizer = PlotlyVisualizer()
-                self.dashboard_manager = DashboardManager(self.visualizer)
-                logger.info("Visualization 모듈 초기화 완료")
-            except Exception as e:
-                logger.warning(f"Visualization 모듈 초기화 실패: {e}")
 
     def __enter__(self):
         """컨텍스트 매니저 진입"""
