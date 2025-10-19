@@ -433,35 +433,36 @@ class KoreaInvestment:
         haskkey = resp.json()["HASH"]
         return haskkey
 
-    def __fetch_price(self, symbol: str, market: str = "KR") -> dict:
+    def fetch_price(self, symbol: str, market: str = "KR") -> dict:
         """국내주식시세/주식현재가 시세
            해외주식현재가/해외주식 현재체결가
 
         Args:
             symbol (str): 종목코드
+            market (str): 시장 코드 ("KR", "KRX", "US" 등)
 
         Returns:
-            dict: _description_
+            dict: API 응답 데이터
         """
 
         if market == "KR" or market == "KRX":
-            stock_info = self.__fetch_stock_info(symbol, market)
-            symbol_type = self.__get_symbol_type(stock_info)
+            stock_info = self.fetch_stock_info(symbol, market)
+            symbol_type = self.get_symbol_type(stock_info)
             if symbol_type == "ETF":
-                resp_json = self.__fetch_etf_domestic_price("J", symbol)
+                resp_json = self.fetch_etf_domestic_price("J", symbol)
             else:
-                resp_json = self.__fetch_domestic_price("J", symbol)
+                resp_json = self.fetch_domestic_price("J", symbol)
         elif market == "US":
             # 기존: resp_json = self.fetch_oversea_price(symbol)  # 메서드 없음
-            # 개선: 이미 구현된 __fetch_price_detail_oversea() 활용
-            resp_json = self.__fetch_price_detail_oversea(symbol, market)
+            # 개선: 이미 구현된 fetch_price_detail_oversea() 활용
+            resp_json = self.fetch_price_detail_oversea(symbol, market)
             # 참고: 이 API는 현재가 외에도 PER, PBR, EPS, BPS 등 추가 정보 제공
         else:
             raise ValueError("Unsupported market type")
 
         return resp_json
 
-    def __get_symbol_type(self, symbol_info):
+    def get_symbol_type(self, symbol_info):
         symbol_type = symbol_info['output']['prdt_clsf_name']
         if symbol_type == '주권' or symbol_type == '상장REITS' or symbol_type == '사회간접자본투융자회사':
             return 'Stock'
@@ -475,17 +476,14 @@ class KoreaInvestment:
         key_generator=lambda self, market_code, symbol: f"fetch_etf_domestic_price:{market_code}:{symbol}"
     )
     @retry_on_rate_limit()
-    def __fetch_etf_domestic_price(self, market_code: str, symbol: str) -> dict:
-        """주식현재가시세 (내부 메서드)
-        
-        Note: 이 메서드는 내부 사용을 위한 private 메서드입니다. 
-        사용자는 fetch_price_list() 통합 인터페이스를 사용하세요.
-        
+    def fetch_etf_domestic_price(self, market_code: str, symbol: str) -> dict:
+        """ETF 주식현재가시세
+
         Args:
-            market_code (str): 시장 분류코드
+            market_code (str): 시장 분류코드 (예: "J")
             symbol (str): 종목코드
         Returns:
-            dict: API 개발 가이드 참조
+            dict: API 응답 데이터
         """
         path = "uapi/domestic-stock/v1/quotations/inquire-price"
         url = f"{self.base_url}/{path}"
@@ -508,17 +506,14 @@ class KoreaInvestment:
         key_generator=lambda self, market_code, symbol: f"fetch_domestic_price:{market_code}:{symbol}"
     )
     @retry_on_rate_limit()
-    def __fetch_domestic_price(self, market_code: str, symbol: str) -> dict:
-        """주식현재가시세 (내부 메서드)
-        
-        Note: 이 메서드는 내부 사용을 위한 private 메서드입니다. 
-        사용자는 fetch_price_list() 통합 인터페이스를 사용하세요.
-        
+    def fetch_domestic_price(self, market_code: str, symbol: str) -> dict:
+        """국내 주식현재가시세
+
         Args:
-            market_code (str): 시장 분류코드
+            market_code (str): 시장 분류코드 (예: "J")
             symbol (str): 종목코드
         Returns:
-            dict: API 개발 가이드 참조
+            dict: API 응답 데이터
         """
         path = "uapi/domestic-stock/v1/quotations/inquire-price"
         url = f"{self.base_url}/{path}"
@@ -781,11 +776,11 @@ class KoreaInvestment:
         return df
 
     @cacheable(
-        ttl=300,  # 5분 
+        ttl=300,  # 5분
         key_generator=lambda self, symbol, market: f"fetch_price_detail_oversea:{market}:{symbol}"
     )
     @retry_on_rate_limit()
-    def __fetch_price_detail_oversea(self, symbol: str, market: str = "KR"):
+    def fetch_price_detail_oversea(self, symbol: str, market: str = "KR"):
         """해외주식 현재가상세
 
         Args:
@@ -832,7 +827,7 @@ class KoreaInvestment:
         key_generator=lambda self, symbol, market: f"fetch_stock_info:{market}:{symbol}"
     )
     @retry_on_rate_limit()
-    def __fetch_stock_info(self, symbol: str, market: str = "KR"):
+    def fetch_stock_info(self, symbol: str, market: str = "KR"):
         self.rate_limiter.acquire()
 
         path = "uapi/domestic-stock/v1/quotations/search-info"
@@ -869,7 +864,7 @@ class KoreaInvestment:
         key_generator=lambda self, symbol, market: f"fetch_search_stock_info:{market}:{symbol}"
     )
     @retry_on_rate_limit()
-    def __fetch_search_stock_info(self, symbol: str, market: str = "KR"):
+    def fetch_search_stock_info(self, symbol: str, market: str = "KR"):
         """
         국내 주식만 제공하는 API이다
         """
