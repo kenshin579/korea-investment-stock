@@ -4,13 +4,16 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Korea Investment Stock is a Python library providing a production-ready wrapper for the Korea Investment Securities OpenAPI. It features advanced rate limiting, automatic retry, batch processing, TTL caching, error recovery, and real-time monitoring.
+Korea Investment Stock is a **pure Python wrapper** for the Korea Investment Securities OpenAPI. This library focuses on providing direct, transparent access to the API without abstraction layers.
+
+**Philosophy**: Simple, transparent, and flexible - let users implement features their way.
 
 **Key Capabilities:**
 - Domestic (KR) and US stock price/info queries
+- Stock information and search
 - IPO schedule lookup
-- Unified interface for mixed KR/US stock queries
-- Production-tested reliability with 0% error rate under normal operation
+- Unified interface for mixed KR/US stock queries via `fetch_price(symbol, market)`
+- Context manager support for resource cleanup
 
 ## Development Commands
 
@@ -36,16 +39,14 @@ pip install -e ".[dev]"
 pytest
 
 # Run specific test file
-pytest korea_investment_stock/tests/test_rate_limiter.py
+pytest korea_investment_stock/tests/test_korea_investment_stock.py
 
 # Run with verbose output
 pytest -v
 
-# Run tests matching a pattern
-pytest -k "test_cache"
-
 # Run integration tests (requires API credentials)
-pytest korea_investment_stock/tests/test_integration.py
+pytest korea_investment_stock/tests/test_integration_us_stocks.py -v
+pytest korea_investment_stock/tests/test_ipo_integration.py -v
 ```
 
 ### Running Examples
@@ -55,12 +56,9 @@ pytest korea_investment_stock/tests/test_integration.py
 source .venv/bin/activate
 
 # Run examples
-python examples/rate_limiting_example.py
+python examples/basic_example.py
 python examples/ipo_schedule_example.py
 python examples/us_stock_price_example.py
-
-# Run stress test
-python scripts/stress_runner.py
 ```
 
 ### Package Management
@@ -92,104 +90,52 @@ export KOREA_INVESTMENT_ACCOUNT_NO="12345678-01"
 
 ## Architecture Overview
 
-### Core Component Flow
+### Simplified Component Flow
 
 ```
 User API Call
   ↓
-@retry_on_rate_limit decorator (5 retries)
-  ↓
-@cacheable decorator (TTL-based)
-  ↓
-EnhancedRateLimiter.acquire() (Token Bucket + Sliding Window)
+KoreaInvestment.fetch_price(symbol, market)
   ↓
 HTTP Request to Korea Investment API
   ↓
-Error Recovery System (pattern matching)
-  ↓
-Circuit Breaker (CLOSED → OPEN → HALF_OPEN)
-  ↓
-Exponential Backoff with Jitter
+Return raw API response
 ```
 
-### Key Modules
+**That's it.** No decorators, no caching, no rate limiting, no magic.
 
-1. **`korea_investment_stock/korea_investment_stock.py`** - Main class
-   - `KoreaInvestment`: Primary API interface (context manager pattern)
-   - Thread pool executor (max 3 concurrent workers)
-   - Semaphore-based concurrency control
-   - Unified KR/US stock query methods
+### Core Module
 
-2. **`rate_limiting/`** - Rate limiting system
-   - `EnhancedRateLimiter`: Hybrid Token Bucket + Sliding Window (15 calls/sec, 80% safety margin)
-   - `EnhancedBackoffStrategy`: Circuit breaker with exponential backoff + jitter (singleton)
-   - `enhanced_retry_decorator`: `@retry_on_rate_limit`, `@retry_on_network_error`, `@auto_refresh_token`
+**`korea_investment_stock/korea_investment_stock.py`** - Main class (1,011 lines)
+- `KoreaInvestment`: Primary API interface
+- Context manager pattern (`__enter__`, `__exit__`)
+- Token management (`issue_access_token()`)
+- Public API methods (18 total):
+  - `fetch_price(symbol, market)` - Unified KR/US price query
+  - `fetch_domestic_price(market_code, symbol)` - KR stocks
+  - `fetch_etf_domestic_price(market_code, symbol)` - KR ETFs
+  - `fetch_price_detail_oversea(symbol, market)` - US stocks
+  - `fetch_stock_info(symbol, market)` - Stock information
+  - `fetch_search_stock_info(symbol, market)` - Stock search
+  - `fetch_kospi_symbols()` - KOSPI symbol list
+  - `fetch_kosdaq_symbols()` - KOSDAQ symbol list
+  - `fetch_ipo_schedule()` - IPO schedule
+  - IPO helper methods (9 total)
 
-3. **`caching/`** - TTL cache system
-   - `TTLCache`: Thread-safe LRU/LFU cache with auto-expiry and compression
-   - Background cleanup thread (60-second intervals)
-   - `@cacheable`: Method-level caching decorator with custom key generation
-   - Market-aware TTL (price: 5min, stock info: 5hrs, symbols: 3 days)
+### Package Structure
 
-4. **`error_handling/`** - Error recovery
-   - `ErrorRecoverySystem`: Pattern-based error matching (singleton)
-   - Error severity levels: LOW, MEDIUM, HIGH, CRITICAL
-   - Recovery actions: RETRY, WAIT, REFRESH_TOKEN, FAIL_FAST, CIRCUIT_BREAK
-   - Tracks last 1000 errors for diagnostics
-
-5. **`batch_processing/`** - Dynamic batch control
-   - `DynamicBatchController`: Auto-adjusts batch size (5-100) and delay (0.5-5.0s)
-   - Target error rate: 1%
-   - Adjustment factor: 20% per cycle (min 10-second intervals)
-
-6. **`monitoring/`** - Statistics management
-   - `StatsManager`: Aggregates metrics from all subsystems (singleton)
-   - Export formats: JSON, CSV, JSONL (with optional gzip)
-   - 7-day auto-rotation
-   - System health classification: HEALTHY (<1%), WARNING (<5%), CRITICAL (≥5%)
-
-7. **`visualization/`** - Monitoring dashboards
-   - `PlotlyVisualizer`: Interactive charts (requires plotly)
-   - `DashboardManager`: Real-time monitoring HTML dashboards
-   - Error rate trends, API usage graphs, system health metrics
-
-### Singleton Pattern Usage
-
-These components are global singletons shared across all `KoreaInvestment` instances:
-
-```python
-from korea_investment_stock.rate_limiting import get_backoff_strategy
-from korea_investment_stock.error_handling import get_error_recovery_system
-from korea_investment_stock.monitoring import get_stats_manager
-
-backoff = get_backoff_strategy()       # Circuit breaker state
-recovery = get_error_recovery_system() # Error pattern matching
-stats = get_stats_manager()            # Metrics aggregation
+```
+korea_investment_stock/
+├── __init__.py (18 lines)
+├── korea_investment_stock.py (1,011 lines)
+└── tests/
+    ├── test_korea_investment_stock.py
+    ├── test_integration_us_stocks.py
+    ├── test_ipo_schedule.py
+    └── test_ipo_integration.py
 ```
 
-### Threading & Concurrency
-
-- **ThreadPoolExecutor**: 3 worker threads (configurable)
-- **Semaphore**: Max 3 concurrent API calls
-- **Locks**:
-  - `threading.Lock` on RateLimiter, BackoffStrategy, ErrorRecoverySystem
-  - `threading.RLock` on TTLCache (re-entrant)
-- **Background Threads**:
-  - Cache cleanup (daemon, 60s interval)
-  - Optional rate limiter auto-save
-
-All shared state is protected by locks. Thread-safe by design.
-
-### Batch Processing Workflow
-
-When calling `fetch_price_list()` or `fetch_price_list_with_dynamic_batch()`:
-
-1. Split stock list into batches (default 50 items)
-2. Submit items to ThreadPoolExecutor with 10ms delay between submissions (prevents burst)
-3. Each item: rate_limit acquire → cache check → API call
-4. DynamicBatchController monitors error rate
-5. Auto-adjust batch size/delay if error rate > 1%
-6. Next batch uses adjusted parameters
+**Dependencies:** `requests`, `pandas` (minimal)
 
 ## Code Style & Conventions
 
@@ -206,46 +152,63 @@ When calling `fetch_price_list()` or `fetch_price_list_with_dynamic_batch()`:
 ### Adding a New API Method
 
 1. Define method in `KoreaInvestment` class
-2. Apply decorators in order:
-   ```python
-   @retry_on_rate_limit(max_retries=5)
-   @cacheable(ttl=300, key_generator=lambda self, symbol: f"price:{symbol}")
-   def fetch_new_data(self, symbol: str) -> Dict[str, Any]:
-       with self.rate_limiter.acquire():
-           response = self._call("/endpoint", params={...})
-           return self._parse_response(response)
-   ```
+2. **No decorators** - just pure API calls
 3. Add tests in `korea_investment_stock/tests/test_korea_investment_stock.py`
-4. Update cache TTL config in `caching/__init__.py` if needed
+
+```python
+def fetch_new_data(self, symbol: str) -> Dict[str, Any]:
+    """
+    새로운 데이터 조회
+
+    Args:
+        symbol: 종목 코드
+
+    Returns:
+        API 응답 딕셔너리
+    """
+    url = f"{self.base_url}/endpoint"
+    headers = {
+        "authorization": self.access_token,
+        "appkey": self.api_key,
+        "appsecret": self.api_secret,
+        "tr_id": "TRANSACTION_ID"
+    }
+    params = {"symbol": symbol}
+
+    response = requests.get(url, headers=headers, params=params)
+    return response.json()
+```
 
 ### Error Handling Pattern
 
-Custom exceptions hierarchy:
-- `RateLimitError`: API rate limit hit (triggers retry)
-- `TokenExpiredError`: Auth token expired (triggers refresh)
-- `APIError`: General API error
-
-Always use `ErrorRecoverySystem` for consistent handling:
-
+API returns error codes in response:
 ```python
-try:
-    result = api_call()
-except Exception as e:
-    recovery_system = get_error_recovery_system()
-    action = recovery_system.handle_error(e, context={"method": "fetch_price"})
-    # Recovery action executed automatically
+result = broker.fetch_price("005930", "KR")
+
+if result['rt_cd'] == '0':
+    # Success
+    price = result['output1']['stck_prpr']
+else:
+    # Error
+    print(f"Error: {result['msg1']}")
 ```
 
-### Cache Key Generation
-
-Cache keys should include all parameters that affect the result:
-
+Users should implement their own retry logic:
 ```python
-def _generate_cache_key(self, market: str, symbol: str, detail: bool) -> str:
-    return f"price:{market}:{symbol}:{detail}"
-```
+import time
 
-Avoid caching on error responses (use `cache_condition` parameter).
+def fetch_with_retry(broker, symbol, market, max_retries=3):
+    for attempt in range(max_retries):
+        try:
+            result = broker.fetch_price(symbol, market)
+            if result['rt_cd'] == '0':
+                return result
+            time.sleep(2 ** attempt)  # Exponential backoff
+        except Exception as e:
+            if attempt == max_retries - 1:
+                raise
+            time.sleep(2 ** attempt)
+```
 
 ### Working with US Stocks
 
@@ -254,14 +217,27 @@ US stock queries require real account (mock not supported):
 - Symbol format: Plain ticker (e.g., "AAPL", not "AAPL.US")
 - Additional fields: PER, PBR, EPS, BPS included in response
 
+Example:
+```python
+# Requires mock=False (real account)
+with KoreaInvestment(api_key, api_secret, acc_no, mock=False) as broker:
+    result = broker.fetch_price("AAPL", "US")
+
+    if result['rt_cd'] == '0':
+        output = result['output']
+        print(f"Price: ${output['last']}")
+        print(f"PER: {output['perx']}")
+```
+
 ## Testing Strategy
 
 ### Test Organization
 
-- **Unit tests**: `test_rate_limiter.py`, `test_ttl_cache.py`, `test_batch_processing.py`
-- **Integration tests**: `test_integration.py`, `test_integration_us_stocks.py`
-- **Load tests**: `test_load.py`, `test_rate_limit_simulation.py`
-- **Feature tests**: `test_ipo_schedule.py`, `test_error_recovery.py`
+- **Unit tests**: `test_korea_investment_stock.py` (94 lines)
+- **Integration tests**:
+  - `test_integration_us_stocks.py` (225 lines) - US stock queries
+  - `test_ipo_integration.py` (186 lines) - IPO schedule
+- **Feature tests**: `test_ipo_schedule.py` (297 lines) - IPO helpers
 
 ### Running Integration Tests
 
@@ -274,75 +250,50 @@ export KOREA_INVESTMENT_API_SECRET="..."
 export KOREA_INVESTMENT_ACCOUNT_NO="..."
 
 # Run integration tests
-pytest korea_investment_stock/tests/test_integration.py -v
+pytest korea_investment_stock/tests/test_integration_us_stocks.py -v
+pytest korea_investment_stock/tests/test_ipo_integration.py -v
 ```
-
-### Stress Testing
-
-The stress test framework (`scripts/stress_runner.py`) validates:
-- Rate limit compliance under high load
-- Circuit breaker activation/recovery
-- Cache effectiveness
-- Error recovery behavior
-
-Configuration: `docs/issue-35/config.yaml`
 
 ## Important Files
 
 - **`pyproject.toml`**: Package metadata, dependencies, build config
 - **`.cursorrules`**: Development conventions (env vars, virtual env, naming)
-- **`CHANGELOG.md`**: Version history and release notes
-- **`examples/`**: Usage examples for all major features
-- **`docs/`**: Design documents and API exploration notes
+- **`CHANGELOG.md`**: Version history and release notes (v0.6.0 = breaking changes)
+- **`examples/`**: Usage examples:
+  - `basic_example.py` - Getting started
+  - `ipo_schedule_example.py` - IPO queries
+  - `us_stock_price_example.py` - US stock queries
 
 ## API Rate Limiting
 
+**User Responsibility**: You must implement your own rate limiting.
+
 Korea Investment Securities API limits:
 - **Official**: 20 requests/second
-- **Library default**: 15 requests/second (conservative, 80% safety margin)
-- **Minimum interval**: 83ms between calls (when enabled)
+- **Recommended**: 15 requests/second (conservative)
 
-Adjust via environment variables:
-```bash
-export RATE_LIMIT_MAX_CALLS=15
-export RATE_LIMIT_SAFETY_MARGIN=0.8
-```
-
-## Monitoring & Debugging
-
-### Statistics Collection
-
+Simple rate limiting example:
 ```python
-with KoreaInvestment(api_key, api_secret, account_no) as broker:
-    # ... perform operations ...
+import time
 
-    # View rate limiter stats
-    broker.rate_limiter.print_stats()
+class RateLimiter:
+    def __init__(self, calls_per_second=15):
+        self.min_interval = 1.0 / calls_per_second
+        self.last_call = 0
 
-    # View cache stats
-    cache_stats = broker.get_cache_stats()
-    print(f"Hit rate: {cache_stats['hit_rate']:.1%}")
+    def wait(self):
+        elapsed = time.time() - self.last_call
+        if elapsed < self.min_interval:
+            time.sleep(self.min_interval - elapsed)
+        self.last_call = time.time()
 
-    # Save all statistics
-    from korea_investment_stock.monitoring import get_stats_manager
-    stats_mgr = get_stats_manager()
-    stats_mgr.save_all_stats(format='json', compress=True)
+# Usage
+limiter = RateLimiter(calls_per_second=15)
+
+for symbol, market in stocks:
+    limiter.wait()
+    result = broker.fetch_price(symbol, market)
 ```
-
-### Dashboard Generation
-
-```python
-# Create HTML monitoring dashboard
-broker.save_monitoring_dashboard("dashboard.html")
-
-# Generate system health chart
-health_chart = broker.get_system_health_chart()
-
-# API usage chart (last 24 hours)
-usage_chart = broker.get_api_usage_chart(hours=24)
-```
-
-Dashboards saved to project root as HTML files.
 
 ## Known Limitations
 
@@ -350,6 +301,9 @@ Dashboards saved to project root as HTML files.
 2. **IPO data**: Reference only (from 예탁원), mock not supported
 3. **Order functionality**: Not yet implemented (planned)
 4. **WebSocket**: Not included in this library
+5. **No built-in rate limiting**: Users must implement
+6. **No built-in caching**: Users must implement
+7. **No automatic retry**: Users must implement
 
 ## Git Commit Message Guidelines
 
@@ -360,7 +314,7 @@ Follow conventional commit format:
 - `[refactor]`: Code restructuring
 - `[test]`: Test additions/changes
 
-Example: `[feat] Add US stock PER/PBR data to fetch_price_list`
+Example: `[feat] Add US stock PER/PBR data to fetch_price`
 
 ## GitHub Actions Workflows
 
@@ -369,35 +323,112 @@ Example: `[feat] Add US stock PER/PBR data to fetch_price_list`
 
 ## Context Manager Pattern
 
-Always use context manager for resource cleanup:
+Always use context manager for proper resource cleanup:
 
 ```python
-with KoreaInvestment(api_key, api_secret, account_no) as broker:
-    # Auto-shutdown thread pool and save stats on exit
-    prices = broker.fetch_price_list(stock_list)
+# ✅ Good: Automatic cleanup
+with KoreaInvestment(api_key, api_secret, acc_no) as broker:
+    result = broker.fetch_price("005930", "KR")
+
+# ❌ Bad: Manual cleanup required
+broker = KoreaInvestment(api_key, api_secret, acc_no)
+result = broker.fetch_price("005930", "KR")
+broker.shutdown()  # Must call manually
 ```
 
-Manual cleanup if not using context manager:
+## User Implementation Examples
+
+### Caching Example
+
 ```python
-broker = KoreaInvestment(api_key, api_secret, account_no)
-try:
-    # operations
-finally:
-    broker.shutdown()  # Essential for thread pool cleanup
+from functools import lru_cache
+from datetime import datetime, timedelta
+
+class CachedBroker:
+    def __init__(self, broker):
+        self.broker = broker
+        self.cache = {}
+        self.ttl = timedelta(minutes=5)
+
+    def fetch_price_cached(self, symbol, market):
+        key = f"{symbol}:{market}"
+        now = datetime.now()
+
+        if key in self.cache:
+            cached_time, cached_result = self.cache[key]
+            if now - cached_time < self.ttl:
+                return cached_result
+
+        result = self.broker.fetch_price(symbol, market)
+        self.cache[key] = (now, result)
+        return result
 ```
 
-## Performance Characteristics
+### Batch Processing Example
 
-**Benchmarks** (from README):
-- Throughput: 10-12 TPS (stable)
-- Error rate: <0.1%
-- 100 stocks query: ~8.5 seconds
-- Memory usage: <100MB
-- CPU usage: <5%
-- Cache hit rate: >80% (typical usage patterns)
+```python
+def fetch_multiple_stocks(broker, stock_list, rate_limit=15):
+    """Fetch multiple stocks with rate limiting"""
+    import time
+
+    min_interval = 1.0 / rate_limit
+    last_call = 0
+    results = []
+
+    for symbol, market in stock_list:
+        # Rate limiting
+        elapsed = time.time() - last_call
+        if elapsed < min_interval:
+            time.sleep(min_interval - elapsed)
+        last_call = time.time()
+
+        # API call
+        result = broker.fetch_price(symbol, market)
+        results.append(result)
+
+    return results
+```
+
+## Migration from v0.5.0
+
+**Breaking Changes in v0.6.0:**
+
+1. **Removed Methods:**
+   - `fetch_price_list()` → Use loop with `fetch_price()`
+   - `fetch_stock_info_list()` → Use loop with `fetch_stock_info()`
+   - All batch processing methods
+   - All caching methods
+   - All monitoring methods
+
+2. **Removed Features:**
+   - Rate limiting system
+   - TTL caching
+   - Statistics collection
+   - Visualization tools
+   - Automatic retry decorators
+
+3. **Migration Example:**
+```python
+# v0.5.0 (Old)
+results = broker.fetch_price_list([("005930", "KR"), ("AAPL", "US")])
+
+# v0.6.0 (New)
+results = []
+for symbol, market in [("005930", "KR"), ("AAPL", "US")]:
+    result = broker.fetch_price(symbol, market)
+    results.append(result)
+    # Add your own rate limiting here if needed
+```
+
+See [CHANGELOG.md](CHANGELOG.md) for complete details.
 
 ## Additional Resources
 
-- **Main docs**: https://wikidocs.net/book/7845
-- **Issues**: https://github.com/kenshin579/korea-investment-stock/issues
+- **Official API Docs**: https://wikidocs.net/book/7845
+- **GitHub Issues**: https://github.com/kenshin579/korea-investment-stock/issues
 - **PyPI**: https://pypi.org/project/korea-investment-stock/
+- **CHANGELOG**: [CHANGELOG.md](CHANGELOG.md) - v0.6.0 breaking changes
+
+---
+
+**Remember**: This is a pure wrapper. You control rate limiting, caching, error handling, and monitoring according to your needs.
