@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "korea-investment-stock"
-version = "0.5.0"
-description = "python wrapper for korea broker's REST API services"
+version = "0.6.0"
+description = "Pure Python wrapper for Korea Investment Securities OpenAPI"
 authors = [
     { name = "Jonghun Yoo", email = "jonghun.yoo@pyquant.co.kr" },
     { name = "Brayden Jo", email = "brayden.jo@pyquant.co.kr" },
@@ -15,11 +15,8 @@ license = { text = "MIT" }
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
-    "requests", # 의존성 패키지
+    "requests",
     "pandas",
-    "websockets",
-    "pycryptodome",
-    "crypto>=1.4.1",
 ]
 
 [project.urls]
