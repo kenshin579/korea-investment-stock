@@ -4,372 +4,395 @@
 [![Python Versions](https://img.shields.io/pypi/pyversions/korea-investment-stock.svg)](https://pypi.org/project/korea-investment-stock/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-한국투자증권 OpenAPI를 위한 파이썬 라이브러리입니다. Rate Limiting, 자동 재시도, 배치 처리 등 프로덕션 환경에 필요한 기능들을 포함하고 있습니다.
+**Pure Python wrapper** for Korea Investment Securities OpenAPI
 
-## 🌟 주요 특징
+## 🎯 Purpose
 
-### ✨ 핵심 기능
-- **한국투자증권 API 시세 조회**: 국내/미국 주식 시세 및 종목 정보 조회 ✨
-- **통합 인터페이스**: 국내/미국 주식을 하나의 메서드로 조회 ✨ NEW
-- **공모주 청약 일정 조회**: 공모주 정보, 청약 일정, 상태 확인
-- **자동 Rate Limiting**: API 호출 제한(초당 20회)을 자동으로 관리
-- **스마트 재시도**: Exponential Backoff와 Circuit Breaker 패턴 구현
-- **배치 처리**: 대량 데이터 조회를 위한 최적화된 배치 처리
-- **실시간 모니터링**: 상세한 통계 및 성능 추적
-- **TTL 캐싱**: 자동 만료되는 캐시로 API 호출 최소화
+A simple, transparent wrapper around the Korea Investment Securities OpenAPI. This library handles API authentication and request formatting, giving you direct access to the API responses without abstraction layers.
 
-### 🛡️ 안정성
-- **에러율 0%**: 프로덕션 환경에서 검증된 안정성
-- **자동 에러 복구**: 일시적 오류 자동 처리
-- **Thread-Safe**: 멀티스레드 환경 지원
+### Philosophy: Keep It Simple
 
-## 📦 설치
+- **Pure wrapper**: Direct API access without magic
+- **Minimal dependencies**: Only `requests` and `pandas`
+- **No abstraction**: You get exactly what the API returns
+- **Implement your way**: Add rate limiting, caching, retries as you need them
+
+## 🌟 Features
+
+### Core API Support
+- ✅ **Stock Price Queries**: Domestic (KR) and US stocks
+- ✅ **Stock Information**: Company details and market data
+- ✅ **IPO Schedule**: Public offering information and schedules
+- ✅ **Unified Interface**: Query KR/US stocks with `fetch_price(symbol, market)`
+- ✅ **Search Functions**: Stock search and lookup
+
+### Technical Features
+- 🔧 **Context Manager**: Automatic resource cleanup
+- 🔧 **Thread Pool**: Basic concurrent execution support
+- 🔧 **Mock Trading**: Test mode for development
+- 🔧 **Environment Variables**: API credentials via env vars
+
+## 📦 Installation
 
 ```bash
 pip install korea-investment-stock
 ```
 
-### 요구사항
-- Python 3.11 이상
-- 한국투자증권 API 계정
+### Requirements
+- Python 3.11 or higher
+- Korea Investment Securities API account
 
-## 🚀 빠른 시작
+## 🚀 Quick Start
 
-### 기본 사용법
+### 1. Set Up Credentials
+
+```bash
+# Add to your ~/.zshrc or ~/.bashrc
+export KOREA_INVESTMENT_API_KEY="your-api-key"
+export KOREA_INVESTMENT_API_SECRET="your-api-secret"
+export KOREA_INVESTMENT_ACCOUNT_NO="12345678-01"
+```
+
+### 2. Basic Usage
 
 ```python
 from korea_investment_stock import KoreaInvestment
+import os
 
-# API 인증 정보
-api_key = "YOUR_API_KEY"
-api_secret = "YOUR_API_SECRET"
-account_no = "12345678-01"
+# Create client (using environment variables)
+with KoreaInvestment(
+    api_key=os.getenv('KOREA_INVESTMENT_API_KEY'),
+    api_secret=os.getenv('KOREA_INVESTMENT_API_SECRET'),
+    acc_no=os.getenv('KOREA_INVESTMENT_ACCOUNT_NO'),
+    mock=True  # False for real trading
+) as broker:
+    # Query Samsung Electronics
+    result = broker.fetch_price("005930", "KR")
 
-# 클라이언트 생성
-broker = KoreaInvestment(
-    api_key=api_key,
-    api_secret=api_secret,
-    acc_no=account_no,
-    mock=False  # 실거래: False, 모의투자: True
-)
-
-# 현재가 조회
-price_info = broker.fetch_price("005930")  # 삼성전자
-print(f"현재가: {price_info['output']['stck_prpr']}원")
-
-# 종목 정보 조회
-stock_info = broker.fetch_stock_info_list([("005930", "KR")])
-print(stock_info)
-```
-
-### Context Manager 사용 (권장)
-
-```python
-from korea_investment_stock import KoreaInvestment
-
-with KoreaInvestment(api_key, api_secret, account_no) as broker:
-    # 자동으로 리소스 정리
-    price = broker.fetch_price("005930")
-    # ... 작업 수행
-# 자동으로 broker.shutdown() 호출됨
-```
-
-## 📊 주요 기능
-
-### 1. 주식 정보 조회
-
-```python
-# 국내 주식 현재가
-price = broker.fetch_domestic_price("J", "005930")
-
-# ETF 현재가
-etf_price = broker.fetch_etf_domestic_price("J", "069500")  # KODEX 200
-
-# 종목 정보 조회
-stock_info = broker.fetch_stock_info_list([("005930", "KR")])
-
-# 여러 종목 동시 조회 (국내)
-stock_list = [("005930", "KR"), ("000660", "KR"), ("035720", "KR")]
-prices = broker.fetch_price_list(stock_list)
-
-# 미국 주식 조회 ✨ NEW
-us_stocks = [("AAPL", "US"), ("TSLA", "US"), ("NVDA", "US")]
-us_prices = broker.fetch_price_list(us_stocks)
-for stock, result in zip(us_stocks, us_prices):
     if result['rt_cd'] == '0':
-        output = result['output']
-        print(f"{stock[0]}: ${output['last']} (PER: {output['perx']}, PBR: {output['pbrx']})")
+        price = result['output1']['stck_prpr']
+        print(f"Price: {price}원")
+```
 
-# 국내/미국 혼합 조회 ✨ NEW
-mixed_stocks = [
-    ("005930", "KR"),  # 삼성전자
-    ("AAPL", "US"),    # 애플
-    ("035720", "KR"),  # 카카오  
-    ("TSLA", "US")     # 테슬라
+## 📖 API Methods
+
+### Stock Price Queries
+
+```python
+# Domestic stock price
+result = broker.fetch_price("005930", "KR")  # Samsung Electronics
+
+# US stock price (requires real account)
+result = broker.fetch_price("AAPL", "US")   # Apple
+
+# Direct methods
+result = broker.fetch_domestic_price("J", "005930")
+result = broker.fetch_etf_domestic_price("J", "069500")  # KODEX 200
+result = broker.fetch_price_detail_oversea("AAPL", "US")
+```
+
+### Stock Information
+
+```python
+# Stock info
+result = broker.fetch_stock_info("005930", "KR")
+
+# Search stock
+result = broker.fetch_search_stock_info("005930", "KR")
+```
+
+### IPO Schedule
+
+```python
+# All IPOs (today + 30 days)
+result = broker.fetch_ipo_schedule()
+
+# Specific period
+result = broker.fetch_ipo_schedule(
+    from_date="20250101",
+    to_date="20250131"
+)
+
+# Specific symbol
+result = broker.fetch_ipo_schedule(symbol="123456")
+
+# Helper methods
+status = broker.get_ipo_status(ipo['subscr_dt'])  # "예정", "진행중", "마감"
+d_day = broker.calculate_ipo_d_day(ipo['subscr_dt'])  # Days until subscription
+```
+
+### Symbol Lists
+
+```python
+# KOSPI symbols
+result = broker.fetch_kospi_symbols()
+
+# KOSDAQ symbols
+result = broker.fetch_kosdaq_symbols()
+```
+
+## 🔧 Advanced Usage
+
+### Multiple Stock Queries
+
+```python
+# Query multiple stocks
+stocks = [
+    ("005930", "KR"),  # Samsung
+    ("000660", "KR"),  # SK Hynix
+    ("035720", "KR"),  # Kakao
 ]
-mixed_prices = broker.fetch_price_list(mixed_stocks)
 
-# 코스피/코스닥 전체 종목 조회
-kospi_symbols = broker.fetch_kospi_symbols()
-kosdaq_symbols = broker.fetch_kosdaq_symbols()
+results = []
+for symbol, market in stocks:
+    result = broker.fetch_price(symbol, market)
+    results.append(result)
+    # Add your own rate limiting here if needed
 ```
 
-### 2. 공모주 청약 일정 조회
+### Mixed KR/US Portfolio
 
 ```python
-# 전체 공모주 일정 조회 (오늘부터 30일)
-ipo_schedule = broker.fetch_ipo_schedule()
-if ipo_schedule['rt_cd'] == '0':
-    for ipo in ipo_schedule['output1']:
-        print(f"{ipo['isin_name']} - 청약기간: {ipo['subscr_dt']}")
-        print(f"공모가: {broker.format_number(ipo['fix_subscr_pri'])}원")
-        print(f"주간사: {ipo['lead_mgr']}")
+portfolio = [
+    ("005930", "KR"),  # Samsung Electronics
+    ("AAPL", "US"),    # Apple
+    ("035720", "KR"),  # Kakao
+    ("MSFT", "US"),    # Microsoft
+]
 
-# 특정 기간 공모주 조회
-ipos = broker.fetch_ipo_schedule(
-    from_date="20240101",
-    to_date="20240131"
-)
+for symbol, market in portfolio:
+    result = broker.fetch_price(symbol, market)
 
-# 특정 종목 공모주 정보 조회
-ipo_info = broker.fetch_ipo_schedule(symbol="123456")
-
-# 공모주 상태 확인 (예정/진행중/마감)
-for ipo in ipo_schedule['output1']:
-    status = broker.get_ipo_status(ipo['subscr_dt'])
-    d_day = broker.calculate_ipo_d_day(ipo['subscr_dt'])
-    print(f"{ipo['isin_name']}: {status}, D-{d_day}")
-
-# 주의: 모의투자는 지원하지 않습니다
-# 예탁원 제공 정보이므로 참고용으로만 사용하세요
+    if result['rt_cd'] == '0':
+        if market == "KR":
+            output = result['output1']
+            price = output['stck_prpr']
+            print(f"{symbol}: ₩{int(price):,}")
+        else:
+            output = result['output']
+            price = output['last']
+            print(f"{symbol}: ${price}")
 ```
 
-### 3. 배치 처리 (대량 데이터)
+### Error Handling
 
 ```python
-# 100개 종목 조회
-large_stock_list = [(f"{i:06d}", "KR") for i in range(1, 101)]
+try:
+    result = broker.fetch_price("INVALID", "US")
 
-# 고정 크기 배치 처리
-results = broker.fetch_price_list_with_batch(
-    large_stock_list,
-    batch_size=20,       # 20개씩 처리
-    batch_delay=1.0,     # 배치 간 1초 대기
-    progress_interval=10 # 진행상황 출력
-)
-
-# 동적 배치 처리 (에러율에 따라 자동 조정)
-results = broker.fetch_price_list_with_dynamic_batch(large_stock_list)
+    if result['rt_cd'] != '0':
+        # API returned error
+        print(f"API Error: {result['msg1']}")
+except ValueError as e:
+    # Invalid parameters
+    print(f"Invalid request: {e}")
+except Exception as e:
+    # Network or other errors
+    print(f"Error: {e}")
 ```
 
-### 4. Rate Limiting 관리
+## 📊 Response Format
+
+### Domestic Stock (KR)
 
 ```python
-# Rate Limiter 통계 확인
-broker.rate_limiter.print_stats()
-
-# 통계 데이터 가져오기
-stats = broker.rate_limiter.get_stats()
-print(f"총 호출: {stats['total_calls']}")
-print(f"에러율: {stats['error_rate']:.1%}")
-print(f"평균 대기시간: {stats['avg_wait_time']:.3f}초")
-
-# 통계 저장
-broker.rate_limiter.save_stats()
+{
+    'rt_cd': '0',               # Return code ('0' = success)
+    'msg1': '정상처리되었습니다',   # Message
+    'output1': {
+        'stck_prpr': '62600',   # Current price
+        'prdy_vrss': '1600',    # Change from previous day
+        'prdy_ctrt': '2.62',    # Change rate (%)
+        'stck_oprc': '61000',   # Opening price
+        'stck_hgpr': '63000',   # High price
+        'stck_lwpr': '60500',   # Low price
+        'acml_vol': '15234567'  # Volume
+        # ... more fields
+    }
+}
 ```
 
-### 5. 캐시 관리
+### US Stock (US)
 
 ```python
-# 캐시 상태 확인
-cache_stats = broker.get_cache_stats()
-print(f"캐시 적중률: {cache_stats['hit_rate']:.1%}")
-print(f"메모리 사용량: {cache_stats['memory_usage']:.1f}MB")
-
-# 캐시 비우기
-broker.clear_cache()  # 전체 캐시 삭제
-broker.clear_cache("fetch_domestic_price:J:005930")  # 특정 항목만 삭제
-
-# 자주 사용하는 종목 미리 캐싱
-popular_stocks = ["005930", "000660", "035720", "051910", "005380"]
-broker.preload_cache(popular_stocks, market="KR")
+{
+    'rt_cd': '0',
+    'msg1': '정상처리되었습니다',
+    'output': {
+        'rsym': 'DNASAAPL',     # Exchange + Symbol
+        'last': '211.16',       # Current price
+        'open': '210.56',       # Opening price
+        'high': '212.13',       # High price
+        'low': '209.86',        # Low price
+        'tvol': '39765812',     # Volume
+        't_xdif': '1.72',       # Change
+        't_xrat': '-0.59',      # Change rate (%)
+        'perx': '32.95',        # PER
+        'pbrx': '47.23',        # PBR
+        'epsx': '6.41',         # EPS
+        'bpsx': '4.47'          # BPS
+        # ... more fields
+    }
+}
 ```
 
-### 6. 고급 기능
+## ⚠️ Important Notes
+
+### API Rate Limits
+- Korea Investment API: **20 requests/second**
+- **You are responsible** for implementing rate limiting
+- Exceeding limits will cause API errors
+
+### US Stocks
+- **Real account only** (mock trading not supported)
+- Auto-detects exchange (NASDAQ → NYSE → AMEX)
+- Includes financial ratios (PER, PBR, EPS, BPS)
+
+### Context Manager
+Always use context manager for proper resource cleanup:
 
 ```python
-# Circuit Breaker 상태 확인
-from korea_investment_stock.rate_limiting import get_backoff_strategy
+# ✅ Good: Automatic cleanup
+with KoreaInvestment(api_key, api_secret, acc_no) as broker:
+    result = broker.fetch_price("005930", "KR")
 
-backoff = get_backoff_strategy()
-state = backoff.get_stats()['state']  # CLOSED, OPEN, HALF_OPEN
-
-# 에러 복구 시스템
-from korea_investment_stock.error_handling import get_error_recovery_system
-
-recovery = get_error_recovery_system()
-summary = recovery.get_error_summary(hours=1)
-print(f"최근 1시간 에러: {summary['total_errors']}건")
-
-# 통계 매니저
-from korea_investment_stock.monitoring import get_stats_manager
-
-stats_mgr = get_stats_manager()
-stats_mgr.save_all_stats()  # 모든 통계 저장
+# ❌ Bad: Manual cleanup required
+broker = KoreaInvestment(api_key, api_secret, acc_no)
+result = broker.fetch_price("005930", "KR")
+broker.shutdown()  # Must call manually
 ```
 
-### 7. 모니터링 및 시각화
+## 🔨 Implementing Your Own Features
+
+### Rate Limiting Example
 
 ```python
-# 실시간 모니터링 대시보드 생성
-dashboard = broker.create_monitoring_dashboard()
-broker.save_monitoring_dashboard("monitoring.html")
+import time
 
-# 시스템 헬스 체크
-health_chart = broker.get_system_health_chart()
+class RateLimiter:
+    def __init__(self, calls_per_second=15):
+        self.min_interval = 1.0 / calls_per_second
+        self.last_call = 0
 
-# API 사용량 차트
-usage_chart = broker.get_api_usage_chart(hours=24)
+    def wait(self):
+        elapsed = time.time() - self.last_call
+        if elapsed < self.min_interval:
+            time.sleep(self.min_interval - elapsed)
+        self.last_call = time.time()
 
-# 통계 리포트 생성
-report_files = broker.create_stats_report("weekly_report")
+# Usage
+limiter = RateLimiter(calls_per_second=15)
+
+for symbol, market in stocks:
+    limiter.wait()
+    result = broker.fetch_price(symbol, market)
 ```
 
-## 🆕 최근 추가된 기능
+### Caching Example
 
-### v1.x.x (2025-01-13) ✨
-- **미국 주식 통합 지원**: `fetch_price_list()`로 국내/미국 주식 동시 조회
-- **추가 재무 정보**: 미국 주식의 PER, PBR, EPS, BPS 정보 제공
-- **향상된 에러 처리**: 거래소별 심볼 검색 실패 시 명확한 에러 메시지
+```python
+from functools import lru_cache
+from datetime import datetime, timedelta
 
-## 🚧 개발 중인 기능
+class CachedBroker:
+    def __init__(self, broker):
+        self.broker = broker
+        self.cache = {}
+        self.ttl = timedelta(minutes=5)
 
-다음 기능들은 향후 버전에서 추가될 예정입니다:
+    def fetch_price_cached(self, symbol, market):
+        key = f"{symbol}:{market}"
+        now = datetime.now()
 
-- **주문 기능**: 시장가/지정가 주문, 주문 취소
-- **잔고 조회**: 보유 종목 및 예수금 조회
-- **차트 데이터**: 일봉, 분봉 등 OHLCV 데이터
-- **해외 주식 확대**: 중국, 일본 등 다른 해외 시장 지원
+        if key in self.cache:
+            cached_time, cached_result = self.cache[key]
+            if now - cached_time < self.ttl:
+                return cached_result
 
-## 📁 프로젝트 구조
-
-```
-korea_investment_stock/
-├── __init__.py
-├── korea_investment_stock.py      # 메인 클래스
-├── rate_limiting/                 # Rate Limiting 모듈
-│   ├── enhanced_rate_limiter.py
-│   ├── enhanced_backoff_strategy.py
-│   └── enhanced_retry_decorator.py
-├── error_handling/                # 에러 처리 모듈
-│   └── error_recovery_system.py
-├── batch_processing/              # 배치 처리 모듈
-│   └── dynamic_batch_controller.py
-├── caching/                       # 캐싱 모듈
-│   ├── ttl_cache.py
-│   └── market_hours.py
-├── monitoring/                    # 모니터링 및 통계
-│   └── stats_manager.py
-├── visualization/                 # 시각화 모듈
-│   ├── charts.py
-│   ├── dashboard.py
-│   └── plotly_visualizer.py
-└── utils/                        # 유틸리티 함수
+        result = self.broker.fetch_price(symbol, market)
+        self.cache[key] = (now, result)
+        return result
 ```
 
-## 🔧 환경 설정
+### Retry Example
 
-### 환경 변수
+```python
+import time
 
-```bash
-# Rate Limiting 설정
-export RATE_LIMIT_MAX_CALLS=15        # 최대 호출 수 (기본: 15)
-export RATE_LIMIT_SAFETY_MARGIN=0.8   # 안전 마진 (기본: 0.8)
-
-# Backoff 전략 설정
-export BACKOFF_BASE_DELAY=1.0         # 기본 대기 시간
-export BACKOFF_MAX_DELAY=60.0         # 최대 대기 시간
-export CIRCUIT_FAILURE_THRESHOLD=5    # Circuit Breaker 임계값
-
-# 캐시 설정
-export CACHE_DEFAULT_TTL=300          # 기본 캐시 TTL (초)
-export CACHE_MAX_SIZE=10000          # 최대 캐시 크기
+def fetch_with_retry(broker, symbol, market, max_retries=3):
+    for attempt in range(max_retries):
+        try:
+            result = broker.fetch_price(symbol, market)
+            if result['rt_cd'] == '0':
+                return result
+        except Exception as e:
+            if attempt == max_retries - 1:
+                raise
+            time.sleep(2 ** attempt)  # Exponential backoff
 ```
 
-## 📈 성능 지표
+## 📚 Examples
 
-- **처리량**: 10-12 TPS (안정적)
-- **에러율**: < 0.1%
-- **100종목 조회**: ~8.5초
-- **메모리 사용**: < 100MB
-- **CPU 사용률**: < 5%
-- **캐시 적중률**: > 80% (일반적인 사용 패턴)
+See the `examples/` directory:
+- `basic_example.py`: Simple usage patterns
+- `ipo_schedule_example.py`: IPO queries and helpers
+- `us_stock_price_example.py`: US stock queries
 
-## 🤝 기여하기
+## 🔄 Migration from v0.5.0
 
-프로젝트에 기여를 환영합니다! 
+### Breaking Changes in v0.6.0
 
-1. Fork the Project
-2. Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the Branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
+**Removed features** (~6,000 lines of code):
+- Rate limiting system
+- TTL caching
+- Batch processing methods
+- Monitoring and statistics
+- Visualization tools
+- Automatic retry decorators
 
-### 개발 환경 설정
+**API changes**:
+```python
+# v0.5.0 (Old)
+results = broker.fetch_price_list([("005930", "KR"), ("AAPL", "US")])
 
-```bash
-# 저장소 클론
-git clone https://github.com/softyoungha/korea-investment-stock.git
-cd korea-investment-stock
-
-# 가상환경 생성 및 활성화
-python -m venv venv
-source venv/bin/activate  # Windows: venv\Scripts\activate
-
-# 개발 의존성 설치
-pip install -e ".[dev]"
-
-# 테스트 실행
-pytest
+# v0.6.0 (New)
+results = []
+for symbol, market in [("005930", "KR"), ("AAPL", "US")]:
+    result = broker.fetch_price(symbol, market)
+    results.append(result)
 ```
 
-## 📚 문서
+See [CHANGELOG.md](CHANGELOG.md) for complete migration guide.
 
-- [상세 문서](https://wikidocs.net/book/7845)
-- [API 레퍼런스](docs/api_reference.md)
-- [예제 코드](examples/)
-- [변경 이력](CHANGELOG.md)
+## 📖 Documentation
 
-## ⚠️ 주의사항
+- [Official API Docs](https://wikidocs.net/book/7845)
+- [GitHub Issues](https://github.com/kenshin579/korea-investment-stock/issues)
 
-- 이 라이브러리는 한국투자증권 OpenAPI의 공식 라이브러리가 아닙니다
-- 실거래 사용 시 충분한 테스트를 거쳐 사용하세요
-- API 호출 제한을 준수하여 사용하세요
-- 현재는 시세 조회 기능만 지원합니다
+## 🤝 Contributing
 
-### 미국 주식 관련 주의사항
-- **모의투자 미지원**: 미국 주식은 실전투자 계정에서만 조회 가능합니다
-- **무료 시세**: 미국은 실시간 무료시세 제공 (나스닥 마켓센터 기준)
-- **거래소 자동 탐색**: NASDAQ, NYSE, AMEX 순서로 자동 검색
-- **추가 정보 제공**: PER, PBR, EPS, BPS 등 재무 정보 포함
+Contributions welcome! Please:
+1. Fork the repository
+2. Create a feature branch
+3. Submit a pull request
 
-## 📄 라이선스
+## 📝 License
 
-이 프로젝트는 MIT 라이선스 하에 배포됩니다. 자세한 내용은 [LICENSE](LICENSE) 파일을 참조하세요.
+MIT License - see [LICENSE](LICENSE) file
 
-## 🙏 감사의 글
+## ⚡ Performance Tips
 
-- 한국투자증권 OpenAPI 팀
-- 모든 기여자들
-- 이슈 리포트와 피드백을 주신 사용자분들
+1. **Implement rate limiting**: Prevent API errors
+2. **Use caching**: Reduce redundant API calls
+3. **Batch requests wisely**: Don't overwhelm the API
+4. **Handle errors gracefully**: Check `rt_cd` and `msg1`
+5. **Use context manager**: Ensure proper cleanup
 
-## 📞 지원
+## 🙏 Credits
 
-- **이슈 트래커**: [GitHub Issues](https://github.com/softyoungha/korea-investment-stock/issues)
-- **토론**: [GitHub Discussions](https://github.com/softyoungha/korea-investment-stock/discussions)
+- Korea Investment Securities for providing the OpenAPI
+- Original contributors: Jonghun Yoo, Brayden Jo, Frank Oh
 
 ---
 
-<p align="center">
-  Made with ❤️ by the Korea Investment Stock community
-</p>
+**Remember**: This is a pure wrapper. You control rate limiting, caching, error handling, and monitoring according to your needs.

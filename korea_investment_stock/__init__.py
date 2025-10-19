@@ -1,4 +1,7 @@
-"""A Python port of Korea-Investment-Stock API"""
+"""A Python port of Korea-Investment-Stock API
+
+Pure wrapper for Korea Investment Securities OpenAPI
+"""
 
 __version__ = "0.6.0"
 
