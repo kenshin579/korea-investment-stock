@@ -649,8 +649,6 @@ class KoreaInvestment:
         Args:
             symbol (str): symbol
         """
-        self.rate_limiter.acquire()
-
         path = "/uapi/overseas-price/v1/quotations/price-detail"
         url = f"{self.base_url}/{path}"
 
@@ -686,8 +684,6 @@ class KoreaInvestment:
         raise ValueError(f"Unable to fetch price for symbol '{symbol}' in any {market} exchange")
 
     def fetch_stock_info(self, symbol: str, market: str = "KR"):
-        self.rate_limiter.acquire()
-
         path = "uapi/domestic-stock/v1/quotations/search-info"
         url = f"{self.base_url}/{path}"
         headers = {
@@ -721,9 +717,6 @@ class KoreaInvestment:
         """
         국내 주식만 제공하는 API이다
         """
-
-        self.rate_limiter.acquire()
-
         path = "uapi/domestic-stock/v1/quotations/search-stock-info"
         url = f"{self.base_url}/{path}"
         headers = {
@@ -912,9 +905,7 @@ class KoreaInvestment:
         # 모의투자 체크
         if self.mock:
             raise ValueError("공모주청약일정 조회는 모의투자를 지원하지 않습니다.")
-            
-        self.rate_limiter.acquire()
-        
+
         # 날짜 기본값 설정
         if not from_date:
             from_date = datetime.now().strftime("%Y%m%d")
