@@ -185,13 +185,13 @@ def main():
         # example_us_stock_price()
 
         # 3. 종목 정보 조회
-        example_stock_info()
+        # example_stock_info()
 
         # 4. 여러 종목 순차 조회
-        example_multiple_stocks()
+        # example_multiple_stocks()
 
         # 5. 에러 처리
-        example_error_handling()
+        # example_error_handling()
 
         print("\n" + "="*60)
         print("✅ 모든 예제 실행 완료!")
