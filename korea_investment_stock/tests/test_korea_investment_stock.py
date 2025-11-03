@@ -24,12 +24,14 @@ class TestKoreaInvestment(TestCase):
             ("AAPL", "US"),
         ]
 
-        results = self.kis.fetch_stock_info_list(stock_market_list)
-        self.assertEqual(len(results), len(stock_market_list))
-
-        for result in results:
+        results = []
+        for symbol, market in stock_market_list:
+            result = self.kis.fetch_stock_info(symbol, market)
+            results.append(result)
             print(result)
             self.assertEqual(result['rt_cd'], API_RETURN_CODE["SUCCESS"])
+
+        self.assertEqual(len(results), len(stock_market_list))
 
     def test_fetch_search_stock_info(self):
         stock_market_list = [
@@ -38,14 +40,16 @@ class TestKoreaInvestment(TestCase):
         #     국내 주식만 조회가 가능하다
         ]
 
-        results = self.kis.fetch_search_stock_info_list(stock_market_list)
-
-        self.assertEqual(len(results), len(stock_market_list))
-        for result in results:
+        results = []
+        for symbol, market in stock_market_list:
+            result = self.kis.fetch_search_stock_info(symbol, market)
+            results.append(result)
             print(result)
             self.assertEqual(result['rt_cd'], API_RETURN_CODE["SUCCESS"])
             self.assertIn('output', result)
             self.assertIn('frbd_mket_lstg_dt', result['output'])
+
+        self.assertEqual(len(results), len(stock_market_list))
 
     def test_fetch_price(self):
         stock_market_list = [
@@ -56,11 +60,14 @@ class TestKoreaInvestment(TestCase):
 
         ]
 
-        results = self.kis.fetch_price_list(stock_market_list)
-        self.assertEqual(len(results), len(stock_market_list))
-        for result in results:
+        results = []
+        for symbol, market in stock_market_list:
+            result = self.kis.fetch_price(symbol, market)
+            results.append(result)
             print(result)
             self.assertEqual(result['rt_cd'], API_RETURN_CODE["SUCCESS"])
+
+        self.assertEqual(len(results), len(stock_market_list))
 
     @skip("Skipping test_fetch_kospi_symbols")
     def test_fetch_kospi_symbols(self):
@@ -75,10 +82,12 @@ class TestKoreaInvestment(TestCase):
             ("QQQM", "US"), # ETF
         ]
 
-        results = self.kis.fetch_price_detail_oversea_list(stock_market_list)
-        self.assertEqual(len(results), len(stock_market_list))
-
-        for result in results:
+        results = []
+        for symbol, market in stock_market_list:
+            result = self.kis.fetch_price_detail_oversea(symbol, market)
+            results.append(result)
             print(result)
             self.assertEqual(result['rt_cd'], API_RETURN_CODE["SUCCESS"])
             self.assertNotEqual(result['output']['rsym'], None)
+
+        self.assertEqual(len(results), len(stock_market_list))

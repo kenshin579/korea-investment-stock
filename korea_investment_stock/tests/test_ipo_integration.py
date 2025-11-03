@@ -136,69 +136,6 @@ class TestIPOIntegration:
         # API 호출 간 대기
         time.sleep(0.5)
     
-    def test_cache_functionality(self, broker):
-        """캐시 기능 테스트"""
-        # 캐시가 활성화되어 있는지 확인
-        if not broker._cache_enabled:
-            pytest.skip("캐시가 비활성화되어 있습니다")
-        
-        # 첫 번째 호출 (캐시 미스)
-        start_time = time.time()
-        result1 = broker.fetch_ipo_schedule(
-            from_date="20240101",
-            to_date="20240131"
-        )
-        first_call_time = time.time() - start_time
-        
-        # 두 번째 호출 (캐시 히트)
-        start_time = time.time()
-        result2 = broker.fetch_ipo_schedule(
-            from_date="20240101",
-            to_date="20240131"
-        )
-        second_call_time = time.time() - start_time
-        
-        # 결과 동일성 검증
-        assert result1 == result2
-        
-        # 캐시 히트가 더 빠른지 검증 (일반적으로 10배 이상 빠름)
-        if result1['rt_cd'] == '0':
-            # 실제 API 호출이 있었다면 캐시가 훨씬 빨라야 함
-            print(f"✅ 캐시 테스트: 첫 번째 호출 {first_call_time:.3f}초, "
-                  f"두 번째 호출 {second_call_time:.3f}초")
-            # 캐시가 더 빠른지만 확인 (정확한 비율은 네트워크 상황에 따라 다름)
-            assert second_call_time <= first_call_time
-        
-        # API 호출 간 대기
-        time.sleep(0.5)
-    
-    def test_rate_limiting(self, broker):
-        """Rate Limiting 동작 테스트"""
-        # 연속 호출로 Rate Limit 테스트
-        call_count = 5
-        errors = []
-        
-        for i in range(call_count):
-            try:
-                result = broker.fetch_ipo_schedule(
-                    from_date=f"2024{i+1:02d}01",
-                    to_date=f"2024{i+1:02d}28"
-                )
-                
-                if result['rt_cd'] != '0':
-                    errors.append(result)
-                    
-                # Rate Limiter가 적절히 대기하는지 확인
-                print(f"✅ Rate Limit 테스트 {i+1}/{call_count} 완료")
-                
-            except Exception as e:
-                errors.append(str(e))
-                print(f"❌ Rate Limit 테스트 {i+1}/{call_count} 에러: {e}")
-        
-        # 모든 호출이 성공해야 함 (Rate Limiter가 제대로 작동하면)
-        assert len(errors) == 0, f"Rate Limit 에러 발생: {errors}"
-        print(f"✅ Rate Limiting 테스트 완료: {call_count}개 호출 모두 성공")
-    
     def test_helper_functions_with_real_data(self, broker):
         """실제 데이터로 헬퍼 함수 테스트"""
         # 전체 조회

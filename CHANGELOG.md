@@ -1,5 +1,95 @@
 # CHANGELOG
 
+## [0.6.0] - 2025-01-19 (Breaking Changes) ⚠️
+
+### 🎯 Major Simplification (#40)
+**Philosophy Change**: Transformed from feature-rich library to **pure API wrapper**
+
+This version removes all advanced features to focus on being a thin, reliable wrapper around the Korea Investment Securities OpenAPI. Users who need rate limiting, caching, batch processing, or monitoring should implement these features themselves according to their specific needs.
+
+### ⚠️ BREAKING CHANGES
+
+#### Removed Features (~6,000+ lines of code removed)
+- **Rate Limiting System**: Removed EnhancedRateLimiter, BackoffStrategy, Circuit Breaker
+  - Users should implement their own rate limiting if needed
+- **Caching System**: Removed TTL cache, cache decorators, cache statistics
+  - Users should implement their own caching strategy
+- **Batch Processing**: Removed batch methods and dynamic batch controller
+  - Use loops with `fetch_price()` instead of `fetch_price_list()`
+- **Monitoring & Visualization**: Removed stats collection, Plotly dashboards, HTML reports
+  - Users should implement their own monitoring
+- **Error Recovery**: Removed automatic retry decorators and error recovery system
+  - Users should handle errors according to their needs
+- **Legacy Module**: Removed deprecated code and unused features
+
+#### API Changes
+- **Removed Methods**:
+  - `fetch_price_list()` → Use loop with `fetch_price(symbol, market)`
+  - `fetch_stock_info_list()` → Use loop with `fetch_stock_info(symbol, market)`
+  - `fetch_price_list_with_batch()` → Use loop with `fetch_price()`
+  - `fetch_price_list_with_dynamic_batch()` → Use loop with `fetch_price()`
+  - All batch processing methods
+  - All caching-related methods
+  - All statistics and monitoring methods
+
+- **Private → Public Methods** (now part of public API):
+  - `__fetch_price()` → `fetch_price(symbol, market)`
+  - `__fetch_stock_info()` → `fetch_stock_info(symbol, market)`
+  - `__fetch_domestic_price()` → `fetch_domestic_price(market_code, symbol)`
+  - `__fetch_etf_domestic_price()` → `fetch_etf_domestic_price(market_code, symbol)`
+  - `__fetch_price_detail_oversea()` → `fetch_price_detail_oversea(symbol, market)`
+
+#### Simplified Dependencies
+- **Removed**: `websockets`, `pycryptodome`, `crypto`
+- **Kept**: `requests`, `pandas` (minimal dependencies)
+
+### ✅ What Remains
+- ✅ Stock price queries (domestic & US)
+- ✅ Stock information queries
+- ✅ IPO schedule queries
+- ✅ Unified interface for KR/US stocks via `fetch_price(symbol, market)`
+- ✅ Basic error responses from API
+- ✅ Context manager support
+- ✅ Thread pool executor (basic concurrency)
+
+### 📦 Migration Guide
+
+#### Before (v0.5.0):
+```python
+# Batch query with automatic rate limiting, caching, retry
+stocks = [("005930", "KR"), ("AAPL", "US")]
+results = broker.fetch_price_list(stocks)
+```
+
+#### After (v0.6.0):
+```python
+# Simple loop - implement your own rate limiting if needed
+stocks = [("005930", "KR"), ("AAPL", "US")]
+results = []
+for symbol, market in stocks:
+    result = broker.fetch_price(symbol, market)
+    results.append(result)
+    # Add your own rate limiting, caching, retry logic here if needed
+```
+
+### 📈 Code Reduction
+- Main file: 1,941 → 1,011 lines (48% reduction)
+- Total deletion: ~6,000+ lines
+- Module count: 15 → 1 (core module only)
+- Test files: 18 → 4 (only integration tests remain)
+
+### 🎯 Why This Change?
+- **Simplicity**: Focus on doing one thing well - wrapping the API
+- **Flexibility**: Users implement features their way
+- **Maintainability**: Less code = fewer bugs
+- **Transparency**: Pure wrapper with no magic
+
+### 📚 Documentation Updates
+- Updated README.md to reflect simple API wrapper approach
+- Updated CLAUDE.md to remove advanced architecture details
+- Updated examples to show simple usage patterns
+- Added `basic_example.py` for simple use cases
+
 ## [Unreleased] - 2025-01-14
 
 ### 🚀 추가된 기능

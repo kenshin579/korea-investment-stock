@@ -6,19 +6,14 @@ import json
 import os
 import pickle
 import random
-import threading
 import time
 import zipfile
 import logging
 import re
-from collections import deque, defaultdict
-from concurrent.futures import ThreadPoolExecutor, as_completed
-from functools import wraps
 from pathlib import Path
 from typing import Literal, Optional, List
 from zoneinfo import ZoneInfo  # Requires Python 3.9+
 from datetime import datetime, timedelta
-import atexit
 
 import pandas as pd
 import requests
@@ -26,30 +21,6 @@ from typing import Dict, Any
 
 # 로거 설정
 logger = logging.getLogger(__name__)
-
-# Enhanced RateLimiter import
-try:
-    from .rate_limiting.enhanced_rate_limiter import EnhancedRateLimiter
-    from .rate_limiting.enhanced_backoff_strategy import get_backoff_strategy
-    from .rate_limiting.enhanced_retry_decorator import retry_on_rate_limit, retry_on_network_error
-    from .error_handling.error_recovery_system import get_error_recovery_system
-    from .monitoring.stats_manager import get_stats_manager
-    from .caching import TTLCache, cacheable, CACHE_TTL_CONFIG
-except ImportError:
-    from rate_limiting.enhanced_rate_limiter import EnhancedRateLimiter
-    from rate_limiting.enhanced_backoff_strategy import get_backoff_strategy
-    from rate_limiting.enhanced_retry_decorator import retry_on_rate_limit, retry_on_network_error
-    from error_handling.error_recovery_system import get_error_recovery_system
-    from monitoring.stats_manager import get_stats_manager
-    from caching import TTLCache, cacheable, CACHE_TTL_CONFIG
-
-# Visualization 모듈
-try:
-    from .visualization import PlotlyVisualizer, DashboardManager
-    VISUALIZATION_AVAILABLE = True
-except ImportError:
-    VISUALIZATION_AVAILABLE = False
-    logger.warning("Visualization 모듈을 사용할 수 없습니다. plotly를 설치하세요.")
 
 EXCHANGE_CODE = {
     "홍콩": "HKS",
@@ -195,19 +166,14 @@ class KoreaInvestment:
     한국투자증권 REST API
     '''
 
-    def __init__(self, api_key: str, api_secret: str, acc_no: str,
-                 mock: bool = False, cache_enabled: bool = True, 
-                 cache_config: Optional[dict] = None):
-        """생성자
+    def __init__(self, api_key: str, api_secret: str, acc_no: str, mock: bool = False):
+        """한국투자증권 API 클라이언트 초기화
+
         Args:
             api_key (str): 발급받은 API key
             api_secret (str): 발급받은 API secret
-            acc_no (str): 계좌번호 체계의 앞 8자리-뒤 2자리
-            exchange (str): "서울", "나스닥", "뉴욕", "아멕스", "홍콩", "상해", "심천", # todo: exchange는 제거 예정
-                            "도쿄", "하노이", "호치민"
+            acc_no (str): 계좌번호 체계의 앞 8자리-뒤 2자리 (예: "12345678-01")
             mock (bool): True (mock trading), False (real trading)
-            cache_enabled (bool): True if cache is enabled, False otherwise
-            cache_config (dict, optional): Configuration for the cache
         """
         self.mock = mock
         self.set_base_url(mock)
@@ -218,23 +184,6 @@ class KoreaInvestment:
         self.acc_no = acc_no
         self.acc_no_prefix = acc_no.split('-')[0]
         self.acc_no_postfix = acc_no.split('-')[1]
-        
-        # Enhanced RateLimiter 설정
-        self.rate_limiter = EnhancedRateLimiter(
-            max_calls=15,  # 기본값 20에서 15로 감소
-            per_seconds=1.0,
-            safety_margin=0.8,  # 실제로는 12회/초
-            enable_min_interval=True,  # 최소 간격 보장
-            enable_stats=True  # 통계 수집 활성화
-        )
-        
-        # ThreadPoolExecutor 개선
-        # 동시 실행 제한을 위한 세마포어 (최대 3개만 동시 실행)
-        self.concurrent_limit = threading.Semaphore(3)
-        # 워커 수 감소 (8 -> 3)
-        self.executor = ThreadPoolExecutor(max_workers=3)
-        # 프로그램 종료 시 자동 정리
-        atexit.register(self.shutdown)
 
         # access token
         self.token_file = Path("~/.cache/mojito2/token.dat").expanduser()
@@ -243,40 +192,6 @@ class KoreaInvestment:
             self.load_access_token()
         else:
             self.issue_access_token()
-
-        # Cache configuration
-        self._cache_enabled = cache_enabled
-        if cache_enabled:
-            # 캐시 설정 병합
-            default_cache_config = {
-                'default_ttl': 300,  # 5분
-                'max_size': 10000,
-                'ttl_config': CACHE_TTL_CONFIG
-            }
-            if cache_config:
-                default_cache_config.update(cache_config)
-            
-            # TTLCache 인스턴스 생성
-            self._cache = TTLCache(
-                default_ttl=default_cache_config['default_ttl'],
-                max_size=default_cache_config['max_size']
-            )
-            logger.info(f"TTL 캐시 활성화 (기본 TTL: {default_cache_config['default_ttl']}초, "
-                       f"최대 크기: {default_cache_config['max_size']})")
-        else:
-            self._cache = None
-            logger.info("TTL 캐시 비활성화")
-        
-        # Visualization 초기화
-        self.visualizer = None
-        self.dashboard_manager = None
-        if VISUALIZATION_AVAILABLE:
-            try:
-                self.visualizer = PlotlyVisualizer()
-                self.dashboard_manager = DashboardManager(self.visualizer)
-                logger.info("Visualization 모듈 초기화 완료")
-            except Exception as e:
-                logger.warning(f"Visualization 모듈 초기화 실패: {e}")
 
     def __enter__(self):
         """컨텍스트 매니저 진입"""
@@ -287,299 +202,6 @@ class KoreaInvestment:
         self.shutdown()
         return False  # 예외를 전파
 
-    def __execute_concurrent_requests(self, method, stock_list, 
-                                     batch_size: Optional[int] = None,
-                                     batch_delay: float = 0.0,
-                                     progress_interval: int = 10,
-                                     dynamic_batch_controller=None):
-        """병렬 요청 실행 (개선된 버전 with 에러 처리 강화 및 배치 처리)
-        
-        Phase 3.4: ThreadPoolExecutor 에러 처리 통합
-        Phase 4.1: 배치 크기 파라미터화
-        Phase 4.2: 동적 배치 조정
-        
-        Args:
-            method: 실행할 메서드
-            stock_list: (symbol, market) 튜플 리스트
-            batch_size: 배치 크기 (None이면 전체를 한 번에 처리)
-            batch_delay: 배치 간 대기 시간 (초)
-            progress_interval: 진행 상황 출력 간격
-            dynamic_batch_controller: DynamicBatchController 인스턴스 (동적 조정용)
-        """
-        from .rate_limiting.enhanced_retry_decorator import RateLimitError, APIError
-        from .rate_limiting.enhanced_backoff_strategy import get_backoff_strategy
-        
-        futures = {}
-        results = []
-        
-        # Rate Limit 에러 발생 시 전체 작업 중단 플래그
-        rate_limit_error_occurred = False
-        rate_limit_error = None
-        
-        def wrapped_method(symbol, market):
-            """세마포어로 동시 실행 제한"""
-            with self.concurrent_limit:
-                return method(symbol, market)
-        
-        # 배치 처리 설정
-        if dynamic_batch_controller:
-            # 동적 배치 조정 사용
-            current_batch_size, current_batch_delay = dynamic_batch_controller.get_current_parameters()
-            batch_size = current_batch_size
-            batch_delay = current_batch_delay
-            print(f"🎯 동적 배치 조정 모드: 초기 배치 크기={batch_size}, 대기 시간={batch_delay:.1f}s")
-        
-        if batch_size is None:
-            batches = [stock_list]  # 전체를 하나의 배치로
-        else:
-            # stock_list를 batch_size 크기로 나누기
-            batches = [stock_list[i:i + batch_size] for i in range(0, len(stock_list), batch_size)]
-            print(f"📦 배치 처리 모드: {len(stock_list)}개 항목을 {len(batches)}개 배치로 처리 (배치 크기: {batch_size})")
-        
-        # 전체 작업을 재시도 가능하도록 감싸기
-        max_retries = 3  # 전체 작업 재시도 횟수
-        retry_count = 0
-        
-        while retry_count < max_retries:
-            futures.clear()
-            results.clear()
-            rate_limit_error_occurred = False
-            rate_limit_error = None
-            
-            # 배치별로 처리
-            for batch_idx, batch in enumerate(batches):
-                # 동적 배치 조정: 각 배치마다 새로운 파라미터 가져오기
-                if dynamic_batch_controller and batch_idx > 0:
-                    new_batch_size, new_batch_delay = dynamic_batch_controller.get_current_parameters()
-                    if new_batch_size != batch_size or new_batch_delay != batch_delay:
-                        batch_size = new_batch_size
-                        batch_delay = new_batch_delay
-                        print(f"📊 배치 파라미터 업데이트: 크기={batch_size}, 대기={batch_delay:.1f}s")
-                        # 새로운 배치 크기로 재구성이 필요한 경우 (다음 루프에서 적용)
-                
-                if len(batches) > 1:
-                    print(f"\n🔄 배치 {batch_idx + 1}/{len(batches)} 처리 중... ({len(batch)}개 항목)")
-                
-                # 배치 시작 시간 기록
-                batch_start_time = time.time()
-                
-                # 배치 내 순차적 제출로 초기 버스트 방지
-                batch_futures = {}
-                submit_delay = 0.01  # 각 제출 간 10ms 대기
-                
-                # 배치 통계 초기화
-                batch_stats = {
-                    'batch_idx': batch_idx,
-                    'batch_size': len(batch),
-                    'submit_start': time.time(),
-                    'symbols': []
-                }
-                
-                for idx, (symbol, market) in enumerate(batch):
-                    # 순차적 제출로 초기 버스트 방지
-                    if idx > 0 and submit_delay > 0:
-                        time.sleep(submit_delay)
-                    
-                    future = self.executor.submit(wrapped_method, symbol, market)
-                    batch_futures[future] = (symbol, market)
-                    futures[future] = (symbol, market)
-                    batch_stats['symbols'].append(symbol)
-                
-                batch_stats['submit_end'] = time.time()
-                batch_stats['submit_duration'] = batch_stats['submit_end'] - batch_stats['submit_start']
-                
-                # 배치 내 작업 완료 대기
-                batch_completed = 0
-                batch_total = len(batch)
-                batch_success_count = 0
-                batch_error_count = 0
-                
-                try:
-                    for future in as_completed(batch_futures, timeout=30):  # 30초 타임아웃
-                        symbol, market = batch_futures[future]
-                        batch_completed += 1
-                        
-                        try:
-                            result = future.result()
-                            results.append(result)
-                            batch_success_count += 1
-                            
-                            # 진행 상황 출력
-                            if batch_completed % progress_interval == 0 or batch_completed == batch_total:
-                                if len(batches) > 1:
-                                    print(f"  배치 진행률: {batch_completed}/{batch_total} ({batch_completed/batch_total*100:.1f}%)")
-                                else:
-                                    total = len(stock_list)
-                                    completed = len(results)
-                                    print(f"처리 진행률: {completed}/{total} ({completed/total*100:.1f}%)")
-                                
-                        except Exception as e:
-                            error_info = {
-                                'rt_cd': '9',  # 에러 코드
-                                'msg1': f'Error: {str(e)}',
-                                'error': True,
-                                'symbol': symbol,
-                                'market': market,
-                                'error_type': type(e).__name__,
-                                'error_details': str(e)
-                            }
-                            
-                            # Rate Limit 에러 감지
-                            if (isinstance(e, RateLimitError) or 
-                                (hasattr(e, 'response') and isinstance(e.response, dict) and 
-                                 e.response.get('rt_cd') == 'EGW00201') or
-                                'EGW00201' in str(e)):
-                                
-                                print(f"⚠️ Rate Limit 에러 감지 - {symbol} ({market})")
-                                rate_limit_error_occurred = True
-                                rate_limit_error = e
-                                
-                                # 남은 작업들 취소
-                                for future in futures:
-                                    if not future.done():
-                                        future.cancel()
-                                break
-                            
-                            # 일반 에러 처리
-                            print(f"❌ 에러 발생 - {symbol} ({market}): {e}")
-                            results.append(error_info)
-                            batch_error_count += 1
-                            
-                            # Rate limit 에러인 경우 기록
-                            if hasattr(self.rate_limiter, 'record_error'):
-                                self.rate_limiter.record_error()
-                    
-                    # Rate Limit 에러가 발생한 경우 배치 처리 중단
-                    if rate_limit_error_occurred:
-                        break
-                    
-                    # 동적 배치 조정: 배치 결과 기록
-                    if dynamic_batch_controller:
-                        batch_elapsed_time = time.time() - batch_start_time
-                        dynamic_batch_controller.record_batch_result(
-                            batch_size=len(batch),
-                            success_count=batch_success_count,
-                            error_count=batch_error_count,
-                            elapsed_time=batch_elapsed_time
-                        )
-                    
-                    # 배치별 결과 통계 수집 및 로깅
-                    batch_elapsed_time = time.time() - batch_start_time
-                    batch_stats['process_end'] = time.time()
-                    batch_stats['total_duration'] = batch_elapsed_time
-                    batch_stats['success_count'] = batch_success_count
-                    batch_stats['error_count'] = batch_error_count
-                    batch_stats['throughput'] = (batch_success_count + batch_error_count) / batch_elapsed_time if batch_elapsed_time > 0 else 0
-                    
-                    # 배치 처리 결과 로깅
-                    if len(batches) > 1:
-                        print(f"\n📊 배치 {batch_idx + 1} 통계:")
-                        print(f"   - 제출 시간: {batch_stats['submit_duration']:.2f}초 ({len(batch)}개)")
-                        print(f"   - 처리 시간: {batch_elapsed_time:.2f}초")
-                        print(f"   - 성공/실패: {batch_success_count}/{batch_error_count}")
-                        print(f"   - 처리량: {batch_stats['throughput']:.1f} TPS")
-                        
-                        # 에러가 있으면 에러 타입별로 분석
-                        if batch_error_count > 0:
-                            error_types = {}
-                            for r in results[-len(batch):]:  # 현재 배치의 결과만
-                                if r.get('error'):
-                                    error_type = r.get('error_type', 'Unknown')
-                                    error_types[error_type] = error_types.get(error_type, 0) + 1
-                            print(f"   - 에러 타입: {error_types}")
-                    
-                    # 배치 간 대기 (마지막 배치 제외)
-                    if batch_delay > 0 and batch_idx < len(batches) - 1:
-                        print(f"⏱️ 다음 배치까지 {batch_delay}초 대기...")
-                        time.sleep(batch_delay)
-                        
-                except TimeoutError:
-                    print(f"⏱️ 타임아웃 발생 - 30초 내 완료되지 않은 작업이 있습니다.")
-                    # 타임아웃된 작업들 처리
-                    for future, (symbol, market) in batch_futures.items():
-                        if not future.done():
-                            future.cancel()
-                            results.append({
-                                'rt_cd': '9',
-                                'msg1': 'Timeout - operation took too long',
-                                'error': True,
-                                'symbol': symbol,
-                                'market': market,
-                                'error_type': 'TimeoutError'
-                            })
-                    # 타임아웃이 발생하면 전체 처리 중단
-                    rate_limit_error_occurred = True
-                    break
-                
-                # Rate Limit 에러가 발생한 경우 배치 루프 종료
-                if rate_limit_error_occurred:
-                    break
-            
-            # Rate Limit 에러가 발생한 경우 재시도
-            if rate_limit_error_occurred:
-                retry_count += 1
-                if retry_count < max_retries:
-                    # Backoff 전략 사용
-                    backoff = get_backoff_strategy()
-                    wait_time, reason = backoff.calculate_backoff(retry_count - 1)
-                    
-                    print(f"\n⏳ Rate Limit 초과로 전체 작업 재시도 중...")
-                    print(f"   대기 시간: {wait_time:.2f}초 ({reason})")
-                    print(f"   재시도: {retry_count}/{max_retries}")
-                    
-                    time.sleep(wait_time)
-                    continue  # 전체 작업 재시도
-                else:
-                    # 최대 재시도 횟수 초과
-                    print(f"\n❌ 최대 재시도 횟수 초과. 부분 결과 반환.")
-                    # 실패한 작업들도 에러 정보로 추가
-                    for future, (symbol, market) in futures.items():
-                        if not future.done() or future.cancelled():
-                            results.append({
-                                'rt_cd': 'EGW00201',
-                                'msg1': 'Rate limit exceeded - max retries reached',
-                                'error': True,
-                                'symbol': symbol,
-                                'market': market,
-                                'error_type': 'RateLimitError'
-                            })
-            
-            # 성공적으로 완료
-            break
-        
-        # 통계 출력
-        if hasattr(self.rate_limiter, 'print_stats'):
-            self.rate_limiter.print_stats()
-        
-        # 성공/실패 요약
-        success_count = sum(1 for r in results if not r.get('error', False))
-        error_count = len(results) - success_count
-        
-        print(f"\n📊 처리 완료 - 성공: {success_count}, 실패: {error_count}")
-        if error_count > 0:
-            error_types = {}
-            for r in results:
-                if r.get('error'):
-                    error_type = r.get('error_type', 'Unknown')
-                    error_types[error_type] = error_types.get(error_type, 0) + 1
-            print(f"   에러 타입별 분포: {error_types}")
-        
-        # 배치 처리 통계
-        if len(batches) > 1:
-            print(f"   배치 수: {len(batches)}, 배치 크기: {batch_size}")
-        
-        # 동적 배치 조정 통계
-        if dynamic_batch_controller:
-            controller_stats = dynamic_batch_controller.get_stats()
-            print(f"\n🎯 동적 배치 조정 통계:")
-            print(f"   최종 배치 크기: {controller_stats['current_batch_size']}")
-            print(f"   최종 대기 시간: {controller_stats['current_batch_delay']:.1f}s")
-            print(f"   파라미터 조정 횟수: {controller_stats['adjustment_count']}")
-            print(f"   목표 에러율: {controller_stats['target_error_rate']:.1%}")
-            print(f"   실제 에러율: {controller_stats['overall_error_rate']:.1%}")
-        
-        return results
-    
     def __handle_rate_limit_error(self, retry_count: int):
         """Rate limit 에러 처리 (Exponential Backoff)
         
@@ -600,123 +222,10 @@ class KoreaInvestment:
         time.sleep(total_wait)
 
     def shutdown(self):
-        """리소스 정리 - ThreadPoolExecutor 종료"""
-        if hasattr(self, 'executor') and self.executor:
-            print("ThreadPoolExecutor 종료 중...")
-            self.executor.shutdown(wait=True)
-            self.executor = None
-            print("ThreadPoolExecutor 종료 완료")
-        
-        # Rate limiter 통계 최종 출력 및 저장
-        if hasattr(self, 'rate_limiter'):
-            if hasattr(self.rate_limiter, 'get_stats'):
-                stats = self.rate_limiter.get_stats()
-                if stats.get('total_calls', 0) > 0:
-                    print(f"\n최종 Rate Limiter 통계:")
-                    print(f"- 총 호출 수: {stats['total_calls']}")
-                    print(f"- 에러 수: {stats['error_count']}")
-                    print(f"- 에러율: {stats['error_rate']:.1%}")
-            
-            # 통계를 파일로 저장
-            if hasattr(self.rate_limiter, 'save_stats'):
-                filepath = self.rate_limiter.save_stats(include_timestamp=True)
-                if filepath:
-                    print(f"- 통계 저장됨: {filepath}")
-            
-            # 자동 저장 비활성화
-            if hasattr(self.rate_limiter, 'disable_auto_save'):
-                self.rate_limiter.disable_auto_save()
-        
-        # Backoff 전략 통계 출력
-        backoff_strategy = get_backoff_strategy()
-        backoff_stats = backoff_strategy.get_stats()
-        if backoff_stats['total_attempts'] > 0:
-            print(f"\n최종 Backoff 전략 통계:")
-            print(f"- Circuit 상태: {backoff_stats['state']}")
-            print(f"- 총 시도: {backoff_stats['total_attempts']}")
-            print(f"- 총 실패: {backoff_stats['total_failures']}")
-            print(f"- 성공률: {backoff_stats['success_rate']:.1%}")
-            print(f"- Circuit Open 횟수: {backoff_stats['circuit_opens']}")
-            print(f"- 평균 백오프 시간: {backoff_stats['avg_backoff_time']:.2f}초")
-        
-        # 캐시 통계 출력 (Phase 8.7)
-        if self._cache_enabled and self._cache:
-            cache_stats = self.get_cache_stats()
-            if cache_stats['total_entries'] > 0 or cache_stats['hit_count'] > 0:
-                print(f"\n최종 캐시 통계:")
-                print(f"- 활성화 여부: {'예' if cache_stats['enabled'] else '아니오'}")
-                print(f"- 총 항목 수: {cache_stats['total_entries']}")
-                print(f"- 캐시 적중: {cache_stats['hit_count']}")
-                print(f"- 캐시 미스: {cache_stats['miss_count']}")
-                print(f"- 적중률: {cache_stats['hit_rate']:.1%}")
-                print(f"- 메모리 사용량: {cache_stats['memory_usage']:.1f}MB")
-                print(f"- 만료된 항목: {cache_stats['expired_count']}")
-                print(f"- 제거된 항목: {cache_stats['eviction_count']}")
-        
-        # 에러 복구 시스템 통계 출력
-        recovery_system = get_error_recovery_system()
-        error_summary = recovery_system.get_error_summary(hours=24)
-        if error_summary['total_errors'] > 0:
-            print(f"\n최종 에러 복구 통계 (최근 24시간):")
-            print(f"- 총 에러 수: {error_summary['total_errors']}")
-            print(f"- 심각도별 분포: {error_summary['by_severity']}")
-            print(f"- 복구 성공률: {error_summary['recovery_rate']:.1%}")
-            print(f"- 가장 빈번한 에러:")
-            for error_info in error_summary['most_common'][:3]:
-                print(f"  - {error_info['error']}: {error_info['count']}회")
-        
-        # 에러 통계 파일로 저장
-        recovery_system.save_stats()
-        
-        # 통합 통계 저장 (Phase 5.1)
-        print("\n통합 통계 저장 중...")
-        stats_manager = get_stats_manager()
-        
-        # DynamicBatchController가 있다면 포함
-        batch_controller = None
-        if hasattr(self, '_dynamic_batch_controller'):
-            batch_controller = self._dynamic_batch_controller
-        
-        # 모든 모듈의 통계 수집
-        all_stats = stats_manager.collect_all_stats(
-            rate_limiter=self.rate_limiter if hasattr(self, 'rate_limiter') else None,
-            backoff_strategy=backoff_strategy,
-            error_recovery=recovery_system,
-            batch_controller=batch_controller,
-            cache=self._cache if self._cache_enabled and self._cache else None
-        )
-        
-        # JSON 형식으로 저장
-        json_path = stats_manager.save_stats(all_stats, format='json', include_timestamp=True)
-        print(f"- 통합 통계 저장됨 (JSON): {json_path}")
-        
-        # CSV 형식으로도 저장 (요약 정보)
-        csv_path = stats_manager.save_stats(all_stats, format='csv', include_timestamp=True)
-        print(f"- 통합 통계 저장됨 (CSV): {csv_path}")
-        
-        # 압축된 JSON Lines 형식으로 저장 (장기 보관용)
-        jsonl_gz_path = stats_manager.save_stats(
-            all_stats, 
-            format='jsonl', 
-            compress=True,
-            filename='stats_history',
-            include_timestamp=False
-        )
-        print(f"- 통계 이력 추가됨 (JSONL.GZ): {jsonl_gz_path}")
-        
-        # 시스템 상태 요약 출력
-        summary = all_stats.get('summary', {})
-        print(f"\n시스템 최종 상태: {summary.get('system_health', 'UNKNOWN')}")
-        print(f"- 전체 API 호출: {summary.get('total_api_calls', 0):,}")
-        print(f"- 전체 에러: {summary.get('total_errors', 0):,}")
-        print(f"- 전체 에러율: {summary.get('overall_error_rate', 0):.2%}")
-        
-        # 캐시 정리 (Phase 8.7)
-        if self._cache_enabled and self._cache:
-            # 백그라운드 스레드 정지
-            if hasattr(self._cache, 'stop_cleanup_thread'):
-                self._cache.stop_cleanup_thread()
-            logger.info("캐시 백그라운드 스레드 정리 완료")
+        """리소스 정리"""
+        # 컨텍스트 매니저 종료 시 호출됨
+        # 향후 필요한 정리 작업이 있으면 여기에 추가
+        pass
 
     def set_base_url(self, mock: bool = True):
         """테스트(모의투자) 서버 사용 설정
@@ -728,7 +237,6 @@ class KoreaInvestment:
         else:
             self.base_url = "https://openapi.koreainvestment.com:9443"
 
-    @retry_on_rate_limit(max_retries=3)  # 토큰 발급은 3회만 재시도
     def issue_access_token(self):
         """OAuth인증/접근토큰발급
         """
@@ -811,86 +319,36 @@ class KoreaInvestment:
         haskkey = resp.json()["HASH"]
         return haskkey
 
-    def fetch_search_stock_info_list(self, stock_market_list):
-        return self.__execute_concurrent_requests_with_cache(self.__fetch_search_stock_info, stock_market_list)
-
-    def fetch_price_list(self, stock_list):
-        return self.__execute_concurrent_requests_with_cache(self.__fetch_price, stock_list)
-
-    def fetch_price_list_with_batch(self, stock_list, batch_size=50, batch_delay=1.0, progress_interval=10):
-        """가격 목록 조회 (배치 처리 지원)
-        
-        Args:
-            stock_list: (symbol, market) 튜플 리스트
-            batch_size: 배치 크기 (기본값: 50)
-            batch_delay: 배치 간 대기 시간 (초, 기본값: 1.0)
-            progress_interval: 진행 상황 출력 간격 (기본값: 10)
-        
-        Returns:
-            list: 조회 결과 리스트
-        """
-        return self.__execute_concurrent_requests(
-            self.__fetch_price, 
-            stock_list,
-            batch_size=batch_size,
-            batch_delay=batch_delay,
-            progress_interval=progress_interval
-        )
-    
-    def fetch_price_list_with_dynamic_batch(self, stock_list, dynamic_batch_controller=None):
-        """가격 목록 조회 (동적 배치 조정)
-        
-        Args:
-            stock_list: (symbol, market) 튜플 리스트
-            dynamic_batch_controller: DynamicBatchController 인스턴스
-                                     (None이면 자동 생성)
-        
-        Returns:
-            list: 조회 결과 리스트
-        """
-        if dynamic_batch_controller is None:
-            from .batch_processing.dynamic_batch_controller import DynamicBatchController
-            dynamic_batch_controller = DynamicBatchController(
-                initial_batch_size=50,
-                initial_batch_delay=1.0,
-                target_error_rate=0.01
-            )
-        
-        return self.__execute_concurrent_requests(
-            self.__fetch_price,
-            stock_list,
-            dynamic_batch_controller=dynamic_batch_controller
-        )
-
-    def __fetch_price(self, symbol: str, market: str = "KR") -> dict:
+    def fetch_price(self, symbol: str, market: str = "KR") -> dict:
         """국내주식시세/주식현재가 시세
            해외주식현재가/해외주식 현재체결가
 
         Args:
             symbol (str): 종목코드
+            market (str): 시장 코드 ("KR", "KRX", "US" 등)
 
         Returns:
-            dict: _description_
+            dict: API 응답 데이터
         """
 
         if market == "KR" or market == "KRX":
-            stock_info = self.__fetch_stock_info(symbol, market)
-            symbol_type = self.__get_symbol_type(stock_info)
+            stock_info = self.fetch_stock_info(symbol, market)
+            symbol_type = self.get_symbol_type(stock_info)
             if symbol_type == "ETF":
-                resp_json = self.__fetch_etf_domestic_price("J", symbol)
+                resp_json = self.fetch_etf_domestic_price("J", symbol)
             else:
-                resp_json = self.__fetch_domestic_price("J", symbol)
+                resp_json = self.fetch_domestic_price("J", symbol)
         elif market == "US":
             # 기존: resp_json = self.fetch_oversea_price(symbol)  # 메서드 없음
-            # 개선: 이미 구현된 __fetch_price_detail_oversea() 활용
-            resp_json = self.__fetch_price_detail_oversea(symbol, market)
+            # 개선: 이미 구현된 fetch_price_detail_oversea() 활용
+            resp_json = self.fetch_price_detail_oversea(symbol, market)
             # 참고: 이 API는 현재가 외에도 PER, PBR, EPS, BPS 등 추가 정보 제공
         else:
             raise ValueError("Unsupported market type")
 
         return resp_json
 
-    def __get_symbol_type(self, symbol_info):
+    def get_symbol_type(self, symbol_info):
         symbol_type = symbol_info['output']['prdt_clsf_name']
         if symbol_type == '주권' or symbol_type == '상장REITS' or symbol_type == '사회간접자본투융자회사':
             return 'Stock'
@@ -899,22 +357,14 @@ class KoreaInvestment:
 
         return "Unknown"
 
-    @cacheable(
-        ttl=300,  # 5분
-        key_generator=lambda self, market_code, symbol: f"fetch_etf_domestic_price:{market_code}:{symbol}"
-    )
-    @retry_on_rate_limit()
-    def __fetch_etf_domestic_price(self, market_code: str, symbol: str) -> dict:
-        """주식현재가시세 (내부 메서드)
-        
-        Note: 이 메서드는 내부 사용을 위한 private 메서드입니다. 
-        사용자는 fetch_price_list() 통합 인터페이스를 사용하세요.
-        
+    def fetch_etf_domestic_price(self, market_code: str, symbol: str) -> dict:
+        """ETF 주식현재가시세
+
         Args:
-            market_code (str): 시장 분류코드
+            market_code (str): 시장 분류코드 (예: "J")
             symbol (str): 종목코드
         Returns:
-            dict: API 개발 가이드 참조
+            dict: API 응답 데이터
         """
         path = "uapi/domestic-stock/v1/quotations/inquire-price"
         url = f"{self.base_url}/{path}"
@@ -932,22 +382,14 @@ class KoreaInvestment:
         resp = requests.get(url, headers=headers, params=params)
         return resp.json()
 
-    @cacheable(
-        ttl=300,  # 5분
-        key_generator=lambda self, market_code, symbol: f"fetch_domestic_price:{market_code}:{symbol}"
-    )
-    @retry_on_rate_limit()
-    def __fetch_domestic_price(self, market_code: str, symbol: str) -> dict:
-        """주식현재가시세 (내부 메서드)
-        
-        Note: 이 메서드는 내부 사용을 위한 private 메서드입니다. 
-        사용자는 fetch_price_list() 통합 인터페이스를 사용하세요.
-        
+    def fetch_domestic_price(self, market_code: str, symbol: str) -> dict:
+        """국내 주식현재가시세
+
         Args:
-            market_code (str): 시장 분류코드
+            market_code (str): 시장 분류코드 (예: "J")
             symbol (str): 종목코드
         Returns:
-            dict: API 개발 가이드 참조
+            dict: API 응답 데이터
         """
         path = "uapi/domestic-stock/v1/quotations/inquire-price"
         url = f"{self.base_url}/{path}"
@@ -965,10 +407,6 @@ class KoreaInvestment:
         resp = requests.get(url, headers=headers, params=params)
         return resp.json()
 
-    @cacheable(
-        ttl=259200,  # 3일
-        key_generator=lambda self: "fetch_kospi_symbols"
-    )
     def fetch_kospi_symbols(self):
         """코스피 종목 코드
 
@@ -999,10 +437,6 @@ class KoreaInvestment:
         df = self.parse_kospi_master(base_dir)
         return df
 
-    @cacheable(
-        ttl=259200,  # 3일
-        key_generator=lambda self: "fetch_kosdaq_symbols"
-    )
     def fetch_kosdaq_symbols(self):
         """코스닥 종목 코드
 
@@ -1209,22 +643,12 @@ class KoreaInvestment:
         os.remove(tmp_fil2)
         return df
 
-    def fetch_price_detail_oversea_list(self, stock_market_list):
-        return self.__execute_concurrent_requests_with_cache(self.__fetch_price_detail_oversea, stock_market_list)
-
-    @cacheable(
-        ttl=300,  # 5분 
-        key_generator=lambda self, symbol, market: f"fetch_price_detail_oversea:{market}:{symbol}"
-    )
-    @retry_on_rate_limit()
-    def __fetch_price_detail_oversea(self, symbol: str, market: str = "KR"):
+    def fetch_price_detail_oversea(self, symbol: str, market: str = "KR"):
         """해외주식 현재가상세
 
         Args:
             symbol (str): symbol
         """
-        self.rate_limiter.acquire()
-
         path = "/uapi/overseas-price/v1/quotations/price-detail"
         url = f"{self.base_url}/{path}"
 
@@ -1259,17 +683,7 @@ class KoreaInvestment:
         # 모든 거래소에서 실패한 경우
         raise ValueError(f"Unable to fetch price for symbol '{symbol}' in any {market} exchange")
 
-    def fetch_stock_info_list(self, stock_market_list):
-        return self.__execute_concurrent_requests_with_cache(self.__fetch_stock_info, stock_market_list)
-
-    @cacheable(
-        ttl=18000,  # 5시간
-        key_generator=lambda self, symbol, market: f"fetch_stock_info:{market}:{symbol}"
-    )
-    @retry_on_rate_limit()
-    def __fetch_stock_info(self, symbol: str, market: str = "KR"):
-        self.rate_limiter.acquire()
-
+    def fetch_stock_info(self, symbol: str, market: str = "KR"):
         path = "uapi/domestic-stock/v1/quotations/search-info"
         url = f"{self.base_url}/{path}"
         headers = {
@@ -1299,21 +713,10 @@ class KoreaInvestment:
                     continue
                 raise e
 
-    def fetch_search_stock_info_list(self, stock_market_list):
-        return self.__execute_concurrent_requests_with_cache(self.__fetch_search_stock_info, stock_market_list)
-
-    @cacheable(
-        ttl=18000,  # 5시간
-        key_generator=lambda self, symbol, market: f"fetch_search_stock_info:{market}:{symbol}"
-    )
-    @retry_on_rate_limit()
-    def __fetch_search_stock_info(self, symbol: str, market: str = "KR"):
+    def fetch_search_stock_info(self, symbol: str, market: str = "KR"):
         """
         국내 주식만 제공하는 API이다
         """
-
-        self.rate_limiter.acquire()
-
         path = "uapi/domestic-stock/v1/quotations/search-stock-info"
         url = f"{self.base_url}/{path}"
         headers = {
@@ -1345,341 +748,6 @@ class KoreaInvestment:
                 if resp_json['rt_cd'] != API_RETURN_CODE['SUCCESS']:
                     continue
                 raise e
-
-    def __execute_concurrent_requests_with_cache(self, method, stock_list,
-                                                  batch_size: Optional[int] = None,
-                                                  batch_delay: float = 0.0,
-                                                  progress_interval: int = 10,
-                                                  use_cache: bool = True):
-        """캐시를 활용한 병렬 요청 실행
-        
-        Phase 8.4: 리스트 메서드 캐시 처리
-        
-        Args:
-            method: 실행할 메서드
-            stock_list: (symbol, market) 튜플 리스트
-            batch_size: 배치 크기 (None이면 전체를 한 번에 처리)
-            batch_delay: 배치 간 대기 시간 (초)
-            progress_interval: 진행 상황 출력 간격
-            use_cache: 캐시 사용 여부
-        
-        Returns:
-            list: 조회 결과 리스트
-        """
-        if not use_cache or not hasattr(self, '_cache') or not self._cache_enabled:
-            # 캐시가 비활성화되어 있으면 기존 메서드 사용
-            return self.__execute_concurrent_requests(
-                method, stock_list, batch_size, batch_delay, progress_interval
-            )
-        
-        # 결과를 순서대로 저장하기 위한 딕셔너리
-        cached_results = {}
-        uncached_items = []
-        result_order = []  # 원래 순서 유지용
-        
-        # 1. 캐시에서 먼저 조회
-        cache_hits = 0
-        cache_misses = 0
-        
-        for idx, (symbol, market) in enumerate(stock_list):
-            result_order.append((idx, symbol, market))
-            
-            # 캐시 키 생성
-            method_name = getattr(method, '__name__', str(method)).replace('_KoreaInvestment__', '')
-            cache_key = f"{method_name}:{market}:{symbol}"
-            
-            # 캐시에서 조회
-            cached_value = self._cache.get(cache_key)
-            if cached_value is not None:
-                cached_results[idx] = cached_value
-                cache_hits += 1
-            else:
-                uncached_items.append((symbol, market))
-                cache_misses += 1
-        
-        if cache_hits > 0:
-            print(f"💾 캐시 적중: {cache_hits}개 ({cache_hits/len(stock_list)*100:.1f}%), "
-                  f"캐시 미스: {cache_misses}개 ({cache_misses/len(stock_list)*100:.1f}%)")
-        
-        # 2. 캐시되지 않은 항목만 API 호출
-        api_results = []
-        if uncached_items:
-            print(f"🔄 API 호출 필요: {len(uncached_items)}개 항목")
-            api_results = self.__execute_concurrent_requests(
-                method, uncached_items, batch_size, batch_delay, progress_interval
-            )
-            
-            # 3. API 호출 결과를 캐시에 저장
-            method_name = getattr(method, '__name__', str(method)).replace('_KoreaInvestment__', '')
-            for (symbol, market), result in zip(uncached_items, api_results):
-                # 성공한 경우만 캐싱
-                if result.get('rt_cd') == '0':
-                    cache_key = f"{method_name}:{market}:{symbol}"
-                    # 메서드별 TTL은 cacheable 데코레이터에서 처리
-                    # 여기서는 기본 TTL 사용
-                    self._cache.set(cache_key, result)
-        
-        # 4. 전체 결과 조합 (원래 순서대로)
-        final_results = []
-        api_result_idx = 0
-        
-        for idx, symbol, market in result_order:
-            if idx in cached_results:
-                # 캐시된 결과 사용
-                final_results.append(cached_results[idx])
-            else:
-                # API 호출 결과 사용
-                if api_result_idx < len(api_results):
-                    final_results.append(api_results[api_result_idx])
-                    api_result_idx += 1
-                else:
-                    # 예외적인 경우 (API 호출 실패 등)
-                    final_results.append({
-                        'rt_cd': '9',
-                        'error': True,
-                        'symbol': symbol,
-                        'market': market,
-                        'msg1': 'Failed to fetch data'
-                    })
-        
-        # 캐시 통계 업데이트
-        if hasattr(self._cache, 'print_stats') and cache_hits > 0:
-            print(f"📊 API 호출 절감: {cache_hits}회")
-        
-        return final_results
-    
-    # Phase 8.6: 캐시 관리 메서드
-    def clear_cache(self, pattern: Optional[str] = None):
-        """캐시 삭제
-        
-        Args:
-            pattern: 삭제할 캐시 키 패턴 (None이면 전체 삭제)
-                    예: "fetch_domestic_price:J:005930"
-        """
-        if not self._cache_enabled or not self._cache:
-            return
-        
-        if pattern is None:
-            # 전체 캐시 삭제
-            self._cache.clear()
-            logger.info("전체 캐시 삭제 완료")
-        else:
-            # 패턴에 맞는 캐시 삭제
-            deleted_count = self._cache.delete_pattern(pattern)
-            logger.info(f"{pattern} 패턴의 캐시 {deleted_count}개 삭제 완료")
-    
-    def get_cache_stats(self) -> dict:
-        """캐시 통계 조회
-        
-        Returns:
-            dict: 캐시 통계 정보
-        """
-        if not self._cache_enabled or not self._cache:
-            return {
-                'enabled': False,
-                'hit_rate': 0.0,
-                'total_entries': 0,
-                'memory_usage': 0,
-                'expired_count': 0
-            }
-        
-        stats = self._cache.get_stats()
-        return {
-            'enabled': True,
-            'hit_rate': stats.get('hit_rate', 0.0),
-            'total_entries': stats.get('size', 0),
-            'memory_usage': stats.get('memory_usage_mb', 0),
-            'expired_count': stats.get('expired_count', 0),
-            'hit_count': stats.get('hit_count', 0),
-            'miss_count': stats.get('miss_count', 0),
-            'eviction_count': stats.get('eviction_count', 0)
-        }
-    
-    def set_cache_enabled(self, enabled: bool):
-        """캐시 기능 on/off
-        
-        Args:
-            enabled: True면 캐시 활성화, False면 비활성화
-        """
-        self._cache_enabled = enabled
-        logger.info(f"캐시 {'활성화' if enabled else '비활성화'}")
-    
-    def preload_cache(self, symbols: List[str], market: str = "KR"):
-        """자주 사용하는 종목 미리 캐싱
-        
-        Args:
-            symbols: 종목 코드 리스트
-            market: 시장 코드 (기본값: "KR")
-        """
-        if not self._cache_enabled or not self._cache:
-            logger.warning("캐시가 비활성화되어 있어 preload를 수행할 수 없습니다")
-            return
-        
-        print(f"🔄 {len(symbols)}개 종목 캐시 사전 로드 시작...")
-        
-        # 종목 정보 로드
-        stock_info_list = [(symbol, market) for symbol in symbols]
-        self.fetch_stock_info_list(stock_info_list)
-        
-        # 현재가 정보 로드
-        price_list = [(symbol, market) for symbol in symbols]
-        self.fetch_price_list(price_list)
-        
-        print(f"✅ {len(symbols)}개 종목 캐시 사전 로드 완료")
-        
-        # 캐시 통계 출력
-        stats = self.get_cache_stats()
-        print(f"📊 캐시 상태: {stats['total_entries']}개 항목, "
-              f"메모리 사용량: {stats['memory_usage']:.1f}MB")
-    
-    # Visualization 메서드들
-    def create_monitoring_dashboard(self, 
-                                  stats_dir: str = "logs/integrated_stats",
-                                  update_interval: int = 5000) -> Optional[Any]:
-        """모니터링 대시보드 생성
-        
-        Args:
-            stats_dir: 통계 파일 디렉토리
-            update_interval: 업데이트 간격 (밀리초)
-            
-        Returns:
-            대시보드 Figure 객체 또는 None
-        """
-        if not self.dashboard_manager:
-            logger.error("Visualization 모듈이 초기화되지 않았습니다.")
-            return None
-        
-        try:
-            # 데이터 로드
-            self.visualizer.stats_dir = Path(stats_dir)
-            self.visualizer.load_history_data()
-            self.visualizer.load_latest_stats()
-            
-            # 대시보드 생성
-            dashboard = self.dashboard_manager.create_realtime_dashboard(update_interval)
-            
-            if dashboard:
-                logger.info("모니터링 대시보드 생성 완료")
-            
-            return dashboard
-            
-        except Exception as e:
-            logger.error(f"대시보드 생성 실패: {e}")
-            return None
-    
-    def save_monitoring_dashboard(self, 
-                                filename: str = "api_monitoring_dashboard.html") -> bool:
-        """모니터링 대시보드를 파일로 저장
-        
-        Args:
-            filename: 저장할 파일명
-            
-        Returns:
-            성공 여부
-        """
-        if not self.dashboard_manager:
-            logger.error("Visualization 모듈이 초기화되지 않았습니다.")
-            return False
-        
-        try:
-            path = self.dashboard_manager.save_dashboard(filename)
-            return bool(path)
-        except Exception as e:
-            logger.error(f"대시보드 저장 실패: {e}")
-            return False
-    
-    def create_stats_report(self, save_as: str = "monitoring_report") -> Dict[str, str]:
-        """통계 리포트 생성
-        
-        Args:
-            save_as: 저장할 파일명 (확장자 제외)
-            
-        Returns:
-            생성된 파일 경로들
-        """
-        if not self.dashboard_manager:
-            logger.error("Visualization 모듈이 초기화되지 않았습니다.")
-            return {}
-        
-        try:
-            paths = self.dashboard_manager.create_report(save_as)
-            logger.info(f"통계 리포트 생성 완료: {len(paths)}개 파일")
-            return paths
-        except Exception as e:
-            logger.error(f"리포트 생성 실패: {e}")
-            return {}
-    
-    def get_system_health_chart(self) -> Optional[Any]:
-        """시스템 헬스 차트 생성
-        
-        Returns:
-            헬스 인디케이터 Figure 또는 None
-        """
-        if not self.visualizer:
-            logger.error("Visualization 모듈이 초기화되지 않았습니다.")
-            return None
-        
-        try:
-            # 최신 통계 로드
-            if not self.visualizer.latest_stats:
-                self.visualizer.load_latest_stats()
-            
-            # 헬스 차트 생성
-            chart = self.visualizer.create_system_health_indicator()
-            return chart
-        except Exception as e:
-            logger.error(f"헬스 차트 생성 실패: {e}")
-            return None
-    
-    def get_api_usage_chart(self, hours: int = 24) -> Optional[Any]:
-        """API 사용량 차트 생성
-        
-        Args:
-            hours: 표시할 시간 범위
-            
-        Returns:
-            API 사용량 차트 Figure 또는 None
-        """
-        if not self.visualizer:
-            logger.error("Visualization 모듈이 초기화되지 않았습니다.")
-            return None
-        
-        try:
-            # 히스토리 데이터 로드
-            if not self.visualizer.history_data:
-                self.visualizer.load_history_data()
-            
-            # 데이터프레임 생성
-            df = self.visualizer.prepare_dataframe()
-            
-            # 시간 필터링
-            if not df.empty and 'timestamp' in df.columns:
-                from datetime import datetime, timedelta
-                cutoff_time = datetime.now() - timedelta(hours=hours)
-                df = df[df['timestamp'] >= cutoff_time]
-            
-            # API 호출 차트 생성
-            chart = self.visualizer.create_api_calls_chart(df)
-            return chart
-        except Exception as e:
-            logger.error(f"API 사용량 차트 생성 실패: {e}")
-            return None
-    
-    def show_monitoring_dashboard(self):
-        """모니터링 대시보드 표시 (브라우저에서 열기)"""
-        if not self.dashboard_manager:
-            logger.error("Visualization 모듈이 초기화되지 않았습니다.")
-            return
-        
-        try:
-            # 대시보드가 없으면 생성
-            if not self.dashboard_manager.dashboard:
-                self.create_monitoring_dashboard()
-            
-            # 대시보드 표시
-            self.dashboard_manager.show_dashboard()
-        except Exception as e:
-            logger.error(f"대시보드 표시 실패: {e}")
 
     # IPO 관련 헬퍼 함수들
     def _validate_date_format(self, date_str: str) -> bool:
@@ -1777,11 +845,6 @@ class KoreaInvestment:
             return num_str
 
     # IPO Schedule API
-    @cacheable(
-        ttl=3600,  # 1시간
-        key_generator=lambda self, from_date=None, to_date=None, symbol="": f"fetch_ipo_schedule:{from_date or 'DEFAULT'}:{to_date or 'DEFAULT'}:{symbol or 'ALL'}"
-    )
-    @retry_on_rate_limit()
     def fetch_ipo_schedule(self, from_date: str = None, to_date: str = None, symbol: str = "") -> dict:
         """공모주 청약 일정 조회
         
@@ -1842,9 +905,7 @@ class KoreaInvestment:
         # 모의투자 체크
         if self.mock:
             raise ValueError("공모주청약일정 조회는 모의투자를 지원하지 않습니다.")
-            
-        self.rate_limiter.acquire()
-        
+
         # 날짜 기본값 설정
         if not from_date:
             from_date = datetime.now().strftime("%Y%m%d")

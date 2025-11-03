@@ -45,10 +45,10 @@ def example_basic_us_stock():
     with KoreaInvestment(api_key, api_secret, acc_no, mock=False) as broker:
         print("📡 AAPL 주식 정보 조회 중...")
         sys.stdout.flush()
-        
+
         # 단일 미국 주식 조회
-        result = broker.fetch_price_list([("AAPL", "US")])[0]
-        
+        result = broker.fetch_price("AAPL", "US")
+
         if result['rt_cd'] == '0':
             output = result['output']
             print(f"\n📈 AAPL (애플) 현재가 정보:")
@@ -84,13 +84,16 @@ def example_multiple_us_stocks():
             ("TSLA", "US"),    # 테슬라
             ("NVDA", "US"),    # 엔비디아
         ]
-        
-        # 한 번에 조회
-        results = broker.fetch_price_list(us_stocks)
-        
+
+        # 순차 조회
+        results = []
+        for symbol, market in us_stocks:
+            result = broker.fetch_price(symbol, market)
+            results.append(result)
+
         print("\n📊 미국 주요 기술주 현재가:")
         print("-" * 50)
-        
+
         for (symbol, _), result in zip(us_stocks, results):
             if result['rt_cd'] == '0':
                 output = result['output']
@@ -123,12 +126,16 @@ def example_mixed_kr_us_stocks():
             ("000660", "KR"),  # SK하이닉스
             ("NVDA", "US"),    # 엔비디아
         ]
-        
-        results = broker.fetch_price_list(mixed_portfolio)
-        
+
+        # 순차 조회
+        results = []
+        for symbol, market in mixed_portfolio:
+            result = broker.fetch_price(symbol, market)
+            results.append(result)
+
         print("\n📈 글로벌 포트폴리오 현재가:")
         print("-" * 60)
-        
+
         for (symbol, market), result in zip(mixed_portfolio, results):
             if result['rt_cd'] == '0':
                 if market == "KR":
@@ -165,8 +172,8 @@ def example_us_stock_details():
     
     with KoreaInvestment(api_key, api_secret, acc_no, mock=False) as broker:
         # 애플 상세 정보
-        result = broker.fetch_price_list([("AAPL", "US")])[0]
-        
+        result = broker.fetch_price("AAPL", "US")
+
         if result['rt_cd'] == '0':
             output = result['output']
             
@@ -212,12 +219,12 @@ def example_error_handling():
         for symbol, market in test_symbols:
             try:
                 print(f"\n테스트: {symbol} ({market})")
-                result = broker.fetch_price_list([(symbol, market)])
-                
-                if result and result[0]['rt_cd'] == '0':
-                    print(f"✅ 성공: ${result[0]['output']['last']}")
+                result = broker.fetch_price(symbol, market)
+
+                if result and result['rt_cd'] == '0':
+                    print(f"✅ 성공: ${result['output']['last']}")
                 else:
-                    error_msg = result[0].get('msg1', '알 수 없는 오류') if result else "No result"
+                    error_msg = result.get('msg1', '알 수 없는 오류') if result else "No result"
                     print(f"❌ API 오류: {error_msg}")
                     
             except ValueError as e:

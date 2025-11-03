@@ -147,7 +147,6 @@ class TestFetchIPOSchedule:
         broker.access_token = "test_token"
         broker.api_key = "test_key"
         broker.api_secret = "test_secret"
-        broker.rate_limiter = Mock()
         broker._validate_date_format = KoreaInvestment._validate_date_format.__get__(broker)
         broker._validate_date_range = KoreaInvestment._validate_date_range.__get__(broker)
         broker.fetch_ipo_schedule = KoreaInvestment.fetch_ipo_schedule.__get__(broker)
