@@ -35,8 +35,12 @@ def example_basic_us_stock():
         print(f"  KOREA_INVESTMENT_API_KEY: {'설정됨' if api_key else '없음'}")
         print(f"  KOREA_INVESTMENT_API_SECRET: {'설정됨' if api_secret else '없음'}")
         print(f"  KOREA_INVESTMENT_ACCOUNT_NO: {'설정됨' if acc_no else '없음'}")
+        print("\n환경 변수 설정 방법:")
+        print("  export KOREA_INVESTMENT_API_KEY='your-api-key'")
+        print("  export KOREA_INVESTMENT_API_SECRET='your-api-secret'")
+        print("  export KOREA_INVESTMENT_ACCOUNT_NO='12345678-01'")
         sys.stdout.flush()
-        return
+        sys.exit(1)
     
     print("✅ API 인증 정보 확인 완료")
     sys.stdout.flush()
@@ -69,11 +73,22 @@ def example_multiple_us_stocks():
     print("\n" + "=" * 60)
     print("2. 여러 미국 주식 동시 조회")
     print("=" * 60)
-    
+
     api_key = os.getenv('KOREA_INVESTMENT_API_KEY')
     api_secret = os.getenv('KOREA_INVESTMENT_API_SECRET')
     acc_no = os.getenv('KOREA_INVESTMENT_ACCOUNT_NO')
-    
+
+    if not all([api_key, api_secret, acc_no]):
+        print("❌ API 인증 정보가 없습니다. 환경 변수를 확인하세요.")
+        print(f"  KOREA_INVESTMENT_API_KEY: {'설정됨' if api_key else '없음'}")
+        print(f"  KOREA_INVESTMENT_API_SECRET: {'설정됨' if api_secret else '없음'}")
+        print(f"  KOREA_INVESTMENT_ACCOUNT_NO: {'설정됨' if acc_no else '없음'}")
+        print("\n환경 변수 설정 방법:")
+        print("  export KOREA_INVESTMENT_API_KEY='your-api-key'")
+        print("  export KOREA_INVESTMENT_API_SECRET='your-api-secret'")
+        print("  export KOREA_INVESTMENT_ACCOUNT_NO='12345678-01'")
+        sys.exit(1)
+
     with KoreaInvestment(api_key, api_secret, acc_no, mock=False) as broker:
         # 여러 미국 주식 리스트
         us_stocks = [
@@ -111,11 +126,22 @@ def example_mixed_kr_us_stocks():
     print("\n" + "=" * 60)
     print("3. 국내/미국 주식 혼합 조회")
     print("=" * 60)
-    
+
     api_key = os.getenv('KOREA_INVESTMENT_API_KEY')
     api_secret = os.getenv('KOREA_INVESTMENT_API_SECRET')
     acc_no = os.getenv('KOREA_INVESTMENT_ACCOUNT_NO')
-    
+
+    if not all([api_key, api_secret, acc_no]):
+        print("❌ API 인증 정보가 없습니다. 환경 변수를 확인하세요.")
+        print(f"  KOREA_INVESTMENT_API_KEY: {'설정됨' if api_key else '없음'}")
+        print(f"  KOREA_INVESTMENT_API_SECRET: {'설정됨' if api_secret else '없음'}")
+        print(f"  KOREA_INVESTMENT_ACCOUNT_NO: {'설정됨' if acc_no else '없음'}")
+        print("\n환경 변수 설정 방법:")
+        print("  export KOREA_INVESTMENT_API_KEY='your-api-key'")
+        print("  export KOREA_INVESTMENT_API_SECRET='your-api-secret'")
+        print("  export KOREA_INVESTMENT_ACCOUNT_NO='12345678-01'")
+        sys.exit(1)
+
     with KoreaInvestment(api_key, api_secret, acc_no, mock=False) as broker:
         # 국내/미국 혼합 포트폴리오
         mixed_portfolio = [
@@ -165,11 +191,22 @@ def example_us_stock_details():
     print("\n" + "=" * 60)
     print("4. 미국 주식 상세 재무 정보")
     print("=" * 60)
-    
+
     api_key = os.getenv('KOREA_INVESTMENT_API_KEY')
     api_secret = os.getenv('KOREA_INVESTMENT_API_SECRET')
     acc_no = os.getenv('KOREA_INVESTMENT_ACCOUNT_NO')
-    
+
+    if not all([api_key, api_secret, acc_no]):
+        print("❌ API 인증 정보가 없습니다. 환경 변수를 확인하세요.")
+        print(f"  KOREA_INVESTMENT_API_KEY: {'설정됨' if api_key else '없음'}")
+        print(f"  KOREA_INVESTMENT_API_SECRET: {'설정됨' if api_secret else '없음'}")
+        print(f"  KOREA_INVESTMENT_ACCOUNT_NO: {'설정됨' if acc_no else '없음'}")
+        print("\n환경 변수 설정 방법:")
+        print("  export KOREA_INVESTMENT_API_KEY='your-api-key'")
+        print("  export KOREA_INVESTMENT_API_SECRET='your-api-secret'")
+        print("  export KOREA_INVESTMENT_ACCOUNT_NO='12345678-01'")
+        sys.exit(1)
+
     with KoreaInvestment(api_key, api_secret, acc_no, mock=False) as broker:
         # 애플 상세 정보
         result = broker.fetch_price("AAPL", "US")
@@ -203,11 +240,22 @@ def example_error_handling():
     print("\n" + "=" * 60)
     print("5. 에러 처리 예제")
     print("=" * 60)
-    
+
     api_key = os.getenv('KOREA_INVESTMENT_API_KEY')
     api_secret = os.getenv('KOREA_INVESTMENT_API_SECRET')
     acc_no = os.getenv('KOREA_INVESTMENT_ACCOUNT_NO')
-    
+
+    if not all([api_key, api_secret, acc_no]):
+        print("❌ API 인증 정보가 없습니다. 환경 변수를 확인하세요.")
+        print(f"  KOREA_INVESTMENT_API_KEY: {'설정됨' if api_key else '없음'}")
+        print(f"  KOREA_INVESTMENT_API_SECRET: {'설정됨' if api_secret else '없음'}")
+        print(f"  KOREA_INVESTMENT_ACCOUNT_NO: {'설정됨' if acc_no else '없음'}")
+        print("\n환경 변수 설정 방법:")
+        print("  export KOREA_INVESTMENT_API_KEY='your-api-key'")
+        print("  export KOREA_INVESTMENT_API_SECRET='your-api-secret'")
+        print("  export KOREA_INVESTMENT_ACCOUNT_NO='12345678-01'")
+        sys.exit(1)
+
     with KoreaInvestment(api_key, api_secret, acc_no, mock=False) as broker:
         # 잘못된 심볼들
         test_symbols = [

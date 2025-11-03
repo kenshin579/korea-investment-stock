@@ -174,16 +174,34 @@ class KoreaInvestment:
             api_secret (str): 발급받은 API secret
             acc_no (str): 계좌번호 체계의 앞 8자리-뒤 2자리 (예: "12345678-01")
             mock (bool): True (mock trading), False (real trading)
+
+        Raises:
+            ValueError: api_key, api_secret, 또는 acc_no가 None이거나 비어있을 때
+            ValueError: acc_no 형식이 올바르지 않을 때
         """
+        # 입력 검증
+        if not api_key:
+            raise ValueError("api_key는 필수입니다. KOREA_INVESTMENT_API_KEY 환경 변수를 설정하세요.")
+        if not api_secret:
+            raise ValueError("api_secret은 필수입니다. KOREA_INVESTMENT_API_SECRET 환경 변수를 설정하세요.")
+        if not acc_no:
+            raise ValueError("acc_no는 필수입니다. KOREA_INVESTMENT_ACCOUNT_NO 환경 변수를 설정하세요.")
+        if '-' not in acc_no:
+            raise ValueError(f"계좌번호 형식이 올바르지 않습니다. '12345678-01' 형식이어야 합니다. 입력값: {acc_no}")
+
         self.mock = mock
         self.set_base_url(mock)
         self.api_key = api_key
         self.api_secret = api_secret
 
-        # account number
+        # account number - 검증 후 split
+        parts = acc_no.split('-')
+        if len(parts) != 2 or len(parts[0]) != 8 or len(parts[1]) != 2:
+            raise ValueError(f"계좌번호 형식이 올바르지 않습니다. 앞 8자리-뒤 2자리여야 합니다. 입력값: {acc_no}")
+
         self.acc_no = acc_no
-        self.acc_no_prefix = acc_no.split('-')[0]
-        self.acc_no_postfix = acc_no.split('-')[1]
+        self.acc_no_prefix = parts[0]
+        self.acc_no_postfix = parts[1]
 
         # access token
         self.token_file = Path("~/.cache/mojito2/token.dat").expanduser()
