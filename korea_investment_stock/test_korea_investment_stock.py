@@ -1,7 +1,7 @@
 import os
 from unittest import TestCase, skip
 
-from .. import KoreaInvestment, API_RETURN_CODE
+from korea_investment_stock import KoreaInvestment, API_RETURN_CODE
 
 
 class TestKoreaInvestment(TestCase):
