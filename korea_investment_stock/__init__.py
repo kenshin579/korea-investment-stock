@@ -8,6 +8,8 @@ from .korea_investment_stock import (
     EXCHANGE_CODE2,
     API_RETURN_CODE,
 )
+from .cache_manager import CacheManager, CacheEntry
+from .cached_korea_investment import CachedKoreaInvestment
 
 __version__ = "0.6.0"
 
@@ -16,4 +18,7 @@ __all__ = [
     "EXCHANGE_CODE",
     "EXCHANGE_CODE2",
     "API_RETURN_CODE",
+    "CacheManager",
+    "CacheEntry",
+    "CachedKoreaInvestment",
 ]
