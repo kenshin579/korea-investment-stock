@@ -8,53 +8,53 @@
 
 ---
 
-## Phase 1: 코어 구현 (7시간)
+## Phase 1: 코어 구현 (7시간) ✅ COMPLETED
 
-### 1.1 저장소 클래스 설계
+### 1.1 저장소 클래스 설계 ✅
 
-- [ ] `TokenStorage` 추상 클래스 구현 (1h)
-  - [ ] `save_token()` 추상 메서드
-  - [ ] `load_token()` 추상 메서드
-  - [ ] `check_token_valid()` 추상 메서드
-  - [ ] `delete_token()` 추상 메서드
+- [x] `TokenStorage` 추상 클래스 구현 (1h)
+  - [x] `save_token()` 추상 메서드
+  - [x] `load_token()` 추상 메서드
+  - [x] `check_token_valid()` 추상 메서드
+  - [x] `delete_token()` 추상 메서드
 
-### 1.2 FileTokenStorage 구현 (2h)
+### 1.2 FileTokenStorage 구현 ✅
 
-- [ ] 기존 파일 저장 로직 래핑
-  - [ ] `save_token()` - Pickle 저장
-  - [ ] `load_token()` - Pickle 로드
-  - [ ] `check_token_valid()` - 파일 존재 및 만료 확인
-  - [ ] `delete_token()` - 파일 삭제
-- [ ] 기본 경로 설정: `~/.cache/kis/token.key`
-- [ ] 디렉토리 자동 생성 로직
+- [x] 기존 파일 저장 로직 래핑
+  - [x] `save_token()` - Pickle 저장
+  - [x] `load_token()` - Pickle 로드
+  - [x] `check_token_valid()` - 파일 존재 및 만료 확인
+  - [x] `delete_token()` - 파일 삭제
+- [x] 기본 경로 설정: `~/.cache/kis/token.key`
+- [x] 디렉토리 자동 생성 로직
 
-### 1.3 RedisTokenStorage 구현 (3h)
+### 1.3 RedisTokenStorage 구현 ✅
 
-- [ ] Redis 클라이언트 초기화
-  - [ ] `redis_url` 파라미터 처리
-  - [ ] `password` 파라미터 처리 (URL에 주입)
-  - [ ] Redis 연결 설정
-- [ ] Redis 키 생성 로직
-  - [ ] `_get_redis_key()` 메서드 (SHA-256 해시)
-- [ ] 토큰 저장/로드 구현
-  - [ ] `save_token()` - Hash 저장 + TTL 설정
-  - [ ] `load_token()` - Hash 로드 + 타입 변환
-  - [ ] `check_token_valid()` - 존재 확인 + 만료 확인
-  - [ ] `delete_token()` - Redis 키 삭제
+- [x] Redis 클라이언트 초기화
+  - [x] `redis_url` 파라미터 처리
+  - [x] `password` 파라미터 처리 (URL에 주입)
+  - [x] Redis 연결 설정
+- [x] Redis 키 생성 로직
+  - [x] `_get_redis_key()` 메서드 (SHA-256 해시)
+- [x] 토큰 저장/로드 구현
+  - [x] `save_token()` - Hash 저장 + TTL 설정
+  - [x] `load_token()` - Hash 로드 + 타입 변환
+  - [x] `check_token_valid()` - 존재 확인 + 만료 확인
+  - [x] `delete_token()` - Redis 키 삭제
 
-### 1.4 단위 테스트 (1h)
+### 1.4 단위 테스트 ✅
 
-- [ ] `test_token_storage.py` 파일 생성
-- [ ] `TestFileTokenStorage` 클래스
-  - [ ] `test_save_and_load()`
-  - [ ] `test_expired_token()`
-  - [ ] `test_wrong_credentials()`
-- [ ] `TestRedisTokenStorage` 클래스 (fakeredis)
-  - [ ] `fakeredis` fixture 설정
-  - [ ] `test_save_and_load()`
-  - [ ] `test_redis_with_password()`
-  - [ ] `test_ttl_auto_expire()`
-  - [ ] `test_concurrent_access()`
+- [x] `test_token_storage.py` 파일 생성
+- [x] `TestFileTokenStorage` 클래스
+  - [x] `test_save_and_load()`
+  - [x] `test_expired_token()`
+  - [x] `test_wrong_credentials()`
+- [x] `TestRedisTokenStorage` 클래스 (fakeredis)
+  - [x] `fakeredis` fixture 설정
+  - [x] `test_save_and_load()`
+  - [x] `test_redis_with_password()`
+  - [x] `test_ttl_auto_expire()`
+  - [x] `test_concurrent_access()`
 
 ---
 
