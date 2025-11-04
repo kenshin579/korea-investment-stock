@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "korea-investment-stock"
-version = "0.6.0"
+version = "0.6.1"
 description = "Pure Python wrapper for Korea Investment Securities OpenAPI"
 authors = [
     { name = "Jonghun Yoo", email = "jonghun.yoo@pyquant.co.kr" },
@@ -17,6 +17,16 @@ requires-python = ">=3.11"
 dependencies = [
     "requests",
     "pandas",
+]
+
+[project.optional-dependencies]
+redis = [
+    "redis>=4.5.0",
+]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-mock>=3.10.0",
+    "fakeredis>=2.10.0",
 ]
 
 [project.urls]

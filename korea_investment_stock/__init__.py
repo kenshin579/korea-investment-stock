@@ -8,12 +8,20 @@ from .korea_investment_stock import (
     EXCHANGE_CODE2,
     API_RETURN_CODE,
 )
+from .token_storage import (
+    TokenStorage,
+    FileTokenStorage,
+    RedisTokenStorage,
+)
 
-__version__ = "0.6.0"
+__version__ = "0.6.1"
 
 __all__ = [
     "KoreaInvestment",
     "EXCHANGE_CODE",
     "EXCHANGE_CODE2",
     "API_RETURN_CODE",
+    "TokenStorage",
+    "FileTokenStorage",
+    "RedisTokenStorage",
 ]
