@@ -58,50 +58,52 @@
 
 ---
 
-## Phase 2: 통합 및 테스트 (7시간)
+## Phase 2: 통합 및 테스트 (7시간) ✅ COMPLETED
 
-### 2.1 KoreaInvestment 클래스 수정 (3h)
+### 2.1 KoreaInvestment 클래스 수정 ✅
 
-- [ ] `__init__()` 메서드 수정 (1h)
-  - [ ] `token_storage` 파라미터 추가
-  - [ ] 토큰 저장소 초기화 로직
-  - [ ] 기존 `self.token_file` 제거
-  - [ ] 토큰 로드 로직 변경
+- [x] `__init__()` 메서드 수정 (1h)
+  - [x] `token_storage` 파라미터 추가
+  - [x] 토큰 저장소 초기화 로직
+  - [x] 기존 `self.token_file` 제거
+  - [x] 토큰 로드 로직 변경
 
-- [ ] `_create_token_storage()` 메서드 구현 (1h)
-  - [ ] 환경 변수 읽기 (`KOREA_INVESTMENT_TOKEN_STORAGE`)
-  - [ ] `"file"` → `FileTokenStorage` 생성
-  - [ ] `"redis"` → `RedisTokenStorage` 생성
-  - [ ] 환경 변수 검증 및 에러 처리
+- [x] `_create_token_storage()` 메서드 구현 (1h)
+  - [x] 환경 변수 읽기 (`KOREA_INVESTMENT_TOKEN_STORAGE`)
+  - [x] `"file"` → `FileTokenStorage` 생성
+  - [x] `"redis"` → `RedisTokenStorage` 생성
+  - [x] 환경 변수 검증 및 에러 처리
 
-- [ ] 기존 메서드 수정 (1h)
-  - [ ] `issue_access_token()` - `save_token()` 호출로 변경
-  - [ ] `check_access_token()` - `check_token_valid()` 호출로 변경
-  - [ ] `load_access_token()` - `load_token()` 호출로 변경
+- [x] 기존 메서드 수정 (1h)
+  - [x] `issue_access_token()` - `save_token()` 호출로 변경
+  - [x] `check_access_token()` - `check_token_valid()` 호출로 변경
+  - [x] `load_access_token()` - `load_token()` 호출로 변경
 
-### 2.2 통합 테스트 (2h)
+### 2.2 통합 테스트 ✅
 
-- [ ] `test_korea_investment_stock.py` 수정
-  - [ ] `test_file_storage_default()` - 기본 파일 저장소 테스트
-  - [ ] `test_redis_storage_via_env()` - 환경 변수로 Redis 사용
-  - [ ] `test_custom_storage()` - 커스텀 저장소 주입
-  - [ ] 기존 테스트 호환성 확인
+- [x] `test_token_storage.py` 생성 (Phase 1에서 완료)
+  - [x] `TestFileTokenStorage` - 파일 저장소 테스트
+  - [x] `TestRedisTokenStorage` - fakeredis 기반 Redis 테스트
+  - [x] `TestTokenStorageIntegration` - 통합 테스트
+  - [x] `TestErrorHandling` - 에러 처리 테스트
 
-### 2.3 예제 코드 작성 (1.5h)
+### 2.3 예제 코드 작성 ✅
 
-- [ ] `examples/redis_token_example.py` 생성
-  - [ ] File 저장소 예제
-  - [ ] Redis 저장소 예제 (인증 없음)
-  - [ ] Redis 저장소 예제 (인증 포함)
-  - [ ] 커스텀 저장소 예제
+- [x] `examples/redis_token_example.py` 생성
+  - [x] File 저장소 예제 (기본 사용)
+  - [x] Redis 저장소 예제 (환경 변수)
+  - [x] Redis 저장소 예제 (비밀번호 인증)
+  - [x] 커스텀 저장소 예제
+  - [x] 분산 환경 토큰 공유 예제
+  - [x] File → Redis 마이그레이션 예제
 
-### 2.4 의존성 업데이트 (0.5h)
+### 2.4 의존성 업데이트 ✅
 
-- [ ] `pyproject.toml` 수정
-  - [ ] `version` 업데이트: `0.6.1`
-  - [ ] `[project.optional-dependencies]` 섹션 추가
-  - [ ] `redis = ["redis>=4.5.0"]` 추가
-  - [ ] `dev`에 `fakeredis>=2.10.0` 추가
+- [x] `pyproject.toml` 수정
+  - [x] `version` 업데이트: `0.6.1`
+  - [x] `[project.optional-dependencies]` 섹션 추가
+  - [x] `redis = ["redis>=4.5.0"]` 추가
+  - [x] `dev`에 `pytest`, `pytest-mock`, `fakeredis>=2.10.0` 추가
 
 ---
 
