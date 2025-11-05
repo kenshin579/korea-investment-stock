@@ -15,7 +15,7 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from unittest.mock import patch, MagicMock
 
-from korea_investment_stock.token_storage import (
+from .token_storage import (
     TokenStorage,
     FileTokenStorage,
     RedisTokenStorage,

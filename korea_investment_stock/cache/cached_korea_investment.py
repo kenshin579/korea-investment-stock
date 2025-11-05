@@ -1,5 +1,5 @@
 from typing import Optional, Dict, Any
-from .korea_investment_stock import KoreaInvestment
+from ..korea_investment_stock import KoreaInvestment
 from .cache_manager import CacheManager
 
 
