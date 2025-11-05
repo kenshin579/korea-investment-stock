@@ -19,6 +19,8 @@ import pandas as pd
 import requests
 from typing import Dict, Any
 
+from .token_storage import TokenStorage, FileTokenStorage, RedisTokenStorage
+
 # 로거 설정
 logger = logging.getLogger(__name__)
 
@@ -166,7 +168,8 @@ class KoreaInvestment:
     한국투자증권 REST API
     '''
 
-    def __init__(self, api_key: str, api_secret: str, acc_no: str, mock: bool = False):
+    def __init__(self, api_key: str, api_secret: str, acc_no: str, mock: bool = False,
+                 token_storage: Optional[TokenStorage] = None):
         """한국투자증권 API 클라이언트 초기화
 
         Args:
@@ -174,6 +177,8 @@ class KoreaInvestment:
             api_secret (str): 발급받은 API secret
             acc_no (str): 계좌번호 체계의 앞 8자리-뒤 2자리 (예: "12345678-01")
             mock (bool): True (mock trading), False (real trading)
+            token_storage (Optional[TokenStorage]): 토큰 저장소 인스턴스
+                (None이면 환경 변수로 결정)
 
         Raises:
             ValueError: api_key, api_secret, 또는 acc_no가 None이거나 비어있을 때
@@ -203,18 +208,60 @@ class KoreaInvestment:
         self.acc_no_prefix = parts[0]
         self.acc_no_postfix = parts[1]
 
+        # 토큰 저장소 초기화
+        if token_storage:
+            self.token_storage = token_storage
+        else:
+            self.token_storage = self._create_token_storage()
+
         # access token
-        self.token_file = Path("~/.cache/mojito2/token.dat").expanduser()
         self.access_token = None
-        if self.check_access_token():
-            self.load_access_token()
+        if self.token_storage.check_token_valid(self.api_key, self.api_secret):
+            token_data = self.token_storage.load_token(self.api_key, self.api_secret)
+            if token_data:
+                self.access_token = f'Bearer {token_data["access_token"]}'
         else:
             self.issue_access_token()
+
+    def _create_token_storage(self) -> TokenStorage:
+        """환경 변수 기반 토큰 저장소 생성
+
+        환경 변수:
+            KOREA_INVESTMENT_TOKEN_STORAGE: "file" (기본값) 또는 "redis"
+            KOREA_INVESTMENT_REDIS_URL: Redis 연결 URL (기본값: redis://localhost:6379/0)
+            KOREA_INVESTMENT_REDIS_PASSWORD: Redis 비밀번호 (선택)
+            KOREA_INVESTMENT_TOKEN_FILE: 토큰 파일 경로 (기본값: ~/.cache/kis/token.key)
+
+        Returns:
+            TokenStorage: 설정된 토큰 저장소 인스턴스
+
+        Raises:
+            ValueError: 지원하지 않는 저장소 타입일 때
+        """
+        storage_type = os.getenv("KOREA_INVESTMENT_TOKEN_STORAGE", "file").lower()
+
+        if storage_type == "file":
+            file_path = os.getenv("KOREA_INVESTMENT_TOKEN_FILE")
+            if file_path:
+                file_path = Path(file_path).expanduser()
+            return FileTokenStorage(file_path)
+
+        elif storage_type == "redis":
+            redis_url = os.getenv("KOREA_INVESTMENT_REDIS_URL", "redis://localhost:6379/0")
+            redis_password = os.getenv("KOREA_INVESTMENT_REDIS_PASSWORD")
+            return RedisTokenStorage(redis_url, password=redis_password)
+
+        else:
+            raise ValueError(
+                f"지원하지 않는 저장소 타입: {storage_type}\n"
+                f"'file' 또는 'redis'만 지원됩니다. "
+                f"KOREA_INVESTMENT_TOKEN_STORAGE 환경 변수를 확인하세요."
+            )
 
     def __enter__(self):
         """컨텍스트 매니저 진입"""
         return self
-    
+
     def __exit__(self, exc_type, exc_val, exc_tb):
         """컨텍스트 매니저 종료 - 리소스 정리"""
         self.shutdown()
@@ -282,10 +329,8 @@ class KoreaInvestment:
         resp_data['api_key'] = self.api_key
         resp_data['api_secret'] = self.api_secret
 
-        # dump access token
-        self.token_file.parent.mkdir(parents=True, exist_ok=True)
-        with self.token_file.open("wb") as f:
-            pickle.dump(resp_data, f)
+        # 토큰 저장소에 저장
+        self.token_storage.save_token(resp_data)
 
     def check_access_token(self) -> bool:
         """check access token
@@ -293,30 +338,14 @@ class KoreaInvestment:
         Returns:
             Bool: True: token is valid, False: token is not valid
         """
-
-        if not self.token_file.exists():
-            return False
-
-        with self.token_file.open("rb") as f:
-            data = pickle.load(f)
-
-        expire_epoch = data['timestamp']
-        now_epoch = int(datetime.now().timestamp())
-        status = False
-
-        if (data['api_key'] != self.api_key) or (data['api_secret'] != self.api_secret):
-            return False
-
-        good_until = data['timestamp']
-        ts_now = int(datetime.now().timestamp())
-        return ts_now < good_until
+        return self.token_storage.check_token_valid(self.api_key, self.api_secret)
 
     def load_access_token(self):
         """load access token
         """
-        with self.token_file.open("rb") as f:
-            data = pickle.load(f)
-        self.access_token = f'Bearer {data["access_token"]}'
+        token_data = self.token_storage.load_token(self.api_key, self.api_secret)
+        if token_data:
+            self.access_token = f'Bearer {token_data["access_token"]}'
 
     def issue_hashkey(self, data: dict):
         """해쉬키 발급

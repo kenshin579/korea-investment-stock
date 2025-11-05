@@ -10,8 +10,13 @@ from .korea_investment_stock import (
 )
 from .cache_manager import CacheManager, CacheEntry
 from .cached_korea_investment import CachedKoreaInvestment
+from .token_storage import (
+    TokenStorage,
+    FileTokenStorage,
+    RedisTokenStorage,
+)
 
-__version__ = "0.6.0"
+__version__ = "0.6.1"
 
 __all__ = [
     "KoreaInvestment",
@@ -21,4 +26,7 @@ __all__ = [
     "CacheManager",
     "CacheEntry",
     "CachedKoreaInvestment",
+    "TokenStorage",
+    "FileTokenStorage",
+    "RedisTokenStorage",
 ]
