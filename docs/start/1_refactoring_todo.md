@@ -25,18 +25,18 @@
 
 ---
 
-## Phase 2: 캐시 모듈 파일 이동
+## Phase 2: 캐시 모듈 파일 이동 ✅
 
 ### 구현 파일 이동
-- [ ] `mv korea_investment_stock/cache_manager.py korea_investment_stock/cache/`
-- [ ] `mv korea_investment_stock/cached_korea_investment.py korea_investment_stock/cache/`
+- [x] `mv korea_investment_stock/cache_manager.py korea_investment_stock/cache/`
+- [x] `mv korea_investment_stock/cached_korea_investment.py korea_investment_stock/cache/`
 
 ### 테스트 파일 이동
-- [ ] `mv korea_investment_stock/tests/test_cache_manager.py korea_investment_stock/cache/`
-- [ ] `mv korea_investment_stock/tests/test_cached_integration.py korea_investment_stock/cache/`
+- [x] `mv korea_investment_stock/tests/test_cache_manager.py korea_investment_stock/cache/`
+- [x] `mv korea_investment_stock/tests/test_cached_integration.py korea_investment_stock/cache/`
 
 ### 검증
-- [ ] `ls korea_investment_stock/cache/` 실행하여 4개 파일 확인
+- [x] `ls korea_investment_stock/cache/` 실행하여 5개 파일 확인
   - `__init__.py`
   - `cache_manager.py`
   - `cached_korea_investment.py`
