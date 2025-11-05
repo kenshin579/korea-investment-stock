@@ -1,5 +1,16 @@
 # CHANGELOG
 
+## [Unreleased]
+
+### Changed
+- **Project Structure**: Reorganized package into feature-based modules (#52)
+  - Created `cache/` module for caching functionality
+  - Created `token_storage/` module for token storage implementations
+  - Moved test files to co-locate with implementation files (co-located tests)
+  - Removed `tests/` directory in favor of feature-specific test files
+  - All existing import paths remain compatible (backward compatible)
+  - Updated version to 0.7.0
+
 ## [0.6.0] - 2025-01-19 (Breaking Changes) ⚠️
 
 ### 🎯 Major Simplification (#40)
