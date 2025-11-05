@@ -126,13 +126,17 @@ Return raw API response
 
 ```
 korea_investment_stock/
-├── __init__.py (18 lines)
-├── korea_investment_stock.py (1,011 lines)
+├── __init__.py                      # Module exports
+├── korea_investment_stock.py        # Main KoreaInvestment class (1,011 lines)
+├── cache_manager.py                 # CacheManager and CacheEntry classes (NEW)
+├── cached_korea_investment.py       # CachedKoreaInvestment wrapper (NEW)
 └── tests/
     ├── test_korea_investment_stock.py
     ├── test_integration_us_stocks.py
     ├── test_ipo_schedule.py
-    └── test_ipo_integration.py
+    ├── test_ipo_integration.py
+    ├── test_cache_manager.py        # Cache unit tests (NEW)
+    └── test_cached_integration.py   # Cache integration tests (NEW)
 ```
 
 **Dependencies:** `requests`, `pandas` (minimal)
@@ -336,33 +340,101 @@ result = broker.fetch_price("005930", "KR")
 broker.shutdown()  # Must call manually
 ```
 
-## User Implementation Examples
+## Built-in Memory Caching
 
-### Caching Example
+**NEW in v0.7.0**: Optional memory-based caching to reduce API calls and improve response times.
+
+### Basic Usage
 
 ```python
-from functools import lru_cache
-from datetime import datetime, timedelta
+from korea_investment_stock import KoreaInvestment, CachedKoreaInvestment
 
-class CachedBroker:
-    def __init__(self, broker):
-        self.broker = broker
-        self.cache = {}
-        self.ttl = timedelta(minutes=5)
+# Create base broker
+broker = KoreaInvestment(api_key, api_secret, acc_no, mock=True)
 
-    def fetch_price_cached(self, symbol, market):
-        key = f"{symbol}:{market}"
-        now = datetime.now()
+# Wrap with caching (opt-in)
+cached_broker = CachedKoreaInvestment(broker, price_ttl=5)
 
-        if key in self.cache:
-            cached_time, cached_result = self.cache[key]
-            if now - cached_time < self.ttl:
-                return cached_result
+# Use as normal - caching happens automatically
+result = cached_broker.fetch_price("005930", "KR")
 
-        result = self.broker.fetch_price(symbol, market)
-        self.cache[key] = (now, result)
-        return result
+# Cache statistics
+stats = cached_broker.get_cache_stats()
+print(f"Hit rate: {stats['hit_rate']}")
 ```
+
+### Architecture
+
+**Option B: Wrapper Class Pattern** (implemented)
+- Existing `KoreaInvestment` class remains unchanged
+- `CachedKoreaInvestment` wraps the broker
+- Opt-in: Users choose to enable caching
+- Philosophy compliant: Simple, transparent, flexible
+
+```
+KoreaInvestment (unchanged)
+    ↓
+CachedKoreaInvestment (wrapper)
+    ↓
+CacheManager (thread-safe memory cache)
+```
+
+### TTL Configuration
+
+Default TTL values (in seconds):
+- **Price data**: 5 seconds (real-time)
+- **Stock info**: 300 seconds (5 minutes)
+- **Symbol lists**: 3600 seconds (1 hour)
+- **IPO schedule**: 1800 seconds (30 minutes)
+
+Custom TTL:
+```python
+cached_broker = CachedKoreaInvestment(
+    broker,
+    price_ttl=1,        # Real-time trading: 1 second
+    stock_info_ttl=60,  # Stock info: 1 minute
+    symbols_ttl=3600,   # Symbols: 1 hour
+    ipo_ttl=1800        # IPO: 30 minutes
+)
+```
+
+### Cache Features
+
+- **Thread-safe**: Uses threading.Lock for concurrent access
+- **Auto-expiration**: TTL-based cache invalidation
+- **Statistics**: Hit rate, miss rate, cache size tracking
+- **Manual control**: `invalidate_cache()` for forced refresh
+- **Context manager**: Automatic cache cleanup
+- **No external deps**: Pure Python (datetime, threading)
+
+### Performance Benefits
+
+| Scenario | Without Cache | With Cache | Improvement |
+|----------|--------------|------------|-------------|
+| Repeated queries (1min) | 60 API calls | 12 calls | 80% reduction |
+| Response time | 100-300ms | <1ms | 99% faster |
+| Symbol lists (daily) | 10 calls | 1 call | 90% reduction |
+
+### When to Use Caching
+
+**✅ Good use cases:**
+- Backtesting and analysis (longer TTL acceptable)
+- Dashboard updates (repeated queries to same symbols)
+- Symbol list queries (rarely change)
+- IPO schedule monitoring
+
+**❌ Not recommended for:**
+- High-frequency trading (TTL too long for real-time)
+- Single query per symbol (no benefit)
+- Different symbols each time (cache never hits)
+
+### See Also
+
+- **Implementation guide**: `docs/start/2_cache_implementation.md`
+- **PRD**: `docs/start/2_cache_prd.md`
+- **Usage examples**: `examples/cached_basic_example.py`
+
+## User Implementation Examples
 
 ### Batch Processing Example
 
