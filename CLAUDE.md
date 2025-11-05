@@ -126,20 +126,27 @@ Return raw API response
 
 ```
 korea_investment_stock/
-├── __init__.py                      # Module exports
-├── korea_investment_stock.py        # Main KoreaInvestment class (1,011 lines)
-├── cache_manager.py                 # CacheManager and CacheEntry classes (NEW)
-├── cached_korea_investment.py       # CachedKoreaInvestment wrapper (NEW)
-└── tests/
-    ├── test_korea_investment_stock.py
-    ├── test_integration_us_stocks.py
-    ├── test_ipo_schedule.py
-    ├── test_ipo_integration.py
-    ├── test_cache_manager.py        # Cache unit tests (NEW)
-    └── test_cached_integration.py   # Cache integration tests (NEW)
+├── __init__.py                          # Module exports
+├── korea_investment_stock.py            # Main KoreaInvestment class
+├── test_korea_investment_stock.py       # Main class tests
+├── test_integration_us_stocks.py        # Integration tests
+│
+├── cache/                               # Cache module
+│   ├── __init__.py                      # Cache exports
+│   ├── cache_manager.py                 # CacheManager, CacheEntry
+│   ├── cached_korea_investment.py       # CachedKoreaInvestment wrapper
+│   ├── test_cache_manager.py            # Cache unit tests
+│   └── test_cached_integration.py       # Cache integration tests
+│
+└── token_storage/                       # Token storage module
+    ├── __init__.py                      # Token storage exports
+    ├── token_storage.py                 # FileTokenStorage, RedisTokenStorage
+    └── test_token_storage.py            # Token storage tests
 ```
 
 **Dependencies:** `requests`, `pandas` (minimal)
+
+**Note:** Tests are co-located with implementation files for better maintainability.
 
 ## Code Style & Conventions
 

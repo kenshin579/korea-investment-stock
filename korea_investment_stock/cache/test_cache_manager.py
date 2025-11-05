@@ -1,6 +1,6 @@
 import pytest
 import time
-from korea_investment_stock.cache_manager import CacheManager, CacheEntry
+from .cache_manager import CacheManager, CacheEntry
 
 
 class TestCacheEntry:
