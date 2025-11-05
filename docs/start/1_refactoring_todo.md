@@ -45,23 +45,23 @@
 
 ---
 
-## Phase 3: 토큰 저장소 모듈 이동
+## Phase 3: 토큰 저장소 모듈 이동 ✅
 
 ### 구현 파일 이동
-- [ ] `mv korea_investment_stock/token_storage.py korea_investment_stock/token_storage/token_storage.py`
+- [x] `mv korea_investment_stock/token_storage.py korea_investment_stock/token_storage/token_storage.py`
 
 ### 테스트 파일 이동
-- [ ] `mv korea_investment_stock/test_token_storage.py korea_investment_stock/token_storage/`
+- [x] `mv korea_investment_stock/test_token_storage.py korea_investment_stock/token_storage/`
 
 ### 빈 디렉토리 정리
-- [ ] `rmdir korea_investment_stock/tests/` (tests 폴더가 비어있으면 제거)
+- [x] `rmdir korea_investment_stock/tests/` (tests 폴더가 비어있으면 제거)
 
 ### 검증
-- [ ] `ls korea_investment_stock/token_storage/` 실행하여 3개 파일 확인
+- [x] `ls korea_investment_stock/token_storage/` 실행하여 3개 파일 확인
   - `__init__.py`
   - `token_storage.py`
   - `test_token_storage.py`
-- [ ] `tests/` 디렉토리가 제거되었는지 확인
+- [x] `tests/` 디렉토리가 제거되었는지 확인
 
 ---
 
