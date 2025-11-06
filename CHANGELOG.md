@@ -11,6 +11,79 @@
   - All existing import paths remain compatible (backward compatible)
   - Updated version to 0.7.0
 
+## [0.8.0] - 2025-01-XX (Breaking Changes) ⚠️
+
+### ⚠️ BREAKING CHANGES
+
+#### Mock 모드 완전 제거 (#55)
+
+**제거된 기능**: 모의투자 서버 지원 (`mock` 파라미터)
+
+**변경 사항**:
+
+1. **생성자 시그니처 변경**
+```python
+# v0.7.x (Before)
+broker = KoreaInvestment(api_key, api_secret, acc_no, mock=True)
+
+# v0.8.0 (After)
+broker = KoreaInvestment(api_key, api_secret, acc_no)
+```
+
+2. **제거된 메서드**
+- `set_base_url(mock: bool)` 메서드 제거
+- 실전 서버 URL 고정: `https://openapi.koreainvestment.com:9443`
+
+3. **제거된 검증**
+- `fetch_ipo_schedule()`: 모의투자 검증 로직 제거
+
+**마이그레이션 가이드**:
+```python
+# Before (v0.7.x)
+broker = KoreaInvestment(
+    api_key="YOUR_API_KEY",
+    api_secret="YOUR_API_SECRET",
+    acc_no="12345678-01",
+    mock=True  # 또는 mock=False
+)
+
+# After (v0.8.0)
+broker = KoreaInvestment(
+    api_key="YOUR_API_KEY",
+    api_secret="YOUR_API_SECRET",
+    acc_no="12345678-01"
+)
+```
+
+**주의사항**:
+- ⚠️ v0.8.0부터는 **실전 계좌만 지원**됩니다
+- ⚠️ 테스트 환경이 필요한 경우 `unittest.mock` 사용 권장
+
+**단위 테스트 예제**:
+```python
+from unittest.mock import patch
+
+@patch('korea_investment_stock.requests.get')
+def test_fetch_price(mock_get):
+    mock_get.return_value.json.return_value = {
+        'rt_cd': '0',
+        'output1': {'stck_prpr': '70000'}
+    }
+    broker = KoreaInvestment(api_key, api_secret, acc_no)
+    result = broker.fetch_price("005930", "KR")
+    assert result['output1']['stck_prpr'] == '70000'
+```
+
+### Changed
+- 실전 서버로 통일되어 모든 API 일관되게 지원
+- 코드베이스 간소화 (mock 관련 로직 제거)
+
+### Removed
+- `mock` 파라미터 (Breaking)
+- `set_base_url()` 메서드 (Breaking)
+- `self.mock` 인스턴스 변수
+- IPO Schedule API의 모의투자 검증 로직
+
 ## [0.6.0] - 2025-01-19 (Breaking Changes) ⚠️
 
 ### 🎯 Major Simplification (#40)

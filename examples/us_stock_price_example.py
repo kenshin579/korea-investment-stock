@@ -46,7 +46,7 @@ def example_basic_us_stock():
     sys.stdout.flush()
     
     # KoreaInvestment 객체 생성
-    with KoreaInvestment(api_key, api_secret, acc_no, mock=False) as broker:
+    with KoreaInvestment(api_key, api_secret, acc_no) as broker:
         print("📡 AAPL 주식 정보 조회 중...")
         sys.stdout.flush()
 
@@ -89,7 +89,7 @@ def example_multiple_us_stocks():
         print("  export KOREA_INVESTMENT_ACCOUNT_NO='12345678-01'")
         sys.exit(1)
 
-    with KoreaInvestment(api_key, api_secret, acc_no, mock=False) as broker:
+    with KoreaInvestment(api_key, api_secret, acc_no) as broker:
         # 여러 미국 주식 리스트
         us_stocks = [
             ("AAPL", "US"),    # 애플
@@ -142,7 +142,7 @@ def example_mixed_kr_us_stocks():
         print("  export KOREA_INVESTMENT_ACCOUNT_NO='12345678-01'")
         sys.exit(1)
 
-    with KoreaInvestment(api_key, api_secret, acc_no, mock=False) as broker:
+    with KoreaInvestment(api_key, api_secret, acc_no) as broker:
         # 국내/미국 혼합 포트폴리오
         mixed_portfolio = [
             ("005930", "KR"),  # 삼성전자
@@ -207,7 +207,7 @@ def example_us_stock_details():
         print("  export KOREA_INVESTMENT_ACCOUNT_NO='12345678-01'")
         sys.exit(1)
 
-    with KoreaInvestment(api_key, api_secret, acc_no, mock=False) as broker:
+    with KoreaInvestment(api_key, api_secret, acc_no) as broker:
         # 애플 상세 정보
         result = broker.fetch_price("AAPL", "US")
 
@@ -256,7 +256,7 @@ def example_error_handling():
         print("  export KOREA_INVESTMENT_ACCOUNT_NO='12345678-01'")
         sys.exit(1)
 
-    with KoreaInvestment(api_key, api_secret, acc_no, mock=False) as broker:
+    with KoreaInvestment(api_key, api_secret, acc_no) as broker:
         # 잘못된 심볼들
         test_symbols = [
             ("INVALID", "US"),     # 존재하지 않는 심볼

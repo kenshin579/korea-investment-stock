@@ -1,4 +1,5 @@
-"""ê‹ 0• ®»
+"""
+Cache Module
 
 Memory-based caching for Korea Investment API responses.
 """

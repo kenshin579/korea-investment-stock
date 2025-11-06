@@ -20,8 +20,7 @@ class TestUSStockIntegration(unittest.TestCase):
         self.broker = KoreaInvestment(
             api_key="test_key",
             api_secret="test_secret",
-            acc_no="12345678-01",
-            mock=True
+            acc_no="12345678-01"
         )
         self.broker.access_token = "Bearer test_token"
     
