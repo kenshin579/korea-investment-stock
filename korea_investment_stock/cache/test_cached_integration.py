@@ -14,7 +14,7 @@ def broker():
     if not all([api_key, api_secret, acc_no]):
         pytest.skip("API credentials not set")
 
-    return KoreaInvestment(api_key, api_secret, acc_no, mock=True)
+    return KoreaInvestment(api_key, api_secret, acc_no)
 
 
 class TestCachedKoreaInvestment:
