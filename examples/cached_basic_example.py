@@ -29,7 +29,7 @@ def example_basic_usage():
         return
 
     # 기본 broker 생성
-    broker = KoreaInvestment(api_key, api_secret, acc_no, mock=True)
+    broker = KoreaInvestment(api_key, api_secret, acc_no)
 
     # 캐싱 래퍼 적용
     cached_broker = CachedKoreaInvestment(broker)
@@ -73,7 +73,7 @@ def example_custom_ttl():
     if not all([api_key, api_secret, acc_no]):
         return
 
-    broker = KoreaInvestment(api_key, api_secret, acc_no, mock=True)
+    broker = KoreaInvestment(api_key, api_secret, acc_no)
 
     # 실시간 트레이딩용: 짧은 TTL
     print("\n실시간 트레이딩용 설정 (price_ttl=1초):")
@@ -113,7 +113,7 @@ def example_context_manager():
     if not all([api_key, api_secret, acc_no]):
         return
 
-    broker = KoreaInvestment(api_key, api_secret, acc_no, mock=True)
+    broker = KoreaInvestment(api_key, api_secret, acc_no)
 
     # with 블록으로 자동 정리
     print("\nwith 블록 사용 (자동 캐시 정리):")
@@ -142,7 +142,7 @@ def example_cache_control():
     if not all([api_key, api_secret, acc_no]):
         return
 
-    broker = KoreaInvestment(api_key, api_secret, acc_no, mock=True)
+    broker = KoreaInvestment(api_key, api_secret, acc_no)
     cached_broker = CachedKoreaInvestment(broker, price_ttl=60)
 
     # 가격 조회
@@ -180,7 +180,7 @@ def example_performance_comparison():
     if not all([api_key, api_secret, acc_no]):
         return
 
-    broker = KoreaInvestment(api_key, api_secret, acc_no, mock=True)
+    broker = KoreaInvestment(api_key, api_secret, acc_no)
     cached_broker = CachedKoreaInvestment(broker, price_ttl=10)
 
     symbols = ["005930", "000660", "035720", "051910", "068270"]

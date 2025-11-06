@@ -40,7 +40,7 @@ def example_domestic_stock_price():
     api_key, api_secret, acc_no = load_credentials()
 
     # KoreaInvestment 인스턴스 생성
-    with KoreaInvestment(api_key, api_secret, acc_no, mock=True) as broker:
+    with KoreaInvestment(api_key, api_secret, acc_no) as broker:
         # 삼성전자 현재가 조회
         result = broker.fetch_price("005930", "KR")
 
@@ -66,8 +66,8 @@ def example_us_stock_price():
 
     api_key, api_secret, acc_no = load_credentials()
 
-    # 실전계좌 사용 (mock=False)
-    with KoreaInvestment(api_key, api_secret, acc_no, mock=False) as broker:
+    # 실전계좌 사용
+    with KoreaInvestment(api_key, api_secret, acc_no) as broker:
         # 애플 현재가 조회
         result = broker.fetch_price("AAPL", "US")
 
@@ -94,7 +94,7 @@ def example_stock_info():
 
     api_key, api_secret, acc_no = load_credentials()
 
-    with KoreaInvestment(api_key, api_secret, acc_no, mock=True) as broker:
+    with KoreaInvestment(api_key, api_secret, acc_no) as broker:
         # 카카오 종목 정보 조회
         result = broker.fetch_stock_info("035720", "KR")
 
@@ -123,7 +123,7 @@ def example_multiple_stocks():
         ("035720", "KR"),  # 카카오
     ]
 
-    with KoreaInvestment(api_key, api_secret, acc_no, mock=True) as broker:
+    with KoreaInvestment(api_key, api_secret, acc_no) as broker:
         print("\n📊 국내 주요 종목 현재가:")
         print("-" * 50)
 
@@ -153,7 +153,7 @@ def example_error_handling():
 
     api_key, api_secret, acc_no = load_credentials()
 
-    with KoreaInvestment(api_key, api_secret, acc_no, mock=True) as broker:
+    with KoreaInvestment(api_key, api_secret, acc_no) as broker:
         # 잘못된 시장 코드
         try:
             print("\n테스트 1: 잘못된 시장 코드")
