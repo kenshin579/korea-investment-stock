@@ -168,7 +168,7 @@ class KoreaInvestment:
     한국투자증권 REST API
     '''
 
-    def __init__(self, api_key: str, api_secret: str, acc_no: str, mock: bool = False,
+    def __init__(self, api_key: str, api_secret: str, acc_no: str,
                  token_storage: Optional[TokenStorage] = None):
         """한국투자증권 API 클라이언트 초기화
 
@@ -176,7 +176,6 @@ class KoreaInvestment:
             api_key (str): 발급받은 API key
             api_secret (str): 발급받은 API secret
             acc_no (str): 계좌번호 체계의 앞 8자리-뒤 2자리 (예: "12345678-01")
-            mock (bool): True (mock trading), False (real trading)
             token_storage (Optional[TokenStorage]): 토큰 저장소 인스턴스
                 (None이면 환경 변수로 결정)
 
@@ -194,8 +193,7 @@ class KoreaInvestment:
         if '-' not in acc_no:
             raise ValueError(f"계좌번호 형식이 올바르지 않습니다. '12345678-01' 형식이어야 합니다. 입력값: {acc_no}")
 
-        self.mock = mock
-        self.set_base_url(mock)
+        self.base_url = "https://openapi.koreainvestment.com:9443"
         self.api_key = api_key
         self.api_secret = api_secret
 
@@ -292,15 +290,6 @@ class KoreaInvestment:
         # 향후 필요한 정리 작업이 있으면 여기에 추가
         pass
 
-    def set_base_url(self, mock: bool = True):
-        """테스트(모의투자) 서버 사용 설정
-        Args:
-            mock(bool, optional): True: 테스트서버, False: 실서버 Defaults to True.
-        """
-        if mock:
-            self.base_url = "https://openapivts.koreainvestment.com:29443"
-        else:
-            self.base_url = "https://openapi.koreainvestment.com:9443"
 
     def issue_access_token(self):
         """OAuth인증/접근토큰발급
@@ -929,10 +918,9 @@ class KoreaInvestment:
                 }
                 
         Raises:
-            ValueError: 모의투자 사용시 또는 날짜 형식 오류시
-            
+            ValueError: 날짜 형식 오류시
+
         Note:
-            - 모의투자는 지원하지 않습니다.
             - 예탁원에서 제공한 자료이므로 정보용으로만 사용하시기 바랍니다.
             - 실제 청약시에는 반드시 공식 공모주 청약 공고문을 확인하세요.
             
@@ -949,10 +937,6 @@ class KoreaInvestment:
             >>> # 특정 종목 조회
             >>> ipo = broker.fetch_ipo_schedule(symbol="123456")
         """
-        # 모의투자 체크
-        if self.mock:
-            raise ValueError("공모주청약일정 조회는 모의투자를 지원하지 않습니다.")
-
         # 날짜 기본값 설정
         if not from_date:
             from_date = datetime.now().strftime("%Y%m%d")
