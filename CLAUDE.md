@@ -223,15 +223,14 @@ def fetch_with_retry(broker, symbol, market, max_retries=3):
 
 ### Working with US Stocks
 
-US stock queries require real account (mock not supported):
+US stock query features:
 - Exchange auto-detection: NASDAQ → NYSE → AMEX
 - Symbol format: Plain ticker (e.g., "AAPL", not "AAPL.US")
 - Additional fields: PER, PBR, EPS, BPS included in response
 
 Example:
 ```python
-# Requires mock=False (real account)
-with KoreaInvestment(api_key, api_secret, acc_no, mock=False) as broker:
+with KoreaInvestment(api_key, api_secret, acc_no) as broker:
     result = broker.fetch_price("AAPL", "US")
 
     if result['rt_cd'] == '0':
@@ -308,13 +307,12 @@ for symbol, market in stocks:
 
 ## Known Limitations
 
-1. **US stocks**: Real account only (mock not supported by API)
-2. **IPO data**: Reference only (from 예탁원), mock not supported
-3. **Order functionality**: Not yet implemented (planned)
-4. **WebSocket**: Not included in this library
-5. **No built-in rate limiting**: Users must implement
-6. **No built-in caching**: Users must implement
-7. **No automatic retry**: Users must implement
+1. **IPO data**: Reference only (from 예탁원)
+2. **Order functionality**: Not yet implemented (planned)
+3. **WebSocket**: Not included in this library
+4. **No built-in rate limiting**: Users must implement
+5. **No built-in caching**: Users must implement
+6. **No automatic retry**: Users must implement
 
 ## Git Commit Message Guidelines
 
@@ -357,7 +355,7 @@ broker.shutdown()  # Must call manually
 from korea_investment_stock import KoreaInvestment, CachedKoreaInvestment
 
 # Create base broker
-broker = KoreaInvestment(api_key, api_secret, acc_no, mock=True)
+broker = KoreaInvestment(api_key, api_secret, acc_no)
 
 # Wrap with caching (opt-in)
 cached_broker = CachedKoreaInvestment(broker, price_ttl=5)

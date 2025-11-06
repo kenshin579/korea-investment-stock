@@ -29,7 +29,6 @@ A simple, transparent wrapper around the Korea Investment Securities OpenAPI. Th
 ### Technical Features
 - 🔧 **Context Manager**: Automatic resource cleanup
 - 🔧 **Thread Pool**: Basic concurrent execution support
-- 🔧 **Mock Trading**: Test mode for development
 - 🔧 **Environment Variables**: API credentials via env vars
 
 ## 📦 Installation
@@ -63,8 +62,7 @@ import os
 with KoreaInvestment(
     api_key=os.getenv('KOREA_INVESTMENT_API_KEY'),
     api_secret=os.getenv('KOREA_INVESTMENT_API_SECRET'),
-    acc_no=os.getenv('KOREA_INVESTMENT_ACCOUNT_NO'),
-    mock=True  # False for real trading
+    acc_no=os.getenv('KOREA_INVESTMENT_ACCOUNT_NO')
 ) as broker:
     # Query Samsung Electronics
     result = broker.fetch_price("005930", "KR")
@@ -199,7 +197,7 @@ Reduce API calls and improve response times with built-in memory caching:
 from korea_investment_stock import KoreaInvestment, CachedKoreaInvestment
 
 # Create base broker
-broker = KoreaInvestment(api_key, api_secret, acc_no, mock=True)
+broker = KoreaInvestment(api_key, api_secret, acc_no)
 
 # Wrap with caching (opt-in)
 cached_broker = CachedKoreaInvestment(broker, price_ttl=5)
@@ -288,7 +286,6 @@ cached_broker = CachedKoreaInvestment(
 - Exceeding limits will cause API errors
 
 ### US Stocks
-- **Real account only** (mock trading not supported)
 - Auto-detects exchange (NASDAQ → NYSE → AMEX)
 - Includes financial ratios (PER, PBR, EPS, BPS)
 
