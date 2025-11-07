@@ -21,7 +21,13 @@ from .token_storage import TokenStorage, FileTokenStorage, RedisTokenStorage
 # Rate Limiting (서브패키지)
 from .rate_limit import RateLimiter, RateLimitedKoreaInvestment
 
-__version__ = "0.7.0"
+# Git tag에서 버전 자동 추출 (setuptools-scm)
+try:
+    from importlib.metadata import version
+    __version__ = version("korea-investment-stock")
+except Exception:
+    # Fallback for development without git tags
+    __version__ = "0.0.0.dev0"
 
 __all__ = [
     # 메인 API
