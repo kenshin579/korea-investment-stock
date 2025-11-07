@@ -65,13 +65,19 @@ def test_rate_limiter_stats():
 
     stats = limiter.get_stats()
 
-    # 통계 검증
+    # 기본 통계 검증
     assert stats['calls_per_second'] == 15, \
         f"Expected calls_per_second=15, got {stats['calls_per_second']}"
     assert stats['total_calls'] == 5, \
         f"Expected total_calls=5, got {stats['total_calls']}"
     assert stats['min_interval'] == pytest.approx(1.0 / 15), \
         f"Expected min_interval={1.0/15:.4f}, got {stats['min_interval']:.4f}"
+
+    # 새로운 통계 필드 존재 확인
+    assert 'throttled_calls' in stats
+    assert 'throttle_rate' in stats
+    assert 'total_wait_time' in stats
+    assert 'avg_wait_time' in stats
 
 
 def test_rate_limiter_adjust():
@@ -139,3 +145,88 @@ def test_rate_limiter_zero_wait():
 
     # 첫 호출은 10ms 이내에 완료되어야 함
     assert elapsed < 0.01, f"First call should be immediate, took {elapsed:.4f}s"
+
+
+def test_throttle_statistics():
+    """Throttle 통계 추적 테스트"""
+    limiter = RateLimiter(calls_per_second=10)
+
+    # 10번 호출 (10회/초이므로 2번째부터 throttle)
+    for _ in range(10):
+        limiter.wait()
+
+    stats = limiter.get_stats()
+
+    # 총 호출 횟수
+    assert stats['total_calls'] == 10, \
+        f"Expected total_calls=10, got {stats['total_calls']}"
+
+    # 첫 번째 호출은 즉시, 나머지 9개는 throttle
+    assert stats['throttled_calls'] == 9, \
+        f"Expected throttled_calls=9, got {stats['throttled_calls']}"
+
+    # 총 대기 시간이 0보다 커야 함
+    assert stats['total_wait_time'] > 0, \
+        f"Expected total_wait_time > 0, got {stats['total_wait_time']}"
+
+    # 대략 0.9초 대기 (9번 throttle × 0.1초)
+    # 허용 오차: ±20%
+    expected_wait = 9 * (1.0 / 10)  # 0.9초
+    assert expected_wait * 0.8 <= stats['total_wait_time'] <= expected_wait * 1.2, \
+        f"Expected wait time {expected_wait*0.8:.2f}-{expected_wait*1.2:.2f}s, " \
+        f"got {stats['total_wait_time']:.2f}s"
+
+
+def test_throttle_rate_calculation():
+    """Throttle rate 계산 테스트"""
+    limiter = RateLimiter(calls_per_second=10)
+
+    # 초기 상태 (호출 전)
+    stats = limiter.get_stats()
+    assert stats['throttle_rate'] == 0.0, \
+        f"Expected initial throttle_rate=0.0, got {stats['throttle_rate']}"
+
+    # 첫 호출 (throttle 안됨)
+    limiter.wait()
+    stats = limiter.get_stats()
+    assert stats['throttle_rate'] == 0.0, \
+        f"Expected throttle_rate=0.0 after first call, got {stats['throttle_rate']}"
+
+    # 10번 더 호출 (모두 throttle)
+    for _ in range(10):
+        limiter.wait()
+
+    stats = limiter.get_stats()
+    # 총 11번 호출, 10번 throttle = 10/11 ≈ 0.909
+    expected_rate = 10 / 11
+    assert stats['throttle_rate'] == pytest.approx(expected_rate, abs=0.01), \
+        f"Expected throttle_rate≈{expected_rate:.3f}, got {stats['throttle_rate']:.3f}"
+
+
+def test_avg_wait_time_calculation():
+    """평균 대기 시간 계산 테스트"""
+    limiter = RateLimiter(calls_per_second=10)
+
+    # 초기 상태 (호출 전)
+    stats = limiter.get_stats()
+    assert stats['avg_wait_time'] == 0.0, \
+        f"Expected initial avg_wait_time=0.0, got {stats['avg_wait_time']}"
+
+    # 10번 호출 (첫 번째 제외하고 9번 throttle)
+    for _ in range(10):
+        limiter.wait()
+
+    stats = limiter.get_stats()
+
+    # 평균 대기 시간 = total_wait_time / throttled_calls
+    # 9번 throttle, 각 약 0.1초 = 평균 0.1초
+    expected_avg = 1.0 / 10  # 0.1초
+    assert stats['avg_wait_time'] == pytest.approx(expected_avg, abs=0.02), \
+        f"Expected avg_wait_time≈{expected_avg:.3f}s, got {stats['avg_wait_time']:.3f}s"
+
+    # avg_wait_time = total_wait_time / throttled_calls 검증
+    calculated_avg = stats['total_wait_time'] / stats['throttled_calls'] \
+        if stats['throttled_calls'] > 0 else 0.0
+    assert stats['avg_wait_time'] == pytest.approx(calculated_avg), \
+        f"avg_wait_time calculation mismatch: " \
+        f"expected {calculated_avg:.3f}, got {stats['avg_wait_time']:.3f}"

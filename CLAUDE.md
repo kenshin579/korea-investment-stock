@@ -597,6 +597,132 @@ python examples/stress_test.py
 - **PRD**: `docs/start/1_api_limit_prd.md`
 - **TODO checklist**: `docs/start/1_api_limit_todo.md`
 
+## Rate Limit Logging and Monitoring
+
+**NEW**: Built-in logging and extended statistics for production monitoring.
+
+### Logging
+
+Rate limiter uses Python's standard `logging` module for throttle event logging:
+
+```python
+import logging
+from korea_investment_stock import KoreaInvestment, RateLimitedKoreaInvestment
+
+# Enable DEBUG logging to see throttle events
+logging.basicConfig(
+    level=logging.DEBUG,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+
+broker = KoreaInvestment(api_key, api_secret, acc_no)
+rate_limited = RateLimitedKoreaInvestment(broker, calls_per_second=15)
+
+# Each throttle event will be logged:
+# "Rate limit: waiting 0.067s (call #2)"
+result = rate_limited.fetch_price("005930", "KR")
+```
+
+**Log Levels:**
+- `DEBUG`: Every throttle event with wait time
+- `INFO`: Application-level messages (default in examples)
+- User can configure logging as needed
+
+### Extended Statistics
+
+The `get_rate_limit_stats()` method now returns comprehensive metrics:
+
+```python
+rate_limited = RateLimitedKoreaInvestment(broker, calls_per_second=15)
+
+# Make some API calls
+for symbol, market in stock_list:
+    rate_limited.fetch_price(symbol, market)
+
+# Get detailed statistics
+stats = rate_limited.get_rate_limit_stats()
+```
+
+**Statistics Fields:**
+
+```python
+{
+    # Basic Configuration
+    'calls_per_second': 15.0,       # Configured rate limit
+    'min_interval': 0.0667,         # Minimum interval between calls (seconds)
+    'last_call': 1699999999.123,    # Timestamp of last call
+
+    # Call Counts
+    'total_calls': 500,              # Total API calls made
+    'throttled_calls': 450,          # Calls that were throttled
+
+    # Throttle Metrics (NEW)
+    'throttle_rate': 0.90,           # Percentage of calls throttled (0.0 - 1.0)
+    'total_wait_time': 28.5,         # Total time spent waiting (seconds)
+    'avg_wait_time': 0.0633          # Average wait per throttled call (seconds)
+}
+```
+
+### Production Monitoring Example
+
+```python
+import logging
+from korea_investment_stock import KoreaInvestment, RateLimitedKoreaInvestment
+
+# Configure logging for production
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s'
+)
+
+broker = KoreaInvestment(api_key, api_secret, acc_no)
+rate_limited = RateLimitedKoreaInvestment(broker, calls_per_second=15)
+
+# Run batch processing
+with rate_limited:
+    for symbol, market in stock_list:
+        result = rate_limited.fetch_price(symbol, market)
+        # Process result...
+
+# Get performance metrics
+stats = rate_limited.get_rate_limit_stats()
+
+print(f"Performance Metrics:")
+print(f"  Total calls: {stats['total_calls']}")
+print(f"  Throttled: {stats['throttled_calls']} ({stats['throttle_rate']*100:.1f}%)")
+print(f"  Total wait time: {stats['total_wait_time']:.2f}s")
+print(f"  Avg wait time: {stats['avg_wait_time']:.3f}s")
+
+# Example output:
+# Performance Metrics:
+#   Total calls: 500
+#   Throttled: 450 (90.0%)
+#   Total wait time: 28.5s
+#   Avg wait time: 0.063s
+```
+
+### Interpreting Statistics
+
+**Throttle Rate:**
+- **0-20%**: Low throttling, rate limit is generous
+- **20-80%**: Moderate throttling, balanced configuration
+- **80-100%**: High throttling, may want to reduce `calls_per_second`
+
+**Total Wait Time:**
+- Shows overhead from rate limiting
+- Compare with total execution time to assess impact
+- Example: 28.5s wait / 33s total = 86% of time spent waiting
+
+**Average Wait Time:**
+- Should be close to `min_interval` (1/calls_per_second)
+- Example: 15 calls/sec → 0.067s interval
+- Higher values may indicate timing issues
+
+### See Also
+
+- **Example**: `examples/stress_test.py` demonstrates logging and statistics
+- **Tests**: `korea_investment_stock/rate_limit/test_rate_limiter.py`
+
 ## User Implementation Examples
 
 ### Batch Processing Example
