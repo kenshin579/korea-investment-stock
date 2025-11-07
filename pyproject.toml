@@ -1,10 +1,10 @@
 [build-system]
-requires = ["setuptools", "wheel"]
+requires = ["setuptools>=61", "wheel", "setuptools-scm>=8"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "korea-investment-stock"
-version = "0.8.0"
+dynamic = ["version"]
 description = "Pure Python wrapper for Korea Investment Securities OpenAPI"
 authors = [
     { name = "Jonghun Yoo", email = "jonghun.yoo@pyquant.co.kr" },
@@ -35,3 +35,8 @@ dev = [
 
 [tool.setuptools.packages.find]
 include = ["korea_investment_stock*"]
+
+[tool.setuptools_scm]
+# Git tag에서 자동으로 버전 추출
+# 예: v0.8.1 → 0.8.1
+# 개발 버전: 0.8.1.dev42+g1234567
