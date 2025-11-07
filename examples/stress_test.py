@@ -8,8 +8,13 @@ Rate Limiting을 적용하여 API 호출 속도를 자동으로 조절합니다.
 import os
 import time
 import yaml
+import logging
 from pathlib import Path
 from korea_investment_stock import KoreaInvestment, RateLimitedKoreaInvestment
+
+# Logging 설정 (DEBUG 레벨로 설정하면 rate limit 로그 확인 가능)
+# logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 
 def load_stock_list(yaml_path: str) -> list:
@@ -123,6 +128,11 @@ def run_stress_test():
     print(f"\n⚡ Rate Limit 통계:")
     print(f"  - 설정: {stats['calls_per_second']}회/초")
     print(f"  - 총 호출: {stats['total_calls']}회")
+    print(f"  - Throttle된 호출: {stats['throttled_calls']}회")
+    print(f"  - Throttle 비율: {stats['throttle_rate']*100:.1f}%")
+    print(f"  - 총 대기 시간: {stats['total_wait_time']:.2f}초")
+    print(f"  - 평균 대기 시간: {stats['avg_wait_time']:.3f}초")
+    print(f"\n💡 Tip: DEBUG 로그를 보려면 파일 상단의 logging.basicConfig를 DEBUG로 변경하세요")
 
 
 if __name__ == "__main__":
