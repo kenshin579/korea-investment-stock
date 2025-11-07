@@ -45,7 +45,7 @@ def example_domestic_stock_price():
         result = broker.fetch_price("005930", "KR")
 
         if result['rt_cd'] == '0':
-            output = result.get('output1', {})
+            output = result.get('output', {})
             print(f"\n✅ 삼성전자 (005930) 현재가:")
             print(f"  현재가: {int(output['stck_prpr']):,}원")
             print(f"  전일대비: {output['prdy_vrss']} ({output['prdy_ctrt']}%)")
@@ -131,7 +131,7 @@ def example_multiple_stocks():
             result = broker.fetch_price(symbol, market)
 
             if result['rt_cd'] == '0':
-                output = result.get('output1', {})
+                output = result.get('output', {})
                 stock_name = {
                     "005930": "삼성전자",
                     "000660": "SK하이닉스",
