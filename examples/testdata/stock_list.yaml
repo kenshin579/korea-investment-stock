@@ -179,8 +179,8 @@ stock_list:
   - ["WFC", "US"]     # Wells Fargo & Company
   - ["AIG", "US"]     # American International Group
   - ["ALLY", "US"]    # Ally Financial Inc.
-  - ["BAC-P", "US"]   # Bank of America Preferred
-  - ["COF-N", "US"]   # Capital One Financial Preferred
+#  - ["BAC-P", "US"]   # Bank of America Preferred
+#  - ["COF-N", "US"]   # Capital One Financial Preferred
 
   # 통신
   - ["VZ", "US"]      # Verizon Communications
@@ -218,7 +218,7 @@ stock_list:
   - ["PDI", "US"]     # PIMCO Dynamic Income Fund
   - ["BHFAM", "US"]   # Brighthouse Financial
   - ["WBTN", "US"]    # Webtoon Entertainment
-  - ["MITT-A", "US"]  # AG Mortgage Investment Trust Preferred
+#  - ["MITT-A", "US"]  # AG Mortgage Investment Trust Preferred
 
   # 미국 ETF (추가) - 채권 ETF
   - ["TLT", "US"]     # iShares 20+ Year Treasury Bond ETF (장기 국채)
