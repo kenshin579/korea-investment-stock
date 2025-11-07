@@ -1,22 +1,18 @@
 """
 토큰 저장소 단위 테스트
 
-TokenStorage, FileTokenStorage, RedisTokenStorage의 기능을 테스트합니다.
+FileTokenStorage, RedisTokenStorage의 기능을 테스트합니다.
 fakeredis를 사용하여 Redis 테스트를 수행합니다 (Docker 불필요).
 """
 
-import os
-import pickle
 import pytest
 import tempfile
 import threading
-import time
 from datetime import datetime, timedelta
 from pathlib import Path
 from unittest.mock import patch, MagicMock
 
 from .token_storage import (
-    TokenStorage,
     FileTokenStorage,
     RedisTokenStorage,
 )
@@ -48,17 +44,33 @@ def create_token_data(api_key="test_key", api_secret="test_secret", days_until_e
 
 
 # ============================================================
+# Global Fixtures (shared across test classes)
+# ============================================================
+
+@pytest.fixture
+def temp_token_file():
+    """임시 토큰 파일 경로 생성 (전역 fixture)"""
+    with tempfile.TemporaryDirectory() as tmpdir:
+        yield Path(tmpdir) / "token.key"
+
+
+@pytest.fixture
+def fake_redis():
+    """In-memory Redis 인스턴스 (fakeredis) (전역 fixture)"""
+    try:
+        import fakeredis
+    except ImportError:
+        pytest.skip("fakeredis가 설치되지 않았습니다")
+
+    return fakeredis.FakeStrictRedis(decode_responses=True)
+
+
+# ============================================================
 # FileTokenStorage Tests
 # ============================================================
 
 class TestFileTokenStorage:
     """FileTokenStorage 클래스 테스트"""
-
-    @pytest.fixture
-    def temp_token_file(self):
-        """임시 토큰 파일 경로 생성"""
-        with tempfile.TemporaryDirectory() as tmpdir:
-            yield Path(tmpdir) / "token.key"
 
     @pytest.fixture
     def file_storage(self, temp_token_file):
@@ -142,16 +154,6 @@ class TestRedisTokenStorage:
     """RedisTokenStorage 클래스 테스트 (fakeredis 사용)"""
 
     @pytest.fixture
-    def fake_redis(self):
-        """In-memory Redis 인스턴스 (fakeredis)"""
-        try:
-            import fakeredis
-        except ImportError:
-            pytest.skip("fakeredis가 설치되지 않았습니다")
-
-        return fakeredis.FakeStrictRedis(decode_responses=True)
-
-    @pytest.fixture
     def redis_storage(self, fake_redis, monkeypatch):
         """fakeredis를 사용하는 RedisTokenStorage"""
         def mock_from_url(*args, **kwargs):
@@ -177,9 +179,12 @@ class TestRedisTokenStorage:
 
     def test_redis_with_password(self, fake_redis, monkeypatch):
         """Redis 비밀번호 인증 테스트"""
+        # URL 변환이 올바르게 되었는지 확인하기 위한 변수
+        captured_url = []
+
         def mock_from_url(url, *args, **kwargs):
-            # URL에 비밀번호가 포함되어 있는지 확인
-            assert ':mypassword@' in url
+            # 전달된 URL을 캡처
+            captured_url.append(url)
             return fake_redis
 
         monkeypatch.setattr('redis.from_url', mock_from_url)
@@ -189,6 +194,10 @@ class TestRedisTokenStorage:
             password="mypassword"
         )
         assert storage is not None
+
+        # 캡처된 URL에 비밀번호가 포함되어 있는지 확인
+        assert len(captured_url) == 1
+        assert ':mypassword@' in captured_url[0]
 
     def test_ttl_auto_expire(self, redis_storage, fake_redis):
         """TTL 자동 만료 테스트"""
