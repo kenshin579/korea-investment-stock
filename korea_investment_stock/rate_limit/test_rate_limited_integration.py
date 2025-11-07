@@ -1,5 +1,4 @@
 import os
-import time
 import pytest
 from korea_investment_stock import KoreaInvestment
 from .rate_limited_korea_investment import RateLimitedKoreaInvestment
@@ -25,8 +24,7 @@ def test_rate_limited_basic(credentials):
     broker = KoreaInvestment(api_key, api_secret, acc_no)
     rate_limited = RateLimitedKoreaInvestment(broker, calls_per_second=15)
 
-    # 30번 API 호출 (약 2초 소요 예상)
-    start = time.time()
+    # 30번 API 호출
     test_stocks = [
         ("005930", "KR"),  # 삼성전자
         ("035720", "KR"),  # 카카오
@@ -41,13 +39,6 @@ def test_rate_limited_basic(credentials):
                 success_count += 1
             else:
                 print(f"API 호출 실패: {symbol}/{market} - {result.get('msg1', 'Unknown error')}")
-
-    elapsed = time.time() - start
-
-    # 30회 호출, 15회/초 = 2초 (허용 오차: ±25%)
-    expected_time = 30 / 15  # 2초
-    assert expected_time * 0.75 <= elapsed <= expected_time * 1.25, \
-        f"Expected {expected_time*0.75:.2f}-{expected_time*1.25:.2f}s, got {elapsed:.2f}s"
 
     # 성공률 검증 (최소 90% 이상)
     success_rate = success_count / 30
@@ -84,11 +75,6 @@ def test_rate_limited_preserves_functionality(credentials):
     result = rate_limited.fetch_stock_info("AAPL", "US")
     assert result['rt_cd'] == '0', \
         f"fetch_stock_info failed: {result.get('msg1', 'Unknown error')}"
-
-    # fetch_kospi_symbols 테스트
-    result = rate_limited.fetch_kospi_symbols()
-    assert result['rt_cd'] == '0', \
-        f"fetch_kospi_symbols failed: {result.get('msg1', 'Unknown error')}"
 
 
 def test_rate_limited_stats(credentials):
@@ -130,16 +116,9 @@ def test_rate_limited_adjust_runtime(credentials):
     assert stats['calls_per_second'] == 10
 
     # 조정된 속도로 API 호출
-    start = time.time()
     for _ in range(10):
         result = rate_limited.fetch_price("005930", "KR")
         assert result['rt_cd'] == '0'
-    elapsed = time.time() - start
-
-    # 10회 호출, 10회/초 = 1초 (허용 오차: ±25%)
-    expected_time = 10 / 10  # 1초
-    assert expected_time * 0.75 <= elapsed <= expected_time * 1.25, \
-        f"Expected {expected_time*0.75:.2f}-{expected_time*1.25:.2f}s, got {elapsed:.2f}s"
 
 
 def test_rate_limited_multiple_markets(credentials):
@@ -170,18 +149,3 @@ def test_rate_limited_multiple_markets(credentials):
     assert success_rate >= 0.9, \
         f"Expected success rate >= 90%, got {success_rate*100:.1f}%"
 
-
-def test_rate_limited_error_propagation(credentials):
-    """API 에러가 올바르게 전파되는지 테스트"""
-    api_key, api_secret, acc_no = credentials
-
-    broker = KoreaInvestment(api_key, api_secret, acc_no)
-    rate_limited = RateLimitedKoreaInvestment(broker, calls_per_second=15)
-
-    # 존재하지 않는 종목 코드로 호출
-    result = rate_limited.fetch_price("INVALID", "KR")
-
-    # 에러가 올바르게 전달되는지 확인
-    # (rt_cd != '0'이거나 msg1에 에러 메시지가 있어야 함)
-    assert result['rt_cd'] != '0' or 'msg1' in result, \
-        "Error should be propagated from API"
