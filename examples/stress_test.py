@@ -2,14 +2,14 @@
 Stress Test Example
 
 종목 리스트를 순회하며 종목 정보와 가격을 조회하는 간단한 stress test
-각 API 호출 사이에 100ms sleep을 적용합니다.
+Rate Limiting을 적용하여 API 호출 속도를 자동으로 조절합니다.
 """
 
 import os
 import time
 import yaml
 from pathlib import Path
-from korea_investment_stock import KoreaInvestment
+from korea_investment_stock import KoreaInvestment, RateLimitedKoreaInvestment
 
 
 def load_stock_list(yaml_path: str) -> list:
@@ -33,9 +33,9 @@ def run_stress_test():
 
     각 종목에 대해:
     1. fetch_stock_info() 호출
-    2. 100ms sleep
-    3. fetch_price() 호출
-    4. 100ms sleep
+    2. fetch_price() 호출
+
+    Rate Limiting (15회/초)이 자동으로 적용되어 API 속도 제한 에러를 방지합니다.
     """
     # Environment variables
     api_key = os.environ.get('KOREA_INVESTMENT_API_KEY')
@@ -54,20 +54,24 @@ def run_stress_test():
     stock_list = load_stock_list(yaml_path)
 
     print(f"📋 총 {len(stock_list)}개 종목 stress test 시작")
+    print("⚡ Rate Limiting: 15 calls/second")
     print("=" * 60)
 
     success_count = 0
     error_count = 0
     start_time = time.time()
 
-    # Initialize broker with context manager
-    with KoreaInvestment(api_key, api_secret, acc_no) as broker:
+    # Initialize broker with rate limiting
+    broker = KoreaInvestment(api_key, api_secret, acc_no)
+    rate_limited_broker = RateLimitedKoreaInvestment(broker, calls_per_second=15)
+
+    with rate_limited_broker:
         for i, (symbol, market) in enumerate(stock_list, 1):
             print(f"\n[{i}/{len(stock_list)}] {symbol} ({market})")
 
             # 1. fetch_stock_info
             try:
-                info_result = broker.fetch_stock_info(symbol, market)
+                info_result = rate_limited_broker.fetch_stock_info(symbol, market)
                 if info_result['rt_cd'] == '0':
                     print(f"  ✅ Stock Info: Success")
                     success_count += 1
@@ -82,11 +86,9 @@ def run_stress_test():
                 print("\n🚨 예외 발생: Stress test 중단")
                 break
 
-            # time.sleep(0.1)  # 100ms sleep
-
             # 2. fetch_price
             try:
-                price_result = broker.fetch_price(symbol, market)
+                price_result = rate_limited_broker.fetch_price(symbol, market)
                 if price_result['rt_cd'] == '0':
                     print(f"  ✅ Price: Success")
                     success_count += 1
@@ -101,7 +103,8 @@ def run_stress_test():
                 print("\n🚨 예외 발생: Stress test 중단")
                 break
 
-            # time.sleep(0.1)  # 100ms sleep
+    # Rate limit stats
+    stats = rate_limited_broker.get_rate_limit_stats()
 
     # Summary
     elapsed_time = time.time() - start_time
@@ -117,6 +120,9 @@ def run_stress_test():
     print(f"성공률: {success_count / total_calls * 100:.1f}%" if total_calls > 0 else "N/A")
     print(f"실행 시간: {elapsed_time:.2f}초")
     print(f"평균 응답 시간: {avg_time:.3f}초/호출")
+    print(f"\n⚡ Rate Limit 통계:")
+    print(f"  - 설정: {stats['calls_per_second']}회/초")
+    print(f"  - 총 호출: {stats['total_calls']}회")
 
 
 if __name__ == "__main__":
