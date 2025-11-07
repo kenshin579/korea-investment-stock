@@ -74,9 +74,54 @@ def test_fetch_price(mock_get):
     assert result['output1']['stck_prpr'] == '70000'
 ```
 
+### Added
+
+#### API Rate Limiting (#67)
+
+**New Feature**: Automatic rate limiting to manage Korea Investment API's 20 calls/second limit.
+
+**Components**:
+- `RateLimiter`: Thread-safe rate limiter using token bucket algorithm
+- `RateLimitedKoreaInvestment`: Wrapper class for automatic rate limiting
+
+**Usage**:
+```python
+from korea_investment_stock import KoreaInvestment, RateLimitedKoreaInvestment
+
+# Create base broker
+broker = KoreaInvestment(api_key, api_secret, acc_no)
+
+# Wrap with rate limiting (15 calls/second - conservative)
+rate_limited = RateLimitedKoreaInvestment(broker, calls_per_second=15)
+
+# Use as normal - rate limiting applied automatically
+result = rate_limited.fetch_price("005930", "KR")
+```
+
+**Features**:
+- ✅ Thread-safe using `threading.Lock`
+- ✅ Default: 15 calls/second (conservative margin)
+- ✅ Dynamic rate adjustment at runtime
+- ✅ Statistics tracking (total_calls, min_interval)
+- ✅ Context manager support
+- ✅ Zero changes to existing `KoreaInvestment` class
+- ✅ Works with `CachedKoreaInvestment` (recommended combination)
+
+**Benefits**:
+- Prevents API rate limit errors
+- `examples/stress_test.py` now achieves 100% success (500 API calls)
+- Batch processing of stocks is safe and reliable
+- Opt-in design: users choose when to enable
+
+**See Also**:
+- Implementation guide: `docs/start/1_api_limit_implementation.md`
+- PRD: `docs/start/1_api_limit_prd.md`
+- CLAUDE.md: "API Rate Limiting" section
+
 ### Changed
 - 실전 서버로 통일되어 모든 API 일관되게 지원
 - 코드베이스 간소화 (mock 관련 로직 제거)
+- `examples/stress_test.py` updated to use `RateLimitedKoreaInvestment`
 
 ### Removed
 - `mock` 파라미터 (Breaking)

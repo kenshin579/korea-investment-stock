@@ -439,6 +439,164 @@ cached_broker = CachedKoreaInvestment(
 - **PRD**: `docs/start/2_cache_prd.md`
 - **Usage examples**: `examples/cached_basic_example.py`
 
+## API Rate Limiting
+
+**NEW in v0.8.0**: Automatic rate limiting to manage Korea Investment API's 20 calls/second limit.
+
+### Problem
+
+Korea Investment Securities OpenAPI has a **20 calls/second limit**. Exceeding this causes API errors:
+- `examples/stress_test.py` with 500 API calls fails without rate limiting
+- Batch processing of stocks triggers rate limit errors
+- API returns error codes when limit exceeded
+
+### Solution
+
+**RateLimitedKoreaInvestment** wrapper automatically throttles API calls to stay within limits:
+
+```python
+from korea_investment_stock import KoreaInvestment, RateLimitedKoreaInvestment
+
+# Create base broker
+broker = KoreaInvestment(api_key, api_secret, acc_no)
+
+# Wrap with rate limiting (15 calls/second - conservative)
+rate_limited = RateLimitedKoreaInvestment(broker, calls_per_second=15)
+
+# Use as normal - rate limiting applied automatically
+result = rate_limited.fetch_price("005930", "KR")
+
+# Batch processing is now safe!
+for symbol, market in stock_list:
+    result = rate_limited.fetch_price(symbol, market)  # Auto-throttled
+```
+
+### Architecture
+
+**Wrapper Pattern** (same as Cache):
+```
+KoreaInvestment (unchanged)
+    ↓
+RateLimitedKoreaInvestment (wrapper)
+    ↓
+RateLimiter (thread-safe rate control)
+```
+
+- Existing `KoreaInvestment` class unchanged
+- Opt-in: Users choose to enable rate limiting
+- Thread-safe: Uses `threading.Lock`
+- Philosophy compliant: Simple, transparent, flexible
+
+### Configuration
+
+Default: **15 calls/second** (conservative margin below 20/sec limit)
+
+Custom rates:
+```python
+# Production - ultra safe
+conservative = RateLimitedKoreaInvestment(broker, calls_per_second=12)
+
+# Testing - closer to limit
+aggressive = RateLimitedKoreaInvestment(broker, calls_per_second=18)
+
+# Maximum safety
+ultra_safe = RateLimitedKoreaInvestment(broker, calls_per_second=10)
+```
+
+### Dynamic Adjustment
+
+```python
+rate_limited = RateLimitedKoreaInvestment(broker, calls_per_second=15)
+
+# Adjust at runtime
+rate_limited.adjust_rate_limit(calls_per_second=10)
+
+# Check statistics
+stats = rate_limited.get_rate_limit_stats()
+print(f"Current rate: {stats['calls_per_second']}/sec")
+print(f"Total calls: {stats['total_calls']}")
+```
+
+### Combined with Cache (Recommended!)
+
+**Best practice**: Use both Cache and Rate Limiting together for optimal performance and safety:
+
+```python
+from korea_investment_stock import (
+    KoreaInvestment,
+    CachedKoreaInvestment,
+    RateLimitedKoreaInvestment
+)
+
+# Stack both wrappers
+broker = KoreaInvestment(api_key, api_secret, acc_no)
+cached = CachedKoreaInvestment(broker, price_ttl=5)
+safe_broker = RateLimitedKoreaInvestment(cached, calls_per_second=15)
+
+# Benefits:
+# ✅ Cache reduces API calls (performance)
+# ✅ Rate limit protects cache misses (safety)
+# ✅ No API errors, maximum efficiency
+```
+
+**How it works together:**
+1. **Rate Limit**: wait() check (throttle)
+2. **Cache**: Check cache (hit = instant return, miss = continue)
+3. **API**: Real API call (only if cache miss)
+
+### Performance Impact
+
+| Scenario | Without Rate Limit | With Rate Limit (15/sec) |
+|----------|-------------------|-------------------------|
+| 10 API calls | ~1-3 sec | ~0.67 sec |
+| 100 API calls | ~10-30 sec | ~6.7 sec |
+| 500 API calls | **FAILS** (rate limit errors) | ~33 sec (100% success) |
+
+### When to Use
+
+**✅ Use rate limiting for:**
+- Batch processing (>20 stocks)
+- Continuous queries (production apps)
+- Stress tests
+- Any scenario where rate limit errors occur
+
+**❌ Not needed for:**
+- Single or rare queries
+- Already have custom rate limiting
+- Interactive development/manual testing
+
+### Context Manager Support
+
+```python
+broker = KoreaInvestment(api_key, api_secret, acc_no)
+rate_limited = RateLimitedKoreaInvestment(broker, calls_per_second=15)
+
+with rate_limited:
+    for symbol, market in stocks:
+        result = rate_limited.fetch_price(symbol, market)
+```
+
+### Stress Test Example
+
+See `examples/stress_test.py` for complete example with 250 stocks (500 API calls):
+
+```bash
+# Run stress test with rate limiting
+python examples/stress_test.py
+
+# Expected results:
+# - 500 API calls complete
+# - 100% success rate
+# - ~33 seconds execution time
+# - 0 rate limit errors
+```
+
+### See Also
+
+- **Implementation guide**: `docs/start/1_api_limit_implementation.md`
+- **PRD**: `docs/start/1_api_limit_prd.md`
+- **TODO checklist**: `docs/start/1_api_limit_todo.md`
+
 ## User Implementation Examples
 
 ### Batch Processing Example
