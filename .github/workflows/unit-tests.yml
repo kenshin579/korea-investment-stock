@@ -26,10 +26,10 @@ jobs:
           python -m pip install --upgrade pip
           pip install -e ".[dev]"
 
-      - name: Run cache manager tests
+      - name: Run unit tests
         run: |
-          pytest korea_investment_stock/cache/test_cache_manager.py -v
-
-      - name: Run token storage tests (excluding Redis)
-        run: |
-          pytest korea_investment_stock/token_storage/test_token_storage.py -v -k "not redis_storage"
+          pytest korea_investment_stock/ -v \
+            --ignore=korea_investment_stock/test_korea_investment_stock.py \
+            --ignore=korea_investment_stock/test_integration_us_stocks.py \
+            --ignore=korea_investment_stock/cache/test_cached_integration.py \
+            -k "not redis_storage"
