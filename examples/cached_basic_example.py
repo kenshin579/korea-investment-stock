@@ -39,7 +39,7 @@ def example_basic_usage():
     start = time.time()
     result = cached_broker.fetch_price("005930", "KR")
     elapsed1 = time.time() - start
-    print(f"  - 삼성전자 현재가: {result['output1']['stck_prpr']}원")
+    print(f"  - 삼성전자 현재가: {result['output']['stck_prpr']}원")
     print(f"  - 소요 시간: {elapsed1*1000:.2f}ms")
 
     # 동일 종목 재조회 (캐시 히트)
@@ -47,7 +47,7 @@ def example_basic_usage():
     start = time.time()
     result = cached_broker.fetch_price("005930", "KR")
     elapsed2 = time.time() - start
-    print(f"  - 삼성전자 현재가: {result['output1']['stck_prpr']}원")
+    print(f"  - 삼성전자 현재가: {result['output']['stck_prpr']}원")
     print(f"  - 소요 시간: {elapsed2*1000:.2f}ms")
     print(f"  - 속도 개선: {(1 - elapsed2/elapsed1)*100:.1f}%")
 
@@ -121,7 +121,7 @@ def example_context_manager():
         symbols = ["005930", "000660", "035720"]
         for symbol in symbols:
             result = cached_broker.fetch_price(symbol, "KR")
-            print(f"  - {symbol}: {result['output1']['stck_prpr']}원")
+            print(f"  - {symbol}: {result['output']['stck_prpr']}원")
 
         stats = cached_broker.get_cache_stats()
         print(f"\n  캐시 크기: {stats['cache_size']}")
@@ -150,7 +150,7 @@ def example_cache_control():
     symbols = ["005930", "000660", "035720"]
     for symbol in symbols:
         result = cached_broker.fetch_price(symbol, "KR")
-        print(f"  - {symbol}: {result['output1']['stck_prpr']}원")
+        print(f"  - {symbol}: {result['output']['stck_prpr']}원")
 
     stats = cached_broker.get_cache_stats()
     print(f"\n조회 후 캐시 통계:")

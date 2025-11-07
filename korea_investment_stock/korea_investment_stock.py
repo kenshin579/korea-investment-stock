@@ -385,6 +385,10 @@ class KoreaInvestment:
         return resp_json
 
     def get_symbol_type(self, symbol_info):
+        # API 오류 응답 처리
+        if symbol_info.get('rt_cd') != '0' or 'output' not in symbol_info:
+            return 'Stock'  # 기본값으로 주식 타입 반환
+
         symbol_type = symbol_info['output']['prdt_clsf_name']
         if symbol_type == '주권' or symbol_type == '상장REITS' or symbol_type == '사회간접자본투융자회사':
             return 'Stock'
