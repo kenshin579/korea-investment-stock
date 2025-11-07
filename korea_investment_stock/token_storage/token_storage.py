@@ -232,7 +232,7 @@ class RedisTokenStorage(TokenStorage):
             )
 
         # Redis URL에 비밀번호가 없고 password 파라미터가 제공된 경우
-        if password and ':' not in redis_url.split('@')[0].split('//')[1]:
+        if password and '@' not in redis_url:
             # redis://host:port/db → redis://:password@host:port/db
             parts = redis_url.split('//')
             protocol = parts[0]
