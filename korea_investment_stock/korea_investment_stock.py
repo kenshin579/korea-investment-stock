@@ -704,10 +704,8 @@ class KoreaInvestment:
             # API 호출해서 실제로 확인은 못해봄, overasea 이라서 안될 것으로 판단해서 조건문 추가함
             raise ValueError("Market cannot be either 'KR' or 'KRX'.")
 
-        for market_code in MARKET_TYPE_MAP[market]:
-            print("market_code", market_code)
-            market_type = MARKET_CODE_MAP[market_code]
-            exchange_code = EXCHANGE_CODE_MAP[market_type]
+        for exchange_code in ["NYS", "NAS", "AMS", "BAY", "BAQ", "BAA"]:
+            print("exchange_code", exchange_code)
             params = {
                 "AUTH": "",
                 "EXCD": exchange_code,
