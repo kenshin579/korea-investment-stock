@@ -18,6 +18,9 @@ from .cache import CacheManager, CacheEntry, CachedKoreaInvestment
 # 토큰 저장소 (서브패키지)
 from .token_storage import TokenStorage, FileTokenStorage, RedisTokenStorage
 
+# Rate Limiting (서브패키지)
+from .rate_limit import RateLimiter, RateLimitedKoreaInvestment
+
 __version__ = "0.7.0"
 
 __all__ = [
@@ -36,4 +39,8 @@ __all__ = [
     "TokenStorage",
     "FileTokenStorage",
     "RedisTokenStorage",
+
+    # Rate Limiting
+    "RateLimiter",
+    "RateLimitedKoreaInvestment",
 ]
