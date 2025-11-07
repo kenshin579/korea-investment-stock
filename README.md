@@ -51,7 +51,7 @@ korea_investment_stock/
 - ✅ **Search Functions**: Stock search and lookup
 
 ### Advanced Features (Opt-in)
-- 🚀 **Rate Limiting** (v0.8.0): Automatic throttling to prevent API errors
+- 🚀 **Rate Limiting** (v0.8.0): Automatic throttling with logging and monitoring
 - 💾 **Memory Caching** (v0.7.0): Reduce API calls with TTL-based caching
 - 🔑 **Token Storage** (v0.7.0): File or Redis-based token persistence
 - 🔄 **Wrapper Architecture**: Stack features as needed
@@ -255,10 +255,56 @@ aggressive = RateLimitedKoreaInvestment(broker, calls_per_second=18)
 # Dynamic adjustment at runtime
 rate_limited.adjust_rate_limit(calls_per_second=10)
 
-# Check statistics
+# Check statistics (NEW: Extended statistics)
 stats = rate_limited.get_rate_limit_stats()
 print(f"Rate: {stats['calls_per_second']}/sec")
 print(f"Total calls: {stats['total_calls']}")
+print(f"Throttled: {stats['throttled_calls']} ({stats['throttle_rate']*100:.1f}%)")
+print(f"Total wait time: {stats['total_wait_time']:.2f}s")
+print(f"Avg wait time: {stats['avg_wait_time']:.3f}s")
+```
+
+**Logging & Monitoring (NEW)**:
+
+Built-in logging and extended statistics for production monitoring:
+
+```python
+import logging
+from korea_investment_stock import KoreaInvestment, RateLimitedKoreaInvestment
+
+# Enable DEBUG logging to see throttle events
+logging.basicConfig(
+    level=logging.DEBUG,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+
+broker = KoreaInvestment(api_key, api_secret, acc_no)
+rate_limited = RateLimitedKoreaInvestment(broker, calls_per_second=15)
+
+# Each throttle event will be logged:
+# "Rate limit: waiting 0.067s (call #2)"
+result = rate_limited.fetch_price("005930", "KR")
+
+# Get detailed statistics after batch processing
+stats = rate_limited.get_rate_limit_stats()
+print(f"Performance Metrics:")
+print(f"  Total calls: {stats['total_calls']}")
+print(f"  Throttled: {stats['throttled_calls']} ({stats['throttle_rate']*100:.1f}%)")
+print(f"  Total wait time: {stats['total_wait_time']:.2f}s")
+print(f"  Avg wait time: {stats['avg_wait_time']:.3f}s")
+```
+
+**Extended Statistics Fields**:
+
+```python
+{
+    'calls_per_second': 15.0,       # Configured rate limit
+    'total_calls': 500,              # Total API calls made
+    'throttled_calls': 450,          # Calls that were throttled (NEW)
+    'throttle_rate': 0.90,           # Throttle percentage (NEW)
+    'total_wait_time': 28.5,         # Total time spent waiting (NEW)
+    'avg_wait_time': 0.0633          # Average wait per throttle (NEW)
+}
 ```
 
 **Combined with Cache (Recommended!)**:
@@ -292,11 +338,12 @@ safe_broker = RateLimitedKoreaInvestment(cached, calls_per_second=15)
 **Features**:
 - 🔒 Thread-safe with `threading.Lock`
 - ⚡ Token bucket algorithm
-- 📊 Real-time statistics
+- 📊 Real-time statistics with extended metrics (NEW)
+- 📝 Built-in logging for throttle events (NEW)
 - 🎛️ Dynamic rate adjustment
 - 🔧 Context manager support
 
-**See**: `examples/stress_test.py` for 500+ API calls example
+**See**: `examples/stress_test.py` for 500+ API calls example with logging and statistics
 
 ---
 
