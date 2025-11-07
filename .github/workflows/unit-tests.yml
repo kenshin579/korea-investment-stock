@@ -32,4 +32,4 @@ jobs:
             --ignore=korea_investment_stock/test_korea_investment_stock.py \
             --ignore=korea_investment_stock/test_integration_us_stocks.py \
             --ignore=korea_investment_stock/cache/test_cached_integration.py \
-            -k "not redis_storage"
+            -k "not (Redis or redis_storage or TestTokenStorageIntegration)"
