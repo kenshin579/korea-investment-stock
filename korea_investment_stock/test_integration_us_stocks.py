@@ -40,7 +40,9 @@ class TestUSStockIntegration(unittest.TestCase):
                 'stck_shrn_iscd': '005930',
                 'stck_prpr': '62600',
                 'prdy_vrss': '1600',
-                'prdy_ctrt': '2.62'
+                'prdy_ctrt': '2.62',
+                'acml_vol': '15234567',    # 거래량
+                'hts_avls': '3735468'      # 시가총액 (억원)
             }
         }
 
@@ -52,6 +54,9 @@ class TestUSStockIntegration(unittest.TestCase):
                 'last': '211.1600',
                 't_xdif': '1720',
                 't_xrat': '-0.59',
+                'tvol': '39765812',        # 거래량
+                'tomv': '3250000000000',   # 시가총액
+                'shar': '15384171000',     # 상장주수
                 'perx': '32.95',
                 'pbrx': '47.23'
             }
@@ -120,6 +125,8 @@ class TestUSStockIntegration(unittest.TestCase):
                 'high': '212.1300',
                 'low': '209.8600',
                 'tvol': '39765812',
+                'tomv': '3250000000000',   # 시가총액
+                'shar': '15384171000',     # 상장주수
                 't_xdif': '1720',
                 't_xrat': '-0.59',
                 'perx': '32.95',
