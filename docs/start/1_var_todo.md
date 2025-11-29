@@ -16,18 +16,18 @@
 
 ## Phase 2: Config 클래스 추가 (v1.0.0)
 
-- [ ] `pyyaml>=6.0` 의존성 추가 (`pyproject.toml`)
-- [ ] `korea_investment_stock/config.py` 파일 생성
-  - [ ] `Config` dataclass 정의
-  - [ ] `from_env()` 메서드 구현
-  - [ ] `from_yaml()` 메서드 구현
-  - [ ] `to_dict()`, `to_yaml()` 메서드 구현
-- [ ] `__init__.py`에서 `Config` 클래스 export
-- [ ] 단위 테스트 작성
-  - [ ] YAML 파일 로딩 테스트
-  - [ ] 환경 변수 로딩 테스트
-  - [ ] 잘못된 파일 형식 에러 처리 테스트
-- [ ] 사용 예제 추가 (`examples/config_example.py`)
+- [x] `pyyaml>=6.0` 의존성 추가 (`pyproject.toml`)
+- [x] `korea_investment_stock/config.py` 파일 생성
+  - [x] `Config` dataclass 정의
+  - [x] `from_env()` 메서드 구현
+  - [x] `from_yaml()` 메서드 구현
+  - [x] `to_dict()`, `to_yaml()` 메서드 구현
+- [x] `__init__.py`에서 `Config` 클래스 export
+- [x] 단위 테스트 작성
+  - [x] YAML 파일 로딩 테스트
+  - [x] 환경 변수 로딩 테스트
+  - [x] 잘못된 파일 형식 에러 처리 테스트
+- [x] 사용 예제 추가 (`examples/config_example.py`)
 
 ---
 

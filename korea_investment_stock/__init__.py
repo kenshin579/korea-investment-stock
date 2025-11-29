@@ -12,6 +12,9 @@ from .korea_investment_stock import (
     API_RETURN_CODE,
 )
 
+# 설정 관리
+from .config import Config
+
 # 캐시 기능 (서브패키지)
 from .cache import CacheManager, CacheEntry, CachedKoreaInvestment
 
@@ -35,6 +38,9 @@ __all__ = [
     "EXCHANGE_CODE",
     "EXCHANGE_CODE2",
     "API_RETURN_CODE",
+
+    # 설정 관리
+    "Config",
 
     # 캐시 기능
     "CacheManager",
