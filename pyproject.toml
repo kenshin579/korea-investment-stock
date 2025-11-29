@@ -17,6 +17,7 @@ requires-python = ">=3.11"
 dependencies = [
     "requests",
     "pandas",
+    "pyyaml>=6.0",
 ]
 
 [project.optional-dependencies]

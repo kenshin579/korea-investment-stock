@@ -71,17 +71,105 @@ python -m build
 ./upload.sh
 ```
 
-## Required Environment Variables
+## Configuration
 
-**CRITICAL:** This project uses OS environment variables only. Never use `.env` files or `python-dotenv`.
+**NEW in v1.1.0**: Multiple configuration methods with 5-level priority.
 
-Set these in your shell profile (`~/.zshrc` or `~/.bashrc`):
+### Configuration Priority (Highest to Lowest)
+
+1. **Constructor parameters** - Direct values in code
+2. **Config object** - `Config` instance passed to constructor
+3. **config_file parameter** - Path to YAML file
+4. **Environment variables** - `KOREA_INVESTMENT_*` env vars
+5. **Default config file** - `~/.config/kis/config.yaml`
+
+### Method 1: Constructor Parameters (Existing)
+
+```python
+broker = KoreaInvestment(
+    api_key="your-api-key",
+    api_secret="your-api-secret",
+    acc_no="12345678-01"
+)
+```
+
+### Method 2: Environment Variables Only
+
+Set in shell profile (`~/.zshrc` or `~/.bashrc`):
 
 ```bash
 export KOREA_INVESTMENT_API_KEY="your-api-key"
 export KOREA_INVESTMENT_API_SECRET="your-api-secret"
 export KOREA_INVESTMENT_ACCOUNT_NO="12345678-01"
 ```
+
+Then initialize without parameters:
+
+```python
+broker = KoreaInvestment()  # Auto-detects from env vars
+```
+
+### Method 3: Config Object (NEW v1.0.0)
+
+```python
+from korea_investment_stock import Config, KoreaInvestment
+
+# Create config from env vars
+config = Config.from_env()
+
+# Or from YAML file
+config = Config.from_yaml("~/.config/kis/config.yaml")
+
+# Use config object
+broker = KoreaInvestment(config=config)
+```
+
+### Method 4: config_file Parameter (NEW v1.1.0)
+
+```python
+broker = KoreaInvestment(config_file="./my_config.yaml")
+```
+
+### Method 5: Default Config File (NEW v1.1.0)
+
+Place config at `~/.config/kis/config.yaml`:
+
+```yaml
+api_key: your-api-key
+api_secret: your-api-secret
+acc_no: "12345678-01"
+token_storage_type: file
+token_file: ~/.cache/kis/token.key
+```
+
+Then initialize without any parameters:
+
+```python
+broker = KoreaInvestment()  # Auto-loads from default path
+```
+
+### Mixed Usage (Partial Override)
+
+```python
+# Config object + constructor override
+config = Config.from_yaml("~/.config/kis/config.yaml")
+broker = KoreaInvestment(
+    config=config,
+    api_key="override-key"  # This overrides config's api_key
+)
+```
+
+### Environment Variable Reference
+
+| Variable | Description | Required |
+|----------|-------------|----------|
+| `KOREA_INVESTMENT_API_KEY` | API Key | Yes |
+| `KOREA_INVESTMENT_API_SECRET` | API Secret | Yes |
+| `KOREA_INVESTMENT_ACCOUNT_NO` | Account (8-2 format) | Yes |
+| `KOREA_INVESTMENT_TOKEN_STORAGE` | "file" or "redis" | No |
+| `KOREA_INVESTMENT_TOKEN_FILE` | Token file path | No |
+| `KOREA_INVESTMENT_REDIS_URL` | Redis URL | No |
+| `KOREA_INVESTMENT_REDIS_PASSWORD` | Redis password | No |
 
 **Naming Convention:**
 - Always use `KOREA_INVESTMENT_` prefix

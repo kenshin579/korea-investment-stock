@@ -6,7 +6,9 @@
 
 **Pure Python wrapper** for Korea Investment Securities OpenAPI
 
-✨ **NEW in v0.8.0**: Built-in rate limiting to prevent API errors!
+✨ **NEW in v0.9.0**: Environment variable auto-detection like boto3/Twilio!
+
+✨ **v0.8.0**: Built-in rate limiting to prevent API errors
 
 ## 🎯 Purpose
 
@@ -51,6 +53,7 @@ korea_investment_stock/
 - ✅ **Search Functions**: Stock search and lookup
 
 ### Advanced Features (Opt-in)
+- 🔧 **Env Auto-Detection** (v0.9.0): boto3/Twilio-style automatic credential loading
 - 🚀 **Rate Limiting** (v0.8.0): Automatic throttling with logging and monitoring
 - 💾 **Memory Caching** (v0.7.0): Reduce API calls with TTL-based caching
 - 🔑 **Token Storage** (v0.7.0): File or Redis-based token persistence
@@ -87,20 +90,34 @@ export KOREA_INVESTMENT_ACCOUNT_NO="12345678-01"
 
 ```python
 from korea_investment_stock import KoreaInvestment
-import os
 
-# Create client (using environment variables)
-with KoreaInvestment(
-    api_key=os.getenv('KOREA_INVESTMENT_API_KEY'),
-    api_secret=os.getenv('KOREA_INVESTMENT_API_SECRET'),
-    acc_no=os.getenv('KOREA_INVESTMENT_ACCOUNT_NO')
-) as broker:
-    # Query Samsung Electronics
+# NEW in v0.9.0: Auto-detect from environment variables!
+with KoreaInvestment() as broker:
     result = broker.fetch_price("005930", "KR")
 
     if result['rt_cd'] == '0':
         price = result['output1']['stck_prpr']
         print(f"Price: {price}원")
+```
+
+**Alternative: Explicit parameters (still supported)**
+```python
+from korea_investment_stock import KoreaInvestment
+import os
+
+# Explicit parameter passing (backward compatible)
+with KoreaInvestment(
+    api_key=os.getenv('KOREA_INVESTMENT_API_KEY'),
+    api_secret=os.getenv('KOREA_INVESTMENT_API_SECRET'),
+    acc_no=os.getenv('KOREA_INVESTMENT_ACCOUNT_NO')
+) as broker:
+    result = broker.fetch_price("005930", "KR")
+```
+
+**Priority: Constructor parameters > Environment variables**
+```python
+# Mixed usage: override specific values
+broker = KoreaInvestment(api_key="override-key")  # Others from env vars
 ```
 
 ## 📖 API Methods
@@ -653,6 +670,32 @@ python examples/stress_test.py
 ```
 
 ## 🔄 Migration Guide
+
+### v0.9.0 Changes (Non-breaking)
+
+**Environment variable auto-detection** (like boto3/Twilio):
+
+```python
+# Before v0.9.0 - Required explicit env var reading
+import os
+broker = KoreaInvestment(
+    api_key=os.getenv('KOREA_INVESTMENT_API_KEY'),
+    api_secret=os.getenv('KOREA_INVESTMENT_API_SECRET'),
+    acc_no=os.getenv('KOREA_INVESTMENT_ACCOUNT_NO')
+)
+
+# v0.9.0+ - Auto-detect from environment variables
+broker = KoreaInvestment()  # Reads KOREA_INVESTMENT_* env vars automatically
+
+# Mixed usage - override specific values
+broker = KoreaInvestment(api_key="override-key")  # Others from env vars
+```
+
+**Priority**: Constructor parameters > Environment variables
+
+**No breaking changes** - all existing code continues to work
+
+---
 
 ### v0.8.0 Changes (Breaking)
 

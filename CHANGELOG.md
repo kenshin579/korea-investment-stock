@@ -2,6 +2,50 @@
 
 ## [Unreleased]
 
+### Added
+
+#### Hybrid Configuration System (v1.1.0) (#76)
+
+**5단계 설정 우선순위 시스템**:
+
+1. 생성자 파라미터 (최고 우선순위)
+2. `config` 객체
+3. `config_file` 파라미터
+4. 환경 변수
+5. 기본 config 파일 (`~/.config/kis/config.yaml`)
+
+**새로운 파라미터**:
+```python
+broker = KoreaInvestment(
+    config=Config.from_yaml("config.yaml"),  # Config 객체 주입
+    config_file="./my_config.yaml",          # YAML 파일 경로
+)
+```
+
+**기본 config 파일 자동 탐색**:
+```yaml
+# ~/.config/kis/config.yaml
+api_key: your-api-key
+api_secret: your-api-secret
+acc_no: "12345678-01"
+```
+
+**혼합 사용 (부분 override)**:
+```python
+config = Config.from_yaml("~/.config/kis/config.yaml")
+broker = KoreaInvestment(
+    config=config,
+    api_key="override-key"  # config보다 우선
+)
+```
+
+**하위 호환성**: 기존 코드 100% 호환
+```python
+# 기존 방식 모두 동작
+broker = KoreaInvestment(api_key, api_secret, acc_no)  # 생성자 파라미터
+broker = KoreaInvestment()  # 환경 변수 자동 감지
+```
+
 ### Changed
 - **Project Structure**: Reorganized package into feature-based modules (#52)
   - Created `cache/` module for caching functionality
