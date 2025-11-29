@@ -168,34 +168,73 @@ class KoreaInvestment:
     한국투자증권 REST API
     '''
 
-    def __init__(self, api_key: str, api_secret: str, acc_no: str,
-                 token_storage: Optional[TokenStorage] = None):
+    def __init__(
+        self,
+        api_key: str | None = None,
+        api_secret: str | None = None,
+        acc_no: str | None = None,
+        token_storage: Optional[TokenStorage] = None
+    ):
         """한국투자증권 API 클라이언트 초기화
 
+        설정 우선순위:
+            1. 생성자 파라미터 (최고 우선순위)
+            2. 환경 변수 (KOREA_INVESTMENT_*)
+
         Args:
-            api_key (str): 발급받은 API key
-            api_secret (str): 발급받은 API secret
-            acc_no (str): 계좌번호 체계의 앞 8자리-뒤 2자리 (예: "12345678-01")
+            api_key (str | None): 발급받은 API key (None이면 환경 변수에서 읽음)
+            api_secret (str | None): 발급받은 API secret (None이면 환경 변수에서 읽음)
+            acc_no (str | None): 계좌번호 체계의 앞 8자리-뒤 2자리 (예: "12345678-01")
+                (None이면 환경 변수에서 읽음)
             token_storage (Optional[TokenStorage]): 토큰 저장소 인스턴스
                 (None이면 환경 변수로 결정)
 
         Raises:
-            ValueError: api_key, api_secret, 또는 acc_no가 None이거나 비어있을 때
+            ValueError: api_key, api_secret, 또는 acc_no가 설정되지 않았을 때
             ValueError: acc_no 형식이 올바르지 않을 때
+
+        Examples:
+            # 방법 1: 생성자 파라미터
+            >>> broker = KoreaInvestment(
+            ...     api_key="your-api-key",
+            ...     api_secret="your-api-secret",
+            ...     acc_no="12345678-01"
+            ... )
+
+            # 방법 2: 환경 변수 자동 감지
+            >>> # KOREA_INVESTMENT_API_KEY, KOREA_INVESTMENT_API_SECRET,
+            >>> # KOREA_INVESTMENT_ACCOUNT_NO 환경 변수가 설정되어 있으면:
+            >>> broker = KoreaInvestment()
+
+            # 방법 3: 혼합 사용 (일부만 override)
+            >>> broker = KoreaInvestment(api_key="override-key")
         """
-        # 입력 검증
-        if not api_key:
-            raise ValueError("api_key는 필수입니다. KOREA_INVESTMENT_API_KEY 환경 변수를 설정하세요.")
-        if not api_secret:
-            raise ValueError("api_secret은 필수입니다. KOREA_INVESTMENT_API_SECRET 환경 변수를 설정하세요.")
+        # 우선순위: 생성자 파라미터 > 환경 변수
+        self.api_key = api_key or os.getenv("KOREA_INVESTMENT_API_KEY")
+        self.api_secret = api_secret or os.getenv("KOREA_INVESTMENT_API_SECRET")
+        acc_no = acc_no or os.getenv("KOREA_INVESTMENT_ACCOUNT_NO")
+
+        # 필수값 검증
+        missing_fields = []
+        if not self.api_key:
+            missing_fields.append("api_key (KOREA_INVESTMENT_API_KEY)")
+        if not self.api_secret:
+            missing_fields.append("api_secret (KOREA_INVESTMENT_API_SECRET)")
         if not acc_no:
-            raise ValueError("acc_no는 필수입니다. KOREA_INVESTMENT_ACCOUNT_NO 환경 변수를 설정하세요.")
+            missing_fields.append("acc_no (KOREA_INVESTMENT_ACCOUNT_NO)")
+
+        if missing_fields:
+            raise ValueError(
+                "API credentials required. Missing: " + ", ".join(missing_fields) + ". "
+                "Pass as parameters or set KOREA_INVESTMENT_* environment variables."
+            )
+
+        # 계좌번호 형식 검증
         if '-' not in acc_no:
             raise ValueError(f"계좌번호 형식이 올바르지 않습니다. '12345678-01' 형식이어야 합니다. 입력값: {acc_no}")
 
         self.base_url = "https://openapi.koreainvestment.com:9443"
-        self.api_key = api_key
-        self.api_secret = api_secret
+        # self.api_key, self.api_secret은 위에서 이미 설정됨
 
         # account number - 검증 후 split
         parts = acc_no.split('-')
