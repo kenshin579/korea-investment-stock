@@ -477,7 +477,8 @@ broker = KoreaInvestment(
         'stck_oprc': '61000',   # Opening price
         'stck_hgpr': '63000',   # High price
         'stck_lwpr': '60500',   # Low price
-        'acml_vol': '15234567'  # Volume
+        'acml_vol': '15234567', # Volume (거래량)
+        'hts_avls': '3735468'   # Market cap (시가총액, 억원)
         # ... more fields
     }
 }
@@ -490,18 +491,20 @@ broker = KoreaInvestment(
     'rt_cd': '0',
     'msg1': '정상처리되었습니다',
     'output': {
-        'rsym': 'DNASAAPL',     # Exchange + Symbol
-        'last': '211.16',       # Current price
-        'open': '210.56',       # Opening price
-        'high': '212.13',       # High price
-        'low': '209.86',        # Low price
-        'tvol': '39765812',     # Volume
-        't_xdif': '1.72',       # Change
-        't_xrat': '-0.59',      # Change rate (%)
-        'perx': '32.95',        # PER
-        'pbrx': '47.23',        # PBR
-        'epsx': '6.41',         # EPS
-        'bpsx': '4.47'          # BPS
+        'rsym': 'DNASAAPL',        # Exchange + Symbol
+        'last': '211.16',          # Current price
+        'open': '210.56',          # Opening price
+        'high': '212.13',          # High price
+        'low': '209.86',           # Low price
+        'tvol': '39765812',        # Volume (거래량)
+        'tomv': '3250000000000',   # Market cap (시가총액)
+        'shar': '15384171000',     # Shares outstanding (상장주수)
+        't_xdif': '1.72',          # Change
+        't_xrat': '-0.59',         # Change rate (%)
+        'perx': '32.95',           # PER
+        'pbrx': '47.23',           # PBR
+        'epsx': '6.41',            # EPS
+        'bpsx': '4.47'             # BPS
         # ... more fields
     }
 }

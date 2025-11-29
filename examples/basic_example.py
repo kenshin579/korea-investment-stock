@@ -53,6 +53,7 @@ def example_domestic_stock_price():
             print(f"  고가: {int(output['stck_hgpr']):,}원")
             print(f"  저가: {int(output['stck_lwpr']):,}원")
             print(f"  거래량: {int(output['acml_vol']):,}주")
+            print(f"  시가총액: {int(output['hts_avls']):,}억원")
         else:
             print(f"❌ 조회 실패: {result.get('msg1', '알 수 없는 오류')}")
 

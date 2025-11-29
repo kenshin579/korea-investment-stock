@@ -327,6 +327,37 @@ with KoreaInvestment(api_key, api_secret, acc_no) as broker:
         print(f"PER: {output['perx']}")
 ```
 
+### API Response Fields Reference
+
+**국내 주식 (KR)** - `fetch_price(symbol, "KR")` 주요 필드:
+| 필드 | API 키 | 설명 |
+|------|--------|------|
+| 현재가 | `stck_prpr` | 주식 현재가 |
+| 전일대비 | `prdy_vrss` | 전일 대비 가격 변동 |
+| 등락률 | `prdy_ctrt` | 전일 대비율 (%) |
+| 시가 | `stck_oprc` | 시가 |
+| 고가 | `stck_hgpr` | 고가 |
+| 저가 | `stck_lwpr` | 저가 |
+| 거래량 | `acml_vol` | 누적 거래량 |
+| 시가총액 | `hts_avls` | HTS 시가총액 (억원) |
+
+**해외 주식 (US)** - `fetch_price(symbol, "US")` 주요 필드:
+| 필드 | API 키 | 설명 |
+|------|--------|------|
+| 현재가 | `last` | 현재가 |
+| 시가 | `open` | 시가 |
+| 고가 | `high` | 고가 |
+| 저가 | `low` | 저가 |
+| 거래량 | `tvol` | 거래량 |
+| 시가총액 | `tomv` | 시가총액 |
+| 상장주수 | `shar` | 상장주수 |
+| 전일대비 | `t_xdif` | 전일 대비 |
+| 등락률 | `t_xrat` | 등락률 (%) |
+| PER | `perx` | 주가수익비율 |
+| PBR | `pbrx` | 주가순자산비율 |
+| EPS | `epsx` | 주당순이익 |
+| BPS | `bpsx` | 주당순자산 |
+
 ## Testing Strategy
 
 ### Test Organization
