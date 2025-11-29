@@ -168,33 +168,44 @@ class KoreaInvestment:
     한국투자증권 REST API
     '''
 
+    # 기본 설정 파일 경로 (우선순위 순)
+    DEFAULT_CONFIG_PATHS = [
+        "~/.config/kis/config.yaml",
+        "~/.config/kis/config.yml",
+    ]
+
     def __init__(
         self,
         api_key: str | None = None,
         api_secret: str | None = None,
         acc_no: str | None = None,
+        config: "Config | None" = None,
+        config_file: "str | Path | None" = None,
         token_storage: Optional[TokenStorage] = None
     ):
         """한국투자증권 API 클라이언트 초기화
 
-        설정 우선순위:
+        설정 우선순위 (5단계):
             1. 생성자 파라미터 (최고 우선순위)
-            2. 환경 변수 (KOREA_INVESTMENT_*)
+            2. config 객체
+            3. config_file 파라미터
+            4. 환경 변수 (KOREA_INVESTMENT_*)
+            5. 기본 config 파일 (~/.config/kis/config.yaml)
 
         Args:
-            api_key (str | None): 발급받은 API key (None이면 환경 변수에서 읽음)
-            api_secret (str | None): 발급받은 API secret (None이면 환경 변수에서 읽음)
+            api_key (str | None): 발급받은 API key
+            api_secret (str | None): 발급받은 API secret
             acc_no (str | None): 계좌번호 체계의 앞 8자리-뒤 2자리 (예: "12345678-01")
-                (None이면 환경 변수에서 읽음)
+            config (Config | None): Config 객체 (Phase 2에서 추가됨)
+            config_file (str | Path | None): 설정 파일 경로
             token_storage (Optional[TokenStorage]): 토큰 저장소 인스턴스
-                (None이면 환경 변수로 결정)
 
         Raises:
             ValueError: api_key, api_secret, 또는 acc_no가 설정되지 않았을 때
             ValueError: acc_no 형식이 올바르지 않을 때
 
         Examples:
-            # 방법 1: 생성자 파라미터
+            # 방법 1: 생성자 파라미터 (기존 방식)
             >>> broker = KoreaInvestment(
             ...     api_key="your-api-key",
             ...     api_secret="your-api-secret",
@@ -202,17 +213,30 @@ class KoreaInvestment:
             ... )
 
             # 방법 2: 환경 변수 자동 감지
-            >>> # KOREA_INVESTMENT_API_KEY, KOREA_INVESTMENT_API_SECRET,
-            >>> # KOREA_INVESTMENT_ACCOUNT_NO 환경 변수가 설정되어 있으면:
             >>> broker = KoreaInvestment()
 
-            # 방법 3: 혼합 사용 (일부만 override)
-            >>> broker = KoreaInvestment(api_key="override-key")
+            # 방법 3: Config 객체 사용
+            >>> config = Config.from_yaml("~/.config/kis/config.yaml")
+            >>> broker = KoreaInvestment(config=config)
+
+            # 방법 4: config_file 파라미터
+            >>> broker = KoreaInvestment(config_file="./my_config.yaml")
+
+            # 방법 5: 혼합 사용 (일부만 override)
+            >>> broker = KoreaInvestment(config=config, api_key="override-key")
         """
-        # 우선순위: 생성자 파라미터 > 환경 변수
-        self.api_key = api_key or os.getenv("KOREA_INVESTMENT_API_KEY")
-        self.api_secret = api_secret or os.getenv("KOREA_INVESTMENT_API_SECRET")
-        acc_no = acc_no or os.getenv("KOREA_INVESTMENT_ACCOUNT_NO")
+        # 5단계 우선순위로 설정 해결
+        resolved = self._resolve_config(
+            api_key=api_key,
+            api_secret=api_secret,
+            acc_no=acc_no,
+            config=config,
+            config_file=config_file,
+        )
+
+        self.api_key = resolved["api_key"]
+        self.api_secret = resolved["api_secret"]
+        acc_no = resolved["acc_no"]
 
         # 필수값 검증
         missing_fields = []
@@ -226,7 +250,7 @@ class KoreaInvestment:
         if missing_fields:
             raise ValueError(
                 "API credentials required. Missing: " + ", ".join(missing_fields) + ". "
-                "Pass as parameters or set KOREA_INVESTMENT_* environment variables."
+                "Pass as parameters, use config/config_file, or set KOREA_INVESTMENT_* environment variables."
             )
 
         # 계좌번호 형식 검증
@@ -234,7 +258,6 @@ class KoreaInvestment:
             raise ValueError(f"계좌번호 형식이 올바르지 않습니다. '12345678-01' 형식이어야 합니다. 입력값: {acc_no}")
 
         self.base_url = "https://openapi.koreainvestment.com:9443"
-        # self.api_key, self.api_secret은 위에서 이미 설정됨
 
         # account number - 검증 후 split
         parts = acc_no.split('-')
@@ -244,6 +267,9 @@ class KoreaInvestment:
         self.acc_no = acc_no
         self.acc_no_prefix = parts[0]
         self.acc_no_postfix = parts[1]
+
+        # resolved에서 token_storage 관련 설정 가져오기
+        self._resolved_config = resolved
 
         # 토큰 저장소 초기화
         if token_storage:
@@ -260,14 +286,175 @@ class KoreaInvestment:
         else:
             self.issue_access_token()
 
-    def _create_token_storage(self) -> TokenStorage:
-        """환경 변수 기반 토큰 저장소 생성
+    def _resolve_config(
+        self,
+        api_key: str | None,
+        api_secret: str | None,
+        acc_no: str | None,
+        config: "Config | None",
+        config_file: "str | Path | None",
+    ) -> dict:
+        """5단계 우선순위로 설정을 해결
 
-        환경 변수:
-            KOREA_INVESTMENT_TOKEN_STORAGE: "file" (기본값) 또는 "redis"
-            KOREA_INVESTMENT_REDIS_URL: Redis 연결 URL (기본값: redis://localhost:6379/0)
-            KOREA_INVESTMENT_REDIS_PASSWORD: Redis 비밀번호 (선택)
-            KOREA_INVESTMENT_TOKEN_FILE: 토큰 파일 경로 (기본값: ~/.cache/kis/token.key)
+        우선순위:
+            1. 생성자 파라미터 (최고 우선순위)
+            2. config 객체
+            3. config_file 파라미터
+            4. 환경 변수
+            5. 기본 config 파일 (~/.config/kis/config.yaml)
+
+        Args:
+            api_key: 생성자에서 전달된 API key
+            api_secret: 생성자에서 전달된 API secret
+            acc_no: 생성자에서 전달된 계좌번호
+            config: Config 객체
+            config_file: 설정 파일 경로
+
+        Returns:
+            dict: 해결된 설정 값들
+                - api_key: API key
+                - api_secret: API secret
+                - acc_no: 계좌번호
+                - token_storage_type: 토큰 저장소 타입
+                - redis_url: Redis URL
+                - redis_password: Redis 비밀번호
+                - token_file: 토큰 파일 경로
+        """
+        # 결과 딕셔너리 초기화 (None으로)
+        result = {
+            "api_key": None,
+            "api_secret": None,
+            "acc_no": None,
+            "token_storage_type": None,
+            "redis_url": None,
+            "redis_password": None,
+            "token_file": None,
+        }
+
+        # 5단계: 기본 config 파일에서 로드 (가장 낮은 우선순위)
+        default_config = self._load_default_config_file()
+        if default_config:
+            self._merge_config(result, default_config)
+
+        # 4단계: 환경 변수
+        env_config = self._load_from_env()
+        self._merge_config(result, env_config)
+
+        # 3단계: config_file 파라미터
+        if config_file:
+            file_config = self._load_config_file(config_file)
+            if file_config:
+                self._merge_config(result, file_config)
+
+        # 2단계: config 객체
+        if config:
+            config_dict = {
+                "api_key": config.api_key,
+                "api_secret": config.api_secret,
+                "acc_no": config.acc_no,
+                "token_storage_type": config.token_storage_type,
+                "redis_url": config.redis_url,
+                "redis_password": config.redis_password,
+                "token_file": str(config.token_file) if config.token_file else None,
+            }
+            self._merge_config(result, config_dict)
+
+        # 1단계: 생성자 파라미터 (최고 우선순위)
+        constructor_params = {
+            "api_key": api_key,
+            "api_secret": api_secret,
+            "acc_no": acc_no,
+        }
+        self._merge_config(result, constructor_params)
+
+        return result
+
+    def _merge_config(self, target: dict, source: dict) -> None:
+        """source의 non-None 값으로 target을 업데이트
+
+        Args:
+            target: 업데이트할 대상 딕셔너리
+            source: 소스 딕셔너리
+        """
+        for key, value in source.items():
+            if value is not None and key in target:
+                target[key] = value
+
+    def _load_default_config_file(self) -> dict | None:
+        """기본 경로에서 config 파일 로드 시도
+
+        DEFAULT_CONFIG_PATHS에 정의된 경로들을 순서대로 확인하여
+        첫 번째 존재하는 파일을 로드합니다.
+
+        Returns:
+            dict | None: 로드된 설정 또는 None (파일 없음)
+        """
+        for path in self.DEFAULT_CONFIG_PATHS:
+            expanded_path = Path(path).expanduser()
+            if expanded_path.exists():
+                return self._load_config_file(expanded_path)
+        return None
+
+    def _load_config_file(self, path: "str | Path") -> dict | None:
+        """설정 파일 로드 (YAML 형식 지원)
+
+        Args:
+            path: 설정 파일 경로
+
+        Returns:
+            dict | None: 로드된 설정 또는 None (실패 시)
+        """
+        try:
+            import yaml
+        except ImportError:
+            # pyyaml이 설치되지 않은 경우
+            return None
+
+        path = Path(path).expanduser()
+        if not path.exists():
+            return None
+
+        try:
+            with open(path, encoding="utf-8") as f:
+                data = yaml.safe_load(f)
+
+            if not data:
+                return None
+
+            # YAML 키를 내부 키로 매핑
+            return {
+                "api_key": data.get("api_key"),
+                "api_secret": data.get("api_secret"),
+                "acc_no": data.get("acc_no"),
+                "token_storage_type": data.get("token_storage_type"),
+                "redis_url": data.get("redis_url"),
+                "redis_password": data.get("redis_password"),
+                "token_file": data.get("token_file"),
+            }
+        except Exception:
+            return None
+
+    def _load_from_env(self) -> dict:
+        """환경 변수에서 설정 로드
+
+        Returns:
+            dict: 환경 변수에서 로드된 설정
+        """
+        return {
+            "api_key": os.getenv("KOREA_INVESTMENT_API_KEY"),
+            "api_secret": os.getenv("KOREA_INVESTMENT_API_SECRET"),
+            "acc_no": os.getenv("KOREA_INVESTMENT_ACCOUNT_NO"),
+            "token_storage_type": os.getenv("KOREA_INVESTMENT_TOKEN_STORAGE"),
+            "redis_url": os.getenv("KOREA_INVESTMENT_REDIS_URL"),
+            "redis_password": os.getenv("KOREA_INVESTMENT_REDIS_PASSWORD"),
+            "token_file": os.getenv("KOREA_INVESTMENT_TOKEN_FILE"),
+        }
+
+    def _create_token_storage(self) -> TokenStorage:
+        """설정 기반 토큰 저장소 생성
+
+        _resolved_config에서 설정을 읽어 토큰 저장소를 생성합니다.
+        설정이 없으면 환경 변수에서 읽습니다.
 
         Returns:
             TokenStorage: 설정된 토큰 저장소 인스턴스
@@ -275,24 +462,34 @@ class KoreaInvestment:
         Raises:
             ValueError: 지원하지 않는 저장소 타입일 때
         """
-        storage_type = os.getenv("KOREA_INVESTMENT_TOKEN_STORAGE", "file").lower()
+        # _resolved_config가 있으면 사용, 없으면 환경 변수에서 읽기
+        if hasattr(self, "_resolved_config") and self._resolved_config:
+            storage_type = self._resolved_config.get("token_storage_type") or "file"
+            redis_url = self._resolved_config.get("redis_url") or "redis://localhost:6379/0"
+            redis_password = self._resolved_config.get("redis_password")
+            token_file = self._resolved_config.get("token_file")
+        else:
+            # 하위 호환성: 환경 변수에서 읽기
+            storage_type = os.getenv("KOREA_INVESTMENT_TOKEN_STORAGE", "file")
+            redis_url = os.getenv("KOREA_INVESTMENT_REDIS_URL", "redis://localhost:6379/0")
+            redis_password = os.getenv("KOREA_INVESTMENT_REDIS_PASSWORD")
+            token_file = os.getenv("KOREA_INVESTMENT_TOKEN_FILE")
+
+        storage_type = storage_type.lower()
 
         if storage_type == "file":
-            file_path = os.getenv("KOREA_INVESTMENT_TOKEN_FILE")
-            if file_path:
-                file_path = Path(file_path).expanduser()
+            file_path = None
+            if token_file:
+                file_path = Path(token_file).expanduser()
             return FileTokenStorage(file_path)
 
         elif storage_type == "redis":
-            redis_url = os.getenv("KOREA_INVESTMENT_REDIS_URL", "redis://localhost:6379/0")
-            redis_password = os.getenv("KOREA_INVESTMENT_REDIS_PASSWORD")
             return RedisTokenStorage(redis_url, password=redis_password)
 
         else:
             raise ValueError(
                 f"지원하지 않는 저장소 타입: {storage_type}\n"
-                f"'file' 또는 'redis'만 지원됩니다. "
-                f"KOREA_INVESTMENT_TOKEN_STORAGE 환경 변수를 확인하세요."
+                f"'file' 또는 'redis'만 지원됩니다."
             )
 
     def __enter__(self):

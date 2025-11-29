@@ -217,12 +217,15 @@ class TestBackwardCompatibility:
 
         기존 코드:
             broker = KoreaInvestment(key, secret, acc_no)
+
+        Note: Phase 3에서 config, config_file 파라미터가 추가되어
+              token_storage는 키워드 인자로 전달해야 합니다.
         """
         broker = KoreaInvestment(
             "positional-key",
             "positional-secret",
             "12345678-01",
-            mock_token_storage
+            token_storage=mock_token_storage
         )
 
         assert broker.api_key == "positional-key"

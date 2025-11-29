@@ -33,14 +33,14 @@
 
 ## Phase 3: Hybrid 통합 (v1.1.0)
 
-- [ ] `KoreaInvestment.__init__()` 에 `config`, `config_file` 파라미터 추가
-- [ ] `_resolve_config()` 메서드 구현 (우선순위 로직)
-- [ ] `_load_config_file()` 메서드 구현 (확장자별 로더 선택)
-- [ ] `DEFAULT_CONFIG_PATHS` 상수 정의
-- [ ] 단위 테스트 작성
-  - [ ] 5단계 우선순위 테스트
-  - [ ] 기본 경로 자동 탐색 테스트
-  - [ ] config 객체 주입 테스트
-- [ ] 통합 테스트 작성
-- [ ] CLAUDE.md 업데이트
-- [ ] CHANGELOG.md 업데이트
+- [x] `KoreaInvestment.__init__()` 에 `config`, `config_file` 파라미터 추가
+- [x] `_resolve_config()` 메서드 구현 (우선순위 로직)
+- [x] `_load_config_file()` 메서드 구현 (확장자별 로더 선택)
+- [x] `DEFAULT_CONFIG_PATHS` 상수 정의
+- [x] 단위 테스트 작성
+  - [x] 5단계 우선순위 테스트
+  - [x] 기본 경로 자동 탐색 테스트
+  - [x] config 객체 주입 테스트
+- [x] 통합 테스트 작성
+- [x] CLAUDE.md 업데이트
+- [x] CHANGELOG.md 업데이트
