@@ -5,11 +5,24 @@ Simple, transparent, and flexible Python wrapper for Korea Investment Securities
 '''
 
 # 메인 클래스
-from .korea_investment_stock import (
-    KoreaInvestment,
+from .korea_investment_stock import KoreaInvestment
+
+# 상수 정의
+from .constants import (
+    EXCHANGE_CODE_QUOTE,
+    EXCHANGE_CODE_ORDER,
+    EXCHANGE_CODE_BALANCE,
+    EXCHANGE_CODE_DETAIL,
+    CURRENCY_CODE,
+    MARKET_TYPE_MAP,
+    API_RETURN_CODE,
+    MARKET_CODE_MAP,
+    EXCHANGE_CODE_MAP,
+    # 하위 호환성
     EXCHANGE_CODE,
     EXCHANGE_CODE2,
-    API_RETURN_CODE,
+    EXCHANGE_CODE3,
+    EXCHANGE_CODE4,
 )
 
 # 설정 관리
@@ -35,9 +48,22 @@ except Exception:
 __all__ = [
     # 메인 API
     "KoreaInvestment",
+
+    # 상수 정의
+    "EXCHANGE_CODE_QUOTE",
+    "EXCHANGE_CODE_ORDER",
+    "EXCHANGE_CODE_BALANCE",
+    "EXCHANGE_CODE_DETAIL",
+    "CURRENCY_CODE",
+    "MARKET_TYPE_MAP",
+    "API_RETURN_CODE",
+    "MARKET_CODE_MAP",
+    "EXCHANGE_CODE_MAP",
+    # 하위 호환성
     "EXCHANGE_CODE",
     "EXCHANGE_CODE2",
-    "API_RETURN_CODE",
+    "EXCHANGE_CODE3",
+    "EXCHANGE_CODE4",
 
     # 설정 관리
     "Config",
