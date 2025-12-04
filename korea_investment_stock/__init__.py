@@ -27,6 +27,7 @@ from .constants import (
 
 # 설정 관리
 from .config import Config
+from .config_resolver import ConfigResolver
 
 # 캐시 기능 (서브패키지)
 from .cache import CacheManager, CacheEntry, CachedKoreaInvestment
@@ -67,6 +68,7 @@ __all__ = [
 
     # 설정 관리
     "Config",
+    "ConfigResolver",
 
     # 캐시 기능
     "CacheManager",
