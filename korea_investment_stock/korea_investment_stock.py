@@ -1,23 +1,18 @@
 '''
 한국투자증권 python wrapper
 '''
-import datetime
 import json
 import os
-import pickle
-import random
-import time
 import zipfile
 import logging
 import re
 from pathlib import Path
-from typing import Literal, Optional, List
+from typing import Literal, Optional
 from zoneinfo import ZoneInfo  # Requires Python 3.9+
 from datetime import datetime, timedelta
 
 import pandas as pd
 import requests
-from typing import Dict, Any
 
 from .token_storage import TokenStorage, FileTokenStorage, RedisTokenStorage
 
@@ -504,25 +499,6 @@ class KoreaInvestment:
         self.shutdown()
         return False  # 예외를 전파
 
-    def __handle_rate_limit_error(self, retry_count: int):
-        """Rate limit 에러 처리 (Exponential Backoff)
-        
-        DEPRECATED: Enhanced Backoff Strategy로 대체됨
-        이 메서드는 하위 호환성을 위해 유지되며, 향후 제거될 예정입니다.
-        
-        Args:
-            retry_count: 재시도 횟수 (0부터 시작)
-        """
-        # Exponential backoff: 1, 2, 4, 8, 16, 32초
-        wait_time = min(2 ** retry_count, 32)
-        
-        # Jitter 추가 (0~10% 랜덤 추가 대기)
-        jitter = random.uniform(0, 0.1 * wait_time)
-        total_wait = wait_time + jitter
-        
-        print(f"Rate limit 초과. {total_wait:.2f}초 대기 후 재시도... (시도 {retry_count + 1}/5)")
-        time.sleep(total_wait)
-
     def shutdown(self):
         """리소스 정리"""
         # 컨텍스트 매니저 종료 시 호출됨
@@ -744,25 +720,6 @@ class KoreaInvestment:
 
         self.download_master_file(base_dir, file_name, url, ttl_hours, force_download)
         df = self.parse_kosdaq_master(base_dir)
-        return df
-
-    def fetch_symbols(self):
-        """fetch symbols from the exchange
-
-        Returns:
-            pd.DataFrame: pandas dataframe
-        """
-        if self.exchange == "서울":  # todo: exchange는 제거 예정
-            df = self.fetch_kospi_symbols()
-            kospi_df = df[['단축코드', '한글명', '그룹코드']].copy()
-            kospi_df['시장'] = '코스피'
-
-            df = self.fetch_kosdaq_symbols()
-            kosdaq_df = df[['단축코드', '한글명', '그룹코드']].copy()
-            kosdaq_df['시장'] = '코스닥'
-
-            df = pd.concat([kospi_df, kosdaq_df], axis=0)
-
         return df
 
     def _should_download(
@@ -1011,7 +968,7 @@ class KoreaInvestment:
             raise ValueError("Market cannot be either 'KR' or 'KRX'.")
 
         for exchange_code in ["NYS", "NAS", "AMS", "BAY", "BAQ", "BAA"]:
-            print("exchange_code", exchange_code)
+            logger.debug(f"exchange_code: {exchange_code}")
             params = {
                 "AUTH": "",
                 "EXCD": exchange_code,
@@ -1052,7 +1009,7 @@ class KoreaInvestment:
                 return resp_json
 
             except Exception as e:
-                print(e)
+                logger.debug(f"fetch_stock_info 에러: {e}")
                 if resp_json['rt_cd'] != API_RETURN_CODE['SUCCESS']:
                     continue
                 raise e
@@ -1088,7 +1045,7 @@ class KoreaInvestment:
                 return resp_json
 
             except Exception as e:
-                print(e)
+                logger.debug(f"fetch_search_stock_info 에러: {e}")
                 if resp_json['rt_cd'] != API_RETURN_CODE['SUCCESS']:
                     continue
                 raise e
@@ -1285,57 +1242,3 @@ class KoreaInvestment:
             return resp_json
         
         return resp_json
-
-
-# RateLimiter 클래스는 enhanced_rate_limiter.py로 이동됨
-
-
-if __name__ == "__main__":
-    with open("../koreainvestment.key", encoding='utf-8') as key_file:
-        lines = key_file.readlines()
-
-    key = lines[0].strip()
-    secret = lines[1].strip()
-    acc_no = lines[2].strip()
-
-    broker = KoreaInvestment(
-        api_key=key,
-        api_secret=secret,
-        acc_no=acc_no,
-        # exchange="나스닥" # todo: exchange는 제거 예정
-    )
-
-    balance = broker.fetch_present_balance()
-    print(balance)
-
-    # result = broker.fetch_oversea_day_night()
-    # pprint.pprint(result)
-
-    # minute1_ohlcv = broker.fetch_today_1m_ohlcv("005930")
-    # pprint.pprint(minute1_ohlcv)
-
-    # broker = KoreaInvestment(key, secret, exchange="나스닥")
-    # import pprint
-    # resp = broker.fetch_price("005930")
-    # pprint.pprint(resp)
-    #
-    # b = broker.fetch_balance("63398082")
-    # pprint.pprint(b)
-    #
-    # resp = broker.create_market_buy_order("63398082", "005930", 10)
-    # pprint.pprint(resp)
-    #
-    # resp = broker.cancel_order("63398082", "91252", "0000117057", "00", 60000, 5, "Y")
-    # print(resp)
-    #
-    # resp = broker.create_limit_buy_order("63398082", "TQQQ", 35, 1)
-    # print(resp)
-
-
-
-    # import pprint
-    # broker = KoreaInvestment(key, secret, exchange="나스닥")
-    # resp_ohlcv = broker.fetch_ohlcv("TSLA", '1d', to="")
-    # print(len(resp_ohlcv['output2']))
-    # pprint.pprint(resp_ohlcv['output2'][0])
-    # pprint.pprint(resp_ohlcv['output2'][-1])
