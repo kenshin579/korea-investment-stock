@@ -174,6 +174,9 @@ class KoreaInvestment:
         "~/.config/kis/config.yml",
     ]
 
+    # 기본 캐시 TTL (시간) - 1주일
+    DEFAULT_MASTER_TTL_HOURS = 168
+
     def __init__(
         self,
         api_key: str | None = None,
@@ -683,7 +686,11 @@ class KoreaInvestment:
         resp = requests.get(url, headers=headers, params=params)
         return resp.json()
 
-    def fetch_kospi_symbols(self):
+    def fetch_kospi_symbols(
+        self,
+        ttl_hours: int = 168,
+        force_download: bool = False
+    ) -> pd.DataFrame:
         """코스피 종목 코드
 
         실제 필요한 종목: ST, RT, EF, IF
@@ -702,27 +709,40 @@ class KoreaInvestment:
         FE	해외ETF
         FS	외국주권
 
+        Args:
+            ttl_hours (int): 캐시 유효 시간 (기본 1주일 = 168시간)
+            force_download (bool): 강제 다운로드 여부
 
         Returns:
-            DataFrame:
+            DataFrame: 코스피 종목 정보
         """
         base_dir = os.getcwd()
         file_name = "kospi_code.mst.zip"
         url = "https://new.real.download.dws.co.kr/common/master/" + file_name
-        self.download_master_file(base_dir, file_name, url)
+
+        self.download_master_file(base_dir, file_name, url, ttl_hours, force_download)
         df = self.parse_kospi_master(base_dir)
         return df
 
-    def fetch_kosdaq_symbols(self):
+    def fetch_kosdaq_symbols(
+        self,
+        ttl_hours: int = 168,
+        force_download: bool = False
+    ) -> pd.DataFrame:
         """코스닥 종목 코드
 
+        Args:
+            ttl_hours (int): 캐시 유효 시간 (기본 1주일 = 168시간)
+            force_download (bool): 강제 다운로드 여부
+
         Returns:
-            DataFrame:
+            DataFrame: 코스닥 종목 정보
         """
         base_dir = os.getcwd()
         file_name = "kosdaq_code.mst.zip"
         url = "https://new.real.download.dws.co.kr/common/master/" + file_name
-        self.download_master_file(base_dir, file_name, url)
+
+        self.download_master_file(base_dir, file_name, url, ttl_hours, force_download)
         df = self.parse_kosdaq_master(base_dir)
         return df
 
@@ -745,29 +765,79 @@ class KoreaInvestment:
 
         return df
 
-    def download_master_file(self, base_dir: str, file_name: str, url: str):
-        """download master file
+    def _should_download(
+        self,
+        file_path: Path,
+        ttl_hours: int,
+        force: bool
+    ) -> bool:
+        """다운로드 필요 여부 판단
 
         Args:
-            base_dir (str): download directory
-            file_name (str: filename
-            url (str): url
+            file_path: ZIP 파일 경로
+            ttl_hours: 캐시 유효 시간
+            force: 강제 다운로드 여부
+
+        Returns:
+            bool: True=다운로드 필요, False=캐시 사용
         """
-        os.chdir(base_dir)
+        if force:
+            return True
 
-        # delete legacy master file
-        if os.path.exists(file_name):
-            os.remove(file_name)
+        if not file_path.exists():
+            return True
 
-        # download master file
+        mtime = datetime.fromtimestamp(file_path.stat().st_mtime)
+        age = datetime.now() - mtime
+
+        if age.total_seconds() > ttl_hours * 3600:
+            logger.debug(f"캐시 만료: {file_path} (age={age})")
+            return True
+
+        return False
+
+    def download_master_file(
+        self,
+        base_dir: str,
+        file_name: str,
+        url: str,
+        ttl_hours: int = 168,
+        force_download: bool = False
+    ) -> bool:
+        """master 파일 다운로드 (캐싱 지원)
+
+        Args:
+            base_dir (str): 저장 디렉토리
+            file_name (str): 파일명 (예: "kospi_code.mst.zip")
+            url (str): 다운로드 URL
+            ttl_hours (int): 캐시 유효 시간 (기본 1주일 = 168시간)
+            force_download (bool): 강제 다운로드 여부
+
+        Returns:
+            bool: True=다운로드됨, False=캐시 사용
+        """
+        zip_path = Path(base_dir) / file_name
+
+        # 다운로드 필요 여부 확인
+        if not self._should_download(zip_path, ttl_hours, force_download):
+            mtime = datetime.fromtimestamp(zip_path.stat().st_mtime)
+            age_hours = (datetime.now() - mtime).total_seconds() / 3600
+            logger.info(f"캐시 사용: {zip_path} (age: {age_hours:.1f}h, ttl: {ttl_hours}h)")
+            return False
+
+        # 다운로드
+        logger.info(f"다운로드 중: {url} -> {zip_path}")
         resp = requests.get(url)
-        with open(file_name, "wb") as f:
+        resp.raise_for_status()
+
+        with open(zip_path, "wb") as f:
             f.write(resp.content)
 
-        # unzip
-        kospi_zip = zipfile.ZipFile(file_name)
-        kospi_zip.extractall()
-        kospi_zip.close()
+        # 압축 해제
+        with zipfile.ZipFile(zip_path, 'r') as zf:
+            zf.extractall(base_dir)
+
+        return True
 
     def parse_kospi_master(self, base_dir: str):
         """parse kospi master file
