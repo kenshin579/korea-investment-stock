@@ -38,6 +38,9 @@ from .token_storage import TokenStorage, FileTokenStorage, RedisTokenStorage
 # Rate Limiting (서브패키지)
 from .rate_limit import RateLimiter, RateLimitedKoreaInvestment
 
+# 파서 (서브패키지)
+from .parsers import parse_kospi_master, parse_kosdaq_master
+
 # Git tag에서 버전 자동 추출 (setuptools-scm)
 try:
     from importlib.metadata import version
@@ -83,4 +86,8 @@ __all__ = [
     # Rate Limiting
     "RateLimiter",
     "RateLimitedKoreaInvestment",
+
+    # 파서
+    "parse_kospi_master",
+    "parse_kosdaq_master",
 ]
