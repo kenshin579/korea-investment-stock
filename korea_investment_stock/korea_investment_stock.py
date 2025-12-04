@@ -21,6 +21,15 @@ from .constants import (
 )
 from .config_resolver import ConfigResolver
 from .parsers import parse_kospi_master, parse_kosdaq_master
+from .ipo import (
+    validate_date_format,
+    validate_date_range,
+    parse_ipo_date_range,
+    format_ipo_date,
+    calculate_ipo_d_day,
+    get_ipo_status,
+    format_number,
+)
 
 # 로거 설정
 logger = logging.getLogger(__name__)
@@ -599,101 +608,6 @@ class KoreaInvestment:
                     continue
                 raise e
 
-    # IPO 관련 헬퍼 함수들
-    def _validate_date_format(self, date_str: str) -> bool:
-        """날짜 형식 검증 (YYYYMMDD)"""
-        if len(date_str) != 8:
-            return False
-        try:
-            datetime.strptime(date_str, "%Y%m%d")
-            return True
-        except ValueError:
-            return False
-
-    def _validate_date_range(self, from_date: str, to_date: str) -> bool:
-        """날짜 범위 유효성 검증"""
-        try:
-            start = datetime.strptime(from_date, "%Y%m%d")
-            end = datetime.strptime(to_date, "%Y%m%d")
-            return start <= end
-        except ValueError:
-            return False
-
-    @staticmethod
-    def parse_ipo_date_range(date_range_str: str) -> tuple:
-        """청약기간 문자열 파싱
-        
-        Args:
-            date_range_str: "2024.01.15~2024.01.16" 형식의 문자열
-            
-        Returns:
-            tuple: (시작일 datetime, 종료일 datetime) 또는 (None, None)
-        """
-        if not date_range_str:
-            return (None, None)
-        
-        # "2024.01.15~2024.01.16" 형식 파싱
-        pattern = r'(\d{4}\.\d{2}\.\d{2})~(\d{4}\.\d{2}\.\d{2})'
-        match = re.match(pattern, date_range_str)
-        
-        if match:
-            try:
-                start_str = match.group(1).replace('.', '')
-                end_str = match.group(2).replace('.', '')
-                start_date = datetime.strptime(start_str, "%Y%m%d")
-                end_date = datetime.strptime(end_str, "%Y%m%d")
-                return (start_date, end_date)
-            except ValueError:
-                pass
-        
-        return (None, None)
-
-    @staticmethod
-    def format_ipo_date(date_str: str) -> str:
-        """날짜 형식 변환 (YYYYMMDD -> YYYY-MM-DD)"""
-        if len(date_str) == 8:
-            return f"{date_str[:4]}-{date_str[4:6]}-{date_str[6:8]}"
-        elif '.' in date_str:
-            return date_str.replace('.', '-')
-        return date_str
-
-    @staticmethod
-    def calculate_ipo_d_day(ipo_date_str: str) -> int:
-        """청약일까지 남은 일수 계산"""
-        if '~' in ipo_date_str:
-            start_date, _ = KoreaInvestment.parse_ipo_date_range(ipo_date_str)
-            if start_date:
-                today = datetime.now()
-                return (start_date - today).days
-        return -999
-
-    @staticmethod
-    def get_ipo_status(subscr_dt: str) -> str:
-        """청약 상태 판단
-        
-        Returns:
-            str: "예정", "진행중", "마감", "알수없음"
-        """
-        start_date, end_date = KoreaInvestment.parse_ipo_date_range(subscr_dt)
-        if not start_date or not end_date:
-            return "알수없음"
-        
-        today = datetime.now()
-        if today < start_date:
-            return "예정"
-        elif start_date <= today <= end_date:
-            return "진행중"
-        else:
-            return "마감"
-
-    @staticmethod
-    def format_number(num_str: str) -> str:
-        """숫자 문자열에 천단위 콤마 추가"""
-        try:
-            return f"{int(num_str):,}"
-        except (ValueError, TypeError):
-            return num_str
-
     # IPO Schedule API
     def fetch_ipo_schedule(self, from_date: str = None, to_date: str = None, symbol: str = "") -> dict:
         """공모주 청약 일정 조회
@@ -758,10 +672,10 @@ class KoreaInvestment:
             to_date = (datetime.now() + timedelta(days=30)).strftime("%Y%m%d")
         
         # 날짜 유효성 검증
-        if not self._validate_date_format(from_date) or not self._validate_date_format(to_date):
+        if not validate_date_format(from_date) or not validate_date_format(to_date):
             raise ValueError("날짜 형식은 YYYYMMDD 이어야 합니다.")
         
-        if not self._validate_date_range(from_date, to_date):
+        if not validate_date_range(from_date, to_date):
             raise ValueError("시작일은 종료일보다 이전이어야 합니다.")
         
         path = "uapi/domestic-stock/v1/ksdinfo/pub-offer"

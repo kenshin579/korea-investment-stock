@@ -41,6 +41,17 @@ from .rate_limit import RateLimiter, RateLimitedKoreaInvestment
 # 파서 (서브패키지)
 from .parsers import parse_kospi_master, parse_kosdaq_master
 
+# IPO 헬퍼 (서브패키지)
+from .ipo import (
+    validate_date_format,
+    validate_date_range,
+    parse_ipo_date_range,
+    format_ipo_date,
+    calculate_ipo_d_day,
+    get_ipo_status,
+    format_number,
+)
+
 # Git tag에서 버전 자동 추출 (setuptools-scm)
 try:
     from importlib.metadata import version
@@ -90,4 +101,13 @@ __all__ = [
     # 파서
     "parse_kospi_master",
     "parse_kosdaq_master",
+
+    # IPO 헬퍼
+    "validate_date_format",
+    "validate_date_range",
+    "parse_ipo_date_range",
+    "format_ipo_date",
+    "calculate_ipo_d_day",
+    "get_ipo_status",
+    "format_number",
 ]
