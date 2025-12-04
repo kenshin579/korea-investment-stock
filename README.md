@@ -3,6 +3,10 @@
 [![PyPI version](https://badge.fury.io/py/korea-investment-stock.svg)](https://badge.fury.io/py/korea-investment-stock)
 [![Python Versions](https://img.shields.io/pypi/pyversions/korea-investment-stock.svg)](https://pypi.org/project/korea-investment-stock/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+![](https://img.shields.io/github/issues-raw/kenshin579/korea-investment-stock?label=Issues)
+![](https://img.shields.io/github/issues-closed-raw/kenshin579/korea-investment-stock?label=Closed+Issues)
+![](https://img.shields.io/github/issues-pr-raw/kenshin579/korea-investment-stock?label=Open+PRs)
+![](https://img.shields.io/github/issues-pr-closed-raw/kenshin579/korea-investment-stock?label=Closed+PRs)
 
 **Pure Python wrapper** for Korea Investment Securities OpenAPI
 
