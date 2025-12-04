@@ -5,15 +5,29 @@ Simple, transparent, and flexible Python wrapper for Korea Investment Securities
 '''
 
 # 메인 클래스
-from .korea_investment_stock import (
-    KoreaInvestment,
+from .korea_investment_stock import KoreaInvestment
+
+# 상수 정의
+from .constants import (
+    EXCHANGE_CODE_QUOTE,
+    EXCHANGE_CODE_ORDER,
+    EXCHANGE_CODE_BALANCE,
+    EXCHANGE_CODE_DETAIL,
+    CURRENCY_CODE,
+    MARKET_TYPE_MAP,
+    API_RETURN_CODE,
+    MARKET_CODE_MAP,
+    EXCHANGE_CODE_MAP,
+    # 하위 호환성
     EXCHANGE_CODE,
     EXCHANGE_CODE2,
-    API_RETURN_CODE,
+    EXCHANGE_CODE3,
+    EXCHANGE_CODE4,
 )
 
 # 설정 관리
 from .config import Config
+from .config_resolver import ConfigResolver
 
 # 캐시 기능 (서브패키지)
 from .cache import CacheManager, CacheEntry, CachedKoreaInvestment
@@ -23,6 +37,20 @@ from .token_storage import TokenStorage, FileTokenStorage, RedisTokenStorage
 
 # Rate Limiting (서브패키지)
 from .rate_limit import RateLimiter, RateLimitedKoreaInvestment
+
+# 파서 (서브패키지)
+from .parsers import parse_kospi_master, parse_kosdaq_master
+
+# IPO 헬퍼 (서브패키지)
+from .ipo import (
+    validate_date_format,
+    validate_date_range,
+    parse_ipo_date_range,
+    format_ipo_date,
+    calculate_ipo_d_day,
+    get_ipo_status,
+    format_number,
+)
 
 # Git tag에서 버전 자동 추출 (setuptools-scm)
 try:
@@ -35,12 +63,26 @@ except Exception:
 __all__ = [
     # 메인 API
     "KoreaInvestment",
+
+    # 상수 정의
+    "EXCHANGE_CODE_QUOTE",
+    "EXCHANGE_CODE_ORDER",
+    "EXCHANGE_CODE_BALANCE",
+    "EXCHANGE_CODE_DETAIL",
+    "CURRENCY_CODE",
+    "MARKET_TYPE_MAP",
+    "API_RETURN_CODE",
+    "MARKET_CODE_MAP",
+    "EXCHANGE_CODE_MAP",
+    # 하위 호환성
     "EXCHANGE_CODE",
     "EXCHANGE_CODE2",
-    "API_RETURN_CODE",
+    "EXCHANGE_CODE3",
+    "EXCHANGE_CODE4",
 
     # 설정 관리
     "Config",
+    "ConfigResolver",
 
     # 캐시 기능
     "CacheManager",
@@ -55,4 +97,17 @@ __all__ = [
     # Rate Limiting
     "RateLimiter",
     "RateLimitedKoreaInvestment",
+
+    # 파서
+    "parse_kospi_master",
+    "parse_kosdaq_master",
+
+    # IPO 헬퍼
+    "validate_date_format",
+    "validate_date_range",
+    "parse_ipo_date_range",
+    "format_ipo_date",
+    "calculate_ipo_d_day",
+    "get_ipo_status",
+    "format_number",
 ]

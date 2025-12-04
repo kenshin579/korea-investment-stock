@@ -1,6 +1,6 @@
 """Hybrid Config 통합 테스트
 
-Phase 3 (v1.1.0): KoreaInvestment 클래스의 5단계 설정 우선순위 검증
+Phase 3 (v1.1.0): ConfigResolver 클래스의 5단계 설정 우선순위 검증
 - 생성자 파라미터 > config 객체 > config_file > 환경 변수 > 기본 config 파일
 
 테스트 카테고리:
@@ -15,7 +15,7 @@ import pytest
 from pathlib import Path
 from unittest.mock import patch, MagicMock
 
-from korea_investment_stock import KoreaInvestment, Config
+from korea_investment_stock import KoreaInvestment, Config, ConfigResolver
 
 
 class TestConfigPriority:
@@ -35,11 +35,11 @@ class TestConfigPriority:
             acc_no="22222222-01"
         )
 
-        # _resolve_config 테스트 (API 호출 없이)
-        broker = KoreaInvestment.__new__(KoreaInvestment)
-        broker.DEFAULT_CONFIG_PATHS = []
+        # ConfigResolver 사용
+        resolver = ConfigResolver()
+        resolver.DEFAULT_CONFIG_PATHS = []
 
-        result = broker._resolve_config(
+        result = resolver.resolve(
             api_key="constructor-key",
             api_secret="constructor-secret",
             acc_no="33333333-01",
@@ -66,10 +66,10 @@ class TestConfigPriority:
             acc_no="22222222-01"
         )
 
-        broker = KoreaInvestment.__new__(KoreaInvestment)
-        broker.DEFAULT_CONFIG_PATHS = []
+        resolver = ConfigResolver()
+        resolver.DEFAULT_CONFIG_PATHS = []
 
-        result = broker._resolve_config(
+        result = resolver.resolve(
             api_key=None,
             api_secret=None,
             acc_no=None,
@@ -97,10 +97,10 @@ api_secret: file-secret
 acc_no: "22222222-01"
 """)
 
-        broker = KoreaInvestment.__new__(KoreaInvestment)
-        broker.DEFAULT_CONFIG_PATHS = []
+        resolver = ConfigResolver()
+        resolver.DEFAULT_CONFIG_PATHS = []
 
-        result = broker._resolve_config(
+        result = resolver.resolve(
             api_key=None,
             api_secret=None,
             acc_no=None,
@@ -128,10 +128,10 @@ api_secret: default-secret
 acc_no: "22222222-01"
 """)
 
-        broker = KoreaInvestment.__new__(KoreaInvestment)
-        broker.DEFAULT_CONFIG_PATHS = [str(default_config)]
+        resolver = ConfigResolver()
+        resolver.DEFAULT_CONFIG_PATHS = [str(default_config)]
 
-        result = broker._resolve_config(
+        result = resolver.resolve(
             api_key=None,
             api_secret=None,
             acc_no=None,
@@ -159,10 +159,10 @@ api_secret: default-secret
 acc_no: "12345678-01"
 """)
 
-        broker = KoreaInvestment.__new__(KoreaInvestment)
-        broker.DEFAULT_CONFIG_PATHS = [str(default_config)]
+        resolver = ConfigResolver()
+        resolver.DEFAULT_CONFIG_PATHS = [str(default_config)]
 
-        result = broker._resolve_config(
+        result = resolver.resolve(
             api_key=None,
             api_secret=None,
             acc_no=None,
@@ -181,10 +181,10 @@ class TestDefaultConfigPaths:
 
     def test_default_config_paths_constant(self):
         """DEFAULT_CONFIG_PATHS 상수가 정의되어 있음"""
-        assert hasattr(KoreaInvestment, 'DEFAULT_CONFIG_PATHS')
-        assert isinstance(KoreaInvestment.DEFAULT_CONFIG_PATHS, list)
-        assert len(KoreaInvestment.DEFAULT_CONFIG_PATHS) >= 1
-        assert "~/.config/kis/config.yaml" in KoreaInvestment.DEFAULT_CONFIG_PATHS
+        assert hasattr(ConfigResolver, 'DEFAULT_CONFIG_PATHS')
+        assert isinstance(ConfigResolver.DEFAULT_CONFIG_PATHS, list)
+        assert len(ConfigResolver.DEFAULT_CONFIG_PATHS) >= 1
+        assert "~/.config/kis/config.yaml" in ConfigResolver.DEFAULT_CONFIG_PATHS
 
     def test_load_first_existing_default_config(self, monkeypatch, tmp_path):
         """첫 번째 존재하는 기본 config 파일을 로드"""
@@ -202,23 +202,23 @@ api_secret: existing-secret
 acc_no: "12345678-01"
 """)
 
-        broker = KoreaInvestment.__new__(KoreaInvestment)
-        broker.DEFAULT_CONFIG_PATHS = [str(non_existent), str(existing_config)]
+        resolver = ConfigResolver()
+        resolver.DEFAULT_CONFIG_PATHS = [str(non_existent), str(existing_config)]
 
-        result = broker._load_default_config_file()
+        result = resolver._load_default_config_file()
 
         assert result is not None
         assert result["api_key"] == "existing-key"
 
     def test_no_default_config_found(self, tmp_path):
         """기본 config 파일이 없으면 None 반환"""
-        broker = KoreaInvestment.__new__(KoreaInvestment)
-        broker.DEFAULT_CONFIG_PATHS = [
+        resolver = ConfigResolver()
+        resolver.DEFAULT_CONFIG_PATHS = [
             str(tmp_path / "non_existent1.yaml"),
             str(tmp_path / "non_existent2.yaml"),
         ]
 
-        result = broker._load_default_config_file()
+        result = resolver._load_default_config_file()
         assert result is None
 
 
@@ -240,10 +240,10 @@ class TestConfigObjectInjection:
             redis_url="redis://custom:6380/1",
         )
 
-        broker = KoreaInvestment.__new__(KoreaInvestment)
-        broker.DEFAULT_CONFIG_PATHS = []
+        resolver = ConfigResolver()
+        resolver.DEFAULT_CONFIG_PATHS = []
 
-        result = broker._resolve_config(
+        result = resolver.resolve(
             api_key=None,
             api_secret=None,
             acc_no=None,
@@ -276,10 +276,10 @@ token_storage_type: file
         # Config.from_yaml()로 로드
         config = Config.from_yaml(yaml_file)
 
-        broker = KoreaInvestment.__new__(KoreaInvestment)
-        broker.DEFAULT_CONFIG_PATHS = []
+        resolver = ConfigResolver()
+        resolver.DEFAULT_CONFIG_PATHS = []
 
-        result = broker._resolve_config(
+        result = resolver.resolve(
             api_key=None,
             api_secret=None,
             acc_no=None,
@@ -302,11 +302,11 @@ class TestMixedUsage:
         monkeypatch.setenv("KOREA_INVESTMENT_API_SECRET", "env-secret")
         monkeypatch.setenv("KOREA_INVESTMENT_ACCOUNT_NO", "11111111-01")
 
-        broker = KoreaInvestment.__new__(KoreaInvestment)
-        broker.DEFAULT_CONFIG_PATHS = []
+        resolver = ConfigResolver()
+        resolver.DEFAULT_CONFIG_PATHS = []
 
         # api_key만 override
-        result = broker._resolve_config(
+        result = resolver.resolve(
             api_key="override-key",
             api_secret=None,
             acc_no=None,
@@ -330,10 +330,10 @@ class TestMixedUsage:
             acc_no="22222222-01",
         )
 
-        broker = KoreaInvestment.__new__(KoreaInvestment)
-        broker.DEFAULT_CONFIG_PATHS = []
+        resolver = ConfigResolver()
+        resolver.DEFAULT_CONFIG_PATHS = []
 
-        result = broker._resolve_config(
+        result = resolver.resolve(
             api_key="override-key",  # 이것만 override
             api_secret=None,
             acc_no=None,
@@ -358,10 +358,10 @@ class TestMixedUsage:
 api_key: file-key
 """)  # api_secret, acc_no는 없음
 
-        broker = KoreaInvestment.__new__(KoreaInvestment)
-        broker.DEFAULT_CONFIG_PATHS = []
+        resolver = ConfigResolver()
+        resolver.DEFAULT_CONFIG_PATHS = []
 
-        result = broker._resolve_config(
+        result = resolver.resolve(
             api_key=None,
             api_secret=None,
             acc_no=None,
@@ -388,8 +388,8 @@ token_storage_type: redis
 redis_url: redis://localhost:6380/0
 """)
 
-        broker = KoreaInvestment.__new__(KoreaInvestment)
-        result = broker._load_config_file(config_file)
+        resolver = ConfigResolver()
+        result = resolver._load_config_file(config_file)
 
         assert result["api_key"] == "test-key"
         assert result["api_secret"] == "test-secret"
@@ -406,15 +406,15 @@ api_secret: yml-secret
 acc_no: "12345678-01"
 """)
 
-        broker = KoreaInvestment.__new__(KoreaInvestment)
-        result = broker._load_config_file(config_file)
+        resolver = ConfigResolver()
+        result = resolver._load_config_file(config_file)
 
         assert result["api_key"] == "yml-key"
 
     def test_non_existent_file(self, tmp_path):
         """존재하지 않는 파일"""
-        broker = KoreaInvestment.__new__(KoreaInvestment)
-        result = broker._load_config_file(tmp_path / "non_existent.yaml")
+        resolver = ConfigResolver()
+        result = resolver._load_config_file(tmp_path / "non_existent.yaml")
 
         assert result is None
 
@@ -423,8 +423,8 @@ acc_no: "12345678-01"
         config_file = tmp_path / "empty.yaml"
         config_file.write_text("")
 
-        broker = KoreaInvestment.__new__(KoreaInvestment)
-        result = broker._load_config_file(config_file)
+        resolver = ConfigResolver()
+        result = resolver._load_config_file(config_file)
 
         assert result is None
 
@@ -438,8 +438,8 @@ api_secret: expanded-secret
 acc_no: "12345678-01"
 """)
 
-        broker = KoreaInvestment.__new__(KoreaInvestment)
-        result = broker._load_config_file(str(config_file))
+        resolver = ConfigResolver()
+        result = resolver._load_config_file(str(config_file))
 
         assert result["api_key"] == "expanded-key"
 
@@ -449,12 +449,12 @@ class TestMergeConfig:
 
     def test_merge_non_none_values(self):
         """None이 아닌 값만 병합"""
-        broker = KoreaInvestment.__new__(KoreaInvestment)
+        resolver = ConfigResolver()
 
         target = {"a": None, "b": "original", "c": None}
         source = {"a": "new_a", "b": None, "c": "new_c"}
 
-        broker._merge_config(target, source)
+        resolver._merge_config(target, source)
 
         assert target["a"] == "new_a"  # source에서 업데이트
         assert target["b"] == "original"  # source가 None이므로 유지
@@ -462,12 +462,12 @@ class TestMergeConfig:
 
     def test_ignore_unknown_keys(self):
         """target에 없는 키는 무시"""
-        broker = KoreaInvestment.__new__(KoreaInvestment)
+        resolver = ConfigResolver()
 
         target = {"a": None}
         source = {"a": "new", "b": "ignored"}
 
-        broker._merge_config(target, source)
+        resolver._merge_config(target, source)
 
         assert target["a"] == "new"
         assert "b" not in target
@@ -493,22 +493,21 @@ token_storage_type: file
 token_file: /custom/path/token.key
 """)
 
-        broker = KoreaInvestment.__new__(KoreaInvestment)
-        broker.DEFAULT_CONFIG_PATHS = []
+        resolver = ConfigResolver()
+        resolver.DEFAULT_CONFIG_PATHS = []
 
-        resolved = broker._resolve_config(
+        resolved = resolver.resolve(
             api_key=None,
             api_secret=None,
             acc_no=None,
             config=None,
             config_file=config_file,
         )
-        broker._resolved_config = resolved
 
-        # FileTokenStorage가 생성되는지 확인
-        from korea_investment_stock import FileTokenStorage
-        storage = broker._create_token_storage()
-        assert isinstance(storage, FileTokenStorage)
+        # resolved가 올바르게 설정되었는지 확인
+        assert resolved["api_key"] == "test-key"
+        assert resolved["token_storage_type"] == "file"
+        assert resolved["token_file"] == "/custom/path/token.key"
 
 
 class TestBackwardCompatibility:
@@ -521,11 +520,11 @@ class TestBackwardCompatibility:
         monkeypatch.delenv("KOREA_INVESTMENT_API_SECRET", raising=False)
         monkeypatch.delenv("KOREA_INVESTMENT_ACCOUNT_NO", raising=False)
 
-        broker = KoreaInvestment.__new__(KoreaInvestment)
-        broker.DEFAULT_CONFIG_PATHS = []
+        resolver = ConfigResolver()
+        resolver.DEFAULT_CONFIG_PATHS = []
 
         # 기존 방식: 모든 파라미터를 생성자에 전달
-        result = broker._resolve_config(
+        result = resolver.resolve(
             api_key="direct-key",
             api_secret="direct-secret",
             acc_no="12345678-01",
@@ -543,11 +542,11 @@ class TestBackwardCompatibility:
         monkeypatch.setenv("KOREA_INVESTMENT_API_SECRET", "env-only-secret")
         monkeypatch.setenv("KOREA_INVESTMENT_ACCOUNT_NO", "12345678-01")
 
-        broker = KoreaInvestment.__new__(KoreaInvestment)
-        broker.DEFAULT_CONFIG_PATHS = []
+        resolver = ConfigResolver()
+        resolver.DEFAULT_CONFIG_PATHS = []
 
         # 환경 변수만 사용
-        result = broker._resolve_config(
+        result = resolver.resolve(
             api_key=None,
             api_secret=None,
             acc_no=None,
