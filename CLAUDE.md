@@ -464,6 +464,98 @@ result = broker.fetch_price("005930", "KR")
 broker.shutdown()  # Must call manually
 ```
 
+## Master File Caching
+
+**NEW**: `fetch_kospi_symbols()` and `fetch_kosdaq_symbols()` methods now include file-based caching to prevent unnecessary re-downloads of master ZIP files.
+
+### How It Works
+
+Master files (종목 코드 리스트) are cached locally and reused if:
+- File exists in current directory
+- File age is within TTL (default: 1 week = 168 hours)
+- `force_download=False` (default)
+
+### Basic Usage (Automatic Caching)
+
+```python
+from korea_investment_stock import KoreaInvestment
+
+broker = KoreaInvestment(api_key, api_secret, acc_no)
+
+# First call - downloads ZIP file (~2-5 seconds)
+df = broker.fetch_kospi_symbols()
+
+# Second call - uses cached file (~0.1 seconds)
+df = broker.fetch_kospi_symbols()
+```
+
+### Custom TTL
+
+```python
+# Cache for 1 day (24 hours)
+df = broker.fetch_kospi_symbols(ttl_hours=24)
+
+# Cache for 1 hour (for testing/development)
+df = broker.fetch_kosdaq_symbols(ttl_hours=1)
+```
+
+### Force Download
+
+```python
+# Ignore cache and always download fresh data
+df = broker.fetch_kospi_symbols(force_download=True)
+```
+
+### Cache Logging
+
+```python
+import logging
+
+# Enable INFO logging to see cache hits/downloads
+logging.basicConfig(level=logging.INFO)
+
+broker = KoreaInvestment(api_key, api_secret, acc_no)
+
+# First call
+df = broker.fetch_kospi_symbols()
+# LOG: INFO - 다운로드 중: https://...kospi_code.mst.zip -> /path/kospi_code.mst.zip
+
+# Second call (within 1 week)
+df = broker.fetch_kospi_symbols()
+# LOG: INFO - 캐시 사용: /path/kospi_code.mst.zip (age: 0.5h, ttl: 168h)
+```
+
+### Performance Benefits
+
+| Scenario | Without Cache | With Cache | Improvement |
+|----------|--------------|------------|-------------|
+| First call | ~2-5 seconds | ~2-5 seconds | - |
+| Second call (same day) | ~2-5 seconds | ~0.1 seconds | 95%+ faster |
+| Multiple calls | N × 2-5 sec | 2-5 + (N-1) × 0.1 sec | ~95% faster |
+
+### Cache Location
+
+Files are stored in the current working directory (`os.getcwd()`):
+```
+{current_working_directory}/
+├── kospi_code.mst.zip       # KOSPI master ZIP (cached)
+├── kospi_code.mst           # Extracted file
+├── kosdaq_code.mst.zip      # KOSDAQ master ZIP (cached)
+└── kosdaq_code.mst          # Extracted file
+```
+
+### Migration Notes
+
+**No breaking changes**: Existing code continues to work without modification. Caching is applied automatically with sensible defaults.
+
+```python
+# Existing code (v0.x) - still works, now with caching
+df = broker.fetch_kospi_symbols()
+
+# New features (optional)
+df = broker.fetch_kospi_symbols(ttl_hours=24, force_download=True)
+```
+
 ## Built-in Memory Caching
 
 **NEW in v0.7.0**: Optional memory-based caching to reduce API calls and improve response times.
