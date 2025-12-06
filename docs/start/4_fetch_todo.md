@@ -40,9 +40,9 @@
 
 ## 5단계: 문서 업데이트
 
-- [ ] CLAUDE.md API Response Fields Reference 섹션 업데이트 (변경 없음)
+- [x] CLAUDE.md 메서드 시그니처 업데이트 (`market` → `country_code`)
 - [x] CHANGELOG.md에 Breaking Changes 추가
-- [ ] examples/ 예제 코드 업데이트 (필요시)
+- [x] examples/ 예제 코드 확인 (수정 불필요 - fetch_price 사용)
 
 ## 6단계: 검증
 
