@@ -13,7 +13,7 @@ import time
 import threading
 from datetime import datetime, timedelta
 
-from korea_investment_stock.token_storage import RedisTokenStorage
+from korea_investment_stock.token import RedisTokenStorage
 
 
 def create_token_data(api_key="test_key", api_secret="test_secret", days=1):

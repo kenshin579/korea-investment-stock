@@ -14,7 +14,7 @@ from datetime import datetime, timedelta
 import pandas as pd
 import requests
 
-from .token_storage import TokenStorage, FileTokenStorage, RedisTokenStorage
+from .token import TokenStorage, FileTokenStorage, RedisTokenStorage
 from .constants import (
     PRDT_TYPE_CD_BY_COUNTRY,
     API_RETURN_CODE,
