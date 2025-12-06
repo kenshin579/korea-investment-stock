@@ -73,6 +73,6 @@
 
 ## Phase 5: 문서화
 
-- [ ] `README.md` 테스트 섹션 업데이트 (선택적)
-- [ ] `CLAUDE.md` 테스트 관련 내용 업데이트 (선택적)
+- [x] `README.md` 테스트 섹션 업데이트
+- [x] `CLAUDE.md` 테스트 관련 내용 업데이트
 - [x] `CHANGELOG.md`에 변경 사항 추가

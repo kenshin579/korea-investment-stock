@@ -38,15 +38,24 @@ pip install -e ".[dev]"
 # Run all tests
 pytest
 
+# Run unit tests only (no Docker required)
+pytest -m "not integration"
+
+# Run integration tests only (Docker required)
+pytest -m integration
+
 # Run specific test file
 pytest korea_investment_stock/tests/test_korea_investment_stock.py
 
 # Run with verbose output
 pytest -v
 
-# Run integration tests (requires API credentials)
+# Run API integration tests (requires API credentials)
 pytest korea_investment_stock/tests/test_integration_us_stocks.py -v
 pytest korea_investment_stock/tests/test_ipo_integration.py -v
+
+# Run Redis integration tests (requires Docker)
+pytest korea_investment_stock/tests/test_redis_integration.py -v
 ```
 
 ### Running Examples
@@ -360,17 +369,34 @@ with KoreaInvestment(api_key, api_secret, acc_no) as broker:
 
 ## Testing Strategy
 
+### Test Markers
+
+pytest markers로 테스트 유형 구분:
+
+```bash
+# 단위 테스트만 (Docker 불필요)
+pytest -m "not integration"
+
+# 통합 테스트만 (Docker 필요)
+pytest -m integration
+
+# 전체 테스트
+pytest
+```
+
 ### Test Organization
 
-- **Unit tests**: `test_korea_investment_stock.py` (94 lines)
-- **Integration tests**:
-  - `test_integration_us_stocks.py` (225 lines) - US stock queries
-  - `test_ipo_integration.py` (186 lines) - IPO schedule
-- **Feature tests**: `test_ipo_schedule.py` (297 lines) - IPO helpers
+- **Unit tests**: `test_korea_investment_stock.py` - 기본 API 테스트
+- **API Integration tests** (API 자격 증명 필요):
+  - `test_integration_us_stocks.py` - US stock queries
+  - `test_ipo_integration.py` - IPO schedule
+- **Redis Integration tests** (Docker 필요):
+  - `tests/test_redis_integration.py` - Redis testcontainers 테스트
+- **Feature tests**: `test_ipo_schedule.py` - IPO helpers
 
-### Running Integration Tests
+### Running API Integration Tests
 
-Integration tests require valid API credentials:
+API 통합 테스트는 유효한 API 자격 증명이 필요합니다:
 
 ```bash
 # Set credentials in environment
@@ -378,10 +404,31 @@ export KOREA_INVESTMENT_API_KEY="..."
 export KOREA_INVESTMENT_API_SECRET="..."
 export KOREA_INVESTMENT_ACCOUNT_NO="..."
 
-# Run integration tests
+# Run API integration tests
 pytest korea_investment_stock/tests/test_integration_us_stocks.py -v
 pytest korea_investment_stock/tests/test_ipo_integration.py -v
 ```
+
+### Running Redis Integration Tests (Testcontainers)
+
+Redis 통합 테스트는 Docker가 필요합니다:
+
+```bash
+# Docker 실행 상태 확인 후 테스트 실행
+pytest -m integration -v
+
+# 결과 예시:
+# test_redis_integration.py::TestRedisTokenStorageIntegration::test_save_and_load PASSED
+# test_redis_integration.py::TestRedisTokenStorageIntegration::test_connection_pool PASSED
+# test_redis_integration.py::TestRedisTokenStorageIntegration::test_ttl_actual_expiry PASSED
+# ...
+```
+
+**Testcontainers 특징**:
+- 실제 Redis Docker 컨테이너 사용
+- 세션 단위 컨테이너 재사용 (성능 최적화)
+- Docker 미설치 시 자동 스킵
+- 테스트 격리 (각 테스트 전 FLUSHDB)
 
 ## Important Files
 

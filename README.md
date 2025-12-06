@@ -761,6 +761,58 @@ See [CHANGELOG.md](CHANGELOG.md) for complete migration guide.
 - [Official API Docs](https://wikidocs.net/book/7845)
 - [GitHub Issues](https://github.com/kenshin579/korea-investment-stock/issues)
 
+## 🧪 Testing
+
+### Test Categories
+
+This project uses **pytest markers** to categorize tests:
+
+| Marker | Description | Docker Required |
+|--------|-------------|-----------------|
+| `unit` | Fast unit tests with mocks | No |
+| `integration` | Tests with real Docker containers | Yes |
+
+### Running Tests
+
+```bash
+# Install dev dependencies
+pip install -e ".[dev,redis]"
+
+# Run unit tests only (fast, no Docker)
+pytest -m "not integration"
+
+# Run integration tests only (requires Docker)
+pytest -m integration
+
+# Run all tests
+pytest
+
+# Run with verbose output
+pytest -v
+```
+
+### Integration Tests (Testcontainers)
+
+Integration tests use [testcontainers](https://testcontainers-python.readthedocs.io/) to spin up real Docker containers:
+
+```bash
+# Redis integration tests
+pytest -m integration -v
+
+# Example output:
+# test_redis_integration.py::TestRedisTokenStorageIntegration::test_save_and_load PASSED
+# test_redis_integration.py::TestRedisTokenStorageIntegration::test_connection_pool PASSED
+# test_redis_integration.py::TestRedisTokenStorageIntegration::test_ttl_actual_expiry PASSED
+# ...
+```
+
+**Features**:
+- Real Redis container for token storage tests
+- Automatic container lifecycle management
+- Graceful skip when Docker is unavailable
+- Thread-safe connection pool testing
+- Actual TTL expiry verification
+
 ## 🤝 Contributing
 
 Contributions welcome! Please:
