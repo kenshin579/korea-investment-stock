@@ -55,19 +55,20 @@
 
 ## Phase 4: KoreaInvestment 수정
 
-- [ ] `token` 모듈 import 추가
+- [x] `token` 모듈 import 추가
   ```python
-  from .token import TokenManager, create_token_storage
+  from .token import TokenStorage, TokenManager, create_token_storage
   ```
-- [ ] `__init__`에서 `TokenManager` 초기화
-- [ ] `issue_access_token()` 위임 패턴으로 변경
-- [ ] `check_access_token()` 위임 패턴으로 변경
-- [ ] `load_access_token()` 위임 패턴으로 변경
-- [ ] `issue_hashkey()` 위임 패턴으로 변경
-- [ ] `_create_token_storage()` 메서드 삭제
-- [ ] 메인 클래스 테스트 통과 확인
+- [x] `__init__`에서 `TokenManager` 초기화
+- [x] `issue_access_token()` 위임 패턴으로 변경
+- [x] `check_access_token()` 위임 패턴으로 변경
+- [x] `load_access_token()` 위임 패턴으로 변경
+- [x] `issue_hashkey()` 위임 패턴으로 변경
+- [x] `_create_token_storage()` 메서드 삭제
+- [x] 불필요한 import 정리 (json, ZoneInfo 제거)
+- [x] 토큰 모듈 테스트 통과 확인 (55 passed)
   ```bash
-  pytest korea_investment_stock/tests/test_korea_investment_stock.py -v
+  pytest korea_investment_stock/token/ -v
   ```
 
 ## Phase 5: __init__.py 업데이트
