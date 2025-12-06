@@ -114,26 +114,6 @@ class RateLimitedKoreaInvestment:
         self._rate_limiter.wait()
         return self._broker.fetch_search_stock_info(symbol, country_code)
 
-    def fetch_kospi_symbols(self) -> Dict[str, Any]:
-        """
-        속도 제한이 적용된 KOSPI 종목 리스트 조회
-
-        Returns:
-            API 응답 딕셔너리
-        """
-        self._rate_limiter.wait()
-        return self._broker.fetch_kospi_symbols()
-
-    def fetch_kosdaq_symbols(self) -> Dict[str, Any]:
-        """
-        속도 제한이 적용된 KOSDAQ 종목 리스트 조회
-
-        Returns:
-            API 응답 딕셔너리
-        """
-        self._rate_limiter.wait()
-        return self._broker.fetch_kosdaq_symbols()
-
     def fetch_ipo_schedule(self) -> Dict[str, Any]:
         """
         속도 제한이 적용된 IPO 일정 조회

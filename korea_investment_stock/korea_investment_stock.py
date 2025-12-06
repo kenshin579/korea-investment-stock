@@ -20,7 +20,12 @@ from .constants import (
     EXCD_BY_COUNTRY,
 )
 from .config_resolver import ConfigResolver
-from .parsers import parse_kospi_master, parse_kosdaq_master
+from .parsers import (
+    parse_kospi_master,
+    parse_kosdaq_master,
+    parse_overseas_stock_master,
+    OVERSEAS_MARKETS,
+)
 from .ipo import fetch_ipo_schedule as _fetch_ipo_schedule
 
 # 로거 설정
@@ -690,3 +695,110 @@ class KoreaInvestment:
             to_date,
             symbol
         )
+
+    # 해외 주식 마스터 파일 API
+    def fetch_overseas_symbols(
+        self,
+        market: str,
+        ttl_hours: int = 168,
+        force_download: bool = False
+    ) -> pd.DataFrame:
+        """해외 주식 종목 코드 조회
+
+        해외 거래소(나스닥, 뉴욕, 홍콩 등) 마스터 파일을 다운로드하여
+        종목 코드 목록을 DataFrame으로 반환합니다.
+
+        지원 거래소 (11개):
+            - nas: 나스닥 (NASDAQ)
+            - nys: 뉴욕 (NYSE)
+            - ams: 아멕스 (AMEX)
+            - shs: 상해
+            - shi: 상해지수
+            - szs: 심천
+            - szi: 심천지수
+            - tse: 도쿄
+            - hks: 홍콩
+            - hnx: 하노이
+            - hsx: 호치민
+
+        Args:
+            market: 시장 코드 (nas, nys, ams, shs, shi, szs, szi, tse, hks, hnx, hsx)
+            ttl_hours: 캐시 유효 시간 (기본 1주일 = 168시간)
+            force_download: 강제 다운로드 여부
+
+        Returns:
+            pd.DataFrame: 해외 종목 정보
+                - 심볼: 종목 심볼 (티커)
+                - 한글명: 종목 한글명
+                - 영문명: 종목 영문명
+                - 통화: 거래 통화
+                - 거래소코드: 거래소 코드
+                - ... (총 24개 컬럼)
+
+        Raises:
+            ValueError: 잘못된 시장 코드
+
+        Example:
+            >>> df = broker.fetch_overseas_symbols("nas")  # 나스닥
+            >>> df = broker.fetch_overseas_symbols("hks")  # 홍콩
+            >>> print(f"종목 수: {len(df)}")
+        """
+        if market not in OVERSEAS_MARKETS:
+            valid_markets = ", ".join(OVERSEAS_MARKETS.keys())
+            raise ValueError(f"잘못된 시장 코드: {market}. 지원 코드: {valid_markets}")
+
+        base_dir = os.getcwd()
+        file_name = f"{market}mst.cod.zip"
+        url = f"https://new.real.download.dws.co.kr/common/master/{file_name}"
+
+        self.download_master_file(base_dir, file_name, url, ttl_hours, force_download)
+        df = parse_overseas_stock_master(base_dir, market)
+        return df
+
+    def fetch_nasdaq_symbols(
+        self,
+        ttl_hours: int = 168,
+        force_download: bool = False
+    ) -> pd.DataFrame:
+        """나스닥(NASDAQ) 종목 코드 조회
+
+        Args:
+            ttl_hours: 캐시 유효 시간 (기본 1주일 = 168시간)
+            force_download: 강제 다운로드 여부
+
+        Returns:
+            pd.DataFrame: 나스닥 종목 정보
+        """
+        return self.fetch_overseas_symbols("nas", ttl_hours, force_download)
+
+    def fetch_nyse_symbols(
+        self,
+        ttl_hours: int = 168,
+        force_download: bool = False
+    ) -> pd.DataFrame:
+        """뉴욕증권거래소(NYSE) 종목 코드 조회
+
+        Args:
+            ttl_hours: 캐시 유효 시간 (기본 1주일 = 168시간)
+            force_download: 강제 다운로드 여부
+
+        Returns:
+            pd.DataFrame: 뉴욕 종목 정보
+        """
+        return self.fetch_overseas_symbols("nys", ttl_hours, force_download)
+
+    def fetch_amex_symbols(
+        self,
+        ttl_hours: int = 168,
+        force_download: bool = False
+    ) -> pd.DataFrame:
+        """아멕스(AMEX) 종목 코드 조회
+
+        Args:
+            ttl_hours: 캐시 유효 시간 (기본 1주일 = 168시간)
+            force_download: 강제 다운로드 여부
+
+        Returns:
+            pd.DataFrame: 아멕스 종목 정보
+        """
+        return self.fetch_overseas_symbols("ams", ttl_hours, force_download)

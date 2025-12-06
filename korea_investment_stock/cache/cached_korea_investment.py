@@ -139,38 +139,6 @@ class CachedKoreaInvestment:
 
         return result
 
-    def fetch_kospi_symbols(self) -> dict:
-        """KOSPI 종목 리스트 (캐싱 지원)"""
-        if not self.enable_cache:
-            return self.broker.fetch_kospi_symbols()
-
-        cache_key = "fetch_kospi_symbols"
-        cached_data = self.cache.get(cache_key)
-
-        if cached_data is not None:
-            return cached_data
-
-        result = self.broker.fetch_kospi_symbols()
-        self.cache.set(cache_key, result, self.ttl['symbols'])
-
-        return result
-
-    def fetch_kosdaq_symbols(self) -> dict:
-        """KOSDAQ 종목 리스트 (캐싱 지원)"""
-        if not self.enable_cache:
-            return self.broker.fetch_kosdaq_symbols()
-
-        cache_key = "fetch_kosdaq_symbols"
-        cached_data = self.cache.get(cache_key)
-
-        if cached_data is not None:
-            return cached_data
-
-        result = self.broker.fetch_kosdaq_symbols()
-        self.cache.set(cache_key, result, self.ttl['symbols'])
-
-        return result
-
     def fetch_ipo_schedule(
         self,
         from_date: Optional[str] = None,
