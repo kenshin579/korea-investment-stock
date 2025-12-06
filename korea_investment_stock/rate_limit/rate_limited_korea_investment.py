@@ -69,19 +69,19 @@ class RateLimitedKoreaInvestment:
         self._rate_limiter.wait()
         return self._broker.fetch_domestic_price(symbol, symbol_type)
 
-    def fetch_price_detail_oversea(self, symbol: str, market: str) -> Dict[str, Any]:
+    def fetch_price_detail_oversea(self, symbol: str, country_code: str = "US") -> Dict[str, Any]:
         """
         속도 제한이 적용된 해외 주식 가격 조회
 
         Args:
             symbol: 종목 코드
-            market: 시장 구분
+            country_code: 국가 코드 (기본값: "US")
 
         Returns:
             API 응답 딕셔너리
         """
         self._rate_limiter.wait()
-        return self._broker.fetch_price_detail_oversea(symbol, market)
+        return self._broker.fetch_price_detail_oversea(symbol, country_code)
 
     def fetch_stock_info(self, symbol: str, market: str) -> Dict[str, Any]:
         """

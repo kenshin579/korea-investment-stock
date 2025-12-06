@@ -19,10 +19,10 @@
 
 ## 3단계: Wrapper 클래스 수정
 
-- [ ] cached_korea_investment.py: `market` → `country_code` 변경
-- [ ] cached_korea_investment.py: 기본값 `"US"` 적용
-- [ ] rate_limited_korea_investment.py: `market` → `country_code` 변경
-- [ ] rate_limited_korea_investment.py: 기본값 `"US"` 적용
+- [x] cached_korea_investment.py: `market` → `country_code` 변경
+- [x] cached_korea_investment.py: 기본값 `"US"` 적용
+- [x] rate_limited_korea_investment.py: `market` → `country_code` 변경
+- [x] rate_limited_korea_investment.py: 기본값 `"US"` 적용
 
 ## 4단계: 테스트 수정
 
