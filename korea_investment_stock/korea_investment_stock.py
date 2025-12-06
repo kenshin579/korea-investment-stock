@@ -16,7 +16,7 @@ import requests
 
 from .token_storage import TokenStorage, FileTokenStorage, RedisTokenStorage
 from .constants import (
-    MARKET_TYPE_MAP,
+    PRDT_TYPE_CD_BY_COUNTRY,
     API_RETURN_CODE,
     FID_COND_MRKT_DIV_CODE_STOCK,
     EXCD_BY_COUNTRY,
@@ -590,7 +590,58 @@ class KoreaInvestment:
         # 모든 거래소에서 실패한 경우
         raise ValueError(f"'{symbol}' 종목을 {country_code} 거래소에서 찾을 수 없습니다")
 
-    def fetch_stock_info(self, symbol: str, market: str = "KR"):
+    def fetch_stock_info(self, symbol: str, country_code: str = "KR") -> dict:
+        """상품기본조회 [v1_국내주식-029]
+
+        국내/해외 주식의 기본 상품 정보를 조회합니다.
+        국가 코드에 따라 해당 국가의 상품유형코드를 자동으로 탐색합니다.
+
+        API 정보:
+            - 경로: /uapi/domestic-stock/v1/quotations/search-info
+            - Method: GET
+            - 실전 TR ID: CTPF1604R
+            - 모의투자: 미지원
+
+        Query Parameters:
+            PDNO (str): 상품번호
+                - Required: Yes
+                - Length: 12
+                - 예) 000660 (하이닉스), AAPL (애플)
+
+            PRDT_TYPE_CD (str): 상품유형코드
+                - Required: Yes
+                - Length: 3
+                - 국내: 300 (주식), 301 (선물옵션), 302 (채권)
+                - 미국: 512 (나스닥), 513 (뉴욕), 529 (아멕스)
+                - 일본: 515
+                - 홍콩: 501, 543 (CNY), 558 (USD)
+                - 베트남: 507 (하노이), 508 (호치민)
+                - 중국: 551 (상해A), 552 (심천A)
+
+        Args:
+            symbol (str): 종목 코드 (예: 005930, AAPL)
+            country_code (str): 국가 코드 (기본값: "KR")
+                - KR/KRX: 한국
+                - US: 미국 (NASDAQ, NYSE, AMEX)
+                - JP: 일본
+                - HK: 홍콩
+                - CN: 중국 (상해, 심천)
+                - VN: 베트남 (하노이, 호치민)
+
+        Returns:
+            dict: API 응답 딕셔너리
+                - rt_cd: 성공 실패 여부 ("0": 성공)
+                - msg_cd: 응답코드
+                - msg1: 응답메시지
+                - output: 상품기본정보
+
+        Raises:
+            KeyError: 지원하지 않는 country_code인 경우
+
+        Example:
+            >>> broker.fetch_stock_info("005930", "KR")  # 삼성전자
+            >>> broker.fetch_stock_info("AAPL", "US")    # 애플
+        """
         path = "uapi/domestic-stock/v1/quotations/search-info"
         url = f"{self.base_url}/{path}"
         headers = {
@@ -601,11 +652,11 @@ class KoreaInvestment:
             "tr_id": "CTPF1604R"
         }
 
-        for market_code in MARKET_TYPE_MAP[market]:
+        for prdt_type_cd in PRDT_TYPE_CD_BY_COUNTRY[country_code]:
             try:
                 params = {
                     "PDNO": symbol,
-                    "PRDT_TYPE_CD": market_code
+                    "PRDT_TYPE_CD": prdt_type_cd
                 }
                 resp = requests.get(url, headers=headers, params=params)
                 resp_json = resp.json()
@@ -620,9 +671,51 @@ class KoreaInvestment:
                     continue
                 raise e
 
-    def fetch_search_stock_info(self, symbol: str, market: str = "KR"):
-        """
-        국내 주식만 제공하는 API이다
+    def fetch_search_stock_info(self, symbol: str, country_code: str = "KR") -> dict:
+        """주식기본조회 [v1_국내주식-067]
+
+        국내주식 종목의 상세 정보를 조회합니다.
+        상장주수, 자본금, 액면가, 시장구분, 업종분류 등 상세 정보를 제공합니다.
+
+        ⚠️ 주의: 이 API는 **국내주식만 지원**합니다.
+        해외주식 정보는 fetch_stock_info() 또는 fetch_price_detail_oversea()를 사용하세요.
+
+        API 정보:
+            - 경로: /uapi/domestic-stock/v1/quotations/search-stock-info
+            - Method: GET
+            - 실전 TR ID: CTPF1002R
+            - 모의투자: 미지원
+
+        Query Parameters:
+            PRDT_TYPE_CD (str): 상품유형코드
+                - Required: Yes
+                - Length: 3
+                - 300: 주식, ETF, ETN, ELW
+                - 301: 선물옵션
+                - 302: 채권
+                - 306: ELS
+
+            PDNO (str): 상품번호
+                - Required: Yes
+                - Length: 12
+                - 종목번호 6자리 (예: 005930)
+                - ETN의 경우 Q로 시작 (예: Q500001)
+
+        Args:
+            symbol (str): 종목 코드 (예: 005930, 000660)
+            country_code (str): 국가 코드 (기본값: "KR")
+                - KR/KRX만 지원
+                - 그 외 값은 ValueError 발생
+
+        Returns:
+            dict: API 응답 딕셔너리
+
+        Raises:
+            ValueError: country_code가 "KR" 또는 "KRX"가 아닌 경우
+
+        Example:
+            >>> broker.fetch_search_stock_info("005930")        # 삼성전자
+            >>> broker.fetch_search_stock_info("005930", "KR")  # 동일
         """
         path = "uapi/domestic-stock/v1/quotations/search-stock-info"
         url = f"{self.base_url}/{path}"
@@ -634,14 +727,14 @@ class KoreaInvestment:
             "tr_id": "CTPF1002R"
         }
 
-        if market != "KR" and market != "KRX":
-            raise ValueError("Market must be either 'KR' or 'KRX'.")
+        if country_code != "KR" and country_code != "KRX":
+            raise ValueError("country_code must be either 'KR' or 'KRX'.")
 
-        for market_ in MARKET_TYPE_MAP[market]:
+        for prdt_type_cd in PRDT_TYPE_CD_BY_COUNTRY[country_code]:
             try:
                 params = {
                     "PDNO": symbol,
-                    "PRDT_TYPE_CD": market_
+                    "PRDT_TYPE_CD": prdt_type_cd
                 }
                 resp = requests.get(url, headers=headers, params=params)
                 resp_json = resp.json()

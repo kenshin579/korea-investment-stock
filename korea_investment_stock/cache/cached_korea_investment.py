@@ -103,36 +103,36 @@ class CachedKoreaInvestment:
 
         return result
 
-    def fetch_stock_info(self, symbol: str, market: str = "KR") -> dict:
+    def fetch_stock_info(self, symbol: str, country_code: str = "KR") -> dict:
         """종목 정보 조회 (캐싱 지원)"""
         if not self.enable_cache:
-            return self.broker.fetch_stock_info(symbol, market)
+            return self.broker.fetch_stock_info(symbol, country_code)
 
-        cache_key = self._make_cache_key("fetch_stock_info", symbol, market)
+        cache_key = self._make_cache_key("fetch_stock_info", symbol, country_code)
         cached_data = self.cache.get(cache_key)
 
         if cached_data is not None:
             return cached_data
 
-        result = self.broker.fetch_stock_info(symbol, market)
+        result = self.broker.fetch_stock_info(symbol, country_code)
 
         if result.get('rt_cd') == '0':
             self.cache.set(cache_key, result, self.ttl['stock_info'])
 
         return result
 
-    def fetch_search_stock_info(self, symbol: str, market: str = "KR") -> dict:
+    def fetch_search_stock_info(self, symbol: str, country_code: str = "KR") -> dict:
         """종목 검색 (캐싱 지원)"""
         if not self.enable_cache:
-            return self.broker.fetch_search_stock_info(symbol, market)
+            return self.broker.fetch_search_stock_info(symbol, country_code)
 
-        cache_key = self._make_cache_key("fetch_search_stock_info", symbol, market)
+        cache_key = self._make_cache_key("fetch_search_stock_info", symbol, country_code)
         cached_data = self.cache.get(cache_key)
 
         if cached_data is not None:
             return cached_data
 
-        result = self.broker.fetch_search_stock_info(symbol, market)
+        result = self.broker.fetch_search_stock_info(symbol, country_code)
 
         if result.get('rt_cd') == '0':
             self.cache.set(cache_key, result, self.ttl['stock_info'])

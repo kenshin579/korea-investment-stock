@@ -23,8 +23,8 @@ from .constants import (
     OVRS_EXCG_CD,       # 해외 주문/잔고용
     # 상품유형 코드
     PRDT_TYPE_CD,
+    PRDT_TYPE_CD_BY_COUNTRY,  # 국가별 상품유형코드 매핑
     # 기타
-    MARKET_TYPE_MAP,
     API_RETURN_CODE,
 )
 
@@ -81,8 +81,8 @@ __all__ = [
     "OVRS_EXCG_CD",
     # 상수 정의 - 상품유형 코드
     "PRDT_TYPE_CD",
+    "PRDT_TYPE_CD_BY_COUNTRY",
     # 상수 정의 - 기타
-    "MARKET_TYPE_MAP",
     "API_RETURN_CODE",
 
     # 설정 관리
