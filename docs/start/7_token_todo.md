@@ -37,18 +37,18 @@
 
 ## Phase 3: TokenStorageFactory 분리
 
-- [ ] `token/factory.py` 파일 생성
-- [ ] `create_token_storage()` 함수 구현
-- [ ] `_get_config_value()` 헬퍼 함수 구현
-- [ ] `_create_file_storage()` 함수 구현
-- [ ] `_create_redis_storage()` 함수 구현
-- [ ] `token/test_factory.py` 테스트 파일 생성
-  - [ ] `test_default_file_storage` 테스트
-  - [ ] `test_config_file_storage` 테스트
-  - [ ] `test_config_redis_storage` 테스트
-  - [ ] `test_invalid_storage_type` 테스트
-  - [ ] `test_env_var_storage_type` 테스트
-- [ ] Factory 테스트 통과 확인
+- [x] `token/factory.py` 파일 생성
+- [x] `create_token_storage()` 함수 구현
+- [x] `_get_config_value()` 헬퍼 함수 구현
+- [x] `_create_file_storage()` 함수 구현
+- [x] `_create_redis_storage()` 함수 구현
+- [x] `token/test_factory.py` 테스트 파일 생성
+  - [x] `test_default_file_storage` 테스트
+  - [x] `test_config_file_storage` 테스트
+  - [x] `test_config_redis_storage` 테스트
+  - [x] `test_invalid_storage_type` 테스트
+  - [x] `test_env_var_storage_type` 테스트
+- [x] Factory 테스트 통과 확인 (20 passed)
   ```bash
   pytest korea_investment_stock/token/test_factory.py -v
   ```
