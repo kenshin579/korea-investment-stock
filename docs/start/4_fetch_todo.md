@@ -8,14 +8,14 @@
 
 ## 2단계: korea_investment_stock.py 수정
 
-- [ ] EXCD_BY_COUNTRY import 추가
-- [ ] fetch_price_detail_oversea 인자명 변경 (`market` → `country_code`)
-- [ ] 기본값 변경 (`"KR"` → `"US"`)
-- [ ] KR/KRX 체크 로직 제거
-- [ ] EXCD_BY_COUNTRY를 활용한 거래소 순회 로직 적용
-- [ ] ValueError 메시지 한글화
-- [ ] docstring 업데이트 (Query Parameters, Returns, Raises 포함)
-- [ ] return type hint 추가 (`-> dict`)
+- [x] EXCD_BY_COUNTRY import 추가
+- [x] fetch_price_detail_oversea 인자명 변경 (`market` → `country_code`)
+- [x] 기본값 변경 (`"KR"` → `"US"`)
+- [x] KR/KRX 체크 로직 제거
+- [x] EXCD_BY_COUNTRY를 활용한 거래소 순회 로직 적용
+- [x] ValueError 메시지 한글화
+- [x] docstring 업데이트 (Query Parameters, Returns, Raises 포함)
+- [x] return type hint 추가 (`-> dict`)
 
 ## 3단계: Wrapper 클래스 수정
 
