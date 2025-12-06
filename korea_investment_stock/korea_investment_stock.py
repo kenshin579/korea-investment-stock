@@ -347,7 +347,7 @@ class KoreaInvestment:
             "tr_id": TR_ID_MAP.get(symbol_type, "FHKST01010100")
         }
         params = {
-            "fid_cond_mrkt_div_code": FID_COND_MRKT_DIV_CODE_STOCK["KRX"],
+            "fid_cond_mrkt_div_code": FID_COND_MRKT_DIV_CODE_STOCK["UNIFIED"],
             "fid_input_iscd": symbol
         }
         resp = requests.get(url, headers=headers, params=params)
