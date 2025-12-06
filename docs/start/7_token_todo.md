@@ -14,23 +14,23 @@
 
 ## Phase 2: TokenManager 클래스 생성
 
-- [ ] `token/manager.py` 파일 생성
-- [ ] `TokenManager` 클래스 구현
-  - [ ] `__init__` 메서드 (storage, base_url, api_key, api_secret)
-  - [ ] `access_token` 프로퍼티
-  - [ ] `get_valid_token()` 메서드
-  - [ ] `is_token_valid()` 메서드
-  - [ ] `_load_token()` 메서드
-  - [ ] `_issue_token()` 메서드
-  - [ ] `_parse_token_response()` 메서드
-  - [ ] `issue_hashkey()` 메서드
-  - [ ] `invalidate()` 메서드
-- [ ] `token/test_manager.py` 테스트 파일 생성
-  - [ ] `test_get_valid_token_when_valid` 테스트
-  - [ ] `test_get_valid_token_when_invalid` 테스트
-  - [ ] `test_is_token_valid` 테스트
-  - [ ] `test_invalidate` 테스트
-- [ ] TokenManager 단위 테스트 통과 확인
+- [x] `token/manager.py` 파일 생성
+- [x] `TokenManager` 클래스 구현
+  - [x] `__init__` 메서드 (storage, base_url, api_key, api_secret)
+  - [x] `access_token` 프로퍼티
+  - [x] `get_valid_token()` 메서드
+  - [x] `is_token_valid()` 메서드
+  - [x] `_load_token()` 메서드
+  - [x] `_issue_token()` 메서드
+  - [x] `_parse_token_response()` 메서드
+  - [x] `issue_hashkey()` 메서드
+  - [x] `invalidate()` 메서드
+- [x] `token/test_manager.py` 테스트 파일 생성
+  - [x] `test_get_valid_token_when_valid` 테스트
+  - [x] `test_get_valid_token_when_invalid` 테스트
+  - [x] `test_is_token_valid` 테스트
+  - [x] `test_invalidate` 테스트
+- [x] TokenManager 단위 테스트 통과 확인 (16 passed)
   ```bash
   pytest korea_investment_stock/token/test_manager.py -v
   ```
