@@ -1,6 +1,8 @@
 # korea_investment_stock.py 리팩토링 구현 가이드
 
 > PRD: `3_impro_prd.md` 기반 구현 상세
+>
+> **상태**: ✅ 모든 Phase 완료 (2025-12-06)
 
 ## 1. Phase 1: 즉시 정리 (삭제만)
 
@@ -726,37 +728,55 @@ class KoreaInvestment:
 
 ---
 
-## 6. __init__.py 업데이트
+## 6. __init__.py 업데이트 ✅ 완료
 
-**파일**: `korea_investment_stock/__init__.py`
+**파일**: `korea_investment_stock/__init__.py` (121줄)
 
 ```python
-"""한국투자증권 API 래퍼"""
+"""한국투자증권 OpenAPI Python Wrapper"""
 
+# 메인 클래스
 from .korea_investment_stock import KoreaInvestment
-from .config import Config
-from .config_resolver import ConfigResolver
+
+# 상수 정의 (API 파라미터명 사용)
 from .constants import (
-    MARKET_TYPE_MAP,
+    COUNTRY_CODE,
+    FID_COND_MRKT_DIV_CODE_STOCK,
+    EXCG_ID_DVSN_CD,
+    EXCD,
+    EXCD_BY_COUNTRY,
+    OVRS_EXCG_CD,
+    PRDT_TYPE_CD,
+    PRDT_TYPE_CD_BY_COUNTRY,
     API_RETURN_CODE,
-    MARKET_TYPE,
-    EXCHANGE_TYPE,
-    # 하위 호환성
-    EXCHANGE_CODE,
-    EXCHANGE_CODE2,
-    EXCHANGE_CODE3,
-    EXCHANGE_CODE4,
 )
 
-# 기존 export 유지 (하위 호환성)
-__all__ = [
-    "KoreaInvestment",
-    "Config",
-    "ConfigResolver",
-    "MARKET_TYPE_MAP",
-    "API_RETURN_CODE",
-    # 기존 cache, rate_limit exports...
-]
+# 설정 관리
+from .config import Config
+from .config_resolver import ConfigResolver
+
+# 캐시 기능
+from .cache import CacheManager, CacheEntry, CachedKoreaInvestment
+
+# 토큰 관리
+from .token import TokenStorage, FileTokenStorage, RedisTokenStorage, TokenManager, create_token_storage
+
+# Rate Limiting
+from .rate_limit import RateLimiter, RateLimitedKoreaInvestment
+
+# 파서
+from .parsers import parse_kospi_master, parse_kosdaq_master
+
+# IPO 헬퍼
+from .ipo import (
+    validate_date_format,
+    validate_date_range,
+    parse_ipo_date_range,
+    format_ipo_date,
+    calculate_ipo_d_day,
+    get_ipo_status,
+    format_number,
+)
 ```
 
 ---
@@ -782,5 +802,101 @@ python examples/basic_example.py
 
 ---
 
-**문서 버전**: 1.0
+## 8. 추가 리팩토링: Token 모듈 (Phase 7) ✅ 완료
+
+PR #98에서 token 모듈 구조가 추가로 개선되었습니다.
+
+### 8.1 token_storage/ → token/ 폴더 변경
+
+```
+# Before
+token_storage/
+├── __init__.py
+└── token_storage.py       # 모든 기능이 한 파일에
+
+# After
+token/
+├── __init__.py            # exports (20줄)
+├── storage.py             # TokenStorage 클래스들 (396줄)
+├── manager.py             # TokenManager (185줄)
+└── factory.py             # create_token_storage (96줄)
+```
+
+### 8.2 TokenManager 클래스 분리
+
+```python
+# token/manager.py
+class TokenManager:
+    """토큰 발급, 검증, 갱신을 담당"""
+
+    def __init__(self, storage, base_url, api_key, api_secret):
+        self.storage = storage
+        # ...
+
+    def get_valid_token(self) -> str:
+        """유효한 토큰 반환 (만료 시 자동 갱신)"""
+
+    def is_token_valid(self) -> bool:
+        """토큰 유효성 확인"""
+
+    def issue_hashkey(self, data: dict) -> str:
+        """해쉬키 발급"""
+```
+
+### 8.3 TokenStorage Factory 분리
+
+```python
+# token/factory.py
+def create_token_storage(config: dict) -> TokenStorage:
+    """설정에 따라 적절한 TokenStorage 생성"""
+    storage_type = config.get("token_storage_type", "file")
+
+    if storage_type == "redis":
+        return RedisTokenStorage(...)
+    else:
+        return FileTokenStorage(...)
+```
+
+---
+
+## 9. 추가 리팩토링: IPO 모듈 (Phase 8) ✅ 완료
+
+PR #96에서 IPO API가 분리되었습니다.
+
+### 9.1 ipo_api.py 추가
+
+```python
+# ipo/ipo_api.py (109줄)
+def fetch_ipo_schedule(
+    base_url: str,
+    access_token: str,
+    api_key: str,
+    api_secret: str,
+    from_date: str = None,
+    to_date: str = None,
+    symbol: str = ""
+) -> dict:
+    """공모주 청약 일정 조회 API"""
+    # API 호출 로직
+```
+
+### 9.2 KoreaInvestment에서 위임
+
+```python
+# korea_investment_stock.py
+from .ipo import fetch_ipo_schedule as _fetch_ipo_schedule
+
+class KoreaInvestment:
+    def fetch_ipo_schedule(self, from_date=None, to_date=None, symbol=""):
+        return _fetch_ipo_schedule(
+            self.base_url, self.access_token,
+            self.api_key, self.api_secret,
+            from_date, to_date, symbol
+        )
+```
+
+---
+
+**문서 버전**: 2.0
 **작성일**: 2025-12-04
+**수정일**: 2025-12-06

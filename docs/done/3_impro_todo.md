@@ -165,6 +165,46 @@
 
 ---
 
+## Phase 7: Token 모듈 리팩토링 - 완료
+
+### 7.1 token_storage/ → token/ 폴더 변경
+- [x] `token_storage/` → `token/` 이름 변경
+- [x] `token_storage.py` → `storage.py` 이름 변경
+
+### 7.2 TokenManager 클래스 분리
+- [x] `token/manager.py` 파일 생성
+- [x] 토큰 발급, 검증, 갱신 로직 이동
+- [x] `KoreaInvestment`에서 `TokenManager` 사용
+
+### 7.3 TokenStorage Factory 분리
+- [x] `token/factory.py` 파일 생성
+- [x] `create_token_storage()` 함수 구현
+- [x] 설정에 따른 TokenStorage 생성 로직
+
+### 7.4 Phase 7 검증
+- [x] `pytest` 실행 - 모든 테스트 통과
+- [x] Token 관련 테스트 통과 확인
+
+**관련 PR**: #98
+
+---
+
+## Phase 8: IPO API 분리 - 완료
+
+### 8.1 ipo_api.py 생성
+- [x] `korea_investment_stock/ipo/ipo_api.py` 파일 생성
+- [x] `fetch_ipo_schedule` 함수 분리
+
+### 8.2 KoreaInvestment 수정
+- [x] `fetch_ipo_schedule` 메서드에서 `ipo_api.fetch_ipo_schedule` 위임
+
+### 8.3 Phase 8 검증
+- [x] `pytest` 실행 - 모든 테스트 통과
+
+**관련 PR**: #96
+
+---
+
 ## 완료 체크리스트
 
 - [x] Phase 1 완료 (즉시 정리)
@@ -173,6 +213,8 @@
 - [x] Phase 4 완료 (파서 분리)
 - [x] Phase 5 완료 (IPO 헬퍼 분리)
 - [x] Phase 6 완료 (최종 검증)
+- [x] Phase 7 완료 (Token 모듈 리팩토링)
+- [x] Phase 8 완료 (IPO API 분리)
 
 ---
 
@@ -185,20 +227,34 @@
 | Phase 3 | 설정 로직 분리 (config_resolver.py) | 1110 → 942 (168줄) |
 | Phase 4 | 파서 분리 (parsers/master_parser.py) | 942 → 793 (149줄) |
 | Phase 5 | IPO 헬퍼 분리 (ipo/ipo_helpers.py) | 793 → 707 (86줄) |
-| **총계** | - | **1342 → 707 (635줄 감소, 47.3%)** |
+| Phase 6 | 최종 검증 및 __init__.py 업데이트 | 707줄 유지 |
+| Phase 7 | Token 모듈 리팩토링 (PR #98) | 707 → 692 (15줄) |
+| Phase 8 | IPO API 분리 (PR #96) | ipo_api.py 추가 |
+| **총계** | - | **1342 → 692 (650줄 감소, 48.4%)** |
 
-### 새로운 모듈 구조
+### 최종 모듈 구조
 
 ```
 korea_investment_stock/
-├── __init__.py                    # 공개 API exports
-├── korea_investment_stock.py      # 707줄 (핵심 클래스)
-├── constants.py                   # 상수 정의
-├── config_resolver.py             # 설정 해결 로직
-├── parsers/
+├── __init__.py                    # 공개 API exports (121줄)
+├── korea_investment_stock.py      # 692줄 (핵심 클래스)
+├── constants.py                   # 상수 정의 (167줄)
+├── config_resolver.py             # 설정 해결 로직 (186줄)
+├── config/
 │   ├── __init__.py
-│   └── master_parser.py           # KOSPI/KOSDAQ 파싱
-└── ipo/
-    ├── __init__.py
-    └── ipo_helpers.py             # IPO 헬퍼 함수
+│   └── config.py                  # Config 클래스
+├── parsers/
+│   ├── __init__.py                # (8줄)
+│   └── master_parser.py           # KOSPI/KOSDAQ 파싱 (159줄)
+├── ipo/
+│   ├── __init__.py                # (28줄)
+│   ├── ipo_api.py                 # IPO API (109줄)
+│   └── ipo_helpers.py             # IPO 헬퍼 함수 (142줄)
+├── token/
+│   ├── __init__.py                # (20줄)
+│   ├── storage.py                 # TokenStorage 클래스들 (396줄)
+│   ├── manager.py                 # TokenManager (185줄)
+│   └── factory.py                 # create_token_storage (96줄)
+├── cache/                         # 캐시 기능
+└── rate_limit/                    # Rate Limiting
 ```
