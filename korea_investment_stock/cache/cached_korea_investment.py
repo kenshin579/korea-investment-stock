@@ -121,18 +121,18 @@ class CachedKoreaInvestment:
 
         return result
 
-    def fetch_search_stock_info(self, symbol: str, country_code: str = "KR") -> dict:
-        """종목 검색 (캐싱 지원)"""
+    def fetch_search_stock_info(self, symbol: str) -> dict:
+        """종목 검색 (캐싱 지원) - 국내주식 전용"""
         if not self.enable_cache:
-            return self.broker.fetch_search_stock_info(symbol, country_code)
+            return self.broker.fetch_search_stock_info(symbol)
 
-        cache_key = self._make_cache_key("fetch_search_stock_info", symbol, country_code)
+        cache_key = self._make_cache_key("fetch_search_stock_info", symbol)
         cached_data = self.cache.get(cache_key)
 
         if cached_data is not None:
             return cached_data
 
-        result = self.broker.fetch_search_stock_info(symbol, country_code)
+        result = self.broker.fetch_search_stock_info(symbol)
 
         if result.get('rt_cd') == '0':
             self.cache.set(cache_key, result, self.ttl['stock_info'])

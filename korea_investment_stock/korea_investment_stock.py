@@ -671,7 +671,7 @@ class KoreaInvestment:
                     continue
                 raise e
 
-    def fetch_search_stock_info(self, symbol: str, country_code: str = "KR") -> dict:
+    def fetch_search_stock_info(self, symbol: str) -> dict:
         """주식기본조회 [v1_국내주식-067]
 
         국내주식 종목의 상세 정보를 조회합니다.
@@ -703,19 +703,12 @@ class KoreaInvestment:
 
         Args:
             symbol (str): 종목 코드 (예: 005930, 000660)
-            country_code (str): 국가 코드 (기본값: "KR")
-                - KR/KRX만 지원
-                - 그 외 값은 ValueError 발생
 
         Returns:
             dict: API 응답 딕셔너리
 
-        Raises:
-            ValueError: country_code가 "KR" 또는 "KRX"가 아닌 경우
-
         Example:
-            >>> broker.fetch_search_stock_info("005930")        # 삼성전자
-            >>> broker.fetch_search_stock_info("005930", "KR")  # 동일
+            >>> broker.fetch_search_stock_info("005930")  # 삼성전자
         """
         path = "uapi/domestic-stock/v1/quotations/search-stock-info"
         url = f"{self.base_url}/{path}"
@@ -727,10 +720,7 @@ class KoreaInvestment:
             "tr_id": "CTPF1002R"
         }
 
-        if country_code != "KR" and country_code != "KRX":
-            raise ValueError("country_code must be either 'KR' or 'KRX'.")
-
-        for prdt_type_cd in PRDT_TYPE_CD_BY_COUNTRY[country_code]:
+        for prdt_type_cd in PRDT_TYPE_CD_BY_COUNTRY["KR"]:
             try:
                 params = {
                     "PDNO": symbol,

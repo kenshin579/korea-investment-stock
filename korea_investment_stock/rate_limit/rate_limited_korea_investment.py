@@ -97,19 +97,18 @@ class RateLimitedKoreaInvestment:
         self._rate_limiter.wait()
         return self._broker.fetch_stock_info(symbol, country_code)
 
-    def fetch_search_stock_info(self, symbol: str, country_code: str = "KR") -> Dict[str, Any]:
+    def fetch_search_stock_info(self, symbol: str) -> Dict[str, Any]:
         """
-        속도 제한이 적용된 종목 검색
+        속도 제한이 적용된 종목 검색 (국내주식 전용)
 
         Args:
             symbol: 종목 코드
-            country_code: 국가 코드 (기본값: "KR")
 
         Returns:
             API 응답 딕셔너리
         """
         self._rate_limiter.wait()
-        return self._broker.fetch_search_stock_info(symbol, country_code)
+        return self._broker.fetch_search_stock_info(symbol)
 
     def fetch_kospi_symbols(self) -> Dict[str, Any]:
         """
