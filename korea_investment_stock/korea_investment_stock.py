@@ -18,6 +18,7 @@ from .token_storage import TokenStorage, FileTokenStorage, RedisTokenStorage
 from .constants import (
     MARKET_TYPE_MAP,
     API_RETURN_CODE,
+    FID_COND_MRKT_DIV_CODE_STOCK,
 )
 from .config_resolver import ConfigResolver
 from .parsers import parse_kospi_master, parse_kosdaq_master
@@ -293,10 +294,7 @@ class KoreaInvestment:
         if market == "KR" or market == "KRX":
             stock_info = self.fetch_stock_info(symbol, market)
             symbol_type = self.get_symbol_type(stock_info)
-            if symbol_type == "ETF":
-                resp_json = self.fetch_etf_domestic_price("J", symbol)
-            else:
-                resp_json = self.fetch_domestic_price("J", symbol)
+            resp_json = self.fetch_domestic_price(symbol, symbol_type)
         elif market == "US":
             # 기존: resp_json = self.fetch_oversea_price(symbol)  # 메서드 없음
             # 개선: 이미 구현된 fetch_price_detail_oversea() 활용
@@ -320,15 +318,25 @@ class KoreaInvestment:
 
         return "Unknown"
 
-    def fetch_etf_domestic_price(self, market_code: str, symbol: str) -> dict:
-        """ETF 주식현재가시세
+    def fetch_domestic_price(
+        self,
+        symbol: str,
+        symbol_type: str = "Stock"
+    ) -> dict:
+        """국내 주식/ETF 현재가시세
 
         Args:
-            market_code (str): 시장 분류코드 (예: "J")
-            symbol (str): 종목코드
+            symbol: 종목코드 (ex: 005930)
+            symbol_type: 상품 타입 ("Stock" 또는 "ETF")
+
         Returns:
             dict: API 응답 데이터
         """
+        TR_ID_MAP = {
+            "Stock": "FHKST01010100",
+            "ETF": "FHPST02400000"
+        }
+
         path = "uapi/domestic-stock/v1/quotations/inquire-price"
         url = f"{self.base_url}/{path}"
         headers = {
@@ -336,35 +344,10 @@ class KoreaInvestment:
             "authorization": self.access_token,
             "appKey": self.api_key,
             "appSecret": self.api_secret,
-            "tr_id": "FHPST02400000"
+            "tr_id": TR_ID_MAP.get(symbol_type, "FHKST01010100")
         }
         params = {
-            "fid_cond_mrkt_div_code": market_code,
-            "fid_input_iscd": symbol
-        }
-        resp = requests.get(url, headers=headers, params=params)
-        return resp.json()
-
-    def fetch_domestic_price(self, market_code: str, symbol: str) -> dict:
-        """국내 주식현재가시세
-
-        Args:
-            market_code (str): 시장 분류코드 (예: "J")
-            symbol (str): 종목코드
-        Returns:
-            dict: API 응답 데이터
-        """
-        path = "uapi/domestic-stock/v1/quotations/inquire-price"
-        url = f"{self.base_url}/{path}"
-        headers = {
-            "content-type": "application/json",
-            "authorization": self.access_token,
-            "appKey": self.api_key,
-            "appSecret": self.api_secret,
-            "tr_id": "FHKST01010100"
-        }
-        params = {
-            "fid_cond_mrkt_div_code": market_code,
+            "fid_cond_mrkt_div_code": FID_COND_MRKT_DIV_CODE_STOCK["KRX"],
             "fid_input_iscd": symbol
         }
         resp = requests.get(url, headers=headers, params=params)
