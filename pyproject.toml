@@ -28,6 +28,13 @@ dev = [
     "pytest>=7.0.0",
     "pytest-mock>=3.10.0",
     "fakeredis>=2.10.0",
+    "testcontainers>=4.0.0",
+]
+
+[tool.pytest.ini_options]
+markers = [
+    "unit: 단위 테스트 (fakeredis, Docker 불필요)",
+    "integration: 통합 테스트 (Docker 필요)",
 ]
 
 [project.urls]
