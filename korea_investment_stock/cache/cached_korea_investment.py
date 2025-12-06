@@ -171,6 +171,34 @@ class CachedKoreaInvestment:
 
         return result
 
+    def fetch_overseas_symbols(self, market: str) -> dict:
+        """해외 종목 리스트 (캐싱 지원)"""
+        if not self.enable_cache:
+            return self.broker.fetch_overseas_symbols(market)
+
+        cache_key = f"fetch_overseas_symbols:{market}"
+        cached_data = self.cache.get(cache_key)
+
+        if cached_data is not None:
+            return cached_data
+
+        result = self.broker.fetch_overseas_symbols(market)
+        self.cache.set(cache_key, result, self.ttl['symbols'])
+
+        return result
+
+    def fetch_nasdaq_symbols(self) -> dict:
+        """나스닥 종목 리스트 (캐싱 지원)"""
+        return self.fetch_overseas_symbols("nas")
+
+    def fetch_nyse_symbols(self) -> dict:
+        """뉴욕증권거래소 종목 리스트 (캐싱 지원)"""
+        return self.fetch_overseas_symbols("nys")
+
+    def fetch_amex_symbols(self) -> dict:
+        """아멕스 종목 리스트 (캐싱 지원)"""
+        return self.fetch_overseas_symbols("ams")
+
     def fetch_ipo_schedule(
         self,
         from_date: Optional[str] = None,

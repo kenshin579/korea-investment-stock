@@ -42,7 +42,13 @@ from .token import TokenStorage, FileTokenStorage, RedisTokenStorage, TokenManag
 from .rate_limit import RateLimiter, RateLimitedKoreaInvestment
 
 # 파서 (서브패키지)
-from .parsers import parse_kospi_master, parse_kosdaq_master
+from .parsers import (
+    parse_kospi_master,
+    parse_kosdaq_master,
+    parse_overseas_stock_master,
+    OVERSEAS_MARKETS,
+    OVERSEAS_COLUMNS,
+)
 
 # IPO 헬퍼 (서브패키지)
 from .ipo import (
@@ -108,6 +114,9 @@ __all__ = [
     # 파서
     "parse_kospi_master",
     "parse_kosdaq_master",
+    "parse_overseas_stock_master",
+    "OVERSEAS_MARKETS",
+    "OVERSEAS_COLUMNS",
 
     # IPO 헬퍼
     "validate_date_format",

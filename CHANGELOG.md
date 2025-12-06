@@ -4,6 +4,58 @@
 
 ### Added
 
+#### 해외 주식 마스터 파일 다운로드 기능 (#102)
+
+**해외 11개 거래소 종목 코드 다운로드 지원**:
+
+```python
+from korea_investment_stock import KoreaInvestment, OVERSEAS_MARKETS
+
+broker = KoreaInvestment(api_key, api_secret, acc_no)
+
+# 나스닥 종목 조회
+nasdaq = broker.fetch_nasdaq_symbols()
+
+# 뉴욕증권거래소 종목 조회
+nyse = broker.fetch_nyse_symbols()
+
+# 홍콩 종목 조회
+hk = broker.fetch_overseas_symbols("hks")
+
+# 지원 시장 확인
+print(OVERSEAS_MARKETS)
+# {'nas': '나스닥', 'nys': '뉴욕', 'ams': '아멕스', 'shs': '상해', ...}
+```
+
+**지원 거래소 (11개)**:
+| 코드 | 거래소 |
+|------|--------|
+| `nas` | 나스닥 (NASDAQ) |
+| `nys` | 뉴욕 (NYSE) |
+| `ams` | 아멕스 (AMEX) |
+| `shs` | 상해 |
+| `shi` | 상해지수 |
+| `szs` | 심천 |
+| `szi` | 심천지수 |
+| `tse` | 도쿄 |
+| `hks` | 홍콩 |
+| `hnx` | 하노이 |
+| `hsx` | 호치민 |
+
+**새로운 메서드**:
+- `fetch_overseas_symbols(market)` - 해외 종목 코드 조회
+- `fetch_nasdaq_symbols()` - 나스닥 편의 메서드
+- `fetch_nyse_symbols()` - 뉴욕 편의 메서드
+- `fetch_amex_symbols()` - 아멕스 편의 메서드
+
+**새로운 상수**:
+- `OVERSEAS_MARKETS` - 지원 시장 코드 (11개)
+- `OVERSEAS_COLUMNS` - 컬럼명 목록 (24개)
+
+**Wrapper 호환**:
+- `CachedKoreaInvestment` 지원
+- `RateLimitedKoreaInvestment` 지원
+
 #### Testcontainers 도입 - Redis 통합 테스트 (#92)
 
 **실제 Docker 컨테이너 기반 통합 테스트 환경 구축**:
