@@ -1,12 +1,12 @@
 import os
 import pytest
-from korea_investment_stock import KoreaInvestment
+from korea_investment_stock import KoreaInvestment, Config
 from .rate_limited_korea_investment import RateLimitedKoreaInvestment
 
 
 @pytest.fixture
-def credentials():
-    """환경 변수에서 API 인증 정보 로드"""
+def broker():
+    """KoreaInvestment 브로커 픽스처"""
     api_key = os.environ.get('KOREA_INVESTMENT_API_KEY')
     api_secret = os.environ.get('KOREA_INVESTMENT_API_SECRET')
     acc_no = os.environ.get('KOREA_INVESTMENT_ACCOUNT_NO')
@@ -14,14 +14,17 @@ def credentials():
     if not all([api_key, api_secret, acc_no]):
         pytest.skip("API credentials not found in environment variables")
 
-    return api_key, api_secret, acc_no
+    config = Config(
+        api_key=api_key,
+        api_secret=api_secret,
+        acc_no=acc_no,
+        token_storage_type="file",
+    )
+    return KoreaInvestment(config=config)
 
 
-def test_rate_limited_basic(credentials):
+def test_rate_limited_basic(broker):
     """기본 속도 제한 통합 테스트"""
-    api_key, api_secret, acc_no = credentials
-
-    broker = KoreaInvestment(api_key, api_secret, acc_no)
     rate_limited = RateLimitedKoreaInvestment(broker, calls_per_second=15)
 
     # 30번 API 호출
@@ -46,11 +49,8 @@ def test_rate_limited_basic(credentials):
         f"Expected success rate >= 90%, got {success_rate*100:.1f}%"
 
 
-def test_rate_limited_context_manager(credentials):
+def test_rate_limited_context_manager(broker):
     """컨텍스트 매니저 테스트"""
-    api_key, api_secret, acc_no = credentials
-
-    broker = KoreaInvestment(api_key, api_secret, acc_no)
     rate_limited = RateLimitedKoreaInvestment(broker, calls_per_second=15)
 
     with rate_limited:
@@ -59,11 +59,8 @@ def test_rate_limited_context_manager(credentials):
             f"API call failed: {result.get('msg1', 'Unknown error')}"
 
 
-def test_rate_limited_preserves_functionality(credentials):
+def test_rate_limited_preserves_functionality(broker):
     """래퍼가 모든 API 기능을 보존하는지 테스트"""
-    api_key, api_secret, acc_no = credentials
-
-    broker = KoreaInvestment(api_key, api_secret, acc_no)
     rate_limited = RateLimitedKoreaInvestment(broker, calls_per_second=15)
 
     # fetch_price 테스트
@@ -77,11 +74,8 @@ def test_rate_limited_preserves_functionality(credentials):
         f"fetch_stock_info failed: {result.get('msg1', 'Unknown error')}"
 
 
-def test_rate_limited_stats(credentials):
+def test_rate_limited_stats(broker):
     """통계 조회 테스트"""
-    api_key, api_secret, acc_no = credentials
-
-    broker = KoreaInvestment(api_key, api_secret, acc_no)
     rate_limited = RateLimitedKoreaInvestment(broker, calls_per_second=15)
 
     # 3번 호출
@@ -97,11 +91,8 @@ def test_rate_limited_stats(credentials):
         f"Expected total_calls=3, got {stats['total_calls']}"
 
 
-def test_rate_limited_adjust_runtime(credentials):
+def test_rate_limited_adjust_runtime(broker):
     """런타임 속도 조정 테스트"""
-    api_key, api_secret, acc_no = credentials
-
-    broker = KoreaInvestment(api_key, api_secret, acc_no)
     rate_limited = RateLimitedKoreaInvestment(broker, calls_per_second=15)
 
     # 초기 설정 확인
@@ -121,11 +112,8 @@ def test_rate_limited_adjust_runtime(credentials):
         assert result['rt_cd'] == '0'
 
 
-def test_rate_limited_multiple_markets(credentials):
+def test_rate_limited_multiple_markets(broker):
     """다양한 시장(KR/US) 혼합 호출 테스트"""
-    api_key, api_secret, acc_no = credentials
-
-    broker = KoreaInvestment(api_key, api_secret, acc_no)
     rate_limited = RateLimitedKoreaInvestment(broker, calls_per_second=15)
 
     # KR과 US 종목 혼합
@@ -148,4 +136,3 @@ def test_rate_limited_multiple_markets(credentials):
     success_rate = success_count / len(test_stocks)
     assert success_rate >= 0.9, \
         f"Expected success rate >= 90%, got {success_rate*100:.1f}%"
-

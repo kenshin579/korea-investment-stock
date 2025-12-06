@@ -5,23 +5,25 @@ TODO-33 Phase 2.2
 import unittest
 from unittest.mock import Mock, patch
 
-from korea_investment_stock import KoreaInvestment
+from korea_investment_stock import KoreaInvestment, Config
 
 
 class TestUSStockIntegration(unittest.TestCase):
     """미국 주식 통합 테스트"""
-    
+
     def setUp(self):
         """Mock broker 인스턴스 설정"""
-        # access token 발급을 건너뛰고 직접 설정
-        self.patcher = patch('korea_investment_stock.korea_investment_stock.KoreaInvestment.issue_access_token')
+        # TokenManager의 토큰 발급을 건너뛰고 직접 설정
+        self.patcher = patch('korea_investment_stock.token.manager.TokenManager._issue_token')
         self.patcher.start()
-        
-        self.broker = KoreaInvestment(
+
+        config = Config(
             api_key="test_key",
             api_secret="test_secret",
-            acc_no="12345678-01"
+            acc_no="12345678-01",
+            token_storage_type="file",
         )
+        self.broker = KoreaInvestment(config=config)
         self.broker.access_token = "Bearer test_token"
     
     def tearDown(self):
@@ -334,16 +336,18 @@ class TestCachedKoreaInvestmentWrapper(unittest.TestCase):
 
     def setUp(self):
         """Mock broker 설정"""
-        self.patcher = patch('korea_investment_stock.korea_investment_stock.KoreaInvestment.issue_access_token')
+        self.patcher = patch('korea_investment_stock.token.manager.TokenManager._issue_token')
         self.patcher.start()
 
         from korea_investment_stock import CachedKoreaInvestment
 
-        self.broker = KoreaInvestment(
+        config = Config(
             api_key="test_key",
             api_secret="test_secret",
-            acc_no="12345678-01"
+            acc_no="12345678-01",
+            token_storage_type="file",
         )
+        self.broker = KoreaInvestment(config=config)
         self.broker.access_token = "Bearer test_token"
         self.cached_broker = CachedKoreaInvestment(self.broker, price_ttl=5)
 
@@ -385,16 +389,18 @@ class TestRateLimitedKoreaInvestmentWrapper(unittest.TestCase):
 
     def setUp(self):
         """Mock broker 설정"""
-        self.patcher = patch('korea_investment_stock.korea_investment_stock.KoreaInvestment.issue_access_token')
+        self.patcher = patch('korea_investment_stock.token.manager.TokenManager._issue_token')
         self.patcher.start()
 
         from korea_investment_stock import RateLimitedKoreaInvestment
 
-        self.broker = KoreaInvestment(
+        config = Config(
             api_key="test_key",
             api_secret="test_secret",
-            acc_no="12345678-01"
+            acc_no="12345678-01",
+            token_storage_type="file",
         )
+        self.broker = KoreaInvestment(config=config)
         self.broker.access_token = "Bearer test_token"
         self.rate_limited_broker = RateLimitedKoreaInvestment(self.broker, calls_per_second=15)
 

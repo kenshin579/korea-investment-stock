@@ -1,7 +1,7 @@
 import pytest
 import os
 import time
-from korea_investment_stock import KoreaInvestment, CachedKoreaInvestment
+from korea_investment_stock import KoreaInvestment, CachedKoreaInvestment, Config
 
 
 @pytest.fixture
@@ -14,7 +14,13 @@ def broker():
     if not all([api_key, api_secret, acc_no]):
         pytest.skip("API credentials not set")
 
-    return KoreaInvestment(api_key, api_secret, acc_no)
+    config = Config(
+        api_key=api_key,
+        api_secret=api_secret,
+        acc_no=acc_no,
+        token_storage_type="file",
+    )
+    return KoreaInvestment(config=config)
 
 
 class TestCachedKoreaInvestment:
