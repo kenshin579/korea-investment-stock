@@ -4,6 +4,35 @@
 
 ### Added
 
+#### Testcontainers 도입 - Redis 통합 테스트 (#92)
+
+**실제 Docker 컨테이너 기반 통합 테스트 환경 구축**:
+
+- `testcontainers>=4.0.0` 의존성 추가
+- pytest marker로 테스트 유형 구분 (`unit`, `integration`)
+- Redis 통합 테스트 7개 추가:
+  - 토큰 저장/로드/삭제
+  - 다중 스레드 연결 풀
+  - 실제 TTL 만료 확인
+  - 다중 데이터베이스 격리
+
+**테스트 실행**:
+```bash
+# 단위 테스트만 (Docker 불필요)
+pytest -m "not integration"
+
+# 통합 테스트만 (Docker 필요)
+pytest -m integration
+
+# 전체 테스트
+pytest
+```
+
+**fakeredis와의 공존**:
+- 기존 fakeredis 단위 테스트 유지 (빠른 피드백)
+- testcontainers 통합 테스트 추가 (실제 환경 검증)
+- Docker 미설치 시 통합 테스트 자동 스킵
+
 #### Hybrid Configuration System (v1.1.0) (#76)
 
 **5단계 설정 우선순위 시스템**:
