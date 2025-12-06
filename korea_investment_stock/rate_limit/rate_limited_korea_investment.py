@@ -114,69 +114,6 @@ class RateLimitedKoreaInvestment:
         self._rate_limiter.wait()
         return self._broker.fetch_search_stock_info(symbol, country_code)
 
-    def fetch_kospi_symbols(self) -> Dict[str, Any]:
-        """
-        속도 제한이 적용된 KOSPI 종목 리스트 조회
-
-        Returns:
-            API 응답 딕셔너리
-        """
-        self._rate_limiter.wait()
-        return self._broker.fetch_kospi_symbols()
-
-    def fetch_kosdaq_symbols(self) -> Dict[str, Any]:
-        """
-        속도 제한이 적용된 KOSDAQ 종목 리스트 조회
-
-        Returns:
-            API 응답 딕셔너리
-        """
-        self._rate_limiter.wait()
-        return self._broker.fetch_kosdaq_symbols()
-
-    def fetch_overseas_symbols(self, market: str) -> Dict[str, Any]:
-        """
-        속도 제한이 적용된 해외 종목 리스트 조회
-
-        Args:
-            market: 시장 코드 (nas, nys, ams 등)
-
-        Returns:
-            API 응답 딕셔너리
-        """
-        self._rate_limiter.wait()
-        return self._broker.fetch_overseas_symbols(market)
-
-    def fetch_nasdaq_symbols(self) -> Dict[str, Any]:
-        """
-        속도 제한이 적용된 나스닥 종목 리스트 조회
-
-        Returns:
-            API 응답 딕셔너리
-        """
-        self._rate_limiter.wait()
-        return self._broker.fetch_nasdaq_symbols()
-
-    def fetch_nyse_symbols(self) -> Dict[str, Any]:
-        """
-        속도 제한이 적용된 뉴욕증권거래소 종목 리스트 조회
-
-        Returns:
-            API 응답 딕셔너리
-        """
-        self._rate_limiter.wait()
-        return self._broker.fetch_nyse_symbols()
-
-    def fetch_amex_symbols(self) -> Dict[str, Any]:
-        """
-        속도 제한이 적용된 아멕스 종목 리스트 조회
-
-        Returns:
-            API 응답 딕셔너리
-        """
-        self._rate_limiter.wait()
-        return self._broker.fetch_amex_symbols()
-
     def fetch_ipo_schedule(self) -> Dict[str, Any]:
         """
         속도 제한이 적용된 IPO 일정 조회
