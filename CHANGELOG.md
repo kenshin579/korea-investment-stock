@@ -88,13 +88,13 @@ broker.fetch_search_stock_info("005930", market="KR")
 
 # 변경 후
 broker.fetch_stock_info("005930", country_code="KR")
-broker.fetch_search_stock_info("005930")  # 국내주식 전용, 인자 제거
+broker.fetch_search_stock_info("005930", country_code="KR")  # KR만 지원, 그 외 ValueError
 ```
 
 **주요 변경 내용**:
 
 - `fetch_stock_info` 인자: `market` → `country_code`
-- `fetch_search_stock_info`: 국내주식 전용 API로 단순화 (country_code 인자 제거)
+- `fetch_search_stock_info` 인자: `market` → `country_code` (KR만 지원, 그 외 ValueError)
 - API 문서 기반 상세 docstring 추가
 - 반환 타입 힌트 `-> dict` 추가
 
@@ -108,7 +108,8 @@ broker.fetch_search_stock_info("005930")  # 국내주식 전용, 인자 제거
 
 - `fetch_stock_info`: 위치 인자 사용 시 호환 (예: `broker.fetch_stock_info("005930", "KR")`)
 - `fetch_stock_info`: 키워드 인자 `market=` 사용 시 `country_code=`로 변경 필요
-- `fetch_search_stock_info`: 국내주식 전용으로 단순화, 두 번째 인자 제거
+- `fetch_search_stock_info`: 키워드 인자 `market=` 사용 시 `country_code=`로 변경 필요
+- `fetch_search_stock_info`: KR 외 country_code 사용 시 ValueError 발생
 
 #### fetch_price_detail_oversea 리팩토링 (#90)
 

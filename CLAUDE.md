@@ -213,7 +213,7 @@ Return raw API response
   - `fetch_etf_domestic_price(market_code, symbol)` - KR ETFs
   - `fetch_price_detail_oversea(symbol, country_code)` - Overseas stocks (US/HK/JP/CN/VN)
   - `fetch_stock_info(symbol, country_code)` - Stock information
-  - `fetch_search_stock_info(symbol)` - Stock search (국내주식 전용)
+  - `fetch_search_stock_info(symbol, country_code)` - Stock search (국내주식 전용, KR만 지원)
   - `fetch_kospi_symbols()` - KOSPI symbol list
   - `fetch_kosdaq_symbols()` - KOSDAQ symbol list
   - `fetch_ipo_schedule()` - IPO schedule

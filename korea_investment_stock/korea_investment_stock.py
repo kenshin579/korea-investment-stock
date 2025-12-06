@@ -671,7 +671,7 @@ class KoreaInvestment:
                     continue
                 raise e
 
-    def fetch_search_stock_info(self, symbol: str) -> dict:
+    def fetch_search_stock_info(self, symbol: str, country_code: str = "KR") -> dict:
         """주식기본조회 [v1_국내주식-067]
 
         국내주식 종목의 상세 정보를 조회합니다.
@@ -703,13 +703,23 @@ class KoreaInvestment:
 
         Args:
             symbol (str): 종목 코드 (예: 005930, 000660)
+            country_code (str): 국가 코드 (기본값: "KR")
+                - "KR"만 지원 (국내주식 전용 API)
+                - 그 외 값은 ValueError 발생
 
         Returns:
             dict: API 응답 딕셔너리
 
+        Raises:
+            ValueError: country_code가 "KR"이 아닌 경우
+
         Example:
-            >>> broker.fetch_search_stock_info("005930")  # 삼성전자
+            >>> broker.fetch_search_stock_info("005930")        # 삼성전자
+            >>> broker.fetch_search_stock_info("005930", "KR")  # 동일
         """
+        if country_code != "KR":
+            raise ValueError(f"fetch_search_stock_info는 국내주식 전용 API입니다. country_code='KR'만 지원합니다. (입력값: '{country_code}')")
+
         path = "uapi/domestic-stock/v1/quotations/search-stock-info"
         url = f"{self.base_url}/{path}"
         headers = {
