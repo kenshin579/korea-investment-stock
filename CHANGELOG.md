@@ -77,6 +77,40 @@ broker = KoreaInvestment()  # 환경 변수 자동 감지
 
 ### Changed
 
+#### fetch_stock_info, fetch_search_stock_info 개선 (#94)
+
+**Breaking Change: 인자 변경**
+
+```python
+# 변경 전
+broker.fetch_stock_info("005930", market="KR")
+broker.fetch_search_stock_info("005930", market="KR")
+
+# 변경 후
+broker.fetch_stock_info("005930", country_code="KR")
+broker.fetch_search_stock_info("005930", country_code="KR")  # KR만 지원, 그 외 ValueError
+```
+
+**주요 변경 내용**:
+
+- `fetch_stock_info` 인자: `market` → `country_code`
+- `fetch_search_stock_info` 인자: `market` → `country_code` (KR만 지원, 그 외 ValueError)
+- API 문서 기반 상세 docstring 추가
+- 반환 타입 힌트 `-> dict` 추가
+
+**상수 변경**:
+
+- `MARKET_TYPE_MAP` → `PRDT_TYPE_CD_BY_COUNTRY`로 이름 변경
+- `PRDT_TYPE_CD` 상수 참조 사용으로 코드 품질 향상
+- `OVRS_EXCG_CD` 키 형태 변경 (NASD:NASD 패턴)
+
+**호환성 노트**:
+
+- `fetch_stock_info`: 위치 인자 사용 시 호환 (예: `broker.fetch_stock_info("005930", "KR")`)
+- `fetch_stock_info`: 키워드 인자 `market=` 사용 시 `country_code=`로 변경 필요
+- `fetch_search_stock_info`: 키워드 인자 `market=` 사용 시 `country_code=`로 변경 필요
+- `fetch_search_stock_info`: KR 외 country_code 사용 시 ValueError 발생
+
 #### fetch_price_detail_oversea 리팩토링 (#90)
 
 **인자명 변경**: `market` → `country_code`

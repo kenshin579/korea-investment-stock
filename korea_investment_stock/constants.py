@@ -102,16 +102,16 @@ EXCD_BY_COUNTRY = {
 
 OVRS_EXCG_CD = {
     # 미국
-    "NASDAQ": "NASD",
-    "NYSE": "NYSE",
-    "AMEX": "AMEX",
+    "NASD": "NASD",   # 나스닥
+    "NYSE": "NYSE",   # 뉴욕
+    "AMEX": "AMEX",   # 아멕스
     # 아시아
-    "HONGKONG": "SEHK",
-    "TOKYO": "TKSE",
-    "SHANGHAI": "SHAA",
-    "SHENZHEN": "SZAA",
-    "HANOI": "HASE",
-    "HOCHIMINH": "VNSE",
+    "SEHK": "SEHK",   # 홍콩
+    "TKSE": "TKSE",   # 도쿄
+    "SHAA": "SHAA",   # 상하이
+    "SZAA": "SZAA",   # 심천
+    "HASE": "HASE",   # 하노이
+    "VNSE": "VNSE",   # 호치민
 }
 
 # =============================================================================
@@ -142,26 +142,17 @@ PRDT_TYPE_CD = {
 }
 
 # =============================================================================
-# 시장 타입 매핑 (MARKET_TYPE_MAP)
+# 국가별 상품유형 코드 매핑 (PRDT_TYPE_CD_BY_COUNTRY)
 # =============================================================================
 
-MARKET_TYPE_MAP = {
-    "KR": ["300"],  # "301", "302"
-    "KRX": ["300"],  # "301", "302"
-    "NASDAQ": ["512"],
-    "NYSE": ["513"],
-    "AMEX": ["529"],
-    "US": ["512", "513", "529"],
-    "TYO": ["515"],
-    "JP": ["515"],
-    "HKEX": ["501"],
-    "HK": ["501", "543", "558"],
-    "HNX": ["507"],
-    "HSX": ["508"],
-    "VN": ["507", "508"],
-    "SSE": ["551"],
-    "SZSE": ["552"],
-    "CN": ["551", "552"]
+PRDT_TYPE_CD_BY_COUNTRY = {
+    "KR": [PRDT_TYPE_CD["KR_STOCK"]],
+    "KRX": [PRDT_TYPE_CD["KR_STOCK"]],
+    "US": [PRDT_TYPE_CD["US_NASDAQ"], PRDT_TYPE_CD["US_NYSE"], PRDT_TYPE_CD["US_AMEX"]],
+    "JP": [PRDT_TYPE_CD["JP"]],
+    "HK": [PRDT_TYPE_CD["HK"], PRDT_TYPE_CD["HK_CNY"], PRDT_TYPE_CD["HK_USD"]],
+    "CN": [PRDT_TYPE_CD["CN_SHANGHAI"], PRDT_TYPE_CD["CN_SHENZHEN"]],
+    "VN": [PRDT_TYPE_CD["VN_HANOI"], PRDT_TYPE_CD["VN_HOCHIMINH"]],
 }
 
 # =============================================================================
