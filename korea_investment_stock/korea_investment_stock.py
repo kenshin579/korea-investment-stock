@@ -291,7 +291,7 @@ class KoreaInvestment:
             dict: API 응답 데이터
         """
 
-        if country_code == "KR" or country_code == "KRX":
+        if country_code == "KR":
             stock_info = self.fetch_stock_info(symbol, country_code)
             symbol_type = self.get_symbol_type(stock_info)
             resp_json = self.fetch_domestic_price(symbol, symbol_type)
