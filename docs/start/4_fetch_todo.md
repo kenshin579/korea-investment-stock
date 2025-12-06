@@ -38,8 +38,8 @@
 
 ## 5단계: 문서 업데이트
 
-- [ ] CLAUDE.md API Response Fields Reference 섹션 업데이트
-- [ ] CHANGELOG.md에 Breaking Changes 추가
+- [ ] CLAUDE.md API Response Fields Reference 섹션 업데이트 (변경 없음)
+- [x] CHANGELOG.md에 Breaking Changes 추가
 - [ ] examples/ 예제 코드 업데이트 (필요시)
 
 ## 6단계: 검증
