@@ -69,22 +69,31 @@ EXCG_ID_DVSN_CD = {
 
 EXCD = {
     # 미국 (정규장)
-    "NYSE": "NYS",
-    "NASDAQ": "NAS",
-    "AMEX": "AMS",
+    "NYS": "NYS",   # NYSE
+    "NAS": "NAS",   # NASDAQ
+    "AMS": "AMS",   # AMEX
     # 미국 (주간거래)
-    "NYSE_DAY": "BAY",
-    "NASDAQ_DAY": "BAQ",
-    "AMEX_DAY": "BAA",
+    "BAY": "BAY",   # NYSE 주간거래
+    "BAQ": "BAQ",   # NASDAQ 주간거래
+    "BAA": "BAA",   # AMEX 주간거래
     # 아시아
-    "HONGKONG": "HKS",
-    "TOKYO": "TSE",
-    "SHANGHAI": "SHS",
-    "SHENZHEN": "SZS",
-    "SHANGHAI_INDEX": "SHI",
-    "SHENZHEN_INDEX": "SZI",
-    "HOCHIMINH": "HSX",
-    "HANOI": "HNX",
+    "HKS": "HKS",   # 홍콩
+    "TSE": "TSE",   # 도쿄
+    "SHS": "SHS",   # 상하이
+    "SZS": "SZS",   # 심천
+    "SHI": "SHI",   # 상하이 지수
+    "SZI": "SZI",   # 심천 지수
+    "HSX": "HSX",   # 호치민
+    "HNX": "HNX",   # 하노이
+}
+
+# 국가별 거래소 코드 매핑 (시세 조회용)
+EXCD_BY_COUNTRY = {
+    "US": ["NYS", "NAS", "AMS", "BAY", "BAQ", "BAA"],  # 미국 (정규장 + 주간거래)
+    "HK": ["HKS"],                                      # 홍콩
+    "JP": ["TSE"],                                      # 일본
+    "CN": ["SHS", "SZS"],                               # 중국 (상하이, 심천)
+    "VN": ["HSX", "HNX"],                               # 베트남 (호치민, 하노이)
 }
 
 # =============================================================================

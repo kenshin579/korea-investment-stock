@@ -202,7 +202,7 @@ Return raw API response
   - `fetch_price(symbol, market)` - Unified KR/US price query
   - `fetch_domestic_price(market_code, symbol)` - KR stocks
   - `fetch_etf_domestic_price(market_code, symbol)` - KR ETFs
-  - `fetch_price_detail_oversea(symbol, market)` - US stocks
+  - `fetch_price_detail_oversea(symbol, country_code)` - Overseas stocks (US/HK/JP/CN/VN)
   - `fetch_stock_info(symbol, market)` - Stock information
   - `fetch_search_stock_info(symbol, market)` - Stock search
   - `fetch_kospi_symbols()` - KOSPI symbol list

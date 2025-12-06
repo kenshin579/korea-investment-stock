@@ -196,11 +196,11 @@ class TestUSStockIntegration(unittest.TestCase):
                     self.assertIn('output', results[i])
     
     def test_invalid_market_type(self):
-        """잘못된 market 타입 처리"""
+        """잘못된 country_code 처리"""
         with self.assertRaises(ValueError) as context:
             self.broker.fetch_price("INVALID", "INVALID_MARKET")
 
-        self.assertIn("Unsupported market type", str(context.exception))
+        self.assertIn("Unsupported country code", str(context.exception))
     
     def test_oversea_error_handling(self):
         """해외 주식 에러 처리 테스트"""
@@ -216,10 +216,219 @@ class TestUSStockIntegration(unittest.TestCase):
             mock_get.return_value = mock_response
 
             with self.assertRaises(ValueError) as context:
-                self.broker.fetch_price_detail_oversea("INVALID", "US")
+                self.broker.fetch_price_detail_oversea("INVALID", country_code="US")
 
-            self.assertIn("Unable to fetch price for symbol 'INVALID' in any US exchange",
+            self.assertIn("'INVALID' 종목을 US 거래소에서 찾을 수 없습니다",
                          str(context.exception))
+
+    def test_unsupported_country_code(self):
+        """지원하지 않는 country_code 에러 처리"""
+        with self.assertRaises(ValueError) as context:
+            self.broker.fetch_price_detail_oversea("AAPL", country_code="INVALID")
+
+        self.assertIn("지원하지 않는 country_code: INVALID", str(context.exception))
+
+    def test_fetch_price_detail_oversea_default_country_code(self):
+        """기본값 country_code="US" 테스트"""
+        mock_response = {
+            'rt_cd': '0',
+            'output': {'rsym': 'DNASAAPL', 'last': '200.00'}
+        }
+
+        with patch('requests.get') as mock_get:
+            mock_get.return_value.json.return_value = mock_response
+
+            # country_code 생략 시 기본값 "US" 사용
+            result = self.broker.fetch_price_detail_oversea("AAPL")
+
+            self.assertEqual(result['rt_cd'], '0')
+            # US 거래소 코드로 호출되었는지 확인
+            call_args = mock_get.call_args
+            self.assertIn('EXCD', call_args.kwargs['params'])
+
+    def test_fetch_price_detail_oversea_explicit_us(self):
+        """명시적 country_code="US" 테스트"""
+        mock_response = {
+            'rt_cd': '0',
+            'output': {'rsym': 'DNASAAPL', 'last': '200.00'}
+        }
+
+        with patch('requests.get') as mock_get:
+            mock_get.return_value.json.return_value = mock_response
+
+            result = self.broker.fetch_price_detail_oversea("AAPL", country_code="US")
+
+            self.assertEqual(result['rt_cd'], '0')
+
+    def test_fetch_price_detail_oversea_hongkong(self):
+        """홍콩 주식 테스트 (country_code="HK")"""
+        mock_response = {
+            'rt_cd': '0',
+            'output': {'rsym': 'HKS9988', 'last': '88.50'}  # 알리바바
+        }
+
+        with patch('requests.get') as mock_get:
+            mock_get.return_value.json.return_value = mock_response
+
+            result = self.broker.fetch_price_detail_oversea("9988", country_code="HK")
+
+            self.assertEqual(result['rt_cd'], '0')
+            # HKS 거래소 코드로 호출되었는지 확인
+            call_args = mock_get.call_args
+            self.assertEqual(call_args.kwargs['params']['EXCD'], 'HKS')
+
+    def test_fetch_price_detail_oversea_japan(self):
+        """일본 주식 테스트 (country_code="JP")"""
+        mock_response = {
+            'rt_cd': '0',
+            'output': {'rsym': 'TSE7203', 'last': '2500.00'}  # 토요타
+        }
+
+        with patch('requests.get') as mock_get:
+            mock_get.return_value.json.return_value = mock_response
+
+            result = self.broker.fetch_price_detail_oversea("7203", country_code="JP")
+
+            self.assertEqual(result['rt_cd'], '0')
+            # TSE 거래소 코드로 호출되었는지 확인
+            call_args = mock_get.call_args
+            self.assertEqual(call_args.kwargs['params']['EXCD'], 'TSE')
+
+    def test_fetch_price_detail_oversea_china(self):
+        """중국 주식 테스트 (country_code="CN")"""
+        mock_response = {
+            'rt_cd': '0',
+            'output': {'rsym': 'SHS600519', 'last': '1800.00'}  # 마오타이
+        }
+
+        with patch('requests.get') as mock_get:
+            mock_get.return_value.json.return_value = mock_response
+
+            result = self.broker.fetch_price_detail_oversea("600519", country_code="CN")
+
+            self.assertEqual(result['rt_cd'], '0')
+            # SHS 또는 SZS 거래소 코드로 호출되었는지 확인
+            call_args = mock_get.call_args
+            self.assertIn(call_args.kwargs['params']['EXCD'], ['SHS', 'SZS'])
+
+    def test_fetch_price_detail_oversea_vietnam(self):
+        """베트남 주식 테스트 (country_code="VN")"""
+        mock_response = {
+            'rt_cd': '0',
+            'output': {'rsym': 'HSXVNM', 'last': '50000.00'}
+        }
+
+        with patch('requests.get') as mock_get:
+            mock_get.return_value.json.return_value = mock_response
+
+            result = self.broker.fetch_price_detail_oversea("VNM", country_code="VN")
+
+            self.assertEqual(result['rt_cd'], '0')
+            # HSX 또는 HNX 거래소 코드로 호출되었는지 확인
+            call_args = mock_get.call_args
+            self.assertIn(call_args.kwargs['params']['EXCD'], ['HSX', 'HNX'])
+
+
+class TestCachedKoreaInvestmentWrapper(unittest.TestCase):
+    """CachedKoreaInvestment 래퍼 테스트"""
+
+    def setUp(self):
+        """Mock broker 설정"""
+        self.patcher = patch('korea_investment_stock.korea_investment_stock.KoreaInvestment.issue_access_token')
+        self.patcher.start()
+
+        from korea_investment_stock import CachedKoreaInvestment
+
+        self.broker = KoreaInvestment(
+            api_key="test_key",
+            api_secret="test_secret",
+            acc_no="12345678-01"
+        )
+        self.broker.access_token = "Bearer test_token"
+        self.cached_broker = CachedKoreaInvestment(self.broker, price_ttl=5)
+
+    def tearDown(self):
+        self.patcher.stop()
+
+    def test_cached_fetch_price_detail_oversea_default(self):
+        """CachedKoreaInvestment 기본값 테스트"""
+        mock_response = {
+            'rt_cd': '0',
+            'output': {'rsym': 'DNASAAPL', 'last': '200.00'}
+        }
+
+        with patch('requests.get') as mock_get:
+            mock_get.return_value.json.return_value = mock_response
+
+            # 기본값 country_code="US"
+            result = self.cached_broker.fetch_price_detail_oversea("AAPL")
+
+            self.assertEqual(result['rt_cd'], '0')
+
+    def test_cached_fetch_price_detail_oversea_with_country_code(self):
+        """CachedKoreaInvestment country_code 전달 테스트"""
+        mock_response = {
+            'rt_cd': '0',
+            'output': {'rsym': 'HKS9988', 'last': '88.50'}
+        }
+
+        with patch('requests.get') as mock_get:
+            mock_get.return_value.json.return_value = mock_response
+
+            result = self.cached_broker.fetch_price_detail_oversea("9988", country_code="HK")
+
+            self.assertEqual(result['rt_cd'], '0')
+
+
+class TestRateLimitedKoreaInvestmentWrapper(unittest.TestCase):
+    """RateLimitedKoreaInvestment 래퍼 테스트"""
+
+    def setUp(self):
+        """Mock broker 설정"""
+        self.patcher = patch('korea_investment_stock.korea_investment_stock.KoreaInvestment.issue_access_token')
+        self.patcher.start()
+
+        from korea_investment_stock import RateLimitedKoreaInvestment
+
+        self.broker = KoreaInvestment(
+            api_key="test_key",
+            api_secret="test_secret",
+            acc_no="12345678-01"
+        )
+        self.broker.access_token = "Bearer test_token"
+        self.rate_limited_broker = RateLimitedKoreaInvestment(self.broker, calls_per_second=15)
+
+    def tearDown(self):
+        self.patcher.stop()
+
+    def test_rate_limited_fetch_price_detail_oversea_default(self):
+        """RateLimitedKoreaInvestment 기본값 테스트"""
+        mock_response = {
+            'rt_cd': '0',
+            'output': {'rsym': 'DNASAAPL', 'last': '200.00'}
+        }
+
+        with patch('requests.get') as mock_get:
+            mock_get.return_value.json.return_value = mock_response
+
+            # 기본값 country_code="US"
+            result = self.rate_limited_broker.fetch_price_detail_oversea("AAPL")
+
+            self.assertEqual(result['rt_cd'], '0')
+
+    def test_rate_limited_fetch_price_detail_oversea_with_country_code(self):
+        """RateLimitedKoreaInvestment country_code 전달 테스트"""
+        mock_response = {
+            'rt_cd': '0',
+            'output': {'rsym': 'TSE7203', 'last': '2500.00'}
+        }
+
+        with patch('requests.get') as mock_get:
+            mock_get.return_value.json.return_value = mock_response
+
+            result = self.rate_limited_broker.fetch_price_detail_oversea("7203", country_code="JP")
+
+            self.assertEqual(result['rt_cd'], '0')
 
 
 if __name__ == "__main__":

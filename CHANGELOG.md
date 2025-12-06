@@ -47,6 +47,33 @@ broker = KoreaInvestment()  # 환경 변수 자동 감지
 ```
 
 ### Changed
+
+#### fetch_price_detail_oversea 리팩토링 (#90)
+
+**인자명 변경**: `market` → `country_code`
+
+```python
+# v1.0.x (Before)
+broker.fetch_price_detail_oversea("AAPL", market="US")
+
+# v1.1.0 (After)
+broker.fetch_price_detail_oversea("AAPL")  # 기본값 "US"
+broker.fetch_price_detail_oversea("AAPL", country_code="US")
+broker.fetch_price_detail_oversea("9988", country_code="HK")  # 홍콩 알리바바
+broker.fetch_price_detail_oversea("7203", country_code="JP")  # 일본 토요타
+```
+
+**지원 국가**:
+- `"US"`: 미국 (NYSE, NASDAQ, AMEX + 주간거래)
+- `"HK"`: 홍콩
+- `"JP"`: 일본
+- `"CN"`: 중국 (상하이, 심천)
+- `"VN"`: 베트남 (호치민, 하노이)
+
+**상수 변경**:
+- `EXCD` 키 변경: `"NYSE"` → `"NYS"`, `"NASDAQ"` → `"NAS"` 등
+- `EXCD_BY_COUNTRY` 신규 추가: 국가별 거래소 코드 매핑
+
 - **Project Structure**: Reorganized package into feature-based modules (#52)
   - Created `cache/` module for caching functionality
   - Created `token_storage/` module for token storage implementations

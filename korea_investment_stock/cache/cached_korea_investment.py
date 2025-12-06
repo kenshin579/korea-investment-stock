@@ -85,18 +85,18 @@ class CachedKoreaInvestment:
 
         return result
 
-    def fetch_price_detail_oversea(self, symbol: str, market: str = "KR") -> dict:
+    def fetch_price_detail_oversea(self, symbol: str, country_code: str = "US") -> dict:
         """해외 주식 가격 조회 (캐싱 지원)"""
         if not self.enable_cache:
-            return self.broker.fetch_price_detail_oversea(symbol, market)
+            return self.broker.fetch_price_detail_oversea(symbol, country_code)
 
-        cache_key = self._make_cache_key("fetch_price_detail_oversea", symbol, market)
+        cache_key = self._make_cache_key("fetch_price_detail_oversea", symbol, country_code)
         cached_data = self.cache.get(cache_key)
 
         if cached_data is not None:
             return cached_data
 
-        result = self.broker.fetch_price_detail_oversea(symbol, market)
+        result = self.broker.fetch_price_detail_oversea(symbol, country_code)
 
         if result.get('rt_cd') == '0':
             self.cache.set(cache_key, result, self.ttl['price'])

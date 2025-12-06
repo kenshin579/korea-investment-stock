@@ -77,17 +77,17 @@ class TestKoreaInvestment(TestCase):
 
     # todo: 이 unit test는 정리가 필요하다
     def test_fetch_price_detail_oversea(self):
-        stock_market_list = [
+        stock_list = [
             # ("AAPL", "US"),
-            ("QQQM", "US"), # ETF
+            ("QQQM", "US"),  # ETF
         ]
 
         results = []
-        for symbol, market in stock_market_list:
-            result = self.kis.fetch_price_detail_oversea(symbol, market)
+        for symbol, country_code in stock_list:
+            result = self.kis.fetch_price_detail_oversea(symbol, country_code)
             results.append(result)
             print(result)
             self.assertEqual(result['rt_cd'], API_RETURN_CODE["SUCCESS"])
             self.assertNotEqual(result['output']['rsym'], None)
 
-        self.assertEqual(len(results), len(stock_market_list))
+        self.assertEqual(len(results), len(stock_list))

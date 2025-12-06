@@ -19,6 +19,7 @@ from .constants import (
     MARKET_TYPE_MAP,
     API_RETURN_CODE,
     FID_COND_MRKT_DIV_CODE_STOCK,
+    EXCD_BY_COUNTRY,
 )
 from .config_resolver import ConfigResolver
 from .parsers import parse_kospi_master, parse_kosdaq_master
@@ -487,12 +488,80 @@ class KoreaInvestment:
 
         return True
 
-    def fetch_price_detail_oversea(self, symbol: str, market: str = "KR"):
+    def fetch_price_detail_oversea(self, symbol: str, country_code: str = "US") -> dict:
         """해외주식 현재가상세
 
+        해외주식 종목의 현재가, PER, PBR, EPS, BPS 등 상세 정보를 조회합니다.
+        국가 코드에 따라 해당 국가의 거래소를 자동으로 탐색합니다.
+
+        API 정보:
+            - 경로: /uapi/overseas-price/v1/quotations/price-detail
+            - TR ID: HHDFS76200200
+            - 모의투자: 미지원
+
+        Query Parameters:
+            - AUTH (str): 사용자권한정보 (빈 문자열)
+            - EXCD (str): 거래소코드
+                - NYS: 뉴욕 (NYSE)
+                - NAS: 나스닥 (NASDAQ)
+                - AMS: 아멕스 (AMEX)
+                - BAY: 뉴욕 주간거래
+                - BAQ: 나스닥 주간거래
+                - BAA: 아멕스 주간거래
+                - HKS: 홍콩
+                - TSE: 도쿄
+                - SHS: 상하이
+                - SZS: 심천
+                - HSX: 호치민
+                - HNX: 하노이
+            - SYMB (str): 종목코드
+
         Args:
-            symbol (str): symbol
+            symbol (str): 종목 코드 (예: AAPL, MSFT, TSLA)
+            country_code (str): 국가 코드 (기본값: "US")
+                - "US": 미국 (NYS → NAS → AMS → BAY → BAQ → BAA)
+                - "HK": 홍콩 (HKS)
+                - "JP": 일본 (TSE)
+                - "CN": 중국 (SHS → SZS)
+                - "VN": 베트남 (HSX → HNX)
+
+        Returns:
+            dict: API 응답. 주요 필드:
+                - rt_cd (str): 성공/실패 ("0"=성공)
+                - msg1 (str): 응답 메시지
+                - output (dict): 응답 상세
+                    - rsym (str): 실시간조회종목코드
+                    - last (str): 현재가
+                    - open (str): 시가
+                    - high (str): 고가
+                    - low (str): 저가
+                    - base (str): 전일종가
+                    - tvol (str): 거래량
+                    - tamt (str): 거래대금
+                    - tomv (str): 시가총액
+                    - shar (str): 상장주수
+                    - perx (str): PER
+                    - pbrx (str): PBR
+                    - epsx (str): EPS
+                    - bpsx (str): BPS
+                    - h52p (str): 52주최고가
+                    - l52p (str): 52주최저가
+                    - vnit (str): 매매단위
+                    - e_hogau (str): 호가단위
+                    - e_icod (str): 업종(섹터)
+                    - curr (str): 통화
+
+        Raises:
+            ValueError: 지원하지 않는 country_code인 경우
+
+        Note:
+            - 지연시세: 미국 실시간무료(0분), 홍콩/베트남/중국/일본 15분 지연
+            - 미국 주간거래 시간에도 동일한 API로 조회 가능
         """
+        exchange_codes = EXCD_BY_COUNTRY.get(country_code)
+        if not exchange_codes:
+            raise ValueError(f"지원하지 않는 country_code: {country_code}")
+
         path = "/uapi/overseas-price/v1/quotations/price-detail"
         url = f"{self.base_url}/{path}"
 
@@ -504,11 +573,7 @@ class KoreaInvestment:
             "tr_id": "HHDFS76200200"
         }
 
-        if market == "KR" or market == "KRX":
-            # API 호출해서 실제로 확인은 못해봄, overasea 이라서 안될 것으로 판단해서 조건문 추가함
-            raise ValueError("Market cannot be either 'KR' or 'KRX'.")
-
-        for exchange_code in ["NYS", "NAS", "AMS", "BAY", "BAQ", "BAA"]:
+        for exchange_code in exchange_codes:
             logger.debug(f"exchange_code: {exchange_code}")
             params = {
                 "AUTH": "",
@@ -521,9 +586,9 @@ class KoreaInvestment:
                 continue
 
             return resp_json
-        
+
         # 모든 거래소에서 실패한 경우
-        raise ValueError(f"Unable to fetch price for symbol '{symbol}' in any {market} exchange")
+        raise ValueError(f"'{symbol}' 종목을 {country_code} 거래소에서 찾을 수 없습니다")
 
     def fetch_stock_info(self, symbol: str, market: str = "KR"):
         path = "uapi/domestic-stock/v1/quotations/search-info"

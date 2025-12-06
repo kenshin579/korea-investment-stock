@@ -19,6 +19,7 @@ from .constants import (
     # 거래소 코드
     EXCG_ID_DVSN_CD,    # 국내 주문용
     EXCD,               # 해외 시세 조회용
+    EXCD_BY_COUNTRY,    # 해외 시세 조회용 (국가별 매핑)
     OVRS_EXCG_CD,       # 해외 주문/잔고용
     # 상품유형 코드
     PRDT_TYPE_CD,
@@ -76,6 +77,7 @@ __all__ = [
     # 상수 정의 - 거래소 코드
     "EXCG_ID_DVSN_CD",
     "EXCD",
+    "EXCD_BY_COUNTRY",
     "OVRS_EXCG_CD",
     # 상수 정의 - 상품유형 코드
     "PRDT_TYPE_CD",
