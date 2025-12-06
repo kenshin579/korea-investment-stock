@@ -1,20 +1,18 @@
 '''
 한국투자증권 python wrapper
 '''
-import json
 import os
 import zipfile
 import logging
 import re
 from pathlib import Path
 from typing import Optional
-from zoneinfo import ZoneInfo  # Requires Python 3.9+
 from datetime import datetime, timedelta
 
 import pandas as pd
 import requests
 
-from .token_storage import TokenStorage, FileTokenStorage, RedisTokenStorage
+from .token import TokenStorage, TokenManager, create_token_storage
 from .constants import (
     PRDT_TYPE_CD_BY_COUNTRY,
     API_RETURN_CODE,
@@ -135,62 +133,22 @@ class KoreaInvestment:
         # resolved에서 token_storage 관련 설정 가져오기
         self._resolved_config = resolved
 
-        # 토큰 저장소 초기화
-        if token_storage:
-            self.token_storage = token_storage
-        else:
-            self.token_storage = self._create_token_storage()
+        # 토큰 저장소 생성 (factory 사용)
+        storage = token_storage or create_token_storage(self._resolved_config)
 
-        # access token
-        self.access_token = None
-        if self.token_storage.check_token_valid(self.api_key, self.api_secret):
-            token_data = self.token_storage.load_token(self.api_key, self.api_secret)
-            if token_data:
-                self.access_token = f'Bearer {token_data["access_token"]}'
-        else:
-            self.issue_access_token()
+        # TokenManager 초기화
+        self._token_manager = TokenManager(
+            storage=storage,
+            base_url=self.base_url,
+            api_key=self.api_key,
+            api_secret=self.api_secret
+        )
 
-    def _create_token_storage(self) -> TokenStorage:
-        """설정 기반 토큰 저장소 생성
+        # 하위 호환성을 위해 token_storage 속성 유지
+        self.token_storage = storage
 
-        _resolved_config에서 설정을 읽어 토큰 저장소를 생성합니다.
-        설정이 없으면 환경 변수에서 읽습니다.
-
-        Returns:
-            TokenStorage: 설정된 토큰 저장소 인스턴스
-
-        Raises:
-            ValueError: 지원하지 않는 저장소 타입일 때
-        """
-        # _resolved_config가 있으면 사용, 없으면 환경 변수에서 읽기
-        if hasattr(self, "_resolved_config") and self._resolved_config:
-            storage_type = self._resolved_config.get("token_storage_type") or "file"
-            redis_url = self._resolved_config.get("redis_url") or "redis://localhost:6379/0"
-            redis_password = self._resolved_config.get("redis_password")
-            token_file = self._resolved_config.get("token_file")
-        else:
-            # 하위 호환성: 환경 변수에서 읽기
-            storage_type = os.getenv("KOREA_INVESTMENT_TOKEN_STORAGE", "file")
-            redis_url = os.getenv("KOREA_INVESTMENT_REDIS_URL", "redis://localhost:6379/0")
-            redis_password = os.getenv("KOREA_INVESTMENT_REDIS_PASSWORD")
-            token_file = os.getenv("KOREA_INVESTMENT_TOKEN_FILE")
-
-        storage_type = storage_type.lower()
-
-        if storage_type == "file":
-            file_path = None
-            if token_file:
-                file_path = Path(token_file).expanduser()
-            return FileTokenStorage(file_path)
-
-        elif storage_type == "redis":
-            return RedisTokenStorage(redis_url, password=redis_password)
-
-        else:
-            raise ValueError(
-                f"지원하지 않는 저장소 타입: {storage_type}\n"
-                f"'file' 또는 'redis'만 지원됩니다."
-            )
+        # 유효한 토큰 확보 (TokenManager 사용)
+        self.access_token = self._token_manager.get_valid_token()
 
     def __enter__(self):
         """컨텍스트 매니저 진입"""
@@ -209,68 +167,31 @@ class KoreaInvestment:
 
 
     def issue_access_token(self):
-        """OAuth인증/접근토큰발급
-        """
-        path = "oauth2/tokenP"
-        url = f"{self.base_url}/{path}"
-        headers = {"content-type": "application/json"}
-        data = {
-            "grant_type": "client_credentials",
-            "appkey": self.api_key,
-            "appsecret": self.api_secret
-        }
-
-        resp = requests.post(url, headers=headers, json=data)
-        resp_data = resp.json()
-        self.access_token = f'Bearer {resp_data["access_token"]}'
-
-        # 'expires_in' has no reference time and causes trouble:
-        # The server thinks I'm expired but my token.dat looks still valid!
-        # Hence, we use 'access_token_token_expired' here.
-        # This error is quite big. I've seen 4000 seconds.
-        timezone = ZoneInfo('Asia/Seoul')
-        dt = datetime.strptime(resp_data['access_token_token_expired'], '%Y-%m-%d %H:%M:%S').replace(
-            tzinfo=timezone)
-        resp_data['timestamp'] = int(dt.timestamp())
-        resp_data['api_key'] = self.api_key
-        resp_data['api_secret'] = self.api_secret
-
-        # 토큰 저장소에 저장
-        self.token_storage.save_token(resp_data)
+        """OAuth인증/접근토큰발급 (TokenManager로 위임)"""
+        self.access_token = self._token_manager.get_valid_token()
 
     def check_access_token(self) -> bool:
-        """check access token
+        """토큰 유효성 확인 (TokenManager로 위임)
 
         Returns:
-            Bool: True: token is valid, False: token is not valid
+            bool: True: 토큰이 유효함, False: 토큰이 유효하지 않음
         """
-        return self.token_storage.check_token_valid(self.api_key, self.api_secret)
+        return self._token_manager.is_token_valid()
 
     def load_access_token(self):
-        """load access token
-        """
-        token_data = self.token_storage.load_token(self.api_key, self.api_secret)
-        if token_data:
-            self.access_token = f'Bearer {token_data["access_token"]}'
+        """토큰 로드 (TokenManager로 위임)"""
+        self.access_token = self._token_manager.get_valid_token()
 
-    def issue_hashkey(self, data: dict):
-        """해쉬키 발급
+    def issue_hashkey(self, data: dict) -> str:
+        """해쉬키 발급 (TokenManager로 위임)
+
         Args:
             data (dict): POST 요청 데이터
+
         Returns:
-            _type_: _description_
+            str: 해쉬키 문자열
         """
-        path = "uapi/hashkey"
-        url = f"{self.base_url}/{path}"
-        headers = {
-            "content-type": "application/json",
-            "appKey": self.api_key,
-            "appSecret": self.api_secret,
-            "User-Agent": "Mozilla/5.0"
-        }
-        resp = requests.post(url, headers=headers, data=json.dumps(data))
-        haskkey = resp.json()["HASH"]
-        return haskkey
+        return self._token_manager.issue_hashkey(data)
 
     def fetch_price(self, symbol: str, country_code: str = "KR") -> dict:
         """국내주식시세/주식현재가 시세

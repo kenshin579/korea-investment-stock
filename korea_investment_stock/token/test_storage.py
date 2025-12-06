@@ -12,7 +12,7 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from unittest.mock import patch, MagicMock
 
-from .token_storage import (
+from .storage import (
     FileTokenStorage,
     RedisTokenStorage,
 )

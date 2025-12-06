@@ -35,8 +35,8 @@ from .config_resolver import ConfigResolver
 # 캐시 기능 (서브패키지)
 from .cache import CacheManager, CacheEntry, CachedKoreaInvestment
 
-# 토큰 저장소 (서브패키지)
-from .token_storage import TokenStorage, FileTokenStorage, RedisTokenStorage
+# 토큰 관리 (서브패키지)
+from .token import TokenStorage, FileTokenStorage, RedisTokenStorage, TokenManager, create_token_storage
 
 # Rate Limiting (서브패키지)
 from .rate_limit import RateLimiter, RateLimitedKoreaInvestment
@@ -94,10 +94,12 @@ __all__ = [
     "CacheEntry",
     "CachedKoreaInvestment",
 
-    # 토큰 저장소
+    # 토큰 관리
     "TokenStorage",
     "FileTokenStorage",
     "RedisTokenStorage",
+    "TokenManager",
+    "create_token_storage",
 
     # Rate Limiting
     "RateLimiter",
