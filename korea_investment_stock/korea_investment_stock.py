@@ -23,15 +23,7 @@ from .constants import (
 )
 from .config_resolver import ConfigResolver
 from .parsers import parse_kospi_master, parse_kosdaq_master
-from .ipo import (
-    validate_date_format,
-    validate_date_range,
-    parse_ipo_date_range,
-    format_ipo_date,
-    calculate_ipo_d_day,
-    get_ipo_status,
-    format_number,
-)
+from .ipo import fetch_ipo_schedule as _fetch_ipo_schedule
 
 # 로거 설정
 logger = logging.getLogger(__name__)
@@ -750,99 +742,30 @@ class KoreaInvestment:
                 raise e
 
     # IPO Schedule API
-    def fetch_ipo_schedule(self, from_date: str = None, to_date: str = None, symbol: str = "") -> dict:
+    def fetch_ipo_schedule(
+        self,
+        from_date: str = None,
+        to_date: str = None,
+        symbol: str = ""
+    ) -> dict:
         """공모주 청약 일정 조회
-        
+
         예탁원정보(공모주청약일정) API를 통해 공모주 정보를 조회합니다.
-        한국투자 HTS(eFriend Plus) > [0667] 공모주청약 화면과 동일한 기능입니다.
-        
+
         Args:
             from_date: 조회 시작일 (YYYYMMDD, 기본값: 오늘)
             to_date: 조회 종료일 (YYYYMMDD, 기본값: 30일 후)
             symbol: 종목코드 (선택, 공백시 전체 조회)
-            
+
         Returns:
             dict: 공모주 청약 일정 정보
-                {
-                    "rt_cd": "0",  # 성공여부
-                    "msg_cd": "응답코드",
-                    "msg1": "응답메시지",
-                    "output1": [
-                        {
-                            "record_date": "기준일",
-                            "sht_cd": "종목코드",
-                            "isin_name": "종목명",
-                            "fix_subscr_pri": "공모가",
-                            "face_value": "액면가",
-                            "subscr_dt": "청약기간",  # "2024.01.15~2024.01.16"
-                            "pay_dt": "납입일",
-                            "refund_dt": "환불일",
-                            "list_dt": "상장/등록일",
-                            "lead_mgr": "주간사",
-                            "pub_bf_cap": "공모전자본금",
-                            "pub_af_cap": "공모후자본금",
-                            "assign_stk_qty": "당사배정물량"
-                        }
-                    ]
-                }
-                
-        Raises:
-            ValueError: 날짜 형식 오류시
-
-        Note:
-            - 예탁원에서 제공한 자료이므로 정보용으로만 사용하시기 바랍니다.
-            - 실제 청약시에는 반드시 공식 공모주 청약 공고문을 확인하세요.
-            
-        Examples:
-            >>> # 전체 공모주 조회 (오늘부터 30일)
-            >>> ipos = broker.fetch_ipo_schedule()
-            
-            >>> # 특정 기간 조회
-            >>> ipos = broker.fetch_ipo_schedule(
-            ...     from_date="20240101",
-            ...     to_date="20240131"
-            ... )
-            
-            >>> # 특정 종목 조회
-            >>> ipo = broker.fetch_ipo_schedule(symbol="123456")
         """
-        # 날짜 기본값 설정
-        if not from_date:
-            from_date = datetime.now().strftime("%Y%m%d")
-        if not to_date:
-            to_date = (datetime.now() + timedelta(days=30)).strftime("%Y%m%d")
-        
-        # 날짜 유효성 검증
-        if not validate_date_format(from_date) or not validate_date_format(to_date):
-            raise ValueError("날짜 형식은 YYYYMMDD 이어야 합니다.")
-        
-        if not validate_date_range(from_date, to_date):
-            raise ValueError("시작일은 종료일보다 이전이어야 합니다.")
-        
-        path = "uapi/domestic-stock/v1/ksdinfo/pub-offer"
-        url = f"{self.base_url}/{path}"
-        headers = {
-            "content-type": "application/json",
-            "authorization": self.access_token,
-            "appKey": self.api_key,
-            "appSecret": self.api_secret,
-            "tr_id": "HHKDB669108C0",
-            "custtype": "P"  # 개인
-        }
-        
-        params = {
-            "SHT_CD": symbol,
-            "CTS": "",
-            "F_DT": from_date,
-            "T_DT": to_date
-        }
-        
-        resp = requests.get(url, headers=headers, params=params)
-        resp_json = resp.json()
-        
-        # 에러 처리
-        if resp_json.get('rt_cd') != '0':
-            logger.error(f"공모주 조회 실패: {resp_json.get('msg1', 'Unknown error')}")
-            return resp_json
-        
-        return resp_json
+        return _fetch_ipo_schedule(
+            self.base_url,
+            self.access_token,
+            self.api_key,
+            self.api_secret,
+            from_date,
+            to_date,
+            symbol
+        )

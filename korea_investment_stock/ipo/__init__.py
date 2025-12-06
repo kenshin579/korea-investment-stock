@@ -1,7 +1,7 @@
 """
-IPO 헬퍼 모듈
+IPO 모듈
 
-공모주 관련 유틸리티 함수를 제공합니다.
+공모주 관련 API 및 유틸리티 함수를 제공합니다.
 """
 from .ipo_helpers import (
     validate_date_format,
@@ -12,8 +12,12 @@ from .ipo_helpers import (
     get_ipo_status,
     format_number,
 )
+from .ipo_api import fetch_ipo_schedule
 
 __all__ = [
+    # API
+    "fetch_ipo_schedule",
+    # Helpers
     "validate_date_format",
     "validate_date_range",
     "parse_ipo_date_range",
