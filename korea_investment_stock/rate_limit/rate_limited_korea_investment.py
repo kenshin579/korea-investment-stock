@@ -41,19 +41,19 @@ class RateLimitedKoreaInvestment:
 
     # === 래핑된 API 메서드 (속도 제한 적용) ===
 
-    def fetch_price(self, symbol: str, market: str) -> Dict[str, Any]:
+    def fetch_price(self, symbol: str, country_code: str) -> Dict[str, Any]:
         """
         속도 제한이 적용된 가격 조회
 
         Args:
             symbol: 종목 코드
-            market: 시장 구분 ("KR" 또는 "US")
+            country_code: 국가 코드 ("KR" 또는 "US")
 
         Returns:
             API 응답 딕셔너리
         """
         self._rate_limiter.wait()
-        return self._broker.fetch_price(symbol, market)
+        return self._broker.fetch_price(symbol, country_code)
 
     def fetch_domestic_price(self, symbol: str, symbol_type: str = "Stock") -> Dict[str, Any]:
         """

@@ -279,29 +279,29 @@ class KoreaInvestment:
         haskkey = resp.json()["HASH"]
         return haskkey
 
-    def fetch_price(self, symbol: str, market: str = "KR") -> dict:
+    def fetch_price(self, symbol: str, country_code: str = "KR") -> dict:
         """국내주식시세/주식현재가 시세
            해외주식현재가/해외주식 현재체결가
 
         Args:
             symbol (str): 종목코드
-            market (str): 시장 코드 ("KR", "KRX", "US" 등)
+            country_code (str): 국가 코드 ("KR", "KRX", "US" 등)
 
         Returns:
             dict: API 응답 데이터
         """
 
-        if market == "KR" or market == "KRX":
-            stock_info = self.fetch_stock_info(symbol, market)
+        if country_code == "KR" or country_code == "KRX":
+            stock_info = self.fetch_stock_info(symbol, country_code)
             symbol_type = self.get_symbol_type(stock_info)
             resp_json = self.fetch_domestic_price(symbol, symbol_type)
-        elif market == "US":
+        elif country_code == "US":
             # 기존: resp_json = self.fetch_oversea_price(symbol)  # 메서드 없음
             # 개선: 이미 구현된 fetch_price_detail_oversea() 활용
-            resp_json = self.fetch_price_detail_oversea(symbol, market)
+            resp_json = self.fetch_price_detail_oversea(symbol, country_code)
             # 참고: 이 API는 현재가 외에도 PER, PBR, EPS, BPS 등 추가 정보 제공
         else:
-            raise ValueError("Unsupported market type")
+            raise ValueError("Unsupported country code")
 
         return resp_json
 

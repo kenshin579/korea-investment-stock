@@ -49,18 +49,18 @@ class CachedKoreaInvestment:
         kwargs_str = "_".join(f"{k}={v}" for k, v in sorted(kwargs.items()))
         return f"{method}:{args_str}:{kwargs_str}"
 
-    def fetch_price(self, symbol: str, market: str = "KR") -> dict:
+    def fetch_price(self, symbol: str, country_code: str = "KR") -> dict:
         """가격 조회 (캐싱 지원)"""
         if not self.enable_cache:
-            return self.broker.fetch_price(symbol, market)
+            return self.broker.fetch_price(symbol, country_code)
 
-        cache_key = self._make_cache_key("fetch_price", symbol, market)
+        cache_key = self._make_cache_key("fetch_price", symbol, country_code)
         cached_data = self.cache.get(cache_key)
 
         if cached_data is not None:
             return cached_data
 
-        result = self.broker.fetch_price(symbol, market)
+        result = self.broker.fetch_price(symbol, country_code)
 
         if result.get('rt_cd') == '0':
             self.cache.set(cache_key, result, self.ttl['price'])
