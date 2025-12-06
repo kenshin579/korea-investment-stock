@@ -10,13 +10,46 @@ API 호출 시 자주 사용되는 코드 값들을 정리했습니다.
 
 ### 1. 시장/거래소 코드
 
-#### 국내주식 시장 분류 코드 (`FID_COND_MRKT_DIV_CODE`)
+#### 조건 시장 분류 코드 (`FID_COND_MRKT_DIV_CODE`)
+
+API별로 사용하는 시장 분류 코드가 다릅니다.
+
+**국내주식**
 
 | 코드 | 설명 | 사용 API |
 |------|------|----------|
 | `J` | KRX (한국거래소) | 주식현재가, ETF/ETN 등 |
 | `NX` | NXT (넥스트레이드) | 주식현재가 |
 | `UN` | 통합 | 주식현재가 |
+| `W` | ELW | ELW 시세 |
+
+**채권**
+
+| 코드 | 설명 | 사용 API |
+|------|------|----------|
+| `B` | 장내채권 | 채권현재가 |
+
+**선물옵션**
+
+| 코드 | 설명 | 사용 API |
+|------|------|----------|
+| `F` | 지수선물 | 선물옵션 시세 |
+| `O` | 지수옵션 | 선물옵션 시세 |
+| `JF` | 주식선물 | 선물옵션 시세 |
+| `JO` | 주식옵션 | 선물옵션 시세 |
+| `CF` | 상품선물(금), 금리선물(국채), 통화선물(달러) | 선물옵션 시세 |
+| `CM` | 야간선물 | 선물옵션 시세 |
+| `EU` | 야간옵션 | 선물옵션 시세 |
+
+**해외지수/환율**
+
+| 코드 | 설명 | 사용 API |
+|------|------|----------|
+| `N` | 해외지수 | 해외지수분봉조회 |
+| `X` | 환율 | 환율 조회 |
+| `KX` | 원화환율 | 환율 조회 |
+| `I` | 국채 | 기간별시세 |
+| `S` | 금선물 | 기간별시세 |
 
 #### 국내 거래소ID 구분코드 (`EXCG_ID_DVSN_CD`)
 
@@ -66,6 +99,15 @@ API 호출 시 자주 사용되는 코드 값들을 정리했습니다.
 > **주의**: 시세 조회용 코드(`EXCD`)와 주문용 코드(`OVRS_EXCG_CD`)가 다릅니다!
 > - 시세: `NAS`, `NYS`, `AMS`
 > - 주문: `NASD`, `NYSE`, `AMEX`
+
+#### 거래소 코드 비교 요약
+
+| 구분 | 파라미터명 | 글자수 | 용도 | 예시 |
+|------|------------|--------|------|------|
+| 국내 시세 | `FID_COND_MRKT_DIV_CODE` | 1-2 | 시세 조회 | `J`, `NX`, `UN` |
+| 국내 주문 | `EXCG_ID_DVSN_CD` | 3 | 주문 | `KRX`, `NXT`, `SOR` |
+| 해외 시세 | `EXCD` | 3 | 시세 조회 | `NAS`, `NYS`, `AMS` |
+| 해외 주문 | `OVRS_EXCG_CD` | 4 | 주문/잔고 | `NASD`, `NYSE`, `AMEX` |
 
 ---
 
@@ -256,6 +298,71 @@ headers = {
     "tr_id": "TTTC0012U"  # 현금매수 (실전)
 }
 ```
+
+---
+
+### 6. 라이브러리 사용 API (`korea_investment_stock`)
+
+이 라이브러리에서 실제로 호출하는 API와 쿼리 파라미터입니다.
+
+#### 요약 테이블
+
+| 메서드 | TR_ID | Endpoint | 주요 파라미터 |
+|--------|-------|----------|--------------|
+| `fetch_domestic_price()` | `FHKST01010100` | `/uapi/domestic-stock/v1/quotations/inquire-price` | `fid_cond_mrkt_div_code`, `fid_input_iscd` |
+| `fetch_etf_domestic_price()` | `FHPST02400000` | `/uapi/domestic-stock/v1/quotations/inquire-price` | `fid_cond_mrkt_div_code`, `fid_input_iscd` |
+| `fetch_price_detail_oversea()` | `HHDFS76200200` | `/uapi/overseas-price/v1/quotations/price-detail` | `AUTH`, `EXCD`, `SYMB` |
+| `fetch_stock_info()` | `CTPF1604R` | `/uapi/domestic-stock/v1/quotations/search-info` | `PDNO`, `PRDT_TYPE_CD` |
+| `fetch_search_stock_info()` | `CTPF1002R` | `/uapi/domestic-stock/v1/quotations/search-stock-info` | `PDNO`, `PRDT_TYPE_CD` |
+| `fetch_ipo_schedule()` | `HHKDB669108C0` | `/uapi/domestic-stock/v1/ksdinfo/pub-offer` | `SHT_CD`, `F_DT`, `T_DT` |
+
+#### 상세 파라미터
+
+**`fetch_domestic_price()` / `fetch_etf_domestic_price()`** - 국내 주식/ETF 시세
+
+| 파라미터 | 값 | 설명 |
+|----------|-----|------|
+| `fid_cond_mrkt_div_code` | `"J"` | 시장 분류 코드 (KRX) |
+| `fid_input_iscd` | 종목코드 | 예: `"005930"` (삼성전자) |
+
+**`fetch_price_detail_oversea()`** - 해외주식 현재가상세
+
+| 파라미터 | 값 | 설명 |
+|----------|-----|------|
+| `AUTH` | `""` | 공백 (미사용) |
+| `EXCD` | `"NYS"`, `"NAS"`, `"AMS"`, `"BAY"`, `"BAQ"`, `"BAA"` | 거래소 코드 (순차 시도) |
+| `SYMB` | 종목심볼 | 예: `"AAPL"` |
+
+**`fetch_stock_info()`** - 상품기본조회
+
+| 파라미터 | 값 | 설명 |
+|----------|-----|------|
+| `PDNO` | 종목코드 | 예: `"005930"`, `"AAPL"` |
+| `PRDT_TYPE_CD` | `"300"`, `"512"`, `"513"`, `"529"` | 상품유형 코드 |
+
+PRDT_TYPE_CD 매핑:
+- `300`: 국내 주식 (KR)
+- `512`: NASDAQ
+- `513`: NYSE
+- `529`: AMEX
+
+**`fetch_search_stock_info()`** - 주식검색조회
+
+| 파라미터 | 값 | 설명 |
+|----------|-----|------|
+| `PDNO` | 종목코드 | 예: `"005930"` |
+| `PRDT_TYPE_CD` | `"300"` | 국내만 지원 |
+
+**`fetch_ipo_schedule()`** - 공모주 청약일정
+
+| 파라미터 | 값 | 설명 |
+|----------|-----|------|
+| `SHT_CD` | `""` 또는 종목코드 | 공백=전체 조회 |
+| `CTS` | `""` | 연속조회 (미사용) |
+| `F_DT` | `"YYYYMMDD"` | 조회 시작일 |
+| `T_DT` | `"YYYYMMDD"` | 조회 종료일 |
+
+> **Note**: 주문 관련 API는 아직 구현되지 않았습니다.
 
 ---
 

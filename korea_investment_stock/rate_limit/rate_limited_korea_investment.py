@@ -55,33 +55,19 @@ class RateLimitedKoreaInvestment:
         self._rate_limiter.wait()
         return self._broker.fetch_price(symbol, market)
 
-    def fetch_domestic_price(self, market_code: str, symbol: str) -> Dict[str, Any]:
+    def fetch_domestic_price(self, symbol: str, symbol_type: str = "Stock") -> Dict[str, Any]:
         """
-        속도 제한이 적용된 국내 주식 가격 조회
+        속도 제한이 적용된 국내 주식/ETF 가격 조회
 
         Args:
-            market_code: 시장 코드
             symbol: 종목 코드
+            symbol_type: 상품 타입 ("Stock" 또는 "ETF")
 
         Returns:
             API 응답 딕셔너리
         """
         self._rate_limiter.wait()
-        return self._broker.fetch_domestic_price(market_code, symbol)
-
-    def fetch_etf_domestic_price(self, market_code: str, symbol: str) -> Dict[str, Any]:
-        """
-        속도 제한이 적용된 ETF 가격 조회
-
-        Args:
-            market_code: 시장 코드
-            symbol: 종목 코드
-
-        Returns:
-            API 응답 딕셔너리
-        """
-        self._rate_limiter.wait()
-        return self._broker.fetch_etf_domestic_price(market_code, symbol)
+        return self._broker.fetch_domestic_price(symbol, symbol_type)
 
     def fetch_price_detail_oversea(self, symbol: str, market: str) -> Dict[str, Any]:
         """

@@ -67,36 +67,18 @@ class CachedKoreaInvestment:
 
         return result
 
-    def fetch_domestic_price(self, market_code: str, symbol: str) -> dict:
-        """국내 주식 가격 조회 (캐싱 지원)"""
+    def fetch_domestic_price(self, symbol: str, symbol_type: str = "Stock") -> dict:
+        """국내 주식/ETF 가격 조회 (캐싱 지원)"""
         if not self.enable_cache:
-            return self.broker.fetch_domestic_price(market_code, symbol)
+            return self.broker.fetch_domestic_price(symbol, symbol_type)
 
-        cache_key = self._make_cache_key("fetch_domestic_price", market_code, symbol)
+        cache_key = self._make_cache_key("fetch_domestic_price", symbol, symbol_type)
         cached_data = self.cache.get(cache_key)
 
         if cached_data is not None:
             return cached_data
 
-        result = self.broker.fetch_domestic_price(market_code, symbol)
-
-        if result.get('rt_cd') == '0':
-            self.cache.set(cache_key, result, self.ttl['price'])
-
-        return result
-
-    def fetch_etf_domestic_price(self, market_code: str, symbol: str) -> dict:
-        """ETF 가격 조회 (캐싱 지원)"""
-        if not self.enable_cache:
-            return self.broker.fetch_etf_domestic_price(market_code, symbol)
-
-        cache_key = self._make_cache_key("fetch_etf_domestic_price", market_code, symbol)
-        cached_data = self.cache.get(cache_key)
-
-        if cached_data is not None:
-            return cached_data
-
-        result = self.broker.fetch_etf_domestic_price(market_code, symbol)
+        result = self.broker.fetch_domestic_price(symbol, symbol_type)
 
         if result.get('rt_cd') == '0':
             self.cache.set(cache_key, result, self.ttl['price'])

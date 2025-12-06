@@ -7,8 +7,22 @@ Simple, transparent, and flexible Python wrapper for Korea Investment Securities
 # 메인 클래스
 from .korea_investment_stock import KoreaInvestment
 
-# 상수 정의
+# 상수 정의 (API 파라미터명 사용)
 from .constants import (
+    # 국가 코드
+    COUNTRY_CODE,
+    # 조건 시장 분류 코드 (FID_COND_MRKT_DIV_CODE)
+    FID_COND_MRKT_DIV_CODE_STOCK,
+    FID_COND_MRKT_DIV_CODE_BOND,
+    FID_COND_MRKT_DIV_CODE_FUTURES,
+    FID_COND_MRKT_DIV_CODE_OVERSEAS,
+    # 거래소 코드
+    EXCG_ID_DVSN_CD,    # 국내 주문용
+    EXCD,               # 해외 시세 조회용
+    OVRS_EXCG_CD,       # 해외 주문/잔고용
+    # 상품유형 코드
+    PRDT_TYPE_CD,
+    # 기타
     MARKET_TYPE_MAP,
     API_RETURN_CODE,
 )
@@ -52,7 +66,20 @@ __all__ = [
     # 메인 API
     "KoreaInvestment",
 
-    # 상수 정의
+    # 상수 정의 - 국가 코드
+    "COUNTRY_CODE",
+    # 상수 정의 - 시장 분류 코드 (FID_COND_MRKT_DIV_CODE)
+    "FID_COND_MRKT_DIV_CODE_STOCK",
+    "FID_COND_MRKT_DIV_CODE_BOND",
+    "FID_COND_MRKT_DIV_CODE_FUTURES",
+    "FID_COND_MRKT_DIV_CODE_OVERSEAS",
+    # 상수 정의 - 거래소 코드
+    "EXCG_ID_DVSN_CD",
+    "EXCD",
+    "OVRS_EXCG_CD",
+    # 상수 정의 - 상품유형 코드
+    "PRDT_TYPE_CD",
+    # 상수 정의 - 기타
     "MARKET_TYPE_MAP",
     "API_RETURN_CODE",
 
