@@ -2,7 +2,8 @@
 해외 마스터 파일 파서 단위 테스트
 """
 import pytest
-from unittest.mock import patch
+from unittest.mock import patch, MagicMock
+from pathlib import Path
 import pandas as pd
 
 from .overseas_master_parser import (
@@ -64,9 +65,19 @@ class TestParseOverseasStockMaster:
     """파서 함수 테스트"""
 
     @patch("pandas.read_table")
-    def test_parse_overseas_stock_master_calls_read_table(self, mock_read_table):
+    @patch("pathlib.Path.iterdir")
+    def test_parse_overseas_stock_master_calls_read_table(
+        self, mock_iterdir, mock_read_table
+    ):
         """pd.read_table 호출 확인"""
-        mock_df = pd.DataFrame({"심볼": ["AAPL", "MSFT"], "한글명": ["애플", "마이크로소프트"]})
+        # Mock file path found via iterdir
+        mock_file = MagicMock(spec=Path)
+        mock_file.name = "nasmst.cod"
+        mock_iterdir.return_value = [mock_file]
+
+        mock_df = pd.DataFrame(
+            {"심볼": ["AAPL", "MSFT"], "한글명": ["애플", "마이크로소프트"]}
+        )
         mock_read_table.return_value = mock_df
 
         result = parse_overseas_stock_master("/tmp", "nas")
@@ -75,19 +86,35 @@ class TestParseOverseasStockMaster:
         assert len(result) == 2
 
     @patch("pandas.read_table")
-    def test_parse_overseas_stock_master_correct_file_path(self, mock_read_table):
+    @patch("pathlib.Path.iterdir")
+    def test_parse_overseas_stock_master_correct_file_path(
+        self, mock_iterdir, mock_read_table
+    ):
         """올바른 파일 경로 생성 확인"""
+        # Mock file path found via iterdir
+        mock_file = MagicMock(spec=Path)
+        mock_file.name = "hksmst.cod"
+        mock_iterdir.return_value = [mock_file]
+
         mock_df = pd.DataFrame()
         mock_read_table.return_value = mock_df
 
         parse_overseas_stock_master("/data", "hks")
 
         call_args = mock_read_table.call_args
-        assert call_args[0][0] == "/data/hksmst.cod"
+        # 파일 경로는 iterdir에서 찾은 mock_file이 전달됨
+        assert call_args[0][0] == mock_file
 
     @patch("pandas.read_table")
-    def test_parse_overseas_stock_master_correct_encoding(self, mock_read_table):
+    @patch("pathlib.Path.iterdir")
+    def test_parse_overseas_stock_master_correct_encoding(
+        self, mock_iterdir, mock_read_table
+    ):
         """CP949 인코딩 사용 확인"""
+        mock_file = MagicMock(spec=Path)
+        mock_file.name = "nasmst.cod"
+        mock_iterdir.return_value = [mock_file]
+
         mock_df = pd.DataFrame()
         mock_read_table.return_value = mock_df
 
@@ -97,8 +124,15 @@ class TestParseOverseasStockMaster:
         assert call_args[1]["encoding"] == "cp949"
 
     @patch("pandas.read_table")
-    def test_parse_overseas_stock_master_tab_separator(self, mock_read_table):
+    @patch("pathlib.Path.iterdir")
+    def test_parse_overseas_stock_master_tab_separator(
+        self, mock_iterdir, mock_read_table
+    ):
         """탭 구분자 사용 확인"""
+        mock_file = MagicMock(spec=Path)
+        mock_file.name = "nasmst.cod"
+        mock_iterdir.return_value = [mock_file]
+
         mock_df = pd.DataFrame()
         mock_read_table.return_value = mock_df
 
@@ -108,8 +142,15 @@ class TestParseOverseasStockMaster:
         assert call_args[1]["sep"] == "\t"
 
     @patch("pandas.read_table")
-    def test_parse_overseas_stock_master_string_dtype(self, mock_read_table):
+    @patch("pathlib.Path.iterdir")
+    def test_parse_overseas_stock_master_string_dtype(
+        self, mock_iterdir, mock_read_table
+    ):
         """문자열 타입 지정 확인"""
+        mock_file = MagicMock(spec=Path)
+        mock_file.name = "nasmst.cod"
+        mock_iterdir.return_value = [mock_file]
+
         mock_df = pd.DataFrame()
         mock_read_table.return_value = mock_df
 
