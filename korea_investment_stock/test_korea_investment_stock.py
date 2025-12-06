@@ -1,7 +1,7 @@
 import os
 from unittest import TestCase, skip
 
-from korea_investment_stock import KoreaInvestment, API_RETURN_CODE
+from korea_investment_stock import KoreaInvestment, API_RETURN_CODE, Config
 
 
 class TestKoreaInvestment(TestCase):
@@ -11,11 +11,13 @@ class TestKoreaInvestment(TestCase):
         api_secret = os.getenv('KOREA_INVESTMENT_API_SECRET')
         acc_no = os.getenv('KOREA_INVESTMENT_ACCOUNT_NO')
 
-        cls.kis = KoreaInvestment(
+        config = Config(
             api_key=api_key,
             api_secret=api_secret,
             acc_no=acc_no,
+            token_storage_type="file",
         )
+        cls.kis = KoreaInvestment(config=config)
 
     def test_stock_info(self):
         stock_market_list = [
