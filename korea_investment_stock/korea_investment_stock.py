@@ -285,7 +285,7 @@ class KoreaInvestment:
 
         Args:
             symbol (str): 종목코드
-            country_code (str): 국가 코드 ("KR", "KRX", "US" 등)
+            country_code (str): 국가 코드 ("KR", "US")
 
         Returns:
             dict: API 응답 데이터
