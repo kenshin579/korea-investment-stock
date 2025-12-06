@@ -111,7 +111,7 @@ class TestUSStockIntegration(unittest.TestCase):
 
             result = self.broker.fetch_price("AAPL", "US")
 
-            mock_us_price.assert_called_once_with("AAPL", "US")
+            mock_us_price.assert_called_once_with("AAPL", country_code="US")
     
     def test_us_stock_response_format(self):
         """미국 주식 응답 형식 검증"""
@@ -216,10 +216,17 @@ class TestUSStockIntegration(unittest.TestCase):
             mock_get.return_value = mock_response
 
             with self.assertRaises(ValueError) as context:
-                self.broker.fetch_price_detail_oversea("INVALID", "US")
+                self.broker.fetch_price_detail_oversea("INVALID", country_code="US")
 
-            self.assertIn("Unable to fetch price for symbol 'INVALID' in any US exchange",
+            self.assertIn("'INVALID' 종목을 US 거래소에서 찾을 수 없습니다",
                          str(context.exception))
+
+    def test_unsupported_country_code(self):
+        """지원하지 않는 country_code 에러 처리"""
+        with self.assertRaises(ValueError) as context:
+            self.broker.fetch_price_detail_oversea("AAPL", country_code="INVALID")
+
+        self.assertIn("지원하지 않는 country_code: INVALID", str(context.exception))
 
 
 if __name__ == "__main__":

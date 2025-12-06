@@ -26,14 +26,15 @@
 
 ## 4단계: 테스트 수정
 
-- [ ] 기존 테스트에서 `market` → `country_code` 변경
-- [ ] `fetch_price_detail_oversea("AAPL")` 기본값 테스트 추가
-- [ ] `fetch_price_detail_oversea("AAPL", country_code="US")` 테스트
-- [ ] 홍콩 주식 테스트 (`country_code="HK"`)
-- [ ] 일본 주식 테스트 (`country_code="JP"`)
-- [ ] 지원하지 않는 country_code에 대한 ValueError 테스트
-- [ ] CachedKoreaInvestment 래퍼 테스트
-- [ ] RateLimitedKoreaInvestment 래퍼 테스트
+- [x] 기존 테스트에서 `market` → `country_code` 변경
+- [x] 에러 메시지 변경 반영 (한글화)
+- [ ] `fetch_price_detail_oversea("AAPL")` 기본값 테스트 추가 (통합 테스트에서 확인)
+- [ ] `fetch_price_detail_oversea("AAPL", country_code="US")` 테스트 (통합 테스트에서 확인)
+- [ ] 홍콩 주식 테스트 (`country_code="HK"`) (통합 테스트에서 확인)
+- [ ] 일본 주식 테스트 (`country_code="JP"`) (통합 테스트에서 확인)
+- [x] 지원하지 않는 country_code에 대한 ValueError 테스트
+- [ ] CachedKoreaInvestment 래퍼 테스트 (통합 테스트에서 확인)
+- [ ] RateLimitedKoreaInvestment 래퍼 테스트 (통합 테스트에서 확인)
 
 ## 5단계: 문서 업데이트
 
