@@ -59,7 +59,20 @@ def parse_overseas_stock_master(base_dir: str, market_code: str) -> pd.DataFrame
     Returns:
         pd.DataFrame: 종목 정보가 담긴 DataFrame
     """
-    file_path = f"{base_dir}/{market_code}mst.cod"
+    from pathlib import Path
+
+    base_path = Path(base_dir)
+    file_name = f"{market_code}mst.cod"
+
+    # 대소문자 구분 없이 파일 찾기 (Linux는 대소문자 구분, ZIP 내부는 대문자)
+    file_path = None
+    for f in base_path.iterdir():
+        if f.name.lower() == file_name.lower():
+            file_path = f
+            break
+
+    if file_path is None:
+        raise FileNotFoundError(f"마스터 파일을 찾을 수 없습니다: {file_name}")
 
     df = pd.read_table(
         file_path,
