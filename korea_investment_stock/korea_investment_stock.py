@@ -26,7 +26,7 @@ from .parsers import (
     parse_overseas_stock_master,
     OVERSEAS_MARKETS,
 )
-from .ipo import fetch_ipo_schedule as _fetch_ipo_schedule
+from .ipo import validate_date_format, validate_date_range
 
 # 로거 설정
 logger = logging.getLogger(__name__)
@@ -171,9 +171,76 @@ class KoreaInvestment:
         pass
 
 
-    def issue_access_token(self):
-        """OAuth인증/접근토큰발급 (TokenManager로 위임)"""
-        self.access_token = self._token_manager.get_valid_token()
+    def issue_access_token(self, force: bool = False):
+        """OAuth인증/접근토큰발급 (TokenManager로 위임)
+
+        Args:
+            force: True면 저장소 상태와 무관하게 강제 재발급
+        """
+        if force:
+            self._token_manager._issue_token()
+            self.access_token = self._token_manager.access_token
+        else:
+            self.access_token = self._token_manager.get_valid_token()
+
+    def _is_token_expired_response(self, resp_json: dict) -> bool:
+        """API 응답에서 토큰 만료 여부 확인
+
+        Note:
+            공식 API 문서에는 토큰 만료 에러 메시지가 명시되어 있지 않음.
+            실제 운영 환경에서 관측된 메시지: "기간이 만료된 token 입니다."
+            다양한 만료 관련 메시지를 포괄하기 위해 "만료"와 "token" 키워드로 감지
+
+        Args:
+            resp_json: API 응답 JSON
+
+        Returns:
+            bool: 토큰 만료 에러이면 True
+        """
+        if resp_json.get('rt_cd') != '0':
+            msg = resp_json.get('msg1', '')
+            # "만료"와 "token"이 모두 포함된 경우 토큰 만료로 판단
+            return '만료' in msg and 'token' in msg.lower()
+        return False
+
+    def _request_with_token_refresh(
+        self,
+        method: str,
+        url: str,
+        headers: dict,
+        params: dict = None,
+        max_retries: int = 1
+    ) -> dict:
+        """토큰 만료 시 자동 재발급 후 재시도하는 요청 래퍼
+
+        Args:
+            method: HTTP 메서드 ("GET" 또는 "POST")
+            url: API URL
+            headers: 요청 헤더 (authorization 포함)
+            params: 쿼리 파라미터 또는 POST 바디
+            max_retries: 토큰 재발급 후 재시도 횟수 (기본 1회)
+
+        Returns:
+            dict: API 응답 JSON
+        """
+        for attempt in range(max_retries + 1):
+            if method == "GET":
+                resp = requests.get(url, headers=headers, params=params)
+            else:
+                resp = requests.post(url, headers=headers, json=params)
+
+            resp_json = resp.json()
+
+            # 토큰 만료 에러 감지 및 재발급
+            if self._is_token_expired_response(resp_json) and attempt < max_retries:
+                logger.info("토큰 만료 감지, 재발급 시도...")
+                self.issue_access_token(force=True)
+                headers["authorization"] = self.access_token
+                continue
+
+            return resp_json
+
+        return resp_json
 
     def check_access_token(self) -> bool:
         """토큰 유효성 확인 (TokenManager로 위임)
@@ -269,8 +336,7 @@ class KoreaInvestment:
             "FID_COND_MRKT_DIV_CODE": FID_COND_MRKT_DIV_CODE_STOCK["KRX"],
             "FID_INPUT_ISCD": symbol
         }
-        resp = requests.get(url, headers=headers, params=params)
-        return resp.json()
+        return self._request_with_token_refresh("GET", url, headers, params)
 
     def fetch_kospi_symbols(
         self,
@@ -498,8 +564,7 @@ class KoreaInvestment:
                 "EXCD": exchange_code,
                 "SYMB": symbol
             }
-            resp = requests.get(url, headers=headers, params=params)
-            resp_json = resp.json()
+            resp_json = self._request_with_token_refresh("GET", url, headers, params)
             if resp_json['rt_cd'] != API_RETURN_CODE["SUCCESS"] or resp_json['output']['rsym'] == '':
                 continue
 
@@ -576,8 +641,7 @@ class KoreaInvestment:
                     "PDNO": symbol,
                     "PRDT_TYPE_CD": prdt_type_cd
                 }
-                resp = requests.get(url, headers=headers, params=params)
-                resp_json = resp.json()
+                resp_json = self._request_with_token_refresh("GET", url, headers, params)
 
                 if resp_json['rt_cd'] == API_RETURN_CODE['NO_DATA']:
                     continue
@@ -654,8 +718,7 @@ class KoreaInvestment:
                     "PDNO": symbol,
                     "PRDT_TYPE_CD": prdt_type_cd
                 }
-                resp = requests.get(url, headers=headers, params=params)
-                resp_json = resp.json()
+                resp_json = self._request_with_token_refresh("GET", url, headers, params)
 
                 if resp_json['rt_cd'] == API_RETURN_CODE['NO_DATA']:
                     continue
@@ -686,15 +749,38 @@ class KoreaInvestment:
         Returns:
             dict: 공모주 청약 일정 정보
         """
-        return _fetch_ipo_schedule(
-            self.base_url,
-            self.access_token,
-            self.api_key,
-            self.api_secret,
-            from_date,
-            to_date,
-            symbol
-        )
+        # 날짜 기본값 설정
+        if not from_date:
+            from_date = datetime.now().strftime("%Y%m%d")
+        if not to_date:
+            to_date = (datetime.now() + timedelta(days=30)).strftime("%Y%m%d")
+
+        # 날짜 유효성 검증
+        if not validate_date_format(from_date) or not validate_date_format(to_date):
+            raise ValueError("날짜 형식은 YYYYMMDD 이어야 합니다.")
+
+        if not validate_date_range(from_date, to_date):
+            raise ValueError("시작일은 종료일보다 이전이어야 합니다.")
+
+        path = "uapi/domestic-stock/v1/ksdinfo/pub-offer"
+        url = f"{self.base_url}/{path}"
+        headers = {
+            "content-type": "application/json",
+            "authorization": self.access_token,
+            "appKey": self.api_key,
+            "appSecret": self.api_secret,
+            "tr_id": "HHKDB669108C0",
+            "custtype": "P"  # 개인
+        }
+
+        params = {
+            "SHT_CD": symbol,
+            "CTS": "",
+            "F_DT": from_date,
+            "T_DT": to_date
+        }
+
+        return self._request_with_token_refresh("GET", url, headers, params)
 
     # 해외 주식 마스터 파일 API
     def fetch_overseas_symbols(

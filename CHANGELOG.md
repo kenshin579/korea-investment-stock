@@ -4,6 +4,33 @@
 
 ### Added
 
+#### API 호출 중 토큰 만료 시 자동 재발급 기능 (#109)
+
+장시간 실행되는 배치 작업 중 토큰이 만료되어도 자동으로 재발급되어 중단 없이 처리됩니다.
+
+**동작 방식**:
+- API 응답에서 토큰 만료 에러 감지 (`"기간이 만료된 token 입니다"`)
+- 자동으로 `issue_access_token(force=True)` 호출 후 재시도
+- 사용자 코드 수정 불필요 (투명한 처리)
+
+**적용된 API 메서드**:
+- `fetch_domestic_price()`
+- `fetch_price_detail_oversea()`
+- `fetch_stock_info()`
+- `fetch_search_stock_info()`
+- `fetch_ipo_schedule()`
+
+**새로운 기능**:
+- `issue_access_token(force=True)` - 저장소 상태와 무관하게 강제 토큰 재발급
+
+**로깅**:
+토큰 재발급 이벤트는 INFO 레벨로 로깅됩니다:
+```python
+import logging
+logging.basicConfig(level=logging.INFO)
+# LOG: 토큰 만료 감지, 재발급 시도...
+```
+
 #### 해외 주식 마스터 파일 다운로드 기능 (#102)
 
 **해외 11개 거래소 종목 코드 다운로드 지원**:
