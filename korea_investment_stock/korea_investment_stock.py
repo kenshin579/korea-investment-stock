@@ -888,3 +888,67 @@ class KoreaInvestment:
             pd.DataFrame: 아멕스 종목 정보
         """
         return self.fetch_overseas_symbols("ams", ttl_hours, force_download)
+
+    def fetch_investor_trading_by_stock_daily(
+        self,
+        symbol: str,
+        date: str,
+        market_code: str = "J"
+    ) -> dict:
+        """종목별 투자자매매동향(일별) 조회 [v1_국내주식]
+
+        특정 종목의 날짜별 외국인/기관/개인 매수매도 현황을 조회합니다.
+        한국투자 HTS [0416] 종목별 일별동향 화면과 동일한 기능입니다.
+
+        ※ 단위: 금액(백만원), 수량(주)
+        ※ 당일 데이터는 장 종료 후 정상 조회 가능
+
+        API 정보:
+            - 경로: /uapi/domestic-stock/v1/quotations/investor-trade-by-stock-daily
+            - Method: GET
+            - 실전 TR ID: FHPTJ04160001
+            - 모의투자: 미지원
+
+        Args:
+            symbol (str): 종목코드 6자리 (예: "005930")
+            date (str): 조회 날짜 YYYYMMDD 형식 (예: "20251213")
+            market_code (str): 시장 분류 코드 (기본값: "J")
+                - "J": KRX (기본값)
+                - "NX": NXT
+                - "UN": 통합
+
+        Returns:
+            dict: API 응답 딕셔너리
+                - rt_cd: 성공 실패 여부 ("0": 성공)
+                - msg_cd: 응답코드
+                - msg1: 응답메시지
+                - output1: 종목 현재가 정보
+                - output2: 일별 투자자 매매동향 리스트
+
+        Example:
+            >>> # 삼성전자 2025년 12월 13일 투자자 매매동향
+            >>> result = broker.fetch_investor_trading_by_stock_daily("005930", "20251213")
+            >>> if result['rt_cd'] == '0':
+            ...     for day in result['output2']:
+            ...         print(f"날짜: {day['stck_bsop_date']}")
+            ...         print(f"외국인 순매수: {day['frgn_ntby_qty']}주")
+            ...         print(f"기관 순매수: {day['orgn_ntby_qty']}주")
+            ...         print(f"개인 순매수: {day['prsn_ntby_qty']}주")
+        """
+        path = "uapi/domestic-stock/v1/quotations/investor-trade-by-stock-daily"
+        url = f"{self.base_url}/{path}"
+        headers = {
+            "content-type": "application/json",
+            "authorization": self.access_token,
+            "appKey": self.api_key,
+            "appSecret": self.api_secret,
+            "tr_id": "FHPTJ04160001"
+        }
+        params = {
+            "FID_COND_MRKT_DIV_CODE": market_code,
+            "FID_INPUT_ISCD": symbol,
+            "FID_INPUT_DATE_1": date,
+            "FID_ORG_ADJ_PRC": "",
+            "FID_ETC_CLS_CODE": ""
+        }
+        return self._request_with_token_refresh("GET", url, headers, params)

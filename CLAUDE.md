@@ -217,6 +217,7 @@ Return raw API response
   - `fetch_kospi_symbols()` - KOSPI symbol list
   - `fetch_kosdaq_symbols()` - KOSDAQ symbol list
   - `fetch_ipo_schedule()` - IPO schedule
+  - `fetch_investor_trading_by_stock_daily(symbol, date, market_code)` - 종목별 투자자매매동향(일별)
   - IPO helper methods (9 total)
 
 ### Package Structure
