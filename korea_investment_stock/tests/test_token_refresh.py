@@ -38,12 +38,33 @@ class TestTokenExpiredDetection:
         expired_resp = {"rt_cd": "1", "msg1": "기간이 만료된 token 입니다."}
         assert broker._is_token_expired_response(expired_resp) is True
 
+    def test_detects_expired_token_variation(self):
+        """다양한 토큰 만료 메시지 감지"""
+        broker = self._create_broker_mock()
+
+        # 다양한 만료 메시지 패턴
+        variations = [
+            {"rt_cd": "1", "msg1": "token이 만료되었습니다"},
+            {"rt_cd": "1", "msg1": "Token 만료"},
+            {"rt_cd": "1", "msg1": "만료된 TOKEN입니다"},
+        ]
+        for resp in variations:
+            assert broker._is_token_expired_response(resp) is True, f"Failed for: {resp['msg1']}"
+
     def test_ignores_other_errors(self):
         """다른 에러는 토큰 만료로 감지하지 않음"""
         broker = self._create_broker_mock()
 
         other_error = {"rt_cd": "1", "msg1": "잘못된 종목코드입니다"}
         assert broker._is_token_expired_response(other_error) is False
+
+    def test_ignores_expiry_without_token(self):
+        """token 없이 만료만 있는 경우는 무시"""
+        broker = self._create_broker_mock()
+
+        # "만료"는 있지만 "token"이 없는 경우
+        no_token = {"rt_cd": "1", "msg1": "세션이 만료되었습니다"}
+        assert broker._is_token_expired_response(no_token) is False
 
     def test_success_response_not_expired(self):
         """성공 응답은 만료로 감지하지 않음"""

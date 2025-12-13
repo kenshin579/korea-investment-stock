@@ -189,7 +189,7 @@ class KoreaInvestment:
         Note:
             공식 API 문서에는 토큰 만료 에러 메시지가 명시되어 있지 않음.
             실제 운영 환경에서 관측된 메시지: "기간이 만료된 token 입니다."
-            (stock-data-batch 프로젝트 로그 참조)
+            다양한 만료 관련 메시지를 포괄하기 위해 "만료"와 "token" 키워드로 감지
 
         Args:
             resp_json: API 응답 JSON
@@ -199,7 +199,8 @@ class KoreaInvestment:
         """
         if resp_json.get('rt_cd') != '0':
             msg = resp_json.get('msg1', '')
-            return '기간이 만료된 token' in msg
+            # "만료"와 "token"이 모두 포함된 경우 토큰 만료로 판단
+            return '만료' in msg and 'token' in msg.lower()
         return False
 
     def _request_with_token_refresh(
