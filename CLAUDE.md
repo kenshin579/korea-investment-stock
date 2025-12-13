@@ -697,6 +697,68 @@ cached_broker = CachedKoreaInvestment(
 - **PRD**: `docs/start/2_cache_prd.md`
 - **Usage examples**: `examples/cached_basic_example.py`
 
+## Automatic Token Refresh
+
+**NEW**: API 호출 중 토큰 만료 시 자동 재발급 기능.
+
+### Problem
+
+장시간 실행되는 배치 작업에서 토큰이 만료되면 모든 API 호출이 실패합니다:
+
+```
+[US 11780/11780] ✗ ZVOL (API): API Error (info): 기간이 만료된 token 입니다
+```
+
+### Solution
+
+라이브러리가 자동으로 토큰 만료를 감지하고 재발급합니다:
+
+1. API 응답에서 토큰 만료 에러 감지 (`"기간이 만료된 token 입니다"`)
+2. 자동으로 `issue_access_token(force=True)` 호출
+3. 동일 요청 재시도
+
+**사용자 코드 수정 불필요** - 투명하게 처리됩니다.
+
+### Applied Methods
+
+다음 API 메서드에 자동 토큰 재발급이 적용됩니다:
+
+- `fetch_domestic_price()`
+- `fetch_price_detail_oversea()`
+- `fetch_stock_info()`
+- `fetch_search_stock_info()`
+- `fetch_ipo_schedule()`
+
+### Force Token Refresh
+
+수동으로 토큰을 강제 재발급할 수 있습니다:
+
+```python
+# 기존 동작: 저장소 토큰이 유효하면 재사용
+broker.issue_access_token()
+
+# 강제 재발급: 저장소 상태와 무관하게 새 토큰 발급
+broker.issue_access_token(force=True)
+```
+
+### Logging
+
+토큰 재발급 이벤트는 INFO 레벨로 로깅됩니다:
+
+```python
+import logging
+logging.basicConfig(level=logging.INFO)
+
+# API 호출 시 토큰 만료되면:
+# INFO - 토큰 만료 감지, 재발급 시도...
+```
+
+### See Also
+
+- **Implementation guide**: `docs/start/1_token_implementation.md`
+- **PRD**: `docs/start/1_token_prd.md`
+- **Tests**: `korea_investment_stock/tests/test_token_refresh.py`
+
 ## API Rate Limiting
 
 **NEW in v0.8.0**: Automatic rate limiting to manage Korea Investment API's 20 calls/second limit.
