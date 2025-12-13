@@ -124,6 +124,26 @@ class RateLimitedKoreaInvestment:
         self._rate_limiter.wait()
         return self._broker.fetch_ipo_schedule()
 
+    def fetch_investor_trading_by_stock_daily(
+        self,
+        symbol: str,
+        date: str,
+        market_code: str = "J"
+    ) -> Dict[str, Any]:
+        """
+        속도 제한이 적용된 투자자 매매동향 조회
+
+        Args:
+            symbol: 종목 코드 6자리 (예: "005930")
+            date: 조회 날짜 YYYYMMDD 형식 (예: "20251213")
+            market_code: 시장 분류 코드 (기본값: "J")
+
+        Returns:
+            API 응답 딕셔너리
+        """
+        self._rate_limiter.wait()
+        return self._broker.fetch_investor_trading_by_stock_daily(symbol, date, market_code)
+
     # === IPO 헬퍼 메서드들 (9개) ===
 
     def get_ipo_schedule_details(self, *args, **kwargs):

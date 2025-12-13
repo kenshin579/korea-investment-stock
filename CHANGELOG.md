@@ -4,6 +4,40 @@
 
 ### Added
 
+#### 종목별 투자자매매동향(일별) API 추가 (#114)
+
+특정 종목의 날짜별 외국인/기관/개인 매수매도 현황을 조회합니다.
+한국투자 HTS [0416] 종목별 일별동향 화면과 동일한 기능입니다.
+
+```python
+from korea_investment_stock import KoreaInvestment
+
+broker = KoreaInvestment()
+
+# 삼성전자 어제 투자자 매매동향
+from datetime import datetime, timedelta
+yesterday = (datetime.now() - timedelta(days=1)).strftime("%Y%m%d")
+
+result = broker.fetch_investor_trading_by_stock_daily("005930", yesterday)
+
+if result['rt_cd'] == '0':
+    for day in result['output2']:
+        print(f"날짜: {day['stck_bsop_date']}")
+        print(f"외국인 순매수: {day['frgn_ntby_qty']}주 ({day['frgn_ntby_tr_pbmn']}백만원)")
+        print(f"기관 순매수: {day['orgn_ntby_qty']}주 ({day['orgn_ntby_tr_pbmn']}백만원)")
+        print(f"개인 순매수: {day['prsn_ntby_qty']}주")
+```
+
+**주요 기능**:
+- 외국인/기관/개인 순매수 수량 및 금액 조회
+- 기관 세부 분류 (증권, 투자신탁, 사모펀드, 은행, 보험 등)
+- 캐시 및 Rate Limit 래퍼 지원
+- 자동 토큰 재발급 지원
+
+**캐시 전략**:
+- 과거 날짜 데이터: 1시간 캐시 (확정된 데이터)
+- 당일 데이터: 5초 캐시 (장중 실시간 변동)
+
 #### API 호출 중 토큰 만료 시 자동 재발급 기능 (#109)
 
 장시간 실행되는 배치 작업 중 토큰이 만료되어도 자동으로 재발급되어 중단 없이 처리됩니다.

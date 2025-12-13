@@ -162,6 +162,36 @@ class CachedKoreaInvestment:
 
         return result
 
+    def fetch_investor_trading_by_stock_daily(
+        self,
+        symbol: str,
+        date: str,
+        market_code: str = "J"
+    ) -> dict:
+        """투자자 매매동향 조회 (캐싱 지원)
+
+        과거 날짜 데이터는 1시간 캐시, 당일 데이터는 가격 TTL 적용
+        """
+        if not self.enable_cache:
+            return self.broker.fetch_investor_trading_by_stock_daily(symbol, date, market_code)
+
+        cache_key = self._make_cache_key("fetch_investor_trading_by_stock_daily", symbol, date, market_code)
+        cached_data = self.cache.get(cache_key)
+
+        if cached_data is not None:
+            return cached_data
+
+        result = self.broker.fetch_investor_trading_by_stock_daily(symbol, date, market_code)
+
+        if result.get('rt_cd') == '0':
+            # 과거 데이터는 더 긴 TTL 적용 (1시간)
+            from datetime import datetime
+            today = datetime.now().strftime("%Y%m%d")
+            ttl = 3600 if date < today else self.ttl['price']
+            self.cache.set(cache_key, result, ttl)
+
+        return result
+
     def invalidate_cache(self, method: Optional[str] = None):
         """캐시 무효화"""
         if not self.enable_cache:
