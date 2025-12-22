@@ -165,3 +165,36 @@ API_RETURN_CODE = {
     "NO_DATA": "7",  # 조회할 자료가 없습니다
     "RATE_LIMIT_EXCEEDED": "EGW00201",  # Rate limit 초과
 }
+
+# =============================================================================
+# 시장별 투자자동향 - 시장 코드 (MARKET_INVESTOR_TREND_CODE)
+# =============================================================================
+
+MARKET_INVESTOR_TREND_CODE = {
+    "KOSPI": "KSP",         # 코스피
+    "KOSDAQ": "KSQ",        # 코스닥
+    "ETF": "ETF",           # ETF
+    "ELW": "ELW",           # ELW
+    "ETN": "ETN",           # ETN
+    "FUTURES": "K2I",       # 선물/콜옵션/풋옵션
+    "STOCK_FUTURES": "999", # 주식선물
+    "MINI": "MKI",          # 미니
+    "WEEKLY_MONTH": "WKM",  # 위클리(월)
+    "WEEKLY_THUR": "WKI",   # 위클리(목)
+    "KOSDAQ150": "KQI",     # 코스닥150
+}
+
+# =============================================================================
+# 시장별 투자자동향 - 업종 코드 (SECTOR_CODE)
+# =============================================================================
+
+SECTOR_CODE = {
+    "KOSPI_TOTAL": "0001",   # 코스피 종합
+    "KOSDAQ_TOTAL": "1001",  # 코스닥 종합
+    "FUTURES": "F001",       # 선물
+    "CALL_OPTION": "OC01",   # 콜옵션
+    "PUT_OPTION": "OP01",    # 풋옵션
+    "ETF_TOTAL": "T000",     # ETF 전체
+    "ELW_TOTAL": "W000",     # ELW 전체
+    "ETN_TOTAL": "E199",     # ETN 전체
+}

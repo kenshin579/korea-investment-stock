@@ -24,6 +24,9 @@ from .constants import (
     # 상품유형 코드
     PRDT_TYPE_CD,
     PRDT_TYPE_CD_BY_COUNTRY,  # 국가별 상품유형코드 매핑
+    # 시장별 투자자동향 코드
+    MARKET_INVESTOR_TREND_CODE,  # 시장 코드 (KSP, KSQ, ETF 등)
+    SECTOR_CODE,                  # 업종 코드 (0001, 1001, T000 등)
     # 기타
     API_RETURN_CODE,
 )
@@ -88,6 +91,9 @@ __all__ = [
     # 상수 정의 - 상품유형 코드
     "PRDT_TYPE_CD",
     "PRDT_TYPE_CD_BY_COUNTRY",
+    # 상수 정의 - 시장별 투자자동향 코드
+    "MARKET_INVESTOR_TREND_CODE",
+    "SECTOR_CODE",
     # 상수 정의 - 기타
     "API_RETURN_CODE",
 
