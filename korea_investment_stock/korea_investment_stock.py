@@ -952,3 +952,102 @@ class KoreaInvestment:
             "FID_ETC_CLS_CODE": ""
         }
         return self._request_with_token_refresh("GET", url, headers, params)
+
+    def fetch_investor_trend_by_market(
+        self,
+        market_code: str = "KSP",
+        sector_code: str = "0001"
+    ) -> dict:
+        """시장별 투자자매매동향(시세) 조회 [v1_국내주식-074]
+
+        시장별 투자자 유형(외국인, 개인, 기관 등)의 매매 현황을 시간대별로 조회합니다.
+        한국투자 HTS [0403] 시장별 시간동향 화면과 동일한 기능입니다.
+
+        API 정보:
+            - 경로: /uapi/domestic-stock/v1/quotations/inquire-investor-time-by-market
+            - Method: GET
+            - 실전 TR ID: FHPTJ04030000
+            - 모의투자: 미지원
+
+        Args:
+            market_code (str): 시장구분 코드 (기본값: "KSP")
+                - "KSP": 코스피
+                - "KSQ": 코스닥
+                - "ETF": ETF
+                - "ELW": ELW
+                - "ETN": ETN
+                - "K2I": 선물/콜옵션/풋옵션
+                - "999": 주식선물
+                - "MKI": 미니
+                - "WKM": 위클리(월)
+                - "WKI": 위클리(목)
+                - "KQI": 코스닥150
+            sector_code (str): 업종구분 코드 (기본값: "0001")
+                - "0001": 코스피 종합
+                - "1001": 코스닥 종합
+                - "F001": 선물
+                - "OC01": 콜옵션
+                - "OP01": 풋옵션
+                - "T000": ETF 전체
+                - "W000": ELW 전체
+                - "E199": ETN 전체
+
+        Returns:
+            dict: API 응답 딕셔너리
+                - rt_cd: 성공 실패 여부 ("0": 성공)
+                - msg_cd: 응답코드
+                - msg1: 응답메시지
+                - output: 시간대별 투자자 매매동향 리스트
+
+        투자자 유형별 응답 필드:
+            - frgn_*: 외국인
+            - prsn_*: 개인
+            - orgn_*: 기관계
+            - scrt_*: 증권
+            - ivtr_*: 투자신탁
+            - pe_fund_*: 사모펀드
+            - bank_*: 은행
+            - insu_*: 보험
+            - mrbn_*: 종금
+            - fund_*: 기금
+            - etc_orgt_*: 기타단체
+            - etc_corp_*: 기타법인
+
+        세부 필드 접미사:
+            - _seln_vol: 매도 거래량
+            - _shnu_vol: 매수 거래량
+            - _ntby_qty: 순매수 수량
+            - _seln_tr_pbmn: 매도 거래 대금
+            - _shnu_tr_pbmn: 매수 거래 대금
+            - _ntby_tr_pbmn: 순매수 거래 대금
+
+        Example:
+            >>> # 코스피 종합 투자자 매매동향
+            >>> result = broker.fetch_investor_trend_by_market("KSP", "0001")
+            >>> if result['rt_cd'] == '0':
+            ...     for item in result['output']:
+            ...         print(f"시간: {item.get('bsop_hour_clss_code', 'N/A')}")
+            ...         print(f"외국인 순매수: {item['frgn_ntby_qty']}주")
+            ...         print(f"기관 순매수: {item['orgn_ntby_qty']}주")
+            ...         print(f"개인 순매수: {item['prsn_ntby_qty']}주")
+
+            >>> # 코스닥 종합 투자자 매매동향
+            >>> result = broker.fetch_investor_trend_by_market("KSQ", "1001")
+
+            >>> # ETF 전체 투자자 매매동향
+            >>> result = broker.fetch_investor_trend_by_market("ETF", "T000")
+        """
+        path = "uapi/domestic-stock/v1/quotations/inquire-investor-time-by-market"
+        url = f"{self.base_url}/{path}"
+        headers = {
+            "content-type": "application/json",
+            "authorization": self.access_token,
+            "appKey": self.api_key,
+            "appSecret": self.api_secret,
+            "tr_id": "FHPTJ04030000"
+        }
+        params = {
+            "fid_input_iscd": market_code,
+            "fid_input_iscd_2": sector_code
+        }
+        return self._request_with_token_refresh("GET", url, headers, params)

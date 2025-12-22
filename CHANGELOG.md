@@ -4,6 +4,41 @@
 
 ### Added
 
+#### 시장별 투자자매매동향(시세) API 추가 (#120)
+
+시장별 투자자 유형(외국인, 개인, 기관 등)의 매매 현황을 시간대별로 조회합니다.
+한국투자 HTS [0403] 시장별 시간동향 화면과 동일한 기능입니다.
+
+```python
+from korea_investment_stock import KoreaInvestment
+
+broker = KoreaInvestment()
+
+# 코스피 종합 투자자 매매동향
+result = broker.fetch_investor_trend_by_market("KSP", "0001")
+
+# 코스닥 종합 투자자 매매동향
+result = broker.fetch_investor_trend_by_market("KSQ", "1001")
+
+# ETF 전체 투자자 매매동향
+result = broker.fetch_investor_trend_by_market("ETF", "T000")
+
+if result['rt_cd'] == '0':
+    for item in result['output']:
+        print(f"외국인 순매수: {item['frgn_ntby_qty']}주")
+        print(f"기관 순매수: {item['orgn_ntby_qty']}주")
+        print(f"개인 순매수: {item['prsn_ntby_qty']}주")
+```
+
+**주요 기능**:
+- 시장별(코스피, 코스닥, ETF 등) 투자자 매매동향 조회
+- 투자자 유형별(외국인, 개인, 기관, 증권, 투신, 사모펀드, 은행, 보험, 기금 등) 순매수 수량/금액 조회
+- 자동 토큰 재발급 지원
+
+**시장 코드 상수 추가**:
+- `MARKET_INVESTOR_TREND_CODE`: 시장 코드 (KSP, KSQ, ETF 등)
+- `SECTOR_CODE`: 업종 코드 (0001, 1001, T000 등)
+
 #### 종목별 투자자매매동향(일별) API 추가 (#114)
 
 특정 종목의 날짜별 외국인/기관/개인 매수매도 현황을 조회합니다.
