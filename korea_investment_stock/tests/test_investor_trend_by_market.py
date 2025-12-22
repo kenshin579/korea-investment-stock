@@ -9,10 +9,24 @@
 실행:
     pytest korea_investment_stock/tests/test_investor_trend_by_market.py -v
 """
+import os
 import pytest
 
 
+def _has_api_credentials() -> bool:
+    """API 자격 증명이 설정되어 있는지 확인"""
+    return all([
+        os.environ.get("KOREA_INVESTMENT_API_KEY"),
+        os.environ.get("KOREA_INVESTMENT_API_SECRET"),
+        os.environ.get("KOREA_INVESTMENT_ACCOUNT_NO"),
+    ])
+
+
 @pytest.mark.integration
+@pytest.mark.skipif(
+    not _has_api_credentials(),
+    reason="API credentials not available (KOREA_INVESTMENT_* env vars required)"
+)
 class TestInvestorTrendByMarketIntegration:
     """시장별 투자자매매동향(시세) API 통합 테스트"""
 
