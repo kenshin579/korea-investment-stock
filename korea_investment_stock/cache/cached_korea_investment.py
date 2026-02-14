@@ -192,6 +192,80 @@ class CachedKoreaInvestment:
 
         return result
 
+    def fetch_domestic_chart(
+        self,
+        symbol: str,
+        period: str = "D",
+        start_date: str = "",
+        end_date: str = "",
+        adjusted: bool = True,
+        market_code: str = "J"
+    ) -> dict:
+        """국내주식기간별시세 조회 (캐싱 지원)"""
+        if not self.enable_cache:
+            return self.broker.fetch_domestic_chart(symbol, period, start_date, end_date, adjusted, market_code)
+
+        cache_key = self._make_cache_key("fetch_domestic_chart", symbol, period, start_date, end_date, adjusted, market_code)
+        cached_data = self.cache.get(cache_key)
+
+        if cached_data is not None:
+            return cached_data
+
+        result = self.broker.fetch_domestic_chart(symbol, period, start_date, end_date, adjusted, market_code)
+
+        if result.get('rt_cd') == '0':
+            self.cache.set(cache_key, result, self.ttl['price'])
+
+        return result
+
+    def fetch_domestic_minute_chart(
+        self,
+        symbol: str,
+        time_from: str = "",
+        market_code: str = "J"
+    ) -> dict:
+        """주식당일분봉조회 (캐싱 지원)"""
+        if not self.enable_cache:
+            return self.broker.fetch_domestic_minute_chart(symbol, time_from, market_code)
+
+        cache_key = self._make_cache_key("fetch_domestic_minute_chart", symbol, time_from, market_code)
+        cached_data = self.cache.get(cache_key)
+
+        if cached_data is not None:
+            return cached_data
+
+        result = self.broker.fetch_domestic_minute_chart(symbol, time_from, market_code)
+
+        if result.get('rt_cd') == '0':
+            self.cache.set(cache_key, result, self.ttl['price'])
+
+        return result
+
+    def fetch_overseas_chart(
+        self,
+        symbol: str,
+        country_code: str = "US",
+        period: str = "D",
+        end_date: str = "",
+        adjusted: bool = True
+    ) -> dict:
+        """해외주식 기간별시세 조회 (캐싱 지원)"""
+        if not self.enable_cache:
+            return self.broker.fetch_overseas_chart(symbol, country_code, period, end_date, adjusted)
+
+        cache_key = self._make_cache_key("fetch_overseas_chart", symbol, country_code, period, end_date, adjusted)
+        cached_data = self.cache.get(cache_key)
+
+        if cached_data is not None:
+            return cached_data
+
+        result = self.broker.fetch_overseas_chart(symbol, country_code, period, end_date, adjusted)
+
+        if result.get('rt_cd') == '0':
+            self.cache.set(cache_key, result, self.ttl['price'])
+
+        return result
+
     def invalidate_cache(self, method: Optional[str] = None):
         """캐시 무효화"""
         if not self.enable_cache:

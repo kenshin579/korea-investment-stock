@@ -1051,3 +1051,210 @@ class KoreaInvestment:
             "fid_input_iscd_2": sector_code
         }
         return self._request_with_token_refresh("GET", url, headers, params)
+
+    def fetch_domestic_chart(
+        self,
+        symbol: str,
+        period: str = "D",
+        start_date: str = "",
+        end_date: str = "",
+        adjusted: bool = True,
+        market_code: str = "J"
+    ) -> dict:
+        """국내주식기간별시세(일/주/월/년) 조회 [v1_국내주식]
+
+        종목의 일봉/주봉/월봉/년봉 차트 데이터를 조회합니다.
+
+        API 정보:
+            - 경로: /uapi/domestic-stock/v1/quotations/inquire-daily-itemchartprice
+            - TR ID: FHKST03010100
+            - 모의투자: 지원
+
+        Args:
+            symbol (str): 종목코드 6자리 (예: "005930")
+            period (str): 기간 구분 (기본값: "D")
+                - "D": 일봉
+                - "W": 주봉
+                - "M": 월봉
+                - "Y": 년봉
+            start_date (str): 조회 시작일 YYYYMMDD (예: "20240101")
+            end_date (str): 조회 종료일 YYYYMMDD (예: "20241231"), 최대 100건
+            adjusted (bool): 수정주가 여부 (기본값: True)
+                - True: 수정주가 (0)
+                - False: 원주가 (1)
+            market_code (str): 시장 분류 코드 (기본값: "J")
+                - "J": KRX
+                - "NX": NXT
+                - "UN": 통합
+
+        Returns:
+            dict: API 응답 딕셔너리
+                - output1: 요약 (현재가, 시가총액 등)
+                - output2[]: 기간별 OHLCV 배열
+                    - stck_bsop_date: 영업일자
+                    - stck_clpr: 종가
+                    - stck_oprc: 시가
+                    - stck_hgpr: 고가
+                    - stck_lwpr: 저가
+                    - acml_vol: 거래량
+                    - acml_tr_pbmn: 거래대금
+
+        Example:
+            >>> result = broker.fetch_domestic_chart("005930", "D", "20240101", "20241231")
+            >>> for candle in result['output2']:
+            ...     print(f"{candle['stck_bsop_date']}: {candle['stck_clpr']}")
+        """
+        path = "uapi/domestic-stock/v1/quotations/inquire-daily-itemchartprice"
+        url = f"{self.base_url}/{path}"
+        headers = {
+            "content-type": "application/json",
+            "authorization": self.access_token,
+            "appKey": self.api_key,
+            "appSecret": self.api_secret,
+            "tr_id": "FHKST03010100"
+        }
+        params = {
+            "FID_COND_MRKT_DIV_CODE": market_code,
+            "FID_INPUT_ISCD": symbol,
+            "FID_INPUT_DATE_1": start_date,
+            "FID_INPUT_DATE_2": end_date,
+            "FID_PERIOD_DIV_CODE": period,
+            "FID_ORG_ADJ_PRC": "0" if adjusted else "1",
+        }
+        return self._request_with_token_refresh("GET", url, headers, params)
+
+    def fetch_domestic_minute_chart(
+        self,
+        symbol: str,
+        time_from: str = "",
+        market_code: str = "J"
+    ) -> dict:
+        """주식당일분봉조회 [v1_국내주식]
+
+        당일 분봉 데이터를 조회합니다. 1회 최대 30건, 당일 데이터만 조회 가능합니다.
+
+        API 정보:
+            - 경로: /uapi/domestic-stock/v1/quotations/inquire-time-itemchartprice
+            - TR ID: FHKST03010200
+            - 모의투자: 지원
+
+        Args:
+            symbol (str): 종목코드 6자리 (예: "005930")
+            time_from (str): 조회시작시간 HHMMSS (예: "090000")
+            market_code (str): 시장 분류 코드 (기본값: "J")
+                - "J": KRX
+                - "NX": NXT
+                - "UN": 통합
+
+        Returns:
+            dict: API 응답 딕셔너리
+                - output1: 요약 (현재가 등)
+                - output2[]: 분봉 데이터 배열
+                    - stck_cntg_hour: 체결시간 (HHMMSS)
+                    - stck_prpr: 현재가
+                    - stck_oprc: 시가
+                    - stck_hgpr: 고가
+                    - stck_lwpr: 저가
+                    - cntg_vol: 체결거래량
+                    - acml_tr_pbmn: 누적거래대금
+
+        Example:
+            >>> result = broker.fetch_domestic_minute_chart("005930", "090000")
+            >>> for candle in result['output2']:
+            ...     print(f"{candle['stck_cntg_hour']}: {candle['stck_prpr']}")
+        """
+        path = "uapi/domestic-stock/v1/quotations/inquire-time-itemchartprice"
+        url = f"{self.base_url}/{path}"
+        headers = {
+            "content-type": "application/json",
+            "authorization": self.access_token,
+            "appKey": self.api_key,
+            "appSecret": self.api_secret,
+            "tr_id": "FHKST03010200"
+        }
+        params = {
+            "FID_COND_MRKT_DIV_CODE": market_code,
+            "FID_INPUT_ISCD": symbol,
+            "FID_INPUT_HOUR_1": time_from,
+            "FID_PW_DATA_INCU_YN": "N",
+            "FID_ETC_CLS_CODE": "",
+        }
+        return self._request_with_token_refresh("GET", url, headers, params)
+
+    def fetch_overseas_chart(
+        self,
+        symbol: str,
+        country_code: str = "US",
+        period: str = "D",
+        end_date: str = "",
+        adjusted: bool = True
+    ) -> dict:
+        """해외주식 기간별시세 조회 [해외주식]
+
+        해외주식 일봉/주봉/월봉 차트 데이터를 조회합니다.
+        1회 최대 100건, 무료(지연) 데이터입니다.
+
+        API 정보:
+            - 경로: /uapi/overseas-price/v1/quotations/dailyprice
+            - TR ID: HHDFS76240000
+            - 모의투자: 지원
+
+        Args:
+            symbol (str): 종목코드 (예: "TSLA", "AAPL")
+            country_code (str): 국가 코드 (기본값: "US")
+                - "US": 미국 (NYS)
+                - "HK": 홍콩 (HKS)
+                - "JP": 일본 (TSE)
+                - "CN": 중국 (SHS)
+                - "VN": 베트남 (HSX)
+            period (str): 기간 구분 (기본값: "D")
+                - "D": 일봉
+                - "W": 주봉
+                - "M": 월봉
+            end_date (str): 기준일 YYYYMMDD (빈값=오늘)
+            adjusted (bool): 수정주가 반영 여부 (기본값: True)
+
+        Returns:
+            dict: API 응답 딕셔너리
+                - output1: 메타 정보 (rsym, zdiv, nrec)
+                - output2[]: 기간별 OHLCV 배열
+                    - xymd: 일자 (YYYYMMDD)
+                    - clos: 종가
+                    - open: 시가
+                    - high: 고가
+                    - low: 저가
+                    - tvol: 거래량
+                    - tamt: 거래대금
+                    - sign: 대비기호
+                    - diff: 대비
+                    - rate: 등락율
+
+        Example:
+            >>> result = broker.fetch_overseas_chart("AAPL", "US", "D")
+            >>> for candle in result['output2']:
+            ...     print(f"{candle['xymd']}: {candle['clos']}")
+        """
+        exchange_codes = EXCD_BY_COUNTRY.get(country_code)
+        if not exchange_codes:
+            raise ValueError(f"지원하지 않는 country_code: {country_code}")
+
+        period_map = {"D": "0", "W": "1", "M": "2"}
+
+        path = "uapi/overseas-price/v1/quotations/dailyprice"
+        url = f"{self.base_url}/{path}"
+        headers = {
+            "content-type": "application/json",
+            "authorization": self.access_token,
+            "appKey": self.api_key,
+            "appSecret": self.api_secret,
+            "tr_id": "HHDFS76240000"
+        }
+        params = {
+            "AUTH": "",
+            "EXCD": exchange_codes[0],
+            "SYMB": symbol,
+            "GUBN": period_map.get(period, "0"),
+            "BYMD": end_date,
+            "MODP": "1" if adjusted else "0",
+        }
+        return self._request_with_token_refresh("GET", url, headers, params)

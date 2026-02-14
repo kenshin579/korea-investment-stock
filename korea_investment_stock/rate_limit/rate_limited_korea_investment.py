@@ -144,6 +144,43 @@ class RateLimitedKoreaInvestment:
         self._rate_limiter.wait()
         return self._broker.fetch_investor_trading_by_stock_daily(symbol, date, market_code)
 
+    # === 차트 데이터 API ===
+
+    def fetch_domestic_chart(
+        self,
+        symbol: str,
+        period: str = "D",
+        start_date: str = "",
+        end_date: str = "",
+        adjusted: bool = True,
+        market_code: str = "J"
+    ) -> Dict[str, Any]:
+        """속도 제한이 적용된 국내주식기간별시세 조회"""
+        self._rate_limiter.wait()
+        return self._broker.fetch_domestic_chart(symbol, period, start_date, end_date, adjusted, market_code)
+
+    def fetch_domestic_minute_chart(
+        self,
+        symbol: str,
+        time_from: str = "",
+        market_code: str = "J"
+    ) -> Dict[str, Any]:
+        """속도 제한이 적용된 주식당일분봉조회"""
+        self._rate_limiter.wait()
+        return self._broker.fetch_domestic_minute_chart(symbol, time_from, market_code)
+
+    def fetch_overseas_chart(
+        self,
+        symbol: str,
+        country_code: str = "US",
+        period: str = "D",
+        end_date: str = "",
+        adjusted: bool = True
+    ) -> Dict[str, Any]:
+        """속도 제한이 적용된 해외주식 기간별시세 조회"""
+        self._rate_limiter.wait()
+        return self._broker.fetch_overseas_chart(symbol, country_code, period, end_date, adjusted)
+
     # === IPO 헬퍼 메서드들 (9개) ===
 
     def get_ipo_schedule_details(self, *args, **kwargs):
