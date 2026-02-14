@@ -181,6 +181,28 @@ class RateLimitedKoreaInvestment:
         self._rate_limiter.wait()
         return self._broker.fetch_overseas_chart(symbol, country_code, period, end_date, adjusted)
 
+    # === 시세 순위 API ===
+
+    def fetch_volume_ranking(self, market_code: str = "J", sort_by: str = "0") -> Dict[str, Any]:
+        """속도 제한이 적용된 거래량순위 조회"""
+        self._rate_limiter.wait()
+        return self._broker.fetch_volume_ranking(market_code, sort_by)
+
+    def fetch_change_rate_ranking(self, market_code: str = "J", sort_order: str = "0", period_days: str = "0") -> Dict[str, Any]:
+        """속도 제한이 적용된 등락률 순위 조회"""
+        self._rate_limiter.wait()
+        return self._broker.fetch_change_rate_ranking(market_code, sort_order, period_days)
+
+    def fetch_market_cap_ranking(self, market_code: str = "J", target_market: str = "0000") -> Dict[str, Any]:
+        """속도 제한이 적용된 시가총액 상위 조회"""
+        self._rate_limiter.wait()
+        return self._broker.fetch_market_cap_ranking(market_code, target_market)
+
+    def fetch_overseas_change_rate_ranking(self, country_code: str = "US", sort_order: str = "1", period: str = "0", volume_filter: str = "0") -> Dict[str, Any]:
+        """속도 제한이 적용된 해외주식 상승율/하락율 조회"""
+        self._rate_limiter.wait()
+        return self._broker.fetch_overseas_change_rate_ranking(country_code, sort_order, period, volume_filter)
+
     # === IPO 헬퍼 메서드들 (9개) ===
 
     def get_ipo_schedule_details(self, *args, **kwargs):

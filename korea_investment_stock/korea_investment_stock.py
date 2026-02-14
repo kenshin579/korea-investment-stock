@@ -1258,3 +1258,268 @@ class KoreaInvestment:
             "MODP": "1" if adjusted else "0",
         }
         return self._request_with_token_refresh("GET", url, headers, params)
+
+    def fetch_volume_ranking(
+        self,
+        market_code: str = "J",
+        sort_by: str = "0"
+    ) -> dict:
+        """거래량순위 조회 [v1_국내주식]
+
+        거래량 기준 종목 순위를 조회합니다. 최대 30건.
+
+        API 정보:
+            - 경로: /uapi/domestic-stock/v1/quotations/volume-rank
+            - TR ID: FHPST01710000
+            - 모의투자: 미지원 (실전 전용)
+
+        Args:
+            market_code (str): 시장 분류 코드 (기본값: "J")
+                - "J": KRX
+                - "NX": NXT
+            sort_by (str): 정렬 기준 (기본값: "0")
+                - "0": 평균거래량
+                - "1": 거래증가율
+                - "2": 거래회전율
+                - "3": 거래금액순
+                - "4": 평균거래금액회전율
+
+        Returns:
+            dict: API 응답 딕셔너리
+                - output[]: 종목 순위 배열
+                    - data_rank: 순위
+                    - hts_kor_isnm: 종목명
+                    - mksc_shrn_iscd: 종목코드
+                    - stck_prpr: 현재가
+                    - acml_vol: 거래량
+                    - vol_inrt: 거래량증가율
+                    - avrg_vol: 평균거래량
+
+        Example:
+            >>> result = broker.fetch_volume_ranking("J", "0")
+            >>> for stock in result['output']:
+            ...     print(f"{stock['data_rank']}위: {stock['hts_kor_isnm']}")
+        """
+        path = "uapi/domestic-stock/v1/quotations/volume-rank"
+        url = f"{self.base_url}/{path}"
+        headers = {
+            "content-type": "application/json",
+            "authorization": self.access_token,
+            "appKey": self.api_key,
+            "appSecret": self.api_secret,
+            "tr_id": "FHPST01710000"
+        }
+        params = {
+            "FID_COND_MRKT_DIV_CODE": market_code,
+            "FID_COND_SCR_DIV_CODE": "20171",
+            "FID_INPUT_ISCD": "0000",
+            "FID_DIV_CLS_CODE": "0",
+            "FID_BLNG_CLS_CODE": sort_by,
+            "FID_TRGT_CLS_CODE": "111111111",
+            "FID_TRGT_EXLS_CLS_CODE": "0000000000",
+            "FID_INPUT_PRICE_1": "",
+            "FID_INPUT_PRICE_2": "",
+            "FID_VOL_CNT": "",
+            "FID_INPUT_DATE_1": "",
+        }
+        return self._request_with_token_refresh("GET", url, headers, params)
+
+    def fetch_change_rate_ranking(
+        self,
+        market_code: str = "J",
+        sort_order: str = "0",
+        period_days: str = "0"
+    ) -> dict:
+        """국내주식 등락률 순위 조회 [v1_국내주식]
+
+        등락률 기준 종목 순위를 조회합니다. 최대 30건.
+
+        API 정보:
+            - 경로: /uapi/domestic-stock/v1/ranking/fluctuation
+            - TR ID: FHPST01700000
+            - 모의투자: 미지원 (실전 전용)
+
+        Args:
+            market_code (str): 시장 분류 코드 (기본값: "J")
+                - "J": KRX
+                - "NX": NXT
+            sort_order (str): 정렬 기준 (기본값: "0")
+                - "0": 상승율순
+                - "1": 하락율순
+                - "2": 시가대비상승율
+                - "3": 시가대비하락율
+                - "4": 변동율
+            period_days (str): 누적일수 (기본값: "0")
+                - "0": 당일
+
+        Returns:
+            dict: API 응답 딕셔너리
+                - output[]: 종목 순위 배열
+                    - data_rank: 순위
+                    - hts_kor_isnm: 종목명
+                    - stck_shrn_iscd: 종목코드
+                    - stck_prpr: 현재가
+                    - prdy_ctrt: 등락률 (%)
+                    - prd_rsfl_rate: 기간 등락률
+
+        Example:
+            >>> result = broker.fetch_change_rate_ranking("J", "0")
+            >>> for stock in result['output']:
+            ...     print(f"{stock['data_rank']}위: {stock['hts_kor_isnm']} ({stock['prdy_ctrt']}%)")
+        """
+        path = "uapi/domestic-stock/v1/ranking/fluctuation"
+        url = f"{self.base_url}/{path}"
+        headers = {
+            "content-type": "application/json",
+            "authorization": self.access_token,
+            "appKey": self.api_key,
+            "appSecret": self.api_secret,
+            "tr_id": "FHPST01700000"
+        }
+        params = {
+            "fid_cond_mrkt_div_code": market_code,
+            "fid_cond_scr_div_code": "20170",
+            "fid_input_iscd": "0000",
+            "fid_rank_sort_cls_code": sort_order,
+            "fid_input_cnt_1": period_days,
+            "fid_prc_cls_code": "0",
+            "fid_input_price_1": "",
+            "fid_input_price_2": "",
+            "fid_vol_cnt": "",
+            "fid_trgt_cls_code": "0",
+            "fid_trgt_exls_cls_code": "0",
+            "fid_div_cls_code": "0",
+            "fid_rsfl_rate1": "",
+            "fid_rsfl_rate2": "",
+        }
+        return self._request_with_token_refresh("GET", url, headers, params)
+
+    def fetch_market_cap_ranking(
+        self,
+        market_code: str = "J",
+        target_market: str = "0000"
+    ) -> dict:
+        """국내주식 시가총액 상위 조회 [v1_국내주식]
+
+        시가총액 기준 종목 순위를 조회합니다. 최대 30건.
+
+        API 정보:
+            - 경로: /uapi/domestic-stock/v1/ranking/market-cap
+            - TR ID: FHPST01740000
+            - 모의투자: 미지원 (실전 전용)
+
+        Args:
+            market_code (str): 시장 분류 코드 (기본값: "J")
+                - "J": KRX
+            target_market (str): 시장 구분 (기본값: "0000")
+                - "0000": 전체
+                - "0001": 거래소 (코스피)
+                - "1001": 코스닥
+                - "2001": 코스피200
+
+        Returns:
+            dict: API 응답 딕셔너리
+                - output[]: 종목 순위 배열
+                    - data_rank: 순위
+                    - hts_kor_isnm: 종목명
+                    - mksc_shrn_iscd: 종목코드
+                    - stck_prpr: 현재가
+                    - stck_avls: 시가총액
+                    - mrkt_whol_avls_rlim: 시가총액 비중 (%)
+                    - lstn_stcn: 상장주수
+
+        Example:
+            >>> result = broker.fetch_market_cap_ranking("J", "0001")
+            >>> for stock in result['output']:
+            ...     print(f"{stock['data_rank']}위: {stock['hts_kor_isnm']}")
+        """
+        path = "uapi/domestic-stock/v1/ranking/market-cap"
+        url = f"{self.base_url}/{path}"
+        headers = {
+            "content-type": "application/json",
+            "authorization": self.access_token,
+            "appKey": self.api_key,
+            "appSecret": self.api_secret,
+            "tr_id": "FHPST01740000"
+        }
+        params = {
+            "fid_cond_mrkt_div_code": market_code,
+            "fid_cond_scr_div_code": "20174",
+            "fid_input_iscd": target_market,
+            "fid_div_cls_code": "0",
+            "fid_trgt_cls_code": "0",
+            "fid_trgt_exls_cls_code": "0",
+            "fid_input_price_1": "",
+            "fid_input_price_2": "",
+            "fid_vol_cnt": "",
+        }
+        return self._request_with_token_refresh("GET", url, headers, params)
+
+    def fetch_overseas_change_rate_ranking(
+        self,
+        country_code: str = "US",
+        sort_order: str = "1",
+        period: str = "0",
+        volume_filter: str = "0"
+    ) -> dict:
+        """해외주식 상승율/하락율 조회 [해외주식]
+
+        해외주식 등락률 기준 종목 순위를 조회합니다.
+
+        API 정보:
+            - 경로: /uapi/overseas-stock/v1/ranking/updown-rate
+            - TR ID: HHDFS76290000
+            - 모의투자: 미지원 (실전 전용)
+
+        Args:
+            country_code (str): 국가 코드 (기본값: "US")
+                - "US": 미국 (NYS)
+                - "HK": 홍콩 (HKS)
+                - "JP": 일본 (TSE)
+                - "CN": 중국 (SHS)
+                - "VN": 베트남 (HSX)
+            sort_order (str): 정렬 기준 (기본값: "1")
+                - "0": 하락율
+                - "1": 상승율
+            period (str): 기간 (기본값: "0")
+                - "0": 당일, "1": 2일 ... "9": 1년
+            volume_filter (str): 거래량 필터 (기본값: "0")
+                - "0": 전체, "1": 100주이상 ... "6": 1000만주이상
+
+        Returns:
+            dict: API 응답 딕셔너리
+                - output2[]: 종목 순위 배열
+                    - rank: 순위
+                    - name: 종목명
+                    - symb: 종목코드
+                    - last: 현재가
+                    - rate: 등락률 (%)
+                    - tvol: 거래량
+
+        Example:
+            >>> result = broker.fetch_overseas_change_rate_ranking("US", "1")
+            >>> for stock in result['output2']:
+            ...     print(f"{stock['rank']}위: {stock['name']} ({stock['rate']}%)")
+        """
+        exchange_codes = EXCD_BY_COUNTRY.get(country_code)
+        if not exchange_codes:
+            raise ValueError(f"지원하지 않는 country_code: {country_code}")
+
+        path = "uapi/overseas-stock/v1/ranking/updown-rate"
+        url = f"{self.base_url}/{path}"
+        headers = {
+            "content-type": "application/json",
+            "authorization": self.access_token,
+            "appKey": self.api_key,
+            "appSecret": self.api_secret,
+            "tr_id": "HHDFS76290000"
+        }
+        params = {
+            "AUTH": "",
+            "EXCD": exchange_codes[0],
+            "GUBN": sort_order,
+            "NDAY": period,
+            "VOL_RANG": volume_filter,
+            "KEYB": "",
+        }
+        return self._request_with_token_refresh("GET", url, headers, params)

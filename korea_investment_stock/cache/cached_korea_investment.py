@@ -266,6 +266,58 @@ class CachedKoreaInvestment:
 
         return result
 
+    def fetch_volume_ranking(self, market_code: str = "J", sort_by: str = "0") -> dict:
+        """거래량순위 조회 (캐싱 지원)"""
+        if not self.enable_cache:
+            return self.broker.fetch_volume_ranking(market_code, sort_by)
+        cache_key = self._make_cache_key("fetch_volume_ranking", market_code, sort_by)
+        cached_data = self.cache.get(cache_key)
+        if cached_data is not None:
+            return cached_data
+        result = self.broker.fetch_volume_ranking(market_code, sort_by)
+        if result.get('rt_cd') == '0':
+            self.cache.set(cache_key, result, self.ttl['price'])
+        return result
+
+    def fetch_change_rate_ranking(self, market_code: str = "J", sort_order: str = "0", period_days: str = "0") -> dict:
+        """등락률 순위 조회 (캐싱 지원)"""
+        if not self.enable_cache:
+            return self.broker.fetch_change_rate_ranking(market_code, sort_order, period_days)
+        cache_key = self._make_cache_key("fetch_change_rate_ranking", market_code, sort_order, period_days)
+        cached_data = self.cache.get(cache_key)
+        if cached_data is not None:
+            return cached_data
+        result = self.broker.fetch_change_rate_ranking(market_code, sort_order, period_days)
+        if result.get('rt_cd') == '0':
+            self.cache.set(cache_key, result, self.ttl['price'])
+        return result
+
+    def fetch_market_cap_ranking(self, market_code: str = "J", target_market: str = "0000") -> dict:
+        """시가총액 상위 조회 (캐싱 지원)"""
+        if not self.enable_cache:
+            return self.broker.fetch_market_cap_ranking(market_code, target_market)
+        cache_key = self._make_cache_key("fetch_market_cap_ranking", market_code, target_market)
+        cached_data = self.cache.get(cache_key)
+        if cached_data is not None:
+            return cached_data
+        result = self.broker.fetch_market_cap_ranking(market_code, target_market)
+        if result.get('rt_cd') == '0':
+            self.cache.set(cache_key, result, self.ttl['price'])
+        return result
+
+    def fetch_overseas_change_rate_ranking(self, country_code: str = "US", sort_order: str = "1", period: str = "0", volume_filter: str = "0") -> dict:
+        """해외주식 상승율/하락율 조회 (캐싱 지원)"""
+        if not self.enable_cache:
+            return self.broker.fetch_overseas_change_rate_ranking(country_code, sort_order, period, volume_filter)
+        cache_key = self._make_cache_key("fetch_overseas_change_rate_ranking", country_code, sort_order, period, volume_filter)
+        cached_data = self.cache.get(cache_key)
+        if cached_data is not None:
+            return cached_data
+        result = self.broker.fetch_overseas_change_rate_ranking(country_code, sort_order, period, volume_filter)
+        if result.get('rt_cd') == '0':
+            self.cache.set(cache_key, result, self.ttl['price'])
+        return result
+
     def invalidate_cache(self, method: Optional[str] = None):
         """캐시 무효화"""
         if not self.enable_cache:

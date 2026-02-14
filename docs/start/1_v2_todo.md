@@ -43,37 +43,37 @@
 
 ### 메인 클래스 (`korea_investment_stock.py`)
 
-- [ ] `fetch_volume_ranking()` 구현 (TR ID: FHPST01710000)
-- [ ] `fetch_change_rate_ranking()` 구현 (TR ID: FHPST01700000)
-- [ ] `fetch_market_cap_ranking()` 구현 (TR ID: FHPST01740000)
-- [ ] `fetch_overseas_change_rate_ranking()` 구현 (TR ID: HHDFS76290000)
+- [x] `fetch_volume_ranking()` 구현 (TR ID: FHPST01710000)
+- [x] `fetch_change_rate_ranking()` 구현 (TR ID: FHPST01700000)
+- [x] `fetch_market_cap_ranking()` 구현 (TR ID: FHPST01740000)
+- [x] `fetch_overseas_change_rate_ranking()` 구현 (TR ID: HHDFS76290000)
 
 ### 상수 (`constants.py`)
 
-- [ ] `VOLUME_RANKING_SORT` 추가
-- [ ] `CHANGE_RATE_SORT` 추가
-- [ ] `MARKET_CAP_TARGET` 추가
+- [x] `VOLUME_RANKING_SORT` 추가 → 메서드 내부에서 직접 처리 (별도 상수 불필요)
+- [x] `CHANGE_RATE_SORT` 추가 → 메서드 내부에서 직접 처리 (별도 상수 불필요)
+- [x] `MARKET_CAP_TARGET` 추가 → 메서드 내부에서 직접 처리 (별도 상수 불필요)
 
 ### 캐시 래퍼 (`cached_korea_investment.py`)
 
-- [ ] `fetch_volume_ranking()` 캐시 래퍼 추가 (TTL: price)
-- [ ] `fetch_change_rate_ranking()` 캐시 래퍼 추가 (TTL: price)
-- [ ] `fetch_market_cap_ranking()` 캐시 래퍼 추가 (TTL: price)
-- [ ] `fetch_overseas_change_rate_ranking()` 캐시 래퍼 추가 (TTL: price)
+- [x] `fetch_volume_ranking()` 캐시 래퍼 추가 (TTL: price)
+- [x] `fetch_change_rate_ranking()` 캐시 래퍼 추가 (TTL: price)
+- [x] `fetch_market_cap_ranking()` 캐시 래퍼 추가 (TTL: price)
+- [x] `fetch_overseas_change_rate_ranking()` 캐시 래퍼 추가 (TTL: price)
 
 ### Rate Limit 래퍼 (`rate_limited_korea_investment.py`)
 
-- [ ] `fetch_volume_ranking()` rate limit 래퍼 추가
-- [ ] `fetch_change_rate_ranking()` rate limit 래퍼 추가
-- [ ] `fetch_market_cap_ranking()` rate limit 래퍼 추가
-- [ ] `fetch_overseas_change_rate_ranking()` rate limit 래퍼 추가
+- [x] `fetch_volume_ranking()` rate limit 래퍼 추가
+- [x] `fetch_change_rate_ranking()` rate limit 래퍼 추가
+- [x] `fetch_market_cap_ranking()` rate limit 래퍼 추가
+- [x] `fetch_overseas_change_rate_ranking()` rate limit 래퍼 추가
 
 ### 테스트 (`tests/test_ranking_apis.py`)
 
-- [ ] `TestFetchVolumeRanking` - 성공 응답, URL/헤더, 파라미터, 정렬 옵션
-- [ ] `TestFetchChangeRateRanking` - 성공 응답, URL/헤더, 파라미터, 정렬 옵션
-- [ ] `TestFetchMarketCapRanking` - 성공 응답, URL/헤더, 파라미터, 시장 구분
-- [ ] `TestFetchOverseasChangeRateRanking` - 성공 응답, URL/헤더, 파라미터
+- [x] `TestFetchVolumeRanking` - 성공 응답, URL/헤더, 파라미터, 정렬 옵션
+- [x] `TestFetchChangeRateRanking` - 성공 응답, URL/헤더, 파라미터, 정렬 옵션
+- [x] `TestFetchMarketCapRanking` - 성공 응답, URL/헤더, 파라미터, 시장 구분
+- [x] `TestFetchOverseasChangeRateRanking` - 성공 응답, URL/헤더, 파라미터
 
 ### 문서 및 버전
 
