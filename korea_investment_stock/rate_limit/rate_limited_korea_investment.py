@@ -203,6 +203,33 @@ class RateLimitedKoreaInvestment:
         self._rate_limiter.wait()
         return self._broker.fetch_overseas_change_rate_ranking(country_code, sort_order, period, volume_filter)
 
+    # === 재무제표 API ===
+
+    def fetch_financial_ratio(self, symbol: str, period_type: str = "0", market_code: str = "J") -> Dict[str, Any]:
+        """속도 제한이 적용된 재무비율 조회"""
+        self._rate_limiter.wait()
+        return self._broker.fetch_financial_ratio(symbol, period_type, market_code)
+
+    def fetch_income_statement(self, symbol: str, period_type: str = "0", market_code: str = "J") -> Dict[str, Any]:
+        """속도 제한이 적용된 손익계산서 조회"""
+        self._rate_limiter.wait()
+        return self._broker.fetch_income_statement(symbol, period_type, market_code)
+
+    def fetch_balance_sheet(self, symbol: str, period_type: str = "0", market_code: str = "J") -> Dict[str, Any]:
+        """속도 제한이 적용된 대차대조표 조회"""
+        self._rate_limiter.wait()
+        return self._broker.fetch_balance_sheet(symbol, period_type, market_code)
+
+    def fetch_profitability_ratio(self, symbol: str, period_type: str = "0", market_code: str = "J") -> Dict[str, Any]:
+        """속도 제한이 적용된 수익성비율 조회"""
+        self._rate_limiter.wait()
+        return self._broker.fetch_profitability_ratio(symbol, period_type, market_code)
+
+    def fetch_growth_ratio(self, symbol: str, period_type: str = "0", market_code: str = "J") -> Dict[str, Any]:
+        """속도 제한이 적용된 성장성비율 조회"""
+        self._rate_limiter.wait()
+        return self._broker.fetch_growth_ratio(symbol, period_type, market_code)
+
     # === IPO 헬퍼 메서드들 (9개) ===
 
     def get_ipo_schedule_details(self, *args, **kwargs):

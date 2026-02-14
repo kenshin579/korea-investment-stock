@@ -87,35 +87,35 @@
 
 ### 메인 클래스 (`korea_investment_stock.py`)
 
-- [ ] `fetch_financial_ratio()` 구현 (TR ID: FHKST66430300)
-- [ ] `fetch_income_statement()` 구현 (TR ID: FHKST66430200)
-- [ ] `fetch_balance_sheet()` 구현 (TR ID: FHKST66430100)
-- [ ] `fetch_profitability_ratio()` 구현 (TR ID: FHKST66430400)
-- [ ] `fetch_growth_ratio()` 구현 (TR ID: FHKST66430800)
+- [x] `fetch_financial_ratio()` 구현 (TR ID: FHKST66430300)
+- [x] `fetch_income_statement()` 구현 (TR ID: FHKST66430200)
+- [x] `fetch_balance_sheet()` 구현 (TR ID: FHKST66430100)
+- [x] `fetch_profitability_ratio()` 구현 (TR ID: FHKST66430400)
+- [x] `fetch_growth_ratio()` 구현 (TR ID: FHKST66430800)
 
 ### 캐시 래퍼 (`cached_korea_investment.py`)
 
-- [ ] `fetch_financial_ratio()` 캐시 래퍼 추가 (TTL: stock_info)
-- [ ] `fetch_income_statement()` 캐시 래퍼 추가 (TTL: stock_info)
-- [ ] `fetch_balance_sheet()` 캐시 래퍼 추가 (TTL: stock_info)
-- [ ] `fetch_profitability_ratio()` 캐시 래퍼 추가 (TTL: stock_info)
-- [ ] `fetch_growth_ratio()` 캐시 래퍼 추가 (TTL: stock_info)
+- [x] `fetch_financial_ratio()` 캐시 래퍼 추가 (TTL: stock_info)
+- [x] `fetch_income_statement()` 캐시 래퍼 추가 (TTL: stock_info)
+- [x] `fetch_balance_sheet()` 캐시 래퍼 추가 (TTL: stock_info)
+- [x] `fetch_profitability_ratio()` 캐시 래퍼 추가 (TTL: stock_info)
+- [x] `fetch_growth_ratio()` 캐시 래퍼 추가 (TTL: stock_info)
 
 ### Rate Limit 래퍼 (`rate_limited_korea_investment.py`)
 
-- [ ] `fetch_financial_ratio()` rate limit 래퍼 추가
-- [ ] `fetch_income_statement()` rate limit 래퍼 추가
-- [ ] `fetch_balance_sheet()` rate limit 래퍼 추가
-- [ ] `fetch_profitability_ratio()` rate limit 래퍼 추가
-- [ ] `fetch_growth_ratio()` rate limit 래퍼 추가
+- [x] `fetch_financial_ratio()` rate limit 래퍼 추가
+- [x] `fetch_income_statement()` rate limit 래퍼 추가
+- [x] `fetch_balance_sheet()` rate limit 래퍼 추가
+- [x] `fetch_profitability_ratio()` rate limit 래퍼 추가
+- [x] `fetch_growth_ratio()` rate limit 래퍼 추가
 
 ### 테스트 (`tests/test_financial_apis.py`)
 
-- [ ] `TestFetchFinancialRatio` - 성공 응답, URL/헤더, 파라미터 (연간/분기)
-- [ ] `TestFetchIncomeStatement` - 성공 응답, URL/헤더, 파라미터 (연간/분기)
-- [ ] `TestFetchBalanceSheet` - 성공 응답, URL/헤더, 파라미터 (연간/분기)
-- [ ] `TestFetchProfitabilityRatio` - 성공 응답, URL/헤더, 파라미터 (연간/분기)
-- [ ] `TestFetchGrowthRatio` - 성공 응답, URL/헤더, 파라미터 (연간/분기)
+- [x] `TestFetchFinancialRatio` - 성공 응답, URL/헤더, 파라미터 (연간/분기)
+- [x] `TestFetchIncomeStatement` - 성공 응답, URL/헤더, 파라미터 (연간/분기)
+- [x] `TestFetchBalanceSheet` - 성공 응답, URL/헤더, 파라미터 (연간/분기)
+- [x] `TestFetchProfitabilityRatio` - 성공 응답, URL/헤더, 파라미터 (연간/분기)
+- [x] `TestFetchGrowthRatio` - 성공 응답, URL/헤더, 파라미터 (연간/분기)
 
 ### 문서 및 버전
 

@@ -1523,3 +1523,284 @@ class KoreaInvestment:
             "KEYB": "",
         }
         return self._request_with_token_refresh("GET", url, headers, params)
+
+    # === 재무제표 API ===
+
+    def fetch_financial_ratio(
+        self,
+        symbol: str,
+        period_type: str = "0",
+        market_code: str = "J"
+    ) -> dict:
+        """국내주식 재무비율 조회 [v1_국내주식]
+
+        종목의 재무비율 데이터를 조회합니다.
+
+        API 정보:
+            - 경로: /uapi/domestic-stock/v1/finance/financial-ratio
+            - TR ID: FHKST66430300
+            - 모의투자: 지원
+
+        Args:
+            symbol (str): 종목코드 6자리 (예: "005930")
+            period_type (str): 기간 구분 (기본값: "0")
+                - "0": 연간
+                - "1": 분기
+            market_code (str): 시장 분류 코드 (기본값: "J")
+
+        Returns:
+            dict: API 응답 딕셔너리
+                - output[]: 재무비율 배열
+                    - stac_yymm: 결산 년월
+                    - grs: 매출액 증가율
+                    - bsop_prfi_inrt: 영업이익 증가율
+                    - ntin_inrt: 순이익 증가율
+                    - roe_val: ROE
+                    - eps: EPS
+                    - sps: 주당매출액
+                    - bps: BPS
+                    - rsrv_rate: 유보비율
+                    - lblt_rate: 부채비율
+
+        Example:
+            >>> result = broker.fetch_financial_ratio("005930", "0")
+            >>> for row in result['output']:
+            ...     print(f"{row['stac_yymm']}: ROE={row['roe_val']}")
+        """
+        path = "uapi/domestic-stock/v1/finance/financial-ratio"
+        url = f"{self.base_url}/{path}"
+        headers = {
+            "content-type": "application/json",
+            "authorization": self.access_token,
+            "appKey": self.api_key,
+            "appSecret": self.api_secret,
+            "tr_id": "FHKST66430300"
+        }
+        params = {
+            "FID_DIV_CLS_CODE": period_type,
+            "fid_cond_mrkt_div_code": market_code,
+            "fid_input_iscd": symbol,
+        }
+        return self._request_with_token_refresh("GET", url, headers, params)
+
+    def fetch_income_statement(
+        self,
+        symbol: str,
+        period_type: str = "0",
+        market_code: str = "J"
+    ) -> dict:
+        """국내주식 손익계산서 조회 [v1_국내주식]
+
+        종목의 손익계산서 데이터를 조회합니다.
+
+        API 정보:
+            - 경로: /uapi/domestic-stock/v1/finance/income-statement
+            - TR ID: FHKST66430200
+            - 모의투자: 지원
+
+        Args:
+            symbol (str): 종목코드 6자리 (예: "005930")
+            period_type (str): 기간 구분 (기본값: "0")
+                - "0": 연간
+                - "1": 분기 (연단위 누적합산)
+            market_code (str): 시장 분류 코드 (기본값: "J")
+
+        Returns:
+            dict: API 응답 딕셔너리
+                - output[]: 손익계산서 배열
+                    - stac_yymm: 결산 년월
+                    - sale_account: 매출액
+                    - sale_cost: 매출원가
+                    - sale_totl_prfi: 매출총이익
+                    - depr_cost: 감가상각비
+                    - sell_mang: 판매관리비
+                    - bsop_prti: 영업이익
+                    - bsop_non_ernn: 영업외수익
+                    - bsop_non_expn: 영업외비용
+                    - op_prfi: 경상이익
+                    - spec_prfi: 특별이익
+                    - spec_loss: 특별손실
+                    - thtr_ntin: 당기순이익
+
+        Example:
+            >>> result = broker.fetch_income_statement("005930", "0")
+            >>> for row in result['output']:
+            ...     print(f"{row['stac_yymm']}: 매출={row['sale_account']}")
+        """
+        path = "uapi/domestic-stock/v1/finance/income-statement"
+        url = f"{self.base_url}/{path}"
+        headers = {
+            "content-type": "application/json",
+            "authorization": self.access_token,
+            "appKey": self.api_key,
+            "appSecret": self.api_secret,
+            "tr_id": "FHKST66430200"
+        }
+        params = {
+            "FID_DIV_CLS_CODE": period_type,
+            "fid_cond_mrkt_div_code": market_code,
+            "fid_input_iscd": symbol,
+        }
+        return self._request_with_token_refresh("GET", url, headers, params)
+
+    def fetch_balance_sheet(
+        self,
+        symbol: str,
+        period_type: str = "0",
+        market_code: str = "J"
+    ) -> dict:
+        """국내주식 대차대조표 조회 [v1_국내주식]
+
+        종목의 대차대조표 데이터를 조회합니다.
+
+        API 정보:
+            - 경로: /uapi/domestic-stock/v1/finance/balance-sheet
+            - TR ID: FHKST66430100
+            - 모의투자: 지원
+
+        Args:
+            symbol (str): 종목코드 6자리 (예: "005930")
+            period_type (str): 기간 구분 (기본값: "0")
+                - "0": 연간
+                - "1": 분기
+            market_code (str): 시장 분류 코드 (기본값: "J")
+
+        Returns:
+            dict: API 응답 딕셔너리
+                - output[]: 대차대조표 배열
+                    - stac_yymm: 결산 년월
+                    - cras: 유동자산
+                    - fxas: 고정자산
+                    - total_aset: 자산총계
+                    - flow_lblt: 유동부채
+                    - fix_lblt: 고정부채
+                    - total_lblt: 부채총계
+                    - cpfn: 자본금
+                    - cfp_surp: 자본잉여금
+                    - prfi_surp: 이익잉여금
+                    - total_cptl: 자본총계
+
+        Example:
+            >>> result = broker.fetch_balance_sheet("005930", "0")
+            >>> for row in result['output']:
+            ...     print(f"{row['stac_yymm']}: 자산총계={row['total_aset']}")
+        """
+        path = "uapi/domestic-stock/v1/finance/balance-sheet"
+        url = f"{self.base_url}/{path}"
+        headers = {
+            "content-type": "application/json",
+            "authorization": self.access_token,
+            "appKey": self.api_key,
+            "appSecret": self.api_secret,
+            "tr_id": "FHKST66430100"
+        }
+        params = {
+            "FID_DIV_CLS_CODE": period_type,
+            "fid_cond_mrkt_div_code": market_code,
+            "fid_input_iscd": symbol,
+        }
+        return self._request_with_token_refresh("GET", url, headers, params)
+
+    def fetch_profitability_ratio(
+        self,
+        symbol: str,
+        period_type: str = "0",
+        market_code: str = "J"
+    ) -> dict:
+        """국내주식 수익성비율 조회 [v1_국내주식]
+
+        종목의 수익성비율 데이터를 조회합니다.
+
+        API 정보:
+            - 경로: /uapi/domestic-stock/v1/finance/profit-ratio
+            - TR ID: FHKST66430400
+            - 모의투자: 지원
+
+        Args:
+            symbol (str): 종목코드 6자리 (예: "005930")
+            period_type (str): 기간 구분 (기본값: "0")
+                - "0": 연간
+                - "1": 분기
+            market_code (str): 시장 분류 코드 (기본값: "J")
+
+        Returns:
+            dict: API 응답 딕셔너리
+                - output[]: 수익성비율 배열
+                    - stac_yymm: 결산 년월
+                    - cptl_ntin_rate: 총자본 순이익율
+                    - self_cptl_ntin_inrt: 자기자본 순이익율
+                    - sale_ntin_rate: 매출액 순이익율
+                    - sale_totl_rate: 매출액 총이익율
+
+        Example:
+            >>> result = broker.fetch_profitability_ratio("005930", "0")
+            >>> for row in result['output']:
+            ...     print(f"{row['stac_yymm']}: 매출총이익율={row['sale_totl_rate']}")
+        """
+        path = "uapi/domestic-stock/v1/finance/profit-ratio"
+        url = f"{self.base_url}/{path}"
+        headers = {
+            "content-type": "application/json",
+            "authorization": self.access_token,
+            "appKey": self.api_key,
+            "appSecret": self.api_secret,
+            "tr_id": "FHKST66430400"
+        }
+        params = {
+            "FID_DIV_CLS_CODE": period_type,
+            "fid_cond_mrkt_div_code": market_code,
+            "fid_input_iscd": symbol,
+        }
+        return self._request_with_token_refresh("GET", url, headers, params)
+
+    def fetch_growth_ratio(
+        self,
+        symbol: str,
+        period_type: str = "0",
+        market_code: str = "J"
+    ) -> dict:
+        """국내주식 성장성비율 조회 [v1_국내주식]
+
+        종목의 성장성비율 데이터를 조회합니다.
+
+        API 정보:
+            - 경로: /uapi/domestic-stock/v1/finance/growth-ratio
+            - TR ID: FHKST66430800
+            - 모의투자: 지원
+
+        Args:
+            symbol (str): 종목코드 6자리 (예: "005930")
+            period_type (str): 기간 구분 (기본값: "0")
+                - "0": 연간
+                - "1": 분기
+            market_code (str): 시장 분류 코드 (기본값: "J")
+
+        Returns:
+            dict: API 응답 딕셔너리
+                - output[]: 성장성비율 배열
+                    - stac_yymm: 결산 년월
+                    - grs: 매출액 증가율
+                    - bsop_prfi_inrt: 영업이익 증가율
+                    - equt_inrt: 자기자본 증가율
+                    - totl_aset_inrt: 총자산 증가율
+
+        Example:
+            >>> result = broker.fetch_growth_ratio("005930", "0")
+            >>> for row in result['output']:
+            ...     print(f"{row['stac_yymm']}: 매출증가율={row['grs']}")
+        """
+        path = "uapi/domestic-stock/v1/finance/growth-ratio"
+        url = f"{self.base_url}/{path}"
+        headers = {
+            "content-type": "application/json",
+            "authorization": self.access_token,
+            "appKey": self.api_key,
+            "appSecret": self.api_secret,
+            "tr_id": "FHKST66430800"
+        }
+        params = {
+            "fid_div_cls_code": period_type,
+            "fid_cond_mrkt_div_code": market_code,
+            "fid_input_iscd": symbol,
+        }
+        return self._request_with_token_refresh("GET", url, headers, params)
