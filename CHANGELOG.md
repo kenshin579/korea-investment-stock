@@ -4,6 +4,35 @@
 
 ### Added
 
+#### API 확장 Phase 1: 15개 GET API 추가 (#124)
+
+차트, 시세 순위, 재무제표, 배당/업종 4개 카테고리에 걸쳐 15개 API를 추가합니다.
+
+**차트 데이터 API (3개)**:
+- `fetch_domestic_chart()` - 국내주식 기간별시세 (일/주/월/년봉)
+- `fetch_domestic_minute_chart()` - 주식당일분봉조회
+- `fetch_overseas_chart()` - 해외주식 기간별시세
+
+**시세 순위 API (4개)**:
+- `fetch_volume_ranking()` - 거래량순위
+- `fetch_change_rate_ranking()` - 등락률 순위
+- `fetch_market_cap_ranking()` - 시가총액 상위
+- `fetch_overseas_change_rate_ranking()` - 해외주식 상승율/하락율
+
+**재무제표 API (5개)**:
+- `fetch_financial_ratio()` - 재무비율 (ROE, EPS, BPS 등)
+- `fetch_income_statement()` - 손익계산서
+- `fetch_balance_sheet()` - 대차대조표
+- `fetch_profitability_ratio()` - 수익성비율
+- `fetch_growth_ratio()` - 성장성비율
+
+**배당 + 업종 API (3개)**:
+- `fetch_dividend_ranking()` - 배당률 상위
+- `fetch_industry_index()` - 업종 현재지수
+- `fetch_industry_category_price()` - 업종 구분별전체시세
+
+모든 API에 Cache 래퍼와 Rate Limit 래퍼가 포함됩니다.
+
 #### 시장별 투자자매매동향(시세) API 추가 (#120)
 
 시장별 투자자 유형(외국인, 개인, 기관 등)의 매매 현황을 시간대별로 조회합니다.

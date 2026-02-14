@@ -192,6 +192,236 @@ class CachedKoreaInvestment:
 
         return result
 
+    def fetch_domestic_chart(
+        self,
+        symbol: str,
+        period: str = "D",
+        start_date: str = "",
+        end_date: str = "",
+        adjusted: bool = True,
+        market_code: str = "J"
+    ) -> dict:
+        """국내주식기간별시세 조회 (캐싱 지원)"""
+        if not self.enable_cache:
+            return self.broker.fetch_domestic_chart(symbol, period, start_date, end_date, adjusted, market_code)
+
+        cache_key = self._make_cache_key("fetch_domestic_chart", symbol, period, start_date, end_date, adjusted, market_code)
+        cached_data = self.cache.get(cache_key)
+
+        if cached_data is not None:
+            return cached_data
+
+        result = self.broker.fetch_domestic_chart(symbol, period, start_date, end_date, adjusted, market_code)
+
+        if result.get('rt_cd') == '0':
+            self.cache.set(cache_key, result, self.ttl['price'])
+
+        return result
+
+    def fetch_domestic_minute_chart(
+        self,
+        symbol: str,
+        time_from: str = "",
+        market_code: str = "J"
+    ) -> dict:
+        """주식당일분봉조회 (캐싱 지원)"""
+        if not self.enable_cache:
+            return self.broker.fetch_domestic_minute_chart(symbol, time_from, market_code)
+
+        cache_key = self._make_cache_key("fetch_domestic_minute_chart", symbol, time_from, market_code)
+        cached_data = self.cache.get(cache_key)
+
+        if cached_data is not None:
+            return cached_data
+
+        result = self.broker.fetch_domestic_minute_chart(symbol, time_from, market_code)
+
+        if result.get('rt_cd') == '0':
+            self.cache.set(cache_key, result, self.ttl['price'])
+
+        return result
+
+    def fetch_overseas_chart(
+        self,
+        symbol: str,
+        country_code: str = "US",
+        period: str = "D",
+        end_date: str = "",
+        adjusted: bool = True
+    ) -> dict:
+        """해외주식 기간별시세 조회 (캐싱 지원)"""
+        if not self.enable_cache:
+            return self.broker.fetch_overseas_chart(symbol, country_code, period, end_date, adjusted)
+
+        cache_key = self._make_cache_key("fetch_overseas_chart", symbol, country_code, period, end_date, adjusted)
+        cached_data = self.cache.get(cache_key)
+
+        if cached_data is not None:
+            return cached_data
+
+        result = self.broker.fetch_overseas_chart(symbol, country_code, period, end_date, adjusted)
+
+        if result.get('rt_cd') == '0':
+            self.cache.set(cache_key, result, self.ttl['price'])
+
+        return result
+
+    def fetch_volume_ranking(self, market_code: str = "J", sort_by: str = "0") -> dict:
+        """거래량순위 조회 (캐싱 지원)"""
+        if not self.enable_cache:
+            return self.broker.fetch_volume_ranking(market_code, sort_by)
+        cache_key = self._make_cache_key("fetch_volume_ranking", market_code, sort_by)
+        cached_data = self.cache.get(cache_key)
+        if cached_data is not None:
+            return cached_data
+        result = self.broker.fetch_volume_ranking(market_code, sort_by)
+        if result.get('rt_cd') == '0':
+            self.cache.set(cache_key, result, self.ttl['price'])
+        return result
+
+    def fetch_change_rate_ranking(self, market_code: str = "J", sort_order: str = "0", period_days: str = "0") -> dict:
+        """등락률 순위 조회 (캐싱 지원)"""
+        if not self.enable_cache:
+            return self.broker.fetch_change_rate_ranking(market_code, sort_order, period_days)
+        cache_key = self._make_cache_key("fetch_change_rate_ranking", market_code, sort_order, period_days)
+        cached_data = self.cache.get(cache_key)
+        if cached_data is not None:
+            return cached_data
+        result = self.broker.fetch_change_rate_ranking(market_code, sort_order, period_days)
+        if result.get('rt_cd') == '0':
+            self.cache.set(cache_key, result, self.ttl['price'])
+        return result
+
+    def fetch_market_cap_ranking(self, market_code: str = "J", target_market: str = "0000") -> dict:
+        """시가총액 상위 조회 (캐싱 지원)"""
+        if not self.enable_cache:
+            return self.broker.fetch_market_cap_ranking(market_code, target_market)
+        cache_key = self._make_cache_key("fetch_market_cap_ranking", market_code, target_market)
+        cached_data = self.cache.get(cache_key)
+        if cached_data is not None:
+            return cached_data
+        result = self.broker.fetch_market_cap_ranking(market_code, target_market)
+        if result.get('rt_cd') == '0':
+            self.cache.set(cache_key, result, self.ttl['price'])
+        return result
+
+    def fetch_overseas_change_rate_ranking(self, country_code: str = "US", sort_order: str = "1", period: str = "0", volume_filter: str = "0") -> dict:
+        """해외주식 상승율/하락율 조회 (캐싱 지원)"""
+        if not self.enable_cache:
+            return self.broker.fetch_overseas_change_rate_ranking(country_code, sort_order, period, volume_filter)
+        cache_key = self._make_cache_key("fetch_overseas_change_rate_ranking", country_code, sort_order, period, volume_filter)
+        cached_data = self.cache.get(cache_key)
+        if cached_data is not None:
+            return cached_data
+        result = self.broker.fetch_overseas_change_rate_ranking(country_code, sort_order, period, volume_filter)
+        if result.get('rt_cd') == '0':
+            self.cache.set(cache_key, result, self.ttl['price'])
+        return result
+
+    def fetch_financial_ratio(self, symbol: str, period_type: str = "0", market_code: str = "J") -> dict:
+        """재무비율 조회 (캐싱 지원)"""
+        if not self.enable_cache:
+            return self.broker.fetch_financial_ratio(symbol, period_type, market_code)
+        cache_key = self._make_cache_key("fetch_financial_ratio", symbol, period_type, market_code)
+        cached_data = self.cache.get(cache_key)
+        if cached_data is not None:
+            return cached_data
+        result = self.broker.fetch_financial_ratio(symbol, period_type, market_code)
+        if result.get('rt_cd') == '0':
+            self.cache.set(cache_key, result, self.ttl['stock_info'])
+        return result
+
+    def fetch_income_statement(self, symbol: str, period_type: str = "0", market_code: str = "J") -> dict:
+        """손익계산서 조회 (캐싱 지원)"""
+        if not self.enable_cache:
+            return self.broker.fetch_income_statement(symbol, period_type, market_code)
+        cache_key = self._make_cache_key("fetch_income_statement", symbol, period_type, market_code)
+        cached_data = self.cache.get(cache_key)
+        if cached_data is not None:
+            return cached_data
+        result = self.broker.fetch_income_statement(symbol, period_type, market_code)
+        if result.get('rt_cd') == '0':
+            self.cache.set(cache_key, result, self.ttl['stock_info'])
+        return result
+
+    def fetch_balance_sheet(self, symbol: str, period_type: str = "0", market_code: str = "J") -> dict:
+        """대차대조표 조회 (캐싱 지원)"""
+        if not self.enable_cache:
+            return self.broker.fetch_balance_sheet(symbol, period_type, market_code)
+        cache_key = self._make_cache_key("fetch_balance_sheet", symbol, period_type, market_code)
+        cached_data = self.cache.get(cache_key)
+        if cached_data is not None:
+            return cached_data
+        result = self.broker.fetch_balance_sheet(symbol, period_type, market_code)
+        if result.get('rt_cd') == '0':
+            self.cache.set(cache_key, result, self.ttl['stock_info'])
+        return result
+
+    def fetch_profitability_ratio(self, symbol: str, period_type: str = "0", market_code: str = "J") -> dict:
+        """수익성비율 조회 (캐싱 지원)"""
+        if not self.enable_cache:
+            return self.broker.fetch_profitability_ratio(symbol, period_type, market_code)
+        cache_key = self._make_cache_key("fetch_profitability_ratio", symbol, period_type, market_code)
+        cached_data = self.cache.get(cache_key)
+        if cached_data is not None:
+            return cached_data
+        result = self.broker.fetch_profitability_ratio(symbol, period_type, market_code)
+        if result.get('rt_cd') == '0':
+            self.cache.set(cache_key, result, self.ttl['stock_info'])
+        return result
+
+    def fetch_growth_ratio(self, symbol: str, period_type: str = "0", market_code: str = "J") -> dict:
+        """성장성비율 조회 (캐싱 지원)"""
+        if not self.enable_cache:
+            return self.broker.fetch_growth_ratio(symbol, period_type, market_code)
+        cache_key = self._make_cache_key("fetch_growth_ratio", symbol, period_type, market_code)
+        cached_data = self.cache.get(cache_key)
+        if cached_data is not None:
+            return cached_data
+        result = self.broker.fetch_growth_ratio(symbol, period_type, market_code)
+        if result.get('rt_cd') == '0':
+            self.cache.set(cache_key, result, self.ttl['stock_info'])
+        return result
+
+    def fetch_dividend_ranking(self, market_type: str = "0", dividend_type: str = "2", start_date: str = "", end_date: str = "", settlement_type: str = "0") -> dict:
+        """배당률 상위 조회 (캐싱 지원)"""
+        if not self.enable_cache:
+            return self.broker.fetch_dividend_ranking(market_type, dividend_type, start_date, end_date, settlement_type)
+        cache_key = self._make_cache_key("fetch_dividend_ranking", market_type, dividend_type, start_date, end_date, settlement_type)
+        cached_data = self.cache.get(cache_key)
+        if cached_data is not None:
+            return cached_data
+        result = self.broker.fetch_dividend_ranking(market_type, dividend_type, start_date, end_date, settlement_type)
+        if result.get('rt_cd') == '0':
+            self.cache.set(cache_key, result, self.ttl['stock_info'])
+        return result
+
+    def fetch_industry_index(self, industry_code: str = "0001") -> dict:
+        """업종 현재지수 조회 (캐싱 지원)"""
+        if not self.enable_cache:
+            return self.broker.fetch_industry_index(industry_code)
+        cache_key = self._make_cache_key("fetch_industry_index", industry_code)
+        cached_data = self.cache.get(cache_key)
+        if cached_data is not None:
+            return cached_data
+        result = self.broker.fetch_industry_index(industry_code)
+        if result.get('rt_cd') == '0':
+            self.cache.set(cache_key, result, self.ttl['stock_info'])
+        return result
+
+    def fetch_industry_category_price(self, market_type: str = "K", category_code: str = "0") -> dict:
+        """업종 구분별전체시세 조회 (캐싱 지원)"""
+        if not self.enable_cache:
+            return self.broker.fetch_industry_category_price(market_type, category_code)
+        cache_key = self._make_cache_key("fetch_industry_category_price", market_type, category_code)
+        cached_data = self.cache.get(cache_key)
+        if cached_data is not None:
+            return cached_data
+        result = self.broker.fetch_industry_category_price(market_type, category_code)
+        if result.get('rt_cd') == '0':
+            self.cache.set(cache_key, result, self.ttl['stock_info'])
+        return result
+
     def invalidate_cache(self, method: Optional[str] = None):
         """캐시 무효화"""
         if not self.enable_cache:

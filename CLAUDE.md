@@ -207,7 +207,7 @@ Return raw API response
 - `KoreaInvestment`: Primary API interface
 - Context manager pattern (`__enter__`, `__exit__`)
 - Token management (`issue_access_token()`)
-- Public API methods (18 total):
+- Public API methods (33 total):
   - `fetch_price(symbol, market)` - Unified KR/US price query
   - `fetch_domestic_price(market_code, symbol)` - KR stocks
   - `fetch_etf_domestic_price(market_code, symbol)` - KR ETFs
@@ -218,6 +218,21 @@ Return raw API response
   - `fetch_kosdaq_symbols()` - KOSDAQ symbol list
   - `fetch_ipo_schedule()` - IPO schedule
   - `fetch_investor_trading_by_stock_daily(symbol, date, market_code)` - 종목별 투자자매매동향(일별)
+  - `fetch_domestic_chart(symbol, period, start_date, end_date)` - 국내주식 기간별시세
+  - `fetch_domestic_minute_chart(symbol, time_from)` - 주식당일분봉조회
+  - `fetch_overseas_chart(symbol, country_code, period)` - 해외주식 기간별시세
+  - `fetch_volume_ranking(market_code, sort_by)` - 거래량순위
+  - `fetch_change_rate_ranking(market_code, sort_order)` - 등락률 순위
+  - `fetch_market_cap_ranking(market_code, target_market)` - 시가총액 상위
+  - `fetch_overseas_change_rate_ranking(country_code, sort_order)` - 해외주식 등락률
+  - `fetch_financial_ratio(symbol, period_type)` - 재무비율
+  - `fetch_income_statement(symbol, period_type)` - 손익계산서
+  - `fetch_balance_sheet(symbol, period_type)` - 대차대조표
+  - `fetch_profitability_ratio(symbol, period_type)` - 수익성비율
+  - `fetch_growth_ratio(symbol, period_type)` - 성장성비율
+  - `fetch_dividend_ranking(market_type, dividend_type)` - 배당률 상위
+  - `fetch_industry_index(industry_code)` - 업종 현재지수
+  - `fetch_industry_category_price(market_type, category_code)` - 업종 구분별전체시세
   - IPO helper methods (9 total)
 
 ### Package Structure
