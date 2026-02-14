@@ -33,8 +33,8 @@
 
 ### 문서 및 버전
 
-- [ ] `CHANGELOG.md` 업데이트
-- [ ] `CLAUDE.md` 메서드 목록 업데이트
+- [x] `CHANGELOG.md` 업데이트
+- [x] `CLAUDE.md` 메서드 목록 업데이트
 - [ ] PR 생성 및 머지
 
 ---
@@ -77,8 +77,8 @@
 
 ### 문서 및 버전
 
-- [ ] `CHANGELOG.md` 업데이트
-- [ ] `CLAUDE.md` 메서드 목록 업데이트
+- [x] `CHANGELOG.md` 업데이트
+- [x] `CLAUDE.md` 메서드 목록 업데이트
 - [ ] PR 생성 및 머지
 
 ---
@@ -119,8 +119,8 @@
 
 ### 문서 및 버전
 
-- [ ] `CHANGELOG.md` 업데이트
-- [ ] `CLAUDE.md` 메서드 목록 업데이트
+- [x] `CHANGELOG.md` 업데이트
+- [x] `CLAUDE.md` 메서드 목록 업데이트
 - [ ] PR 생성 및 머지
 
 ---
