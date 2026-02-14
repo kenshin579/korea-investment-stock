@@ -383,6 +383,45 @@ class CachedKoreaInvestment:
             self.cache.set(cache_key, result, self.ttl['stock_info'])
         return result
 
+    def fetch_dividend_ranking(self, market_type: str = "0", dividend_type: str = "2", start_date: str = "", end_date: str = "", settlement_type: str = "0") -> dict:
+        """배당률 상위 조회 (캐싱 지원)"""
+        if not self.enable_cache:
+            return self.broker.fetch_dividend_ranking(market_type, dividend_type, start_date, end_date, settlement_type)
+        cache_key = self._make_cache_key("fetch_dividend_ranking", market_type, dividend_type, start_date, end_date, settlement_type)
+        cached_data = self.cache.get(cache_key)
+        if cached_data is not None:
+            return cached_data
+        result = self.broker.fetch_dividend_ranking(market_type, dividend_type, start_date, end_date, settlement_type)
+        if result.get('rt_cd') == '0':
+            self.cache.set(cache_key, result, self.ttl['stock_info'])
+        return result
+
+    def fetch_industry_index(self, industry_code: str = "0001") -> dict:
+        """업종 현재지수 조회 (캐싱 지원)"""
+        if not self.enable_cache:
+            return self.broker.fetch_industry_index(industry_code)
+        cache_key = self._make_cache_key("fetch_industry_index", industry_code)
+        cached_data = self.cache.get(cache_key)
+        if cached_data is not None:
+            return cached_data
+        result = self.broker.fetch_industry_index(industry_code)
+        if result.get('rt_cd') == '0':
+            self.cache.set(cache_key, result, self.ttl['stock_info'])
+        return result
+
+    def fetch_industry_category_price(self, market_type: str = "K", category_code: str = "0") -> dict:
+        """업종 구분별전체시세 조회 (캐싱 지원)"""
+        if not self.enable_cache:
+            return self.broker.fetch_industry_category_price(market_type, category_code)
+        cache_key = self._make_cache_key("fetch_industry_category_price", market_type, category_code)
+        cached_data = self.cache.get(cache_key)
+        if cached_data is not None:
+            return cached_data
+        result = self.broker.fetch_industry_category_price(market_type, category_code)
+        if result.get('rt_cd') == '0':
+            self.cache.set(cache_key, result, self.ttl['stock_info'])
+        return result
+
     def invalidate_cache(self, method: Optional[str] = None):
         """캐시 무효화"""
         if not self.enable_cache:

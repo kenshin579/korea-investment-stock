@@ -230,6 +230,23 @@ class RateLimitedKoreaInvestment:
         self._rate_limiter.wait()
         return self._broker.fetch_growth_ratio(symbol, period_type, market_code)
 
+    # === 배당 + 업종 API ===
+
+    def fetch_dividend_ranking(self, market_type: str = "0", dividend_type: str = "2", start_date: str = "", end_date: str = "", settlement_type: str = "0") -> Dict[str, Any]:
+        """속도 제한이 적용된 배당률 상위 조회"""
+        self._rate_limiter.wait()
+        return self._broker.fetch_dividend_ranking(market_type, dividend_type, start_date, end_date, settlement_type)
+
+    def fetch_industry_index(self, industry_code: str = "0001") -> Dict[str, Any]:
+        """속도 제한이 적용된 업종 현재지수 조회"""
+        self._rate_limiter.wait()
+        return self._broker.fetch_industry_index(industry_code)
+
+    def fetch_industry_category_price(self, market_type: str = "K", category_code: str = "0") -> Dict[str, Any]:
+        """속도 제한이 적용된 업종 구분별전체시세 조회"""
+        self._rate_limiter.wait()
+        return self._broker.fetch_industry_category_price(market_type, category_code)
+
     # === IPO 헬퍼 메서드들 (9개) ===
 
     def get_ipo_schedule_details(self, *args, **kwargs):

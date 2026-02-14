@@ -1804,3 +1804,194 @@ class KoreaInvestment:
             "fid_input_iscd": symbol,
         }
         return self._request_with_token_refresh("GET", url, headers, params)
+
+    # === 배당 + 업종 API ===
+
+    def fetch_dividend_ranking(
+        self,
+        market_type: str = "0",
+        dividend_type: str = "2",
+        start_date: str = "",
+        end_date: str = "",
+        settlement_type: str = "0"
+    ) -> dict:
+        """국내주식 배당률 상위 조회 [v1_국내주식]
+
+        배당률 기준 종목 순위를 조회합니다. 최대 30건.
+
+        API 정보:
+            - 경로: /uapi/domestic-stock/v1/ranking/dividend-rate
+            - TR ID: HHKDB13470100
+            - 모의투자: 미지원 (실전 전용)
+
+        Args:
+            market_type (str): 시장 구분 (기본값: "0")
+                - "0": 전체
+                - "1": 코스피
+                - "2": 코스피200
+                - "3": 코스닥
+            dividend_type (str): 배당 구분 (기본값: "2")
+                - "1": 주식배당
+                - "2": 현금배당
+            start_date (str): 시작일 YYYYMMDD (예: "20240101")
+            end_date (str): 종료일 YYYYMMDD (예: "20241231")
+            settlement_type (str): 결산 구분 (기본값: "0")
+                - "0": 전체
+                - "1": 결산배당
+                - "2": 중간배당
+
+        Returns:
+            dict: API 응답 딕셔너리
+                - output1[]: 배당률 순위 배열
+                    - rank: 순위
+                    - sht_cd: 종목코드
+                    - isin_name: 종목명
+                    - record_date: 기준일
+                    - per_sto_divi_amt: 배당금
+                    - divi_rate: 배당률 (%)
+                    - divi_kind: 배당종류
+
+        Example:
+            >>> result = broker.fetch_dividend_ranking("1", "2", "20240101", "20241231")
+            >>> for stock in result['output1']:
+            ...     print(f"{stock['rank']}위: {stock['isin_name']} ({stock['divi_rate']}%)")
+        """
+        path = "uapi/domestic-stock/v1/ranking/dividend-rate"
+        url = f"{self.base_url}/{path}"
+        headers = {
+            "content-type": "application/json",
+            "authorization": self.access_token,
+            "appKey": self.api_key,
+            "appSecret": self.api_secret,
+            "tr_id": "HHKDB13470100"
+        }
+        params = {
+            "CTS_AREA": "",
+            "GB1": market_type,
+            "UPJONG": "",
+            "GB2": "0",
+            "GB3": dividend_type,
+            "F_DT": start_date,
+            "T_DT": end_date,
+            "GB4": settlement_type,
+        }
+        return self._request_with_token_refresh("GET", url, headers, params)
+
+    def fetch_industry_index(
+        self,
+        industry_code: str = "0001"
+    ) -> dict:
+        """국내업종 현재지수 조회 [v1_국내주식]
+
+        업종 현재 지수를 조회합니다.
+
+        API 정보:
+            - 경로: /uapi/domestic-stock/v1/quotations/inquire-index-price
+            - TR ID: FHPUP02100000
+            - 모의투자: 지원
+
+        Args:
+            industry_code (str): 업종 코드 (기본값: "0001")
+                - "0001": 코스피 종합
+                - "1001": 코스닥 종합
+                - "2001": 코스피200
+
+        Returns:
+            dict: API 응답 딕셔너리
+                - output: 업종 지수 정보 (단일 객체)
+                    - bstp_nmix_prpr: 업종 지수 현재가
+                    - bstp_nmix_prdy_vrss: 전일 대비
+                    - prdy_vrss_sign: 전일 대비 부호
+                    - bstp_nmix_prdy_ctrt: 전일 대비율
+                    - acml_vol: 누적 거래량
+                    - acml_tr_pbmn: 누적 거래대금
+                    - ascn_issu_cnt: 상승 종목 수
+                    - down_issu_cnt: 하락 종목 수
+
+        Example:
+            >>> result = broker.fetch_industry_index("0001")
+            >>> output = result['output']
+            >>> print(f"코스피: {output['bstp_nmix_prpr']} ({output['bstp_nmix_prdy_ctrt']}%)")
+        """
+        path = "uapi/domestic-stock/v1/quotations/inquire-index-price"
+        url = f"{self.base_url}/{path}"
+        headers = {
+            "content-type": "application/json",
+            "authorization": self.access_token,
+            "appKey": self.api_key,
+            "appSecret": self.api_secret,
+            "tr_id": "FHPUP02100000"
+        }
+        params = {
+            "FID_COND_MRKT_DIV_CODE": "U",
+            "FID_INPUT_ISCD": industry_code,
+        }
+        return self._request_with_token_refresh("GET", url, headers, params)
+
+    def fetch_industry_category_price(
+        self,
+        market_type: str = "K",
+        category_code: str = "0"
+    ) -> dict:
+        """국내업종 구분별전체시세 조회 [v1_국내주식]
+
+        업종별 전체 시세를 조회합니다.
+
+        API 정보:
+            - 경로: /uapi/domestic-stock/v1/quotations/inquire-index-category-price
+            - TR ID: FHPUP02140000
+            - 모의투자: 지원
+
+        Args:
+            market_type (str): 시장 구분 (기본값: "K")
+                - "K": 거래소 (코스피)
+                - "Q": 코스닥
+                - "K2": 코스피200
+            category_code (str): 카테고리 코드 (기본값: "0")
+                거래소(K): "0":전업종, "1":기타, "2":자본금, "3":상업별
+                코스닥(Q): "0":전업종, "1":기타, "2":벤처, "3":일반
+                코스피200(K2): "0":전업종
+
+        Returns:
+            dict: API 응답 딕셔너리
+                - output1: 메인 지수 요약 (단일 객체)
+                    - bstp_nmix_prpr: 업종 지수 현재가
+                    - bstp_nmix_prdy_vrss: 전일 대비
+                    - bstp_nmix_prdy_ctrt: 전일 대비율
+                    - ascn_issu_cnt: 상승 종목 수
+                    - down_issu_cnt: 하락 종목 수
+                - output2[]: 업종별 상세 배열
+                    - bstp_cls_code: 업종 구분 코드
+                    - hts_kor_isnm: 업종명
+                    - bstp_nmix_prpr: 업종 지수 현재가
+                    - bstp_nmix_prdy_vrss: 전일 대비
+                    - bstp_nmix_prdy_ctrt: 전일 대비율
+                    - acml_vol: 누적 거래량
+                    - acml_tr_pbmn: 누적 거래대금
+
+        Example:
+            >>> result = broker.fetch_industry_category_price("K", "0")
+            >>> for sector in result['output2']:
+            ...     print(f"{sector['hts_kor_isnm']}: {sector['bstp_nmix_prpr']}")
+        """
+        # market_type에 따라 industry_code 매핑
+        industry_code_map = {"K": "0001", "Q": "1001", "K2": "2001"}
+        industry_code = industry_code_map.get(market_type, "0001")
+
+        path = "uapi/domestic-stock/v1/quotations/inquire-index-category-price"
+        url = f"{self.base_url}/{path}"
+        headers = {
+            "content-type": "application/json",
+            "authorization": self.access_token,
+            "appKey": self.api_key,
+            "appSecret": self.api_secret,
+            "tr_id": "FHPUP02140000"
+        }
+        params = {
+            "FID_COND_MRKT_DIV_CODE": "U",
+            "FID_INPUT_ISCD": industry_code,
+            "FID_COND_SCR_DIV_CODE": "20214",
+            "FID_MRKT_CLS_CODE": market_type,
+            "FID_BLNG_CLS_CODE": category_code,
+        }
+        return self._request_with_token_refresh("GET", url, headers, params)

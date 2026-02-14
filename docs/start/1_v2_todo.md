@@ -129,34 +129,34 @@
 
 ### 메인 클래스 (`korea_investment_stock.py`)
 
-- [ ] `fetch_dividend_ranking()` 구현 (TR ID: HHKDB13470100)
-- [ ] `fetch_industry_index()` 구현 (TR ID: FHPUP02100000)
-- [ ] `fetch_industry_category_price()` 구현 (TR ID: FHPUP02140000)
+- [x] `fetch_dividend_ranking()` 구현 (TR ID: HHKDB13470100)
+- [x] `fetch_industry_index()` 구현 (TR ID: FHPUP02100000)
+- [x] `fetch_industry_category_price()` 구현 (TR ID: FHPUP02140000)
 - [ ] `fetch_dividend_schedule()` 구현 (API 문서 확인 후, 후순위)
 
 ### 상수 (`constants.py`)
 
-- [ ] `INDUSTRY_INDEX_CODE` 추가
+- [x] `INDUSTRY_INDEX_CODE` 추가 → 메서드 내부에서 직접 처리 (별도 상수 불필요)
 
 ### 캐시 래퍼 (`cached_korea_investment.py`)
 
-- [ ] `fetch_dividend_ranking()` 캐시 래퍼 추가 (TTL: stock_info)
-- [ ] `fetch_industry_index()` 캐시 래퍼 추가 (TTL: stock_info)
-- [ ] `fetch_industry_category_price()` 캐시 래퍼 추가 (TTL: stock_info)
+- [x] `fetch_dividend_ranking()` 캐시 래퍼 추가 (TTL: stock_info)
+- [x] `fetch_industry_index()` 캐시 래퍼 추가 (TTL: stock_info)
+- [x] `fetch_industry_category_price()` 캐시 래퍼 추가 (TTL: stock_info)
 - [ ] `fetch_dividend_schedule()` 캐시 래퍼 추가 (문서 확인 후)
 
 ### Rate Limit 래퍼 (`rate_limited_korea_investment.py`)
 
-- [ ] `fetch_dividend_ranking()` rate limit 래퍼 추가
-- [ ] `fetch_industry_index()` rate limit 래퍼 추가
-- [ ] `fetch_industry_category_price()` rate limit 래퍼 추가
+- [x] `fetch_dividend_ranking()` rate limit 래퍼 추가
+- [x] `fetch_industry_index()` rate limit 래퍼 추가
+- [x] `fetch_industry_category_price()` rate limit 래퍼 추가
 - [ ] `fetch_dividend_schedule()` rate limit 래퍼 추가 (문서 확인 후)
 
 ### 테스트 (`tests/test_dividend_industry_apis.py`)
 
-- [ ] `TestFetchDividendRanking` - 성공 응답, URL/헤더, 파라미터
-- [ ] `TestFetchIndustryIndex` - 성공 응답, URL/헤더, 파라미터 (업종코드)
-- [ ] `TestFetchIndustryCategoryPrice` - 성공 응답, URL/헤더, 파라미터 (시장구분)
+- [x] `TestFetchDividendRanking` - 성공 응답, URL/헤더, 파라미터
+- [x] `TestFetchIndustryIndex` - 성공 응답, URL/헤더, 파라미터 (업종코드)
+- [x] `TestFetchIndustryCategoryPrice` - 성공 응답, URL/헤더, 파라미터 (시장구분)
 - [ ] `TestFetchDividendSchedule` - (문서 확인 후)
 
 ### 문서 및 버전
