@@ -1,6 +1,6 @@
 """Phase 1 API 확장 통합 테스트 (15개 API)
 
-실제 API 자격 증명이 필요합니다.
+API 환경 변수가 설정되어 있으면 자동 실행, 없으면 스킵됩니다.
 환경 변수 설정:
     - KOREA_INVESTMENT_API_KEY
     - KOREA_INVESTMENT_API_SECRET
@@ -9,15 +9,25 @@
 실행:
     pytest korea_investment_stock/tests/test_integration_apis.py -v
 """
+import os
 import pytest
 import time
 from datetime import datetime, timedelta
+
+_has_credentials = all(
+    os.environ.get(v)
+    for v in ("KOREA_INVESTMENT_API_KEY", "KOREA_INVESTMENT_API_SECRET", "KOREA_INVESTMENT_ACCOUNT_NO")
+)
+
+pytestmark = [
+    pytest.mark.integration,
+    pytest.mark.skipif(not _has_credentials, reason="API 자격 증명 환경 변수 미설정"),
+]
 
 
 @pytest.fixture(scope="module")
 def broker():
     """실제 API 자격 증명으로 broker 생성 (모듈 단위 재사용)"""
-    import os
     from korea_investment_stock import KoreaInvestment
 
     # Redis가 없는 환경에서도 동작하도록 file 토큰 저장소 사용
@@ -40,7 +50,6 @@ def _wait():
 
 # === Step 1: 차트 데이터 API ===
 
-@pytest.mark.integration
 class TestDomesticChartIntegration:
 
     def test_samsung_daily_chart(self, broker):
@@ -80,7 +89,6 @@ class TestDomesticChartIntegration:
         assert result['rt_cd'] == '0', f"API Error: {result.get('msg1')}"
 
 
-@pytest.mark.integration
 class TestDomesticMinuteChartIntegration:
 
     def test_samsung_minute_chart(self, broker):
@@ -103,7 +111,6 @@ class TestDomesticMinuteChartIntegration:
                 assert field in candle, f"Missing field: {field}"
 
 
-@pytest.mark.integration
 class TestOverseasChartIntegration:
 
     def test_apple_daily_chart(self, broker):
@@ -130,7 +137,6 @@ class TestOverseasChartIntegration:
 
 # === Step 2: 시세 순위 API ===
 
-@pytest.mark.integration
 class TestVolumeRankingIntegration:
 
     def test_volume_ranking(self, broker):
@@ -154,7 +160,6 @@ class TestVolumeRankingIntegration:
                 assert field in stock, f"Missing field: {field}"
 
 
-@pytest.mark.integration
 class TestChangeRateRankingIntegration:
 
     def test_rise_ranking(self, broker):
@@ -173,7 +178,6 @@ class TestChangeRateRankingIntegration:
         assert result['rt_cd'] == '0', f"API Error: {result.get('msg1')}"
 
 
-@pytest.mark.integration
 class TestMarketCapRankingIntegration:
 
     def test_market_cap_ranking(self, broker):
@@ -197,7 +201,6 @@ class TestMarketCapRankingIntegration:
                 assert field in stock, f"Missing field: {field}"
 
 
-@pytest.mark.integration
 class TestOverseasChangeRateRankingIntegration:
 
     def test_us_rise_ranking(self, broker):
@@ -222,7 +225,6 @@ class TestOverseasChangeRateRankingIntegration:
 
 # === Step 3: 재무제표 API ===
 
-@pytest.mark.integration
 class TestFinancialRatioIntegration:
 
     def test_samsung_financial_ratio_annual(self, broker):
@@ -253,7 +255,6 @@ class TestFinancialRatioIntegration:
         assert result['rt_cd'] == '0', f"API Error: {result.get('msg1')}"
 
 
-@pytest.mark.integration
 class TestIncomeStatementIntegration:
 
     def test_samsung_income_statement(self, broker):
@@ -277,7 +278,6 @@ class TestIncomeStatementIntegration:
                 assert field in row, f"Missing field: {field}"
 
 
-@pytest.mark.integration
 class TestBalanceSheetIntegration:
 
     def test_samsung_balance_sheet(self, broker):
@@ -301,7 +301,6 @@ class TestBalanceSheetIntegration:
                 assert field in row, f"Missing field: {field}"
 
 
-@pytest.mark.integration
 class TestProfitabilityRatioIntegration:
 
     def test_samsung_profitability_ratio(self, broker):
@@ -324,7 +323,6 @@ class TestProfitabilityRatioIntegration:
                 assert field in row, f"Missing field: {field}"
 
 
-@pytest.mark.integration
 class TestGrowthRatioIntegration:
 
     def test_samsung_growth_ratio(self, broker):
@@ -349,7 +347,6 @@ class TestGrowthRatioIntegration:
 
 # === Step 4: 배당 + 업종 API ===
 
-@pytest.mark.integration
 class TestDividendRankingIntegration:
 
     def test_dividend_ranking(self, broker):
@@ -377,7 +374,6 @@ class TestDividendRankingIntegration:
                 assert field in row, f"Missing field: {field}"
 
 
-@pytest.mark.integration
 class TestIndustryIndexIntegration:
 
     def test_kospi_index(self, broker):
@@ -407,7 +403,6 @@ class TestIndustryIndexIntegration:
         assert result['rt_cd'] == '0', f"API Error: {result.get('msg1')}"
 
 
-@pytest.mark.integration
 class TestIndustryCategoryPriceIntegration:
 
     def test_kospi_category_price(self, broker):
