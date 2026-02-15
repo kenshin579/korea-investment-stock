@@ -163,12 +163,39 @@
 
 - [x] `CHANGELOG.md` 업데이트
 - [x] `CLAUDE.md` 메서드 목록 업데이트
-- [ ] 버전 업데이트 (PyPI 릴리스용)
+- [x] 버전 업데이트 (PyPI 릴리스용)
 - [x] PR #125 생성 및 머지
 
 ---
 
-## Step 5: DB 스키마 마이그레이션 → PR #5 (moneyflow.advenoh.pe.kr)
+## Step 5: stock-data-batch 수정 → PR #5
+
+### DB 모델 수정 (`database/models.py`)
+
+- [ ] `KRStock` 모델 필드명 변경 (API 원본 필드명)
+- [ ] `KRETF` 모델 필드명 변경
+- [ ] `USStock` 모델 필드명 변경
+- [ ] `USETF` 모델 필드명 변경
+- [ ] `KRInvestorTrading` 모델 필드명 변경
+- [ ] `MarketInvestorTrend` 모델 필드명 변경
+
+### 수집 로직 수정
+
+- [ ] `services/stock_collector.py` 필드 매핑 수정
+- [ ] `services/data_saver.py` UPSERT 함수 수정
+
+### korea-investment-stock 의존성
+
+- [ ] `pyproject.toml` 또는 `requirements.txt` 버전 업데이트
+
+### 테스트
+
+- [ ] 배치 테스트 실행 (`python test_integration.py --quick`)
+- [ ] 데이터 재수집 확인
+
+---
+
+## Step 6: DB 스키마 마이그레이션 → PR #6 (moneyflow.advenoh.pe.kr)
 
 ### 기존 테이블 DROP
 
@@ -202,30 +229,11 @@
 
 ---
 
-## Step 6: stock-data-batch 수정 → PR #6
+## Step 6.5: stock-data-batch 배포 → charts PR
 
-### DB 모델 수정 (`database/models.py`)
-
-- [ ] `KRStock` 모델 필드명 변경 (API 원본 필드명)
-- [ ] `KRETF` 모델 필드명 변경
-- [ ] `USStock` 모델 필드명 변경
-- [ ] `USETF` 모델 필드명 변경
-- [ ] `KRInvestorTrading` 모델 필드명 변경
-- [ ] `MarketInvestorTrend` 모델 필드명 변경
-
-### 수집 로직 수정
-
-- [ ] `services/stock_collector.py` 필드 매핑 수정
-- [ ] `services/data_saver.py` UPSERT 함수 수정
-
-### korea-investment-stock 의존성
-
-- [ ] `pyproject.toml` 또는 `requirements.txt` 버전 업데이트
-
-### 테스트
-
-- [ ] 배치 테스트 실행 (`python test_integration.py --quick`)
-- [ ] 데이터 재수집 확인
+- [ ] Docker 이미지 빌드 및 푸시 (`make docker-build && make docker-push`)
+- [ ] charts에서 stock-data-batch 이미지 버전 업데이트
+- [ ] ArgoCD sync
 
 ---
 
