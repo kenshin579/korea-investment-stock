@@ -11,6 +11,14 @@ import (
 	"net/http"
 )
 
+// KIS OpenAPI base URLs.
+const (
+	// RealEnv is the production endpoint.
+	RealEnv = "https://openapi.koreainvestment.com:9443"
+	// PaperEnv is the paper-trading (mock) endpoint.
+	PaperEnv = "https://openapivts.koreainvestment.com:29443"
+)
+
 // Client is the entry point of the kis library. Domain-specific operations
 // are grouped under sub-clients (Client.Domestic, Client.Overseas).
 //
@@ -20,6 +28,8 @@ type Client struct {
 	apiKey    string
 	apiSecret string
 	accountNo string
+
+	opts clientOptions
 
 	// Sub-clients. Initialized in NewClient.
 	Domestic *DomesticClient
@@ -38,7 +48,7 @@ type OverseasClient struct {
 	parent *Client
 }
 
-// Option configures a Client. See WithBaseURL, WithRetries, etc.
+// Option configures a Client. See WithBaseURL, WithRetries, etc. (added in Phase 1).
 type Option func(*clientOptions)
 
 type clientOptions struct {
@@ -50,17 +60,26 @@ type clientOptions struct {
 
 // NewClient constructs a kis Client.
 //
-// apiKey, apiSecret, accountNo are required. Phase 1 will add functional
-// options (WithBaseURL, WithRetries, WithRateLimit, WithHTTPClient,
+// apiKey, apiSecret, accountNo are required and must not be empty. Phase 1 will
+// add functional options (WithBaseURL, WithRetries, WithRateLimit, WithHTTPClient,
 // WithTokenStorage, WithLogger).
 func NewClient(apiKey, apiSecret, accountNo string, opts ...Option) (*Client, error) {
 	if apiKey == "" || apiSecret == "" || accountNo == "" {
-		return nil, errors.New("kis: apiKey, apiSecret, accountNo are all required")
+		return nil, errors.New("kis: apiKey, apiSecret, and accountNo are required and must not be empty")
+	}
+	cfg := clientOptions{
+		baseURL: RealEnv,
+		// retries / rateLimit defaults are set in Phase 1 alongside the
+		// httpclient / ratelimit packages.
+	}
+	for _, opt := range opts {
+		opt(&cfg)
 	}
 	c := &Client{
 		apiKey:    apiKey,
 		apiSecret: apiSecret,
 		accountNo: accountNo,
+		opts:      cfg,
 	}
 	c.Domestic = &DomesticClient{parent: c}
 	c.Overseas = &OverseasClient{parent: c}
