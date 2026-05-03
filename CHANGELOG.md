@@ -15,7 +15,7 @@
 
 상세 내용: [Phase 0 design spec](docs/superpowers/specs/2026-05-03-korea-investment-go-migration-design.md)
 
-### Added
+### Added (이 버전에 포함된 기능 — 기존 [Unreleased] 항목 유지)
 
 #### API 확장 Phase 1: 15개 GET API 추가 (#124)
 
