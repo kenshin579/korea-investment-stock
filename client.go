@@ -8,7 +8,11 @@ package kis
 
 import (
 	"errors"
+	"log/slog"
 	"net/http"
+	"time"
+
+	"github.com/kenshin579/korea-investment-stock/internal/token"
 )
 
 // KIS OpenAPI base URLs.
@@ -52,10 +56,15 @@ type OverseasClient struct {
 type Option func(*clientOptions)
 
 type clientOptions struct {
-	baseURL    string
-	retries    int
-	rateLimit  int
-	httpClient *http.Client
+	baseURL        string
+	retries        int
+	rateLimit      float64
+	httpClient     *http.Client
+	tokenStorage   token.Storage
+	masterCacheDir string
+	logger         *slog.Logger
+	timeout        time.Duration
+	userAgent      string
 }
 
 // NewClient constructs a kis Client.
