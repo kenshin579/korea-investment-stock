@@ -10,7 +10,7 @@ Go client library for the Korea Investment Securities OpenAPI.
 
 ## Stack
 
-Go 1.23+ · module `github.com/kenshin579/korea-investment-stock` · package `kis` · `go-resty/resty/v2` (HTTP, internal) · `shopspring/decimal` (가격) · `stretchr/testify` (test)
+Go 1.25+ (`golang.org/x/sync` v0.20+ 이 1.25 요구) · module `github.com/kenshin579/korea-investment-stock` · package `kis` · `go-resty/resty/v2` (HTTP, internal) · `shopspring/decimal` (가격) · `stretchr/testify` (test)
 
 ## Layout
 

@@ -6,7 +6,7 @@
 
 **Architecture:** TDD 기반. 모든 인프라는 `internal/` 아래에 두어 외부 노출 안 함. root 의 `client.go` 가 인프라를 wiring 하고 외부에는 functional options + 3개 진입점 (`NewClient`, `NewClientFromEnv`, `NewClientFromYAML`) 노출. Phase 1.2 부터 메서드 추가가 깔끔하게 되도록 sub-package (`domestic/`, `overseas/`) 의 `Client` struct 를 placeholder 로 정의.
 
-**Tech Stack:** Go 1.23+, `github.com/go-resty/resty/v2`, `github.com/shopspring/decimal`, `github.com/redis/go-redis/v9`, `gopkg.in/yaml.v3`, `github.com/jarcoal/httpmock`, `github.com/stretchr/testify`, `golang.org/x/sync/singleflight`
+**Tech Stack:** Go 1.25+ (`golang.org/x/sync` v0.20+ 이 1.25 요구), `github.com/go-resty/resty/v2`, `github.com/shopspring/decimal`, `github.com/redis/go-redis/v9`, `gopkg.in/yaml.v3`, `github.com/jarcoal/httpmock`, `github.com/stretchr/testify`, `golang.org/x/sync/singleflight`
 
 **참고 spec:**
 - Phase 1: `docs/superpowers/specs/2026-05-03-phase1-api-coverage-design.md` (commit `66d9733`)
