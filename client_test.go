@@ -1,8 +1,11 @@
 package kis
 
 import (
+	"context"
+	"net/http"
 	"testing"
 
+	"github.com/jarcoal/httpmock"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -36,4 +39,23 @@ func TestNewClient_Defaults(t *testing.T) {
 	assert.Equal(t, RealEnv, c.opts.baseURL)
 	assert.Equal(t, 3, c.opts.retries)
 	assert.Equal(t, 15.0, c.opts.rateLimit)
+}
+
+func TestNewClient_TokenIssue(t *testing.T) {
+	httpmock.Activate()
+	defer httpmock.DeactivateAndReset()
+	httpmock.RegisterResponder(http.MethodPost, "=~/oauth2/tokenP",
+		httpmock.NewStringResponder(200, `{
+			"access_token": "T",
+			"token_type": "Bearer",
+			"access_token_token_expired": "2099-12-31 23:59:59"
+		}`))
+
+	c, err := NewClient("k", "s", "acc",
+		WithHTTPClient(&http.Client{Transport: httpmock.DefaultTransport}),
+	)
+	require.NoError(t, err)
+	tok, err := c.IssueAccessToken(context.Background())
+	require.NoError(t, err)
+	assert.Equal(t, "Bearer T", tok)
 }
