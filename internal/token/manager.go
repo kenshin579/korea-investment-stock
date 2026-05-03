@@ -1,6 +1,7 @@
 package token
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -56,6 +57,11 @@ func NewManager(cfg Config) *Manager {
 
 // Get 은 유효한 토큰의 Bearer 문자열 반환.
 // 캐시된 토큰이 없거나 만료 임박이면 자동 발급.
+//
+// 주의 (singleflight 동작):
+// 동시 호출 시 첫 caller 의 ctx 가 inflight 발급 동안 사용됨. 첫 caller 가
+// ctx cancel 하면 다른 waiter 들도 모두 cancellation 에러 받음. token 발급은
+// 일반적으로 짧은 작업이라 caller 가 적절한 timeout 을 주면 문제 없음.
 func (m *Manager) Get(ctx context.Context) (string, error) {
 	if t := m.cachedValid(); t != nil {
 		return t.Bearer(), nil
@@ -90,12 +96,6 @@ func (m *Manager) Refresh(ctx context.Context) (string, error) {
 	return v.(*AccessToken).Bearer(), nil
 }
 
-// warmup 은 테스트 편의용 — 첫 토큰을 미리 받아둠.
-func (m *Manager) warmup(ctx context.Context) error {
-	_, err := m.Get(ctx)
-	return err
-}
-
 func (m *Manager) cachedValid() *AccessToken {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
@@ -120,7 +120,7 @@ func (m *Manager) issue(ctx context.Context) (*AccessToken, error) {
 	})
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost,
 		strings.TrimRight(m.cfg.BaseURL, "/")+oauthPath,
-		strings.NewReader(string(body)))
+		bytes.NewReader(body))
 	if err != nil {
 		return nil, err
 	}

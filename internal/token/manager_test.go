@@ -13,6 +13,12 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// warmup 은 테스트 편의용 — 첫 토큰을 미리 받아둠.
+func (m *Manager) warmup(ctx context.Context) error {
+	_, err := m.Get(ctx)
+	return err
+}
+
 func TestManager_Get_FreshFetch(t *testing.T) {
 	httpmock.Activate()
 	defer httpmock.DeactivateAndReset()
@@ -119,4 +125,37 @@ func TestManager_Get_Singleflight(t *testing.T) {
 	}
 	wg.Wait()
 	assert.Equal(t, int64(1), calls.Load(), "10 concurrent Get → 1 OAuth call (singleflight)")
+}
+
+func TestManager_Get_UsesStorageCache(t *testing.T) {
+	httpmock.Activate()
+	defer httpmock.DeactivateAndReset()
+	calls := atomic.Int64{}
+	httpmock.RegisterResponder(http.MethodPost, "=~/oauth2/tokenP",
+		func(req *http.Request) (*http.Response, error) {
+			calls.Add(1)
+			return httpmock.NewStringResponse(200, `{
+				"access_token": "should-not-be-used",
+				"token_type": "Bearer",
+				"access_token_token_expired": "2099-12-31 23:59:59"
+			}`), nil
+		})
+
+	storage := NewFileStorage(t.TempDir() + "/token.json")
+	// Storage 에 미리 유효한 토큰 저장
+	require.NoError(t, storage.Save(context.Background(), &AccessToken{
+		Value:     "from-storage",
+		TokenType: "Bearer",
+		ExpiresAt: time.Now().Add(1 * time.Hour),
+	}))
+
+	m := NewManager(Config{
+		Storage: storage, BaseURL: "https://x", APIKey: "k", APISecret: "s",
+		HTTPClient: http.DefaultClient,
+	})
+
+	bearer, err := m.Get(context.Background())
+	require.NoError(t, err)
+	assert.Equal(t, "Bearer from-storage", bearer)
+	assert.Equal(t, int64(0), calls.Load(), "should NOT call OAuth — token loaded from storage")
 }
