@@ -2,7 +2,20 @@
 
 ## [Unreleased]
 
-### Added
+> 본 repo 는 Go 로 마이그레이션 중입니다. Python 신규 기능 추가는 중단되었습니다.
+
+## [v0.19.0] — 2026-05-03
+
+### Deprecation Notice
+
+- **이 버전이 Python 라이브러리의 마지막 기능 release 입니다.** 이후 Go 모듈로 대체됩니다.
+- 마지막 Python 커밋은 `python-final` 태그로 영구 보존됩니다.
+- PyPI 패키지 자체는 archive 하지 않으며, critical security fix 만 v0.19.x patch 로 받을 수 있습니다.
+- 신규 사용자는 Go 모듈 (`github.com/kenshin579/korea-investment-stock`) 을 사용해주세요.
+
+상세 내용: [Phase 0 design spec](docs/superpowers/specs/2026-05-03-korea-investment-go-migration-design.md)
+
+### Added (이 버전에 포함된 기능 — 기존 [Unreleased] 항목 유지)
 
 #### API 확장 Phase 1: 15개 GET API 추가 (#124)
 
