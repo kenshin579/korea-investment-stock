@@ -1,0 +1,13 @@
+# Sample config for korea-investment-stock Go library.
+# Copy and edit before running examples/yaml_config/main.go.
+
+api_key: YOUR_API_KEY
+api_secret: YOUR_API_SECRET
+acc_no: "12345678-01"
+
+# Optional
+# base_url: https://openapi.koreainvestment.com:9443
+# token_storage_type: file
+# token_file: ~/.cache/kis/token.json
+# rate_limit: 15
+# retries: 3
