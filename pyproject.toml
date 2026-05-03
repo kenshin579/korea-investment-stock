@@ -5,7 +5,13 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "korea-investment-stock"
 dynamic = ["version"]
-description = "Pure Python wrapper for Korea Investment Securities OpenAPI"
+description = "[DEPRECATED — use the Go version] Python wrapper for Korea Investment Securities OpenAPI. This package is no longer maintained. New users should use the Go module at github.com/kenshin579/korea-investment-stock."
+classifiers = [
+    "Development Status :: 7 - Inactive",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+]
 authors = [
     { name = "Jonghun Yoo", email = "jonghun.yoo@pyquant.co.kr" },
     { name = "Brayden Jo", email = "brayden.jo@pyquant.co.kr" },
