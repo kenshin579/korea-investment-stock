@@ -1,3 +1,14 @@
+> ## ⚠️ DEPRECATED — 이 라이브러리는 더 이상 유지보수되지 않습니다
+>
+> 이 Python 패키지는 **`v0.19.0` 을 마지막으로 신규 기능 추가가 중단**되었습니다.
+> 신규 사용자는 같은 repo 의 **Go 모듈** 을 사용해주세요.
+>
+> - **Go 모듈**: `github.com/kenshin579/korea-investment-stock` (개발 중)
+> - **기존 Python v1.x 사용자**: 이 코드는 [`python-final`](https://github.com/kenshin579/korea-investment-stock/tree/python-final) 태그로 영구 보존됩니다. critical security fix 를 제외한 신규 PR 은 받지 않습니다.
+> - **마이그레이션 가이드**: 본 repo 의 [Phase 0 design spec](docs/superpowers/specs/2026-05-03-korea-investment-go-migration-design.md) 참고
+>
+> ---
+
 # 🚀 Korea Investment Stock
 
 [![PyPI version](https://badge.fury.io/py/korea-investment-stock.svg)](https://badge.fury.io/py/korea-investment-stock)
