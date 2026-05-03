@@ -24,12 +24,13 @@ type Cache struct {
 }
 
 // New 는 지정된 디렉터리와 TTL 로 Cache 생성.
-// dir 가 빈 문자열이면 DefaultDir() 사용.
+// dir 가 빈 문자열이면 DefaultDir() 사용. DefaultDir() 도 실패하면 os.TempDir()/kis 로 fallback.
 func New(dir string, ttl time.Duration) *Cache {
 	if dir == "" {
-		d, err := DefaultDir()
-		if err == nil {
+		if d, err := DefaultDir(); err == nil {
 			dir = d
+		} else {
+			dir = filepath.Join(os.TempDir(), "kis")
 		}
 	}
 	return &Cache{dir: dir, ttl: ttl}
@@ -72,7 +73,26 @@ func (c *Cache) Get(ctx context.Context, name string, fetch FetchFunc) ([]byte, 
 	if err := os.MkdirAll(c.dir, 0700); err != nil {
 		return nil, err
 	}
-	if err := os.WriteFile(path, data, 0600); err != nil {
+	// Atomic write: temp 파일에 쓰고 rename. 다운로드 중 process 죽어도 cache corrupt 안 됨.
+	tmp, err := os.CreateTemp(c.dir, ".tmp-"+name+"-*")
+	if err != nil {
+		return nil, err
+	}
+	tmpName := tmp.Name()
+	defer func() {
+		tmp.Close()
+		os.Remove(tmpName) // 성공 시 rename 후엔 no-op
+	}()
+	if _, err := tmp.Write(data); err != nil {
+		return nil, err
+	}
+	if err := tmp.Chmod(0600); err != nil {
+		return nil, err
+	}
+	if err := tmp.Close(); err != nil {
+		return nil, err
+	}
+	if err := os.Rename(tmpName, path); err != nil {
 		return nil, err
 	}
 	return data, nil
@@ -80,6 +100,8 @@ func (c *Cache) Get(ctx context.Context, name string, fetch FetchFunc) ([]byte, 
 
 // Clear 는 name 캐시 제거. 없으면 에러 없음.
 func (c *Cache) Clear(name string) error {
+	c.mu.Lock()
+	defer c.mu.Unlock()
 	err := os.Remove(filepath.Join(c.dir, name))
 	if errors.Is(err, fs.ErrNotExist) {
 		return nil

@@ -43,7 +43,7 @@ func TestCache_TTLExpired(t *testing.T) {
 	calls := atomic.Int64{}
 	fetch := func(ctx context.Context) ([]byte, error) {
 		calls.Add(1)
-		return []byte("v" + strings.Repeat("x", 1)), nil
+		return []byte("hello"), nil
 	}
 	_, _ = c.Get(context.Background(), "test.bin", fetch)
 	time.Sleep(10 * time.Millisecond)
@@ -73,4 +73,13 @@ func TestDefaultDir(t *testing.T) {
 	dir, err := DefaultDir()
 	require.NoError(t, err)
 	assert.True(t, strings.Contains(dir, "kis"), "default dir should contain 'kis'")
+}
+
+func TestCache_FetchError_ColdNoFallback(t *testing.T) {
+	c := New(t.TempDir(), 24*time.Hour)
+	sentinelErr := errors.New("network down")
+	_, err := c.Get(context.Background(), "test.bin", func(ctx context.Context) ([]byte, error) {
+		return nil, sentinelErr
+	})
+	assert.ErrorIs(t, err, sentinelErr)
 }
