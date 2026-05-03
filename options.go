@@ -44,6 +44,10 @@ func WithMasterCacheDir(dir string) Option {
 }
 
 // WithLogger 는 사용자 정의 slog logger.
+//
+// Phase 1.1 시점에서는 internal 패키지 (httpclient, ratelimit, token, mastercache) 가
+// logger 를 받지 않으므로 이 옵션은 placeholder. Phase 1.2+ 에서 internal 패키지
+// 들에 logger 주입 시 활성화.
 func WithLogger(l *slog.Logger) Option {
 	return func(o *clientOptions) { o.logger = l }
 }

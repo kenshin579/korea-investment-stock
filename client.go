@@ -37,7 +37,7 @@ type Client struct {
 
 	httpClient *httpclient.Client
 	tokenMgr   *token.Manager
-	masterC    *mastercache.Cache
+	masterC    *mastercache.Cache // Phase 1.2 의 FetchKospi/Kosdaq Symbols 가 사용 예정
 
 	Domestic *domestic.Client
 	Overseas *overseas.Client
@@ -120,6 +120,9 @@ func (c *Client) wireInfra() error {
 		HTTPClient: c.opts.httpClient,
 	})
 
+	// masterDir resolution 은 lenient: DefaultDir 실패 시 빈 문자열 → mastercache.New 가
+	// os.TempDir()/kis 로 자동 fallback. token storage 와의 strict-vs-lenient 차이는
+	// 의도적 — 토큰은 secret 이라 fallback 위치 특정 필수, master cache 는 단순 다운로드 캐시.
 	masterDir := c.opts.masterCacheDir
 	if masterDir == "" {
 		d, _ := mastercache.DefaultDir()
@@ -142,7 +145,7 @@ func (c *Client) resolveTokenStorage() (token.Storage, error) {
 }
 
 // newRedisStorage 는 NewClientFromEnv 에서 redis 옵션 시 호출.
-// (현재 client.go 에는 사용되지 않음 — from_env.go 에서 import)
+// (현재 client.go 내부에서는 사용되지 않음 — from_env.go (Task 16) 가 호출)
 func newRedisStorage(url, password string) (token.Storage, error) {
 	opts, err := redis.ParseURL(url)
 	if err != nil {
