@@ -1,5 +1,4 @@
-// Package ratelimit implements a token-bucket rate limiter shared across
-// goroutines. Default 15 req/sec.
+// Package ratelimit provides a request-spacing rate limiter for KIS API calls.
 //
-// Phase 0 skeleton.
+// Phase 1.1 implementation (was Phase 0 placeholder).
 package ratelimit

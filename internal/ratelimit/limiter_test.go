@@ -65,3 +65,13 @@ func TestLimiter_ConcurrentSafe(t *testing.T) {
 	}
 	assert.Equal(t, int64(50), l.Stats().TotalCalls)
 }
+
+func TestLimiter_Wait_PreCancelledContext(t *testing.T) {
+	l := New(1000) // 빠른 rate, throttle 거의 없음
+
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel() // 미리 취소
+
+	err := l.Wait(ctx)
+	assert.ErrorIs(t, err, context.Canceled, "pre-cancelled ctx should propagate error even on fast path")
+}

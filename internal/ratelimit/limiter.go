@@ -1,4 +1,6 @@
-// Package ratelimit 은 한투 API 호출 빈도를 제어하는 토큰 버킷 rate limiter 를 제공.
+// Package ratelimit 은 한투 API 호출 빈도를 제어하는 rate limiter 를 제공.
+//
+// 요청 간격을 minInterval 로 강제하는 leaky-bucket(request-spacing) 방식.
 //
 // 사용자에게 노출되지 않는 internal 패키지. kis.Client 가 내부적으로 사용.
 package ratelimit
@@ -9,7 +11,8 @@ import (
 	"time"
 )
 
-// Limiter 는 thread-safe 토큰 버킷 rate limiter.
+// Limiter 는 thread-safe leaky-bucket rate limiter.
+// 연속 호출 간격을 minInterval(= 1s/callsPerSec) 이상으로 유지.
 // callsPerSec 이 클수록 호출 빈도가 높아짐. Default 15.
 type Limiter struct {
 	callsPerSec    float64
@@ -43,6 +46,11 @@ func New(callsPerSec float64) *Limiter {
 
 // Wait 는 다음 호출이 허용될 때까지 대기.
 // ctx 가 done 되면 그 이유의 에러 반환 (sleep 인터럽트).
+//
+// 주의: ctx 가 sleep 도중 취소되어도 해당 슬롯(lastCall 예약)은 반환되지 않음.
+// 취소 비율이 높은 환경에서는 슬롯 낭비가 발생할 수 있음.
+// 또한 throttledCalls / totalWait 통계는 예약된 sleep 기준이라 ctx cancel 로
+// 조기 반환해도 감소하지 않음.
 func (l *Limiter) Wait(ctx context.Context) error {
 	l.mu.Lock()
 	now := time.Now()
@@ -60,7 +68,7 @@ func (l *Limiter) Wait(ctx context.Context) error {
 	l.mu.Unlock()
 
 	if sleep <= 0 {
-		return nil
+		return ctx.Err() // nil if active; propagate error if already cancelled
 	}
 
 	timer := time.NewTimer(sleep)
