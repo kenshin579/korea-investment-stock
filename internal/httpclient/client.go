@@ -55,10 +55,23 @@ func New(cfg Config) *Client {
 	if cfg.UserAgent == "" {
 		cfg.UserAgent = "korea-investment-stock-go"
 	}
+	// nil guard — 사용자가 Config 직접 만들 때 panic 방지.
+	// Production code path 는 root kis.NewClient 가 모두 채워서 옴.
+	if cfg.Limiter == nil {
+		cfg.Limiter = ratelimit.New(15)
+	}
+	// TokenMgr 는 nil 이면 단언적으로 panic — 사용자에게 명확한 에러:
+	// 토큰 매니저 없이는 한투 API 인증이 불가능하므로 default 도 의미 없음.
+	// (root NewClient 는 항상 주입하므로 이 경로는 직접 New() 호출 시만 도달.)
+	if cfg.TokenMgr == nil {
+		panic("httpclient: TokenMgr is required (typically set by kis.NewClient)")
+	}
 	r := resty.New().
 		SetBaseURL(strings.TrimRight(cfg.BaseURL, "/")).
 		SetTimeout(cfg.Timeout).
 		SetHeader("User-Agent", cfg.UserAgent)
+	// Note: SetTransport only — resty manages its own Timeout (cfg.Timeout).
+	// http.Client 의 Jar / CheckRedirect 는 의도적으로 forward 하지 않음.
 	if cfg.HTTPClient != nil {
 		r.SetTransport(cfg.HTTPClient.Transport)
 	}
@@ -87,7 +100,8 @@ type Response struct {
 	Raw     []byte          `json:"-"`
 }
 
-// APIError 는 한투 응답의 rt_cd != "0" 케이스. kis.APIError 와 동일 구조 (root 와 internal 분리).
+// APIError 는 한투 응답의 rt_cd != "0" 케이스 — internal 패키지 전용.
+// 외부 사용자에게는 root kis.APIError 로 wrap 되어 노출됨 (Task 14 의 NewClient 가 처리).
 type APIError struct {
 	RtCode  string
 	MsgCode string
@@ -125,6 +139,9 @@ func (c *Client) Do(ctx context.Context, req *Request) (*Response, error) {
 		if err != nil {
 			return nil, err
 		}
+		if resp == nil {
+			return nil, errors.New("kis: nil response after refresh")
+		}
 	}
 
 	if resp.RtCode != "0" {
@@ -159,7 +176,13 @@ func (c *Client) send(ctx context.Context, req *Request, bearer string) (*Respon
 			if attempt == c.cfg.Retries {
 				return nil, fmt.Errorf("kis: http: %w", err)
 			}
-			time.Sleep(backoff(attempt))
+			timer := time.NewTimer(backoff(attempt))
+			select {
+			case <-timer.C:
+			case <-ctx.Done():
+				timer.Stop()
+				return nil, ctx.Err()
+			}
 			continue
 		}
 
@@ -168,7 +191,13 @@ func (c *Client) send(ctx context.Context, req *Request, bearer string) (*Respon
 			if attempt == c.cfg.Retries {
 				return nil, fmt.Errorf("kis: http: %s after %d retries", lastHTTPErr, c.cfg.Retries)
 			}
-			time.Sleep(backoff(attempt))
+			timer := time.NewTimer(backoff(attempt))
+			select {
+			case <-timer.C:
+			case <-ctx.Done():
+				timer.Stop()
+				return nil, ctx.Err()
+			}
 			continue
 		}
 
