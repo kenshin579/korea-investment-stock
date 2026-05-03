@@ -13,6 +13,7 @@ go.work.sum
 # IDE
 .idea/
 .vscode/
+.history
 *.iml
 
 # OS
@@ -25,3 +26,13 @@ Thumbs.db
 # Coverage
 coverage.txt
 coverage.html
+
+# Build outputs
+bin/
+dist/
+
+# Secrets / credentials
+.env
+.env.*
+*.key
+token.dat
