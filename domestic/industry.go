@@ -82,6 +82,104 @@ type InquireIndexPriceParams struct {
 	Symbol     string // FID_INPUT_ISCD — 필수, 업종 코드 (예 "0001":코스피, "1001":코스닥, "2001":코스피200)
 }
 
+// IndexCategoryPrice 는 국내업종 구분별 전체시세 (FHPUP02140000) 응답.
+//
+// 한투 docs: docs/api/국내주식/국내업종_구분별전체시세.md
+// path: /uapi/domestic-stock/v1/quotations/inquire-index-category-price
+type IndexCategoryPrice struct {
+	Output1 IndexCategoryPriceSummary `json:"output1"`
+	Output2 []IndexCategoryPriceItem  `json:"output2"`
+}
+
+// IndexCategoryPriceSummary 는 응답의 output1 (대표 업종 지수).
+type IndexCategoryPriceSummary struct {
+	BstpNmixPrpr         decimal.Decimal `json:"bstp_nmix_prpr"`
+	BstpNmixPrdyVrss     decimal.Decimal `json:"bstp_nmix_prdy_vrss"`
+	PrdyVrssSign         string          `json:"prdy_vrss_sign"`
+	BstpNmixPrdyCtrt     float64         `json:"bstp_nmix_prdy_ctrt,string"`
+	AcmlVol              int64           `json:"acml_vol,string"`
+	AcmlTrPbmn           int64           `json:"acml_tr_pbmn,string"`
+	BstpNmixOprc         decimal.Decimal `json:"bstp_nmix_oprc"`
+	BstpNmixHgpr         decimal.Decimal `json:"bstp_nmix_hgpr"`
+	BstpNmixLwpr         decimal.Decimal `json:"bstp_nmix_lwpr"`
+	PrdyVol              int64           `json:"prdy_vol,string"`
+	AscnIssuCnt          string          `json:"ascn_issu_cnt"`
+	DownIssuCnt          string          `json:"down_issu_cnt"`
+	StnrIssuCnt          string          `json:"stnr_issu_cnt"`
+	UplmIssuCnt          string          `json:"uplm_issu_cnt"`
+	LslmIssuCnt          string          `json:"lslm_issu_cnt"`
+	PrdyTrPbmn           int64           `json:"prdy_tr_pbmn,string"`
+	DryyBstpNmixHgprDate string          `json:"dryy_bstp_nmix_hgpr_date"`
+	DryyBstpNmixHgpr     decimal.Decimal `json:"dryy_bstp_nmix_hgpr"`
+	DryyBstpNmixLwpr     decimal.Decimal `json:"dryy_bstp_nmix_lwpr"`
+	DryyBstpNmixLwprDate string          `json:"dryy_bstp_nmix_lwpr_date"`
+}
+
+// IndexCategoryPriceItem 은 응답의 output2 한 행 (구분별 업종).
+type IndexCategoryPriceItem struct {
+	BstpClsCode      string          `json:"bstp_cls_code"`              // 업종 구분 코드
+	HtsKorIsnm       string          `json:"hts_kor_isnm"`               // HTS 한글 종목명
+	BstpNmixPrpr     decimal.Decimal `json:"bstp_nmix_prpr"`             // 업종 지수 현재가
+	BstpNmixPrdyVrss decimal.Decimal `json:"bstp_nmix_prdy_vrss"`        // 업종 지수 전일 대비
+	PrdyVrssSign     string          `json:"prdy_vrss_sign"`             // 전일 대비 부호
+	BstpNmixPrdyCtrt float64         `json:"bstp_nmix_prdy_ctrt,string"` // 업종 지수 전일 대비율
+	AcmlVol          int64           `json:"acml_vol,string"`            // 누적 거래량
+	AcmlTrPbmn       int64           `json:"acml_tr_pbmn,string"`        // 누적 거래 대금
+	AcmlVolRlim      float64         `json:"acml_vol_rlim,string"`       // 누적 거래량 비중
+	AcmlTrPbmnRlim   float64         `json:"acml_tr_pbmn_rlim,string"`   // 누적 거래 대금 비중
+}
+
+// InquireIndexCategoryPriceParams 는 국내업종 구분별 전체시세 조회 파라미터.
+type InquireIndexCategoryPriceParams struct {
+	MarketCode string // FID_COND_MRKT_DIV_CODE — 빈 값=>"U" (업종)
+	Symbol     string // FID_INPUT_ISCD — 필수, 업종 코드 (코스피 0001 등)
+	ScreenCode string // FID_COND_SCR_DIV_CODE — 빈 값=>"20214"
+	MarketCls  string // FID_MRKT_CLS_CODE — "K":거래소, "Q":코스닥, "K2":코스피200
+	BelongCls  string // FID_BLNG_CLS_CODE — 빈 값=>"0" (전업종)
+}
+
+// InquireIndexCategoryPrice 는 국내업종 구분별 전체시세 호출.
+//
+// 한투 docs: docs/api/국내주식/국내업종_구분별전체시세.md
+// path: /uapi/domestic-stock/v1/quotations/inquire-index-category-price (FHPUP02140000)
+func (c *Client) InquireIndexCategoryPrice(ctx context.Context, params InquireIndexCategoryPriceParams) (*IndexCategoryPrice, error) {
+	market := params.MarketCode
+	if market == "" {
+		market = "U"
+	}
+	scr := params.ScreenCode
+	if scr == "" {
+		scr = "20214"
+	}
+	belong := params.BelongCls
+	if belong == "" {
+		belong = "0"
+	}
+
+	resp, err := c.http.Do(ctx, &httpclient.Request{
+		Method: http.MethodGet,
+		Path:   "/uapi/domestic-stock/v1/quotations/inquire-index-category-price",
+		TrID:   "FHPUP02140000",
+		Query: map[string]string{
+			"FID_COND_MRKT_DIV_CODE": market,
+			"FID_INPUT_ISCD":         params.Symbol,
+			"FID_COND_SCR_DIV_CODE":  scr,
+			"FID_MRKT_CLS_CODE":      params.MarketCls,
+			"FID_BLNG_CLS_CODE":      belong,
+		},
+		CustType: "P",
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	var res IndexCategoryPrice
+	if err := json.Unmarshal(resp.Raw, &res); err != nil {
+		return nil, fmt.Errorf("kis: parse IndexCategoryPrice: %w", err)
+	}
+	return &res, nil
+}
+
 // InquireIndexPrice 는 국내업종 현재지수 호출.
 //
 // 한투 docs: docs/api/국내주식/국내업종_현재지수.md

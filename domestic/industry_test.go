@@ -45,3 +45,41 @@ func TestClient_InquireIndexPrice(t *testing.T) {
 	assert.Equal(t, "315", res.Output.AscnIssuCnt)
 	assert.Equal(t, "450", res.Output.DownIssuCnt)
 }
+
+func TestClient_InquireIndexCategoryPrice(t *testing.T) {
+	httpmock.Activate()
+	defer httpmock.DeactivateAndReset()
+
+	var capturedQuery url.Values
+	httpmock.RegisterResponder(
+		http.MethodGet,
+		`=~/quotations/inquire-index-category-price`,
+		func(req *http.Request) (*http.Response, error) {
+			capturedQuery = req.URL.Query()
+			return httpmock.NewStringResponse(200, loadFixtureString(t, "index_category_price_success.json")), nil
+		},
+	)
+
+	c := newTestClient(t)
+	res, err := c.InquireIndexCategoryPrice(context.Background(), domestic.InquireIndexCategoryPriceParams{
+		Symbol:    "0001",
+		MarketCls: "K",
+	})
+	require.NoError(t, err)
+	require.NotNil(t, res)
+
+	assert.Equal(t, "U", capturedQuery.Get("FID_COND_MRKT_DIV_CODE"))
+	assert.Equal(t, "0001", capturedQuery.Get("FID_INPUT_ISCD"))
+	assert.Equal(t, "20214", capturedQuery.Get("FID_COND_SCR_DIV_CODE"))
+	assert.Equal(t, "K", capturedQuery.Get("FID_MRKT_CLS_CODE"))
+	assert.Equal(t, "0", capturedQuery.Get("FID_BLNG_CLS_CODE"))
+
+	d, _ := decimal.NewFromString("2650.45")
+	assert.True(t, d.Equal(res.Output1.BstpNmixPrpr))
+	assert.Equal(t, int64(350000000), res.Output1.AcmlVol)
+
+	require.Len(t, res.Output2, 2)
+	assert.Equal(t, "0001", res.Output2[0].BstpClsCode)
+	assert.Equal(t, "코스피", res.Output2[0].HtsKorIsnm)
+	assert.InDelta(t, 100.0, res.Output2[0].AcmlVolRlim, 0.01)
+}
