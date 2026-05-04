@@ -312,3 +312,141 @@ func (c *Client) InquireInvestorDailyByMarket(ctx context.Context, params Inquir
 	}
 	return &res, nil
 }
+
+// InvestorTimeByMarket 은 시장별 투자자매매동향(시세) (FHPTJ04030000) 응답.
+//
+// 한투 docs: docs/api/국내주식/시장별_투자자매매동향(시세).md
+// path: /uapi/domestic-stock/v1/quotations/inquire-investor-time-by-market
+type InvestorTimeByMarket struct {
+	Output InvestorTimeByMarketSnapshot `json:"output"`
+}
+
+// InvestorTimeByMarketSnapshot 은 응답의 output (단일 객체, 시세).
+//
+// 13 type 의 (ntby_qty/seln_vol/shnu_vol/seln_tr_pbmn/shnu_tr_pbmn/ntby_tr_pbmn) = 6 fields × 13 = 78 fields.
+// 일부 type 은 vol 표기. KIS docs 의 line 113~180+ 모든 필드 1:1 매핑.
+type InvestorTimeByMarketSnapshot struct {
+	// 외국인 (6 fields)
+	FrgnSelnVol    int64 `json:"frgn_seln_vol,string"`
+	FrgnShnuVol    int64 `json:"frgn_shnu_vol,string"`
+	FrgnNtbyQty    int64 `json:"frgn_ntby_qty,string"`
+	FrgnSelnTrPbmn int64 `json:"frgn_seln_tr_pbmn,string"`
+	FrgnShnuTrPbmn int64 `json:"frgn_shnu_tr_pbmn,string"`
+	FrgnNtbyTrPbmn int64 `json:"frgn_ntby_tr_pbmn,string"`
+
+	// 개인 (6 fields)
+	PrsnSelnVol    int64 `json:"prsn_seln_vol,string"`
+	PrsnShnuVol    int64 `json:"prsn_shnu_vol,string"`
+	PrsnNtbyQty    int64 `json:"prsn_ntby_qty,string"`
+	PrsnSelnTrPbmn int64 `json:"prsn_seln_tr_pbmn,string"`
+	PrsnShnuTrPbmn int64 `json:"prsn_shnu_tr_pbmn,string"`
+	PrsnNtbyTrPbmn int64 `json:"prsn_ntby_tr_pbmn,string"`
+
+	// 기관계 (6 fields)
+	OrgnSelnVol    int64 `json:"orgn_seln_vol,string"`
+	OrgnShnuVol    int64 `json:"orgn_shnu_vol,string"`
+	OrgnNtbyQty    int64 `json:"orgn_ntby_qty,string"`
+	OrgnSelnTrPbmn int64 `json:"orgn_seln_tr_pbmn,string"`
+	OrgnShnuTrPbmn int64 `json:"orgn_shnu_tr_pbmn,string"`
+	OrgnNtbyTrPbmn int64 `json:"orgn_ntby_tr_pbmn,string"`
+
+	// 증권 (6 fields)
+	ScrtSelnVol    int64 `json:"scrt_seln_vol,string"`
+	ScrtShnuVol    int64 `json:"scrt_shnu_vol,string"`
+	ScrtNtbyQty    int64 `json:"scrt_ntby_qty,string"`
+	ScrtSelnTrPbmn int64 `json:"scrt_seln_tr_pbmn,string"`
+	ScrtShnuTrPbmn int64 `json:"scrt_shnu_tr_pbmn,string"`
+	ScrtNtbyTrPbmn int64 `json:"scrt_ntby_tr_pbmn,string"`
+
+	// 투자신탁 (6 fields)
+	IvtrSelnVol    int64 `json:"ivtr_seln_vol,string"`
+	IvtrShnuVol    int64 `json:"ivtr_shnu_vol,string"`
+	IvtrNtbyQty    int64 `json:"ivtr_ntby_qty,string"`
+	IvtrSelnTrPbmn int64 `json:"ivtr_seln_tr_pbmn,string"`
+	IvtrShnuTrPbmn int64 `json:"ivtr_shnu_tr_pbmn,string"`
+	IvtrNtbyTrPbmn int64 `json:"ivtr_ntby_tr_pbmn,string"`
+
+	// 사모 펀드 (6 fields, vol)
+	PeFundSelnVol    int64 `json:"pe_fund_seln_vol,string"`
+	PeFundShnuVol    int64 `json:"pe_fund_shnu_vol,string"`
+	PeFundNtbyVol    int64 `json:"pe_fund_ntby_vol,string"`
+	PeFundSelnTrPbmn int64 `json:"pe_fund_seln_tr_pbmn,string"`
+	PeFundShnuTrPbmn int64 `json:"pe_fund_shnu_tr_pbmn,string"`
+	PeFundNtbyTrPbmn int64 `json:"pe_fund_ntby_tr_pbmn,string"`
+
+	// 은행 (6 fields)
+	BankSelnVol    int64 `json:"bank_seln_vol,string"`
+	BankShnuVol    int64 `json:"bank_shnu_vol,string"`
+	BankNtbyQty    int64 `json:"bank_ntby_qty,string"`
+	BankSelnTrPbmn int64 `json:"bank_seln_tr_pbmn,string"`
+	BankShnuTrPbmn int64 `json:"bank_shnu_tr_pbmn,string"`
+	BankNtbyTrPbmn int64 `json:"bank_ntby_tr_pbmn,string"`
+
+	// 보험 (6 fields)
+	InsuSelnVol    int64 `json:"insu_seln_vol,string"`
+	InsuShnuVol    int64 `json:"insu_shnu_vol,string"`
+	InsuNtbyQty    int64 `json:"insu_ntby_qty,string"`
+	InsuSelnTrPbmn int64 `json:"insu_seln_tr_pbmn,string"`
+	InsuShnuTrPbmn int64 `json:"insu_shnu_tr_pbmn,string"`
+	InsuNtbyTrPbmn int64 `json:"insu_ntby_tr_pbmn,string"`
+
+	// 종금 (6 fields)
+	MrbnSelnVol    int64 `json:"mrbn_seln_vol,string"`
+	MrbnShnuVol    int64 `json:"mrbn_shnu_vol,string"`
+	MrbnNtbyQty    int64 `json:"mrbn_ntby_qty,string"`
+	MrbnSelnTrPbmn int64 `json:"mrbn_seln_tr_pbmn,string"`
+	MrbnShnuTrPbmn int64 `json:"mrbn_shnu_tr_pbmn,string"`
+	MrbnNtbyTrPbmn int64 `json:"mrbn_ntby_tr_pbmn,string"`
+
+	// 기금 (6 fields)
+	FundSelnVol    int64 `json:"fund_seln_vol,string"`
+	FundShnuVol    int64 `json:"fund_shnu_vol,string"`
+	FundNtbyQty    int64 `json:"fund_ntby_qty,string"`
+	FundSelnTrPbmn int64 `json:"fund_seln_tr_pbmn,string"`
+	FundShnuTrPbmn int64 `json:"fund_shnu_tr_pbmn,string"`
+	FundNtbyTrPbmn int64 `json:"fund_ntby_tr_pbmn,string"`
+
+	// 기타 단체 (6 fields, vol)
+	EtcOrgtSelnVol    int64 `json:"etc_orgt_seln_vol,string"`
+	EtcOrgtShnuVol    int64 `json:"etc_orgt_shnu_vol,string"`
+	EtcOrgtNtbyVol    int64 `json:"etc_orgt_ntby_vol,string"`
+	EtcOrgtSelnTrPbmn int64 `json:"etc_orgt_seln_tr_pbmn,string"`
+	EtcOrgtShnuTrPbmn int64 `json:"etc_orgt_shnu_tr_pbmn,string"`
+	EtcOrgtNtbyTrPbmn int64 `json:"etc_orgt_ntby_tr_pbmn,string"`
+}
+
+// InquireInvestorTimeByMarketParams 는 시장별 투자자매매동향(시세) 조회 파라미터.
+//
+// fid_input_iscd 는 product 코드 (KSP/KSQ/K2I/999/ETF/ELW/ETN/MKI/WKM/WKI/KQI). fid_input_iscd_2 는 product 별 하위 분류.
+type InquireInvestorTimeByMarketParams struct {
+	Market  string // fid_input_iscd — KSP(코스피)/KSQ(코스닥)/K2I(선물옵션)/등
+	SubCode string // fid_input_iscd_2 — Market 에 따른 하위 분류 (코스피 0001 종합 등)
+}
+
+// InquireInvestorTimeByMarket 은 시장별 투자자매매동향(시세) 호출.
+//
+// 한투 docs: docs/api/국내주식/시장별_투자자매매동향(시세).md
+// path: /uapi/domestic-stock/v1/quotations/inquire-investor-time-by-market (FHPTJ04030000)
+//
+// 다양한 product (KSP/KSQ/선물옵션/ETF/ELW/ETN/등) 지원. SubCode 의 의미는 Market 에 따라 달라짐 — KIS docs 의 line 50~93 참조.
+func (c *Client) InquireInvestorTimeByMarket(ctx context.Context, params InquireInvestorTimeByMarketParams) (*InvestorTimeByMarket, error) {
+	resp, err := c.http.Do(ctx, &httpclient.Request{
+		Method: http.MethodGet,
+		Path:   "/uapi/domestic-stock/v1/quotations/inquire-investor-time-by-market",
+		TrID:   "FHPTJ04030000",
+		Query: map[string]string{
+			"fid_input_iscd":   params.Market,
+			"fid_input_iscd_2": params.SubCode,
+		},
+		CustType: "P",
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	var res InvestorTimeByMarket
+	if err := json.Unmarshal(resp.Raw, &res); err != nil {
+		return nil, fmt.Errorf("kis: parse InvestorTimeByMarket: %w", err)
+	}
+	return &res, nil
+}

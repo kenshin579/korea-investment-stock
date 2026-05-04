@@ -55,6 +55,36 @@ func TestClient_InquireInvestorTradeByStockDaily(t *testing.T) {
 	assert.Equal(t, int64(-100000), res.Output2[0].OrgnNtbyQty)
 }
 
+func TestClient_InquireInvestorTimeByMarket(t *testing.T) {
+	httpmock.Activate()
+	defer httpmock.DeactivateAndReset()
+
+	var capturedQuery url.Values
+	httpmock.RegisterResponder(
+		http.MethodGet,
+		`=~/quotations/inquire-investor-time-by-market`,
+		func(req *http.Request) (*http.Response, error) {
+			capturedQuery = req.URL.Query()
+			return httpmock.NewStringResponse(200, loadFixtureString(t, "investor_time_by_market_success.json")), nil
+		},
+	)
+
+	c := newTestClient(t)
+	res, err := c.InquireInvestorTimeByMarket(context.Background(), domestic.InquireInvestorTimeByMarketParams{
+		Market:  "KSP",
+		SubCode: "0001",
+	})
+	require.NoError(t, err)
+	require.NotNil(t, res)
+
+	assert.Equal(t, "KSP", capturedQuery.Get("fid_input_iscd"))
+	assert.Equal(t, "0001", capturedQuery.Get("fid_input_iscd_2"))
+
+	assert.Equal(t, int64(5000000), res.Output.FrgnSelnVol)
+	assert.Equal(t, int64(-123456), res.Output.FrgnNtbyQty)
+	assert.Equal(t, int64(234567), res.Output.PrsnNtbyQty)
+}
+
 func TestClient_InquireInvestorDailyByMarket(t *testing.T) {
 	httpmock.Activate()
 	defer httpmock.DeactivateAndReset()
