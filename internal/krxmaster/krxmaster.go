@@ -127,6 +127,107 @@ func ParseKospi(zipBytes []byte) ([]KospiSymbol, error) {
 	return out, nil
 }
 
+// KosdaqSymbol 은 KRX KOSDAQ 종목 마스터 한 행.
+type KosdaqSymbol struct {
+	ShortCode       string          // 단축코드 (예 "000250")
+	StandardCode    string          // 표준코드 (ISIN, 예 "KR7000250001")
+	KoreanName      string          // 한글명
+	GroupCode       string          // 그룹코드 (ST=주권, EF=ETF, ...)
+	MarketCapSize   string          // 시가총액 규모
+	KOSDAQ150       string          // KOSDAQ150 편입 여부
+	BasePrice       int64           // 기준가
+	FaceValue       decimal.Decimal // 액면가
+	ListedShares    int64           // 상장주수
+	Capital         int64           // 자본금
+	SettlementMonth string          // 결산월 (예 "12")
+	PreferredStock  string          // 우선주 여부
+	VentureCompany  string          // 벤처기업 여부
+	SuspendedYn     string          // 거래정지 여부
+
+	Raw map[string]string // 모든 64 컬럼 (한글 키)
+}
+
+// kosdaqFieldSpecs / kosdaqColumns 는 Python parsers/master_parser.py 의
+// KOSDAQ field_specs / part2_columns 와 1:1 매핑. 마지막 221 byte fwf.
+var kosdaqFieldSpecs = []int{
+	2, 1, 4, 4, 4,
+	1, 1, 1, 1, 1,
+	1, 1, 1, 1, 1,
+	1, 1, 1, 1, 1,
+	1, 1, 1, 1, 1,
+	1, 9, 5, 5, 1,
+	1, 1, 2, 1, 1,
+	1, 2, 2, 2, 3,
+	1, 3, 12, 12, 8,
+	15, 21, 2, 7, 1,
+	1, 1, 1, 9, 9,
+	9, 5, 9, 8, 9,
+	3, 1, 1, 1,
+}
+
+var kosdaqColumns = []string{
+	"그룹코드", "시가총액규모", "지수업종대분류", "지수업종중분류", "지수업종소분류",
+	"벤처기업", "저유동성", "KRX", "ETP", "KRX100",
+	"KRX자동차", "KRX반도체", "KRX바이오", "KRX은행", "SPAC",
+	"KRX에너지화학", "KRX철강", "단기과열", "KRX미디어통신", "KRX건설",
+	"투자주의", "KRX증권", "KRX선박", "KRX섹터_보험", "KRX섹터_운송",
+	"KOSDAQ150", "기준가", "매매수량단위", "시간외수량단위", "거래정지",
+	"정리매매", "관리종목", "시장경고", "경고예고", "불성실공시",
+	"우회상장", "락구분", "액면변경", "증자구분", "증거금비율",
+	"신용가능", "신용기간", "전일거래량", "액면가", "상장일자",
+	"상장주수", "자본금", "결산월", "공모가", "우선주",
+	"공매도과열", "이상급등", "KRX300", "매출액", "영업이익",
+	"경상이익", "당기순이익", "ROE", "기준년월", "시가총액",
+	"그룹사코드", "회사신용한도초과", "담보대출가능", "대주가능",
+}
+
+// ParseKosdaq 는 KOSDAQ 마스터 ZIP byte 를 종목 슬라이스로 디코딩.
+func ParseKosdaq(zipBytes []byte) ([]KosdaqSymbol, error) {
+	const fwfLen = 221
+	mst, err := openMstFromZip(zipBytes)
+	if err != nil {
+		return nil, fmt.Errorf("krxmaster: kosdaq: %w", err)
+	}
+	decoded, err := decodeCP949(mst)
+	if err != nil {
+		return nil, fmt.Errorf("krxmaster: kosdaq: cp949: %w", err)
+	}
+
+	var out []KosdaqSymbol
+	for _, line := range strings.Split(decoded, "\n") {
+		line = strings.TrimRight(line, "\r")
+		if len(line) < fwfLen+21 {
+			continue
+		}
+		prefix := line[:len(line)-fwfLen]
+		fwf := line[len(line)-fwfLen:]
+
+		shortCode := strings.TrimSpace(prefix[0:9])
+		standardCode := strings.TrimSpace(prefix[9:21])
+		koreanName := strings.TrimSpace(prefix[21:])
+		raw := parseFwf(fwf, kosdaqFieldSpecs, kosdaqColumns)
+
+		out = append(out, KosdaqSymbol{
+			ShortCode:       shortCode,
+			StandardCode:    standardCode,
+			KoreanName:      koreanName,
+			GroupCode:       raw["그룹코드"],
+			MarketCapSize:   raw["시가총액규모"],
+			KOSDAQ150:       raw["KOSDAQ150"],
+			BasePrice:       atoi64(raw["기준가"]),
+			FaceValue:       toDecimal(raw["액면가"]),
+			ListedShares:    atoi64(raw["상장주수"]),
+			Capital:         atoi64(raw["자본금"]),
+			SettlementMonth: raw["결산월"],
+			PreferredStock:  raw["우선주"],
+			VentureCompany:  raw["벤처기업"],
+			SuspendedYn:     raw["거래정지"],
+			Raw:             raw,
+		})
+	}
+	return out, nil
+}
+
 // openMstFromZip 은 ZIP byte 에서 .mst 파일 byte 를 추출.
 func openMstFromZip(zipBytes []byte) ([]byte, error) {
 	zr, err := zip.NewReader(bytes.NewReader(zipBytes), int64(len(zipBytes)))

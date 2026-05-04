@@ -17,7 +17,11 @@ curl -sSL -o kospi_code.mst.zip https://new.real.download.dws.co.kr/common/maste
 unzip -o kospi_code.mst.zip
 LC_ALL=C grep -E '^[0-9]{6}' kospi_code.mst | head -n 3 > kospi_code_sample.mst
 zip kospi_code_sample.mst.zip kospi_code_sample.mst
-# kosdaq 동일 (regular 6자리 단축코드 필터)
+# KOSDAQ — 외국 기업 9자리 코드(예: 900110)가 앞에 있어 KR 표준코드 필터 필요
+curl -sSL -o kosdaq_code.mst.zip https://new.real.download.dws.co.kr/common/master/kosdaq_code.mst.zip
+unzip -o kosdaq_code.mst.zip
+iconv -f cp949 -t utf-8 kosdaq_code.mst | grep '^[0-9]\{6\}   KR' | head -3 | iconv -f utf-8 -t cp949 > kosdaq_code_sample.mst
+zip kosdaq_code_sample.mst.zip kosdaq_code_sample.mst
 ```
 
 ## 라이선스
