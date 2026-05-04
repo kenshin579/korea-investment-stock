@@ -1,0 +1,37 @@
+{
+  "rt_cd": "0",
+  "msg_cd": "MCA00000",
+  "msg1": "정상처리 되었습니다.",
+  "output1": [
+    {
+      "record_date": "20260505",
+      "sht_cd": "999998",
+      "isin_name": "샘플바이오",
+      "fix_subscr_pri": "30000",
+      "face_value": "100",
+      "subscr_dt": "20260505 ~ 20260506",
+      "pay_dt": "20260508",
+      "refund_dt": "20260510",
+      "list_dt": "20260520",
+      "lead_mgr": "한국투자증권",
+      "pub_bf_cap": "5000",
+      "pub_af_cap": "8000",
+      "assign_stk_qty": "100000"
+    },
+    {
+      "record_date": "20260510",
+      "sht_cd": "999997",
+      "isin_name": "샘플테크",
+      "fix_subscr_pri": "15000",
+      "face_value": "500",
+      "subscr_dt": "20260510 ~ 20260511",
+      "pay_dt": "20260513",
+      "refund_dt": "20260515",
+      "list_dt": "20260525",
+      "lead_mgr": "한국투자증권",
+      "pub_bf_cap": "3000",
+      "pub_af_cap": "4500",
+      "assign_stk_qty": "75000"
+    }
+  ]
+}
