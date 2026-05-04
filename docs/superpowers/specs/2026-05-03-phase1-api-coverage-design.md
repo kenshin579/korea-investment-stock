@@ -130,24 +130,33 @@
 
 **한투 spec 충실 원칙** (Phase 1.2/1.3 와 동일): query param/응답 필드를 한투 docs (`docs/api/국내주식/<API>.md`) 그대로 노출. Python wrapper convenience 미반영.
 
-### Phase 1.5 — 해외 전체 (`v1.0.0` ← Python parity 완성)
+### Phase 1.5 — 해외 전체 (`v1.3.0`, Python parity 완성)
 
-| 메서드 | 위치 | 한투 API |
-|-------|------|---------|
-| `FetchPriceDetailOverseas` | `overseas/price.go` | 해외주식_현재가상세 |
-| `FetchOverseasSymbols` | `overseas/symbols.go` | (master file 또는 API) |
-| `FetchNasdaqSymbols` | `overseas/symbols.go` | (master file) |
-| `FetchNyseSymbols` | `overseas/symbols.go` | (master file) |
-| `FetchAmexSymbols` | `overseas/symbols.go` | (master file) |
-| `FetchOverseasChart` | `overseas/chart.go` | 해외주식_기간별시세 |
-| `FetchOverseasChangeRateRanking` | `overseas/ranking.go` | 해외주식_상승율_하락율 |
+> **Amendment (2026-05-05, Phase 1.5 brainstorming)**: 메서드명을 Phase 1.2~1.4 와 동일한 Style A (한투 endpoint path 의 마지막 segment 를 PascalCase 로 1:1 매핑) 로 갱신. NASDAQ/NYSE/AMEX 별 메서드는 `FetchOverseasSymbols(market)` 로 통합 (Python wrapper convenience 미반영 정책 일관). 차트는 `dailyprice` (단일 종목) + `inquire-daily-chartprice` (종목/지수/환율 일/주/월/년) 두 endpoint 모두 별도 메서드로 노출. `해외주식_상품기본정보` 추가 (Python `fetch_search_stock_info` 파리티). 총 6 메서드.
 
-총 **7 메서드**
+| 메서드 | 위치 | 한투 path | TR_ID |
+|-------|------|----------|-------|
+| `Overseas.InquirePriceDetail` | `overseas/price.go` | `overseas-price/v1/quotations/price-detail` | HHDFS76200200 |
+| `Overseas.SearchInfo` | `overseas/search.go` | `overseas-price/v1/quotations/search-info` | CTPF1702R |
+| `Overseas.InquireDailyPrice` | `overseas/chart.go` | `overseas-price/v1/quotations/dailyprice` | HHDFS76240000 |
+| `Overseas.InquireDailyChartPrice` | `overseas/chart.go` | `overseas-price/v1/quotations/inquire-daily-chartprice` | FHKST03030100 |
+| `Overseas.InquireUpdownRate` | `overseas/ranking.go` | `overseas-stock/v1/ranking/updown-rate` | HHDFS76290000 |
+| `Overseas.FetchOverseasSymbols(market)` | `overseas/symbols.go` | (외부 다운로드 — 11 거래소) | — |
+
+총 **6 메서드**
+
+**응답 typed struct 명**: `PriceDetail`, `OverseasSearchInfo` (또는 `OverseasProductInfo` — domestic 의 `ProductInfo` 와 구분), `DailyPrice`, `DailyChartPrice`, `UpdownRate`, `OverseasSymbol[]`. Params struct 는 `<MethodName>Params`.
+
+**해외 마스터 파일**: KRX 와 동일 패턴 — 외부 다운로드 (`https://new.real.download.dws.co.kr/common/master/<market>mst.cod.zip`). 11 거래소 (`nas`/`nys`/`ams`/`shs`/`shi`/`szs`/`szi`/`tse`/`hks`/`hnx`/`hsx`). 새 internal package: `internal/overseasmaster/` (KRX 와 분리, cp949 + fwf 형식 가능 — 실제 형식 확인 후 codec 재사용 여부 결정).
+
+**`overseas.Client` 시그니처 확장**: `overseas.New(http)` → `overseas.New(http, master)` (Phase 1.2 의 domestic 패턴). root `client.go` 의 `wireInfra` 가 `c.masterC` 주입.
+
+**한투 spec 충실 원칙** (Phase 1.2~1.4 와 동일): query param/응답 필드를 한투 docs (`docs/api/해외주식/<API>.md`) 그대로 노출. Python wrapper 의 `country_code` fallback 루프, NASDAQ/NYSE/AMEX 별 편의 메서드 등은 미구현.
 
 ### 합계
 
 - **인프라**: 1 PR
-- **메서드**: 7 (1.2) + 9 (1.3) + 6 (1.4) + 7 (1.5) = **29 메서드** (IPO helpers 9개 제거 — Phase 1.4 amendment, 시장별 매매동향 시세 1개 추가)
+- **메서드**: 7 (1.2) + 9 (1.3) + 6 (1.4) + 6 (1.5) = **28 메서드** (Phase 1.5 amendment: NASDAQ/NYSE/AMEX 통합으로 7→6, 해외 SearchInfo 추가)
 - **Release tags**: ~~v0.1.0/v0.2.0~~ (Python era namespace 충돌로 삭제) → **`v1.0.0`** (Phase 1.1+1.2 통합), `v1.1.0` (Phase 1.3), `v1.2.0` (Phase 1.4), `v1.3.0` (Phase 1.5 — 해외 전체)
 
 ---
