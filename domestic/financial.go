@@ -237,3 +237,60 @@ func (c *Client) InquireProfitRatio(ctx context.Context, params InquireProfitRat
 	}
 	return &res, nil
 }
+
+// GrowthRatio 는 성장성비율 (FHKST66430800) 응답.
+//
+// 한투 docs: docs/api/국내주식/국내주식_성장성비율.md
+// path: /uapi/domestic-stock/v1/finance/growth-ratio
+type GrowthRatio struct {
+	Output []GrowthRatioItem `json:"output"`
+}
+
+// GrowthRatioItem 은 성장성비율 응답의 한 행.
+type GrowthRatioItem struct {
+	StacYymm     string  `json:"stac_yymm"`             // 결산 년월
+	Grs          float64 `json:"grs,string"`            // 매출액 증가율
+	BsopPrfiInrt float64 `json:"bsop_prfi_inrt,string"` // 영업 이익 증가율
+	EqutInrt     float64 `json:"equt_inrt,string"`      // 자기자본 증가율
+	TotlAsetInrt float64 `json:"totl_aset_inrt,string"` // 총자산 증가율
+}
+
+// InquireGrowthRatioParams 는 성장성비율 조회 파라미터.
+type InquireGrowthRatioParams struct {
+	Symbol  string // fid_input_iscd (필수)
+	Quarter bool   // fid_div_cls_code (소문자 — KIS docs 그대로). false=>"0"(년), true=>"1"(분기)
+}
+
+// InquireGrowthRatio 는 성장성비율 호출.
+//
+// 한투 docs: docs/api/국내주식/국내주식_성장성비율.md
+// path: /uapi/domestic-stock/v1/finance/growth-ratio (FHKST66430800)
+//
+// 다른 finance API 와 다르게 query 키가 fid_div_cls_code (소문자) — 다른 4 메서드는 FID_DIV_CLS_CODE (대문자).
+// 그래서 inquireFinanceQuery helper 는 사용하지 않고 inline query.
+func (c *Client) InquireGrowthRatio(ctx context.Context, params InquireGrowthRatioParams) (*GrowthRatio, error) {
+	div := "0"
+	if params.Quarter {
+		div = "1"
+	}
+	resp, err := c.http.Do(ctx, &httpclient.Request{
+		Method: http.MethodGet,
+		Path:   "/uapi/domestic-stock/v1/finance/growth-ratio",
+		TrID:   "FHKST66430800",
+		Query: map[string]string{
+			"fid_input_iscd":         params.Symbol,
+			"fid_div_cls_code":       div,
+			"fid_cond_mrkt_div_code": "J",
+		},
+		CustType: "P",
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	var res GrowthRatio
+	if err := json.Unmarshal(resp.Raw, &res); err != nil {
+		return nil, fmt.Errorf("kis: parse GrowthRatio: %w", err)
+	}
+	return &res, nil
+}

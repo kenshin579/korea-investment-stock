@@ -144,3 +144,28 @@ func TestClient_InquireProfitRatio(t *testing.T) {
 	assert.InDelta(t, 12.30, res.Output[0].SaleNtinRate, 0.001)
 	assert.InDelta(t, 37.05, res.Output[0].SaleTotlRate, 0.001)
 }
+
+func TestClient_InquireGrowthRatio(t *testing.T) {
+	httpmock.Activate()
+	defer httpmock.DeactivateAndReset()
+
+	httpmock.RegisterResponder(
+		http.MethodGet,
+		`=~/finance/growth-ratio`,
+		httpmock.NewStringResponder(200, loadFixtureString(t, "growth_ratio_success.json")),
+	)
+
+	c := newTestClient(t)
+	res, err := c.InquireGrowthRatio(context.Background(), domestic.InquireGrowthRatioParams{
+		Symbol: "005930",
+	})
+	require.NoError(t, err)
+	require.NotNil(t, res)
+
+	require.Len(t, res.Output, 1)
+	assert.Equal(t, "202412", res.Output[0].StacYymm)
+	assert.InDelta(t, 5.42, res.Output[0].Grs, 0.001)
+	assert.InDelta(t, 12.30, res.Output[0].BsopPrfiInrt, 0.001)
+	assert.InDelta(t, 8.50, res.Output[0].EqutInrt, 0.001)
+	assert.InDelta(t, 10.20, res.Output[0].TotlAsetInrt, 0.001)
+}
