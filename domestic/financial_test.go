@@ -94,3 +94,28 @@ func TestClient_InquireIncomeStatement(t *testing.T) {
 	assert.Equal(t, int64(32830000), res.Output[0].BsopPrti)
 	assert.Equal(t, int64(23456000), res.Output[0].ThtrNtin)
 }
+
+func TestClient_InquireBalanceSheet(t *testing.T) {
+	httpmock.Activate()
+	defer httpmock.DeactivateAndReset()
+
+	httpmock.RegisterResponder(
+		http.MethodGet,
+		`=~/finance/balance-sheet`,
+		httpmock.NewStringResponder(200, loadFixtureString(t, "balance_sheet_success.json")),
+	)
+
+	c := newTestClient(t)
+	res, err := c.InquireBalanceSheet(context.Background(), domestic.InquireBalanceSheetParams{
+		Symbol: "005930",
+	})
+	require.NoError(t, err)
+	require.NotNil(t, res)
+
+	require.Len(t, res.Output, 1)
+	assert.Equal(t, "202412", res.Output[0].StacYymm)
+	assert.Equal(t, int64(189000000), res.Output[0].Cras)
+	assert.Equal(t, int64(434000000), res.Output[0].TotalAset)
+	assert.Equal(t, int64(94000000), res.Output[0].TotalLblt)
+	assert.Equal(t, int64(340000000), res.Output[0].TotalCptl)
+}

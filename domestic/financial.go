@@ -139,3 +139,55 @@ func (c *Client) InquireIncomeStatement(ctx context.Context, params InquireIncom
 	}
 	return &res, nil
 }
+
+// BalanceSheet 는 대차대조표 (FHKST66430100) 응답.
+//
+// 한투 docs: docs/api/국내주식/국내주식_대차대조표.md
+// path: /uapi/domestic-stock/v1/finance/balance-sheet
+type BalanceSheet struct {
+	Output []BalanceSheetItem `json:"output"`
+}
+
+// BalanceSheetItem 은 대차대조표 응답의 한 행.
+type BalanceSheetItem struct {
+	StacYymm  string `json:"stac_yymm"`         // 결산 년월
+	Cras      int64  `json:"cras,string"`        // 유동자산
+	Fxas      int64  `json:"fxas,string"`        // 고정자산
+	TotalAset int64  `json:"total_aset,string"`  // 자산총계
+	FlowLblt  int64  `json:"flow_lblt,string"`   // 유동부채
+	FixLblt   int64  `json:"fix_lblt,string"`    // 고정부채
+	TotalLblt int64  `json:"total_lblt,string"`  // 부채총계
+	Cpfn      int64  `json:"cpfn,string"`        // 자본금
+	CfpSurp   string `json:"cfp_surp"`           // 자본 잉여금 (출력 안 되면 "99.99")
+	PrfiSurp  string `json:"prfi_surp"`          // 이익 잉여금 (출력 안 되면 "99.99")
+	TotalCptl int64  `json:"total_cptl,string"`  // 자본총계
+}
+
+// InquireBalanceSheetParams 는 대차대조표 조회 파라미터.
+type InquireBalanceSheetParams struct {
+	Symbol  string // fid_input_iscd (필수)
+	Quarter bool   // FID_DIV_CLS_CODE
+}
+
+// InquireBalanceSheet 는 대차대조표 호출.
+//
+// 한투 docs: docs/api/국내주식/국내주식_대차대조표.md
+// path: /uapi/domestic-stock/v1/finance/balance-sheet (FHKST66430100)
+func (c *Client) InquireBalanceSheet(ctx context.Context, params InquireBalanceSheetParams) (*BalanceSheet, error) {
+	resp, err := c.http.Do(ctx, &httpclient.Request{
+		Method:   http.MethodGet,
+		Path:     "/uapi/domestic-stock/v1/finance/balance-sheet",
+		TrID:     "FHKST66430100",
+		Query:    inquireFinanceQuery(params.Symbol, params.Quarter),
+		CustType: "P",
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	var res BalanceSheet
+	if err := json.Unmarshal(resp.Raw, &res); err != nil {
+		return nil, fmt.Errorf("kis: parse BalanceSheet: %w", err)
+	}
+	return &res, nil
+}
