@@ -1,0 +1,47 @@
+package domestic_test
+
+import (
+	"context"
+	"net/http"
+	"net/url"
+	"testing"
+
+	"github.com/jarcoal/httpmock"
+	"github.com/shopspring/decimal"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
+	"github.com/kenshin579/korea-investment-stock/domestic"
+)
+
+func TestClient_InquireIndexPrice(t *testing.T) {
+	httpmock.Activate()
+	defer httpmock.DeactivateAndReset()
+
+	var capturedQuery url.Values
+	httpmock.RegisterResponder(
+		http.MethodGet,
+		`=~/quotations/inquire-index-price`,
+		func(req *http.Request) (*http.Response, error) {
+			capturedQuery = req.URL.Query()
+			return httpmock.NewStringResponse(200, loadFixtureString(t, "index_price_success.json")), nil
+		},
+	)
+
+	c := newTestClient(t)
+	res, err := c.InquireIndexPrice(context.Background(), domestic.InquireIndexPriceParams{
+		Symbol: "0001",
+	})
+	require.NoError(t, err)
+	require.NotNil(t, res)
+
+	assert.Equal(t, "U", capturedQuery.Get("FID_COND_MRKT_DIV_CODE"))
+	assert.Equal(t, "0001", capturedQuery.Get("FID_INPUT_ISCD"))
+
+	d, _ := decimal.NewFromString("2650.45")
+	assert.True(t, d.Equal(res.Output.BstpNmixPrpr))
+	assert.InDelta(t, -0.46, res.Output.BstpNmixPrdyCtrt, 0.001)
+	assert.Equal(t, int64(350000000), res.Output.AcmlVol)
+	assert.Equal(t, "315", res.Output.AscnIssuCnt)
+	assert.Equal(t, "450", res.Output.DownIssuCnt)
+}
