@@ -151,16 +151,16 @@ type BalanceSheet struct {
 // BalanceSheetItem 은 대차대조표 응답의 한 행.
 type BalanceSheetItem struct {
 	StacYymm  string `json:"stac_yymm"`         // 결산 년월
-	Cras      int64  `json:"cras,string"`        // 유동자산
-	Fxas      int64  `json:"fxas,string"`        // 고정자산
-	TotalAset int64  `json:"total_aset,string"`  // 자산총계
-	FlowLblt  int64  `json:"flow_lblt,string"`   // 유동부채
-	FixLblt   int64  `json:"fix_lblt,string"`    // 고정부채
-	TotalLblt int64  `json:"total_lblt,string"`  // 부채총계
-	Cpfn      int64  `json:"cpfn,string"`        // 자본금
-	CfpSurp   string `json:"cfp_surp"`           // 자본 잉여금 (출력 안 되면 "99.99")
-	PrfiSurp  string `json:"prfi_surp"`          // 이익 잉여금 (출력 안 되면 "99.99")
-	TotalCptl int64  `json:"total_cptl,string"`  // 자본총계
+	Cras      int64  `json:"cras,string"`       // 유동자산
+	Fxas      int64  `json:"fxas,string"`       // 고정자산
+	TotalAset int64  `json:"total_aset,string"` // 자산총계
+	FlowLblt  int64  `json:"flow_lblt,string"`  // 유동부채
+	FixLblt   int64  `json:"fix_lblt,string"`   // 고정부채
+	TotalLblt int64  `json:"total_lblt,string"` // 부채총계
+	Cpfn      int64  `json:"cpfn,string"`       // 자본금
+	CfpSurp   string `json:"cfp_surp"`          // 자본 잉여금 (출력 안 되면 "99.99")
+	PrfiSurp  string `json:"prfi_surp"`         // 이익 잉여금 (출력 안 되면 "99.99")
+	TotalCptl int64  `json:"total_cptl,string"` // 자본총계
 }
 
 // InquireBalanceSheetParams 는 대차대조표 조회 파라미터.

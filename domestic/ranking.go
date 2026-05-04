@@ -133,30 +133,30 @@ type Fluctuation struct {
 
 // FluctuationItem 은 등락률 순위 응답의 한 행.
 type FluctuationItem struct {
-	StckShrnIscd             string          `json:"stck_shrn_iscd"`                        // 주식 단축 종목코드
-	DataRank                 string          `json:"data_rank"`                             // 데이터 순위
-	HtsKorIsnm               string          `json:"hts_kor_isnm"`                          // HTS 한글 종목명
-	StckPrpr                 decimal.Decimal `json:"stck_prpr"`                             // 주식 현재가
-	PrdyVrss                 decimal.Decimal `json:"prdy_vrss"`                             // 전일 대비
-	PrdyVrssSign             string          `json:"prdy_vrss_sign"`                        // 전일 대비 부호
-	PrdyCtrt                 float64         `json:"prdy_ctrt,string"`                      // 전일 대비율
-	AcmlVol                  int64           `json:"acml_vol,string"`                       // 누적 거래량
-	StckHgpr                 decimal.Decimal `json:"stck_hgpr"`                             // 주식 최고가
-	HgprHour                 string          `json:"hgpr_hour"`                             // 최고가 시간 (HHMMSS)
-	AcmlHgprDate             string          `json:"acml_hgpr_date"`                        // 누적 최고가 일자
-	StckLwpr                 decimal.Decimal `json:"stck_lwpr"`                             // 주식 최저가
-	LwprHour                 string          `json:"lwpr_hour"`                             // 최저가 시간
-	AcmlLwprDate             string          `json:"acml_lwpr_date"`                        // 누적 최저가 일자
-	LwprVrssPrprRate         float64         `json:"lwpr_vrss_prpr_rate,string"`            // 최저가 대비 현재가 비율
-	DsgtDateClprVrssPrprRate float64         `json:"dsgt_date_clpr_vrss_prpr_rate,string"`  // 지정 일자 종가 대비 현재가 비율
-	CnntAscnDynu             int64           `json:"cnnt_ascn_dynu,string"`                 // 연속 상승 일수
-	HgprVrssPrprRate         float64         `json:"hgpr_vrss_prpr_rate,string"`            // 최고가 대비 현재가 비율
-	CnntDownDynu             int64           `json:"cnnt_down_dynu,string"`                 // 연속 하락 일수
-	OprcVrssPrprSign         string          `json:"oprc_vrss_prpr_sign"`                   // 시가 대비 현재가 부호
-	OprcVrssPrpr             decimal.Decimal `json:"oprc_vrss_prpr"`                        // 시가 대비 현재가
-	OprcVrssPrprRate         float64         `json:"oprc_vrss_prpr_rate,string"`            // 시가 대비 현재가 비율
-	PrdRsfl                  decimal.Decimal `json:"prd_rsfl"`                              // 기간 등락
-	PrdRsflRate              float64         `json:"prd_rsfl_rate,string"`                  // 기간 등락 비율
+	StckShrnIscd             string          `json:"stck_shrn_iscd"`                       // 주식 단축 종목코드
+	DataRank                 string          `json:"data_rank"`                            // 데이터 순위
+	HtsKorIsnm               string          `json:"hts_kor_isnm"`                         // HTS 한글 종목명
+	StckPrpr                 decimal.Decimal `json:"stck_prpr"`                            // 주식 현재가
+	PrdyVrss                 decimal.Decimal `json:"prdy_vrss"`                            // 전일 대비
+	PrdyVrssSign             string          `json:"prdy_vrss_sign"`                       // 전일 대비 부호
+	PrdyCtrt                 float64         `json:"prdy_ctrt,string"`                     // 전일 대비율
+	AcmlVol                  int64           `json:"acml_vol,string"`                      // 누적 거래량
+	StckHgpr                 decimal.Decimal `json:"stck_hgpr"`                            // 주식 최고가
+	HgprHour                 string          `json:"hgpr_hour"`                            // 최고가 시간 (HHMMSS)
+	AcmlHgprDate             string          `json:"acml_hgpr_date"`                       // 누적 최고가 일자
+	StckLwpr                 decimal.Decimal `json:"stck_lwpr"`                            // 주식 최저가
+	LwprHour                 string          `json:"lwpr_hour"`                            // 최저가 시간
+	AcmlLwprDate             string          `json:"acml_lwpr_date"`                       // 누적 최저가 일자
+	LwprVrssPrprRate         float64         `json:"lwpr_vrss_prpr_rate,string"`           // 최저가 대비 현재가 비율
+	DsgtDateClprVrssPrprRate float64         `json:"dsgt_date_clpr_vrss_prpr_rate,string"` // 지정 일자 종가 대비 현재가 비율
+	CnntAscnDynu             int64           `json:"cnnt_ascn_dynu,string"`                // 연속 상승 일수
+	HgprVrssPrprRate         float64         `json:"hgpr_vrss_prpr_rate,string"`           // 최고가 대비 현재가 비율
+	CnntDownDynu             int64           `json:"cnnt_down_dynu,string"`                // 연속 하락 일수
+	OprcVrssPrprSign         string          `json:"oprc_vrss_prpr_sign"`                  // 시가 대비 현재가 부호
+	OprcVrssPrpr             decimal.Decimal `json:"oprc_vrss_prpr"`                       // 시가 대비 현재가
+	OprcVrssPrprRate         float64         `json:"oprc_vrss_prpr_rate,string"`           // 시가 대비 현재가 비율
+	PrdRsfl                  decimal.Decimal `json:"prd_rsfl"`                             // 기간 등락
+	PrdRsflRate              float64         `json:"prd_rsfl_rate,string"`                 // 기간 등락 비율
 }
 
 // InquireFluctuationParams 는 등락률 순위 조회 파라미터.

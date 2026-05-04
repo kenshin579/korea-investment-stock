@@ -73,8 +73,8 @@ func TestClient_InquireVolumeRank_Variant(t *testing.T) {
 	rank, err := c.InquireVolumeRank(context.Background(), domestic.InquireVolumeRankParams{
 		MarketCode: "NX",
 		InputISCD:  "0000",
-		DivCode:    "1",      // 보통주
-		BelongCode: "3",      // 거래금액순
+		DivCode:    "1", // 보통주
+		BelongCode: "3", // 거래금액순
 	})
 	require.NoError(t, err)
 
