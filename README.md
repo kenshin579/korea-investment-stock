@@ -61,7 +61,7 @@ func main() {
 }
 ```
 
-## Available Methods (Phase 1.2)
+## Available Methods (Phase 1.2 + 1.3)
 
 | Method | 한투 path | TR_ID |
 |--------|----------|-------|
@@ -72,6 +72,15 @@ func main() {
 | `Domestic.InquireTimeItemChartPrice` | `inquire-time-itemchartprice` | FHKST03010200 |
 | `Domestic.FetchKospiSymbols` | (KRX 공개 마스터) | — |
 | `Domestic.FetchKosdaqSymbols` | (KRX 공개 마스터) | — |
+| `Domestic.InquireVolumeRank` | `quotations/volume-rank` | FHPST01710000 |
+| `Domestic.InquireFluctuation` | `ranking/fluctuation` | FHPST01700000 |
+| `Domestic.InquireMarketCap` | `ranking/market-cap` | FHPST01740000 |
+| `Domestic.InquireDividendRate` | `ranking/dividend-rate` | HHKDB13470100 |
+| `Domestic.InquireFinancialRatio` | `finance/financial-ratio` | FHKST66430300 |
+| `Domestic.InquireIncomeStatement` | `finance/income-statement` | FHKST66430200 |
+| `Domestic.InquireBalanceSheet` | `finance/balance-sheet` | FHKST66430100 |
+| `Domestic.InquireProfitRatio` | `finance/profit-ratio` | FHKST66430400 |
+| `Domestic.InquireGrowthRatio` | `finance/growth-ratio` | FHKST66430800 |
 
 ## Design
 

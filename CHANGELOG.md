@@ -1,5 +1,26 @@
 # CHANGELOG
 
+## [1.1.0] - 2026-05-04
+
+### Added — Phase 1.3 (국내주식 순위/재무)
+
+- `Domestic.InquireVolumeRank` — 거래량순위 (FHPST01710000)
+- `Domestic.InquireFluctuation` — 등락률 순위 (FHPST01700000)
+- `Domestic.InquireMarketCap` — 시가총액 상위 (FHPST01740000)
+- `Domestic.InquireDividendRate` — 배당률 상위 (HHKDB13470100)
+- `Domestic.InquireFinancialRatio` — 재무비율 (FHKST66430300)
+- `Domestic.InquireIncomeStatement` — 손익계산서 (FHKST66430200)
+- `Domestic.InquireBalanceSheet` — 대차대조표 (FHKST66430100)
+- `Domestic.InquireProfitRatio` — 수익성비율 (FHKST66430400)
+- `Domestic.InquireGrowthRatio` — 성장성비율 (FHKST66430800)
+- examples: `domestic_ranking`, `domestic_financial`
+
+### Notes
+
+- ranking 메서드의 query parameter naming 이 inconsistent (거래량순위만 대문자 `FID_*`, 나머지 소문자 `fid_*`) — KIS docs 그대로 노출
+- 거래량순위 응답의 최상위 키가 대문자 `Output` (KIS docs 명시), 다른 ranking/finance 는 소문자 `output`/`output1`
+- 손익계산서 / 대차대조표 의 일부 필드 (감가상각비, 영업외 수익/비용 등) 는 출력되지 않을 시 `"99.99"` 반환 — string 필드로 노출, caller 가 처리
+
 ## [1.0.0] - 2026-05-04
 
 > Go 라이브러리 첫 stable release. Phase 1.1 (인프라+Config) + Phase 1.2 (국내 시세/심볼/차트) 통합.
