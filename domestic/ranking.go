@@ -122,3 +122,128 @@ func (c *Client) InquireVolumeRank(ctx context.Context, params InquireVolumeRank
 	}
 	return &rank, nil
 }
+
+// Fluctuation 은 등락률 순위 (FHPST01700000) 응답.
+//
+// 한투 docs: docs/api/국내주식/국내주식_등락률_순위.md
+// path: /uapi/domestic-stock/v1/ranking/fluctuation
+type Fluctuation struct {
+	Output []FluctuationItem `json:"output"`
+}
+
+// FluctuationItem 은 등락률 순위 응답의 한 행.
+type FluctuationItem struct {
+	StckShrnIscd             string          `json:"stck_shrn_iscd"`                        // 주식 단축 종목코드
+	DataRank                 string          `json:"data_rank"`                             // 데이터 순위
+	HtsKorIsnm               string          `json:"hts_kor_isnm"`                          // HTS 한글 종목명
+	StckPrpr                 decimal.Decimal `json:"stck_prpr"`                             // 주식 현재가
+	PrdyVrss                 decimal.Decimal `json:"prdy_vrss"`                             // 전일 대비
+	PrdyVrssSign             string          `json:"prdy_vrss_sign"`                        // 전일 대비 부호
+	PrdyCtrt                 float64         `json:"prdy_ctrt,string"`                      // 전일 대비율
+	AcmlVol                  int64           `json:"acml_vol,string"`                       // 누적 거래량
+	StckHgpr                 decimal.Decimal `json:"stck_hgpr"`                             // 주식 최고가
+	HgprHour                 string          `json:"hgpr_hour"`                             // 최고가 시간 (HHMMSS)
+	AcmlHgprDate             string          `json:"acml_hgpr_date"`                        // 누적 최고가 일자
+	StckLwpr                 decimal.Decimal `json:"stck_lwpr"`                             // 주식 최저가
+	LwprHour                 string          `json:"lwpr_hour"`                             // 최저가 시간
+	AcmlLwprDate             string          `json:"acml_lwpr_date"`                        // 누적 최저가 일자
+	LwprVrssPrprRate         float64         `json:"lwpr_vrss_prpr_rate,string"`            // 최저가 대비 현재가 비율
+	DsgtDateClprVrssPrprRate float64         `json:"dsgt_date_clpr_vrss_prpr_rate,string"`  // 지정 일자 종가 대비 현재가 비율
+	CnntAscnDynu             int64           `json:"cnnt_ascn_dynu,string"`                 // 연속 상승 일수
+	HgprVrssPrprRate         float64         `json:"hgpr_vrss_prpr_rate,string"`            // 최고가 대비 현재가 비율
+	CnntDownDynu             int64           `json:"cnnt_down_dynu,string"`                 // 연속 하락 일수
+	OprcVrssPrprSign         string          `json:"oprc_vrss_prpr_sign"`                   // 시가 대비 현재가 부호
+	OprcVrssPrpr             decimal.Decimal `json:"oprc_vrss_prpr"`                        // 시가 대비 현재가
+	OprcVrssPrprRate         float64         `json:"oprc_vrss_prpr_rate,string"`            // 시가 대비 현재가 비율
+	PrdRsfl                  decimal.Decimal `json:"prd_rsfl"`                              // 기간 등락
+	PrdRsflRate              float64         `json:"prd_rsfl_rate,string"`                  // 기간 등락 비율
+}
+
+// InquireFluctuationParams 는 등락률 순위 조회 파라미터.
+type InquireFluctuationParams struct {
+	RsflRate2     string // fid_rsfl_rate2 — 등락 비율2 (~ 비율). 빈 값 OK
+	MarketCode    string // fid_cond_mrkt_div_code — "J":KRX, "NX":NXT. 빈 값=>"J"
+	ScreenCode    string // fid_cond_scr_div_code — Unique key. 빈 값=>"20170"
+	InputISCD     string // fid_input_iscd — 필수, "0000"(전체)/"0001"(코스피)/"1001"(코스닥)/"2001"(코스피200)
+	SortCode      string // fid_rank_sort_cls_code — "0":상승율순, "1":하락율순, "2":시가대비상승, "3":시가대비하락, "4":변동율. 빈 값=>"0"
+	InputCnt1     string // fid_input_cnt_1 — "0":전체, 또는 누적일수. 빈 값=>"0"
+	PriceCode     string // fid_prc_cls_code — 가격 구분. 빈 값=>"0"
+	InputPrice1   string // fid_input_price_1
+	InputPrice2   string // fid_input_price_2
+	VolCount      string // fid_vol_cnt
+	TargetCode    string // fid_trgt_cls_code. 빈 값=>"0"
+	TargetExclude string // fid_trgt_exls_cls_code. 빈 값=>"0"
+	DivCode       string // fid_div_cls_code. 빈 값=>"0"
+	RsflRate1     string // fid_rsfl_rate1 — 등락 비율1 (비율 ~). 빈 값 OK
+}
+
+// InquireFluctuation 는 등락률 순위 호출.
+//
+// 한투 docs: docs/api/국내주식/국내주식_등락률_순위.md
+// path: /uapi/domestic-stock/v1/ranking/fluctuation (FHPST01700000)
+func (c *Client) InquireFluctuation(ctx context.Context, params InquireFluctuationParams) (*Fluctuation, error) {
+	market := params.MarketCode
+	if market == "" {
+		market = "J"
+	}
+	scr := params.ScreenCode
+	if scr == "" {
+		scr = "20170"
+	}
+	sort := params.SortCode
+	if sort == "" {
+		sort = "0"
+	}
+	cnt := params.InputCnt1
+	if cnt == "" {
+		cnt = "0"
+	}
+	prc := params.PriceCode
+	if prc == "" {
+		prc = "0"
+	}
+	tgt := params.TargetCode
+	if tgt == "" {
+		tgt = "0"
+	}
+	tgtExcl := params.TargetExclude
+	if tgtExcl == "" {
+		tgtExcl = "0"
+	}
+	div := params.DivCode
+	if div == "" {
+		div = "0"
+	}
+
+	resp, err := c.http.Do(ctx, &httpclient.Request{
+		Method: http.MethodGet,
+		Path:   "/uapi/domestic-stock/v1/ranking/fluctuation",
+		TrID:   "FHPST01700000",
+		Query: map[string]string{
+			"fid_rsfl_rate2":         params.RsflRate2,
+			"fid_cond_mrkt_div_code": market,
+			"fid_cond_scr_div_code":  scr,
+			"fid_input_iscd":         params.InputISCD,
+			"fid_rank_sort_cls_code": sort,
+			"fid_input_cnt_1":        cnt,
+			"fid_prc_cls_code":       prc,
+			"fid_input_price_1":      params.InputPrice1,
+			"fid_input_price_2":      params.InputPrice2,
+			"fid_vol_cnt":            params.VolCount,
+			"fid_trgt_cls_code":      tgt,
+			"fid_trgt_exls_cls_code": tgtExcl,
+			"fid_div_cls_code":       div,
+			"fid_rsfl_rate1":         params.RsflRate1,
+		},
+		CustType: "P",
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	var res Fluctuation
+	if err := json.Unmarshal(resp.Raw, &res); err != nil {
+		return nil, fmt.Errorf("kis: parse Fluctuation: %w", err)
+	}
+	return &res, nil
+}

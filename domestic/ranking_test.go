@@ -87,3 +87,38 @@ func TestClient_InquireVolumeRank_Variant(t *testing.T) {
 	require.GreaterOrEqual(t, len(rank.Output), 1)
 	assert.True(t, rank.Output[0].PrdyVrss.IsNegative(), "PrdyVrss=-200 must be negative")
 }
+
+func TestClient_InquireFluctuation(t *testing.T) {
+	httpmock.Activate()
+	defer httpmock.DeactivateAndReset()
+
+	var capturedQuery url.Values
+	httpmock.RegisterResponder(
+		http.MethodGet,
+		`=~/ranking/fluctuation`,
+		func(req *http.Request) (*http.Response, error) {
+			capturedQuery = req.URL.Query()
+			return httpmock.NewStringResponse(200, loadFixtureString(t, "fluctuation_success.json")), nil
+		},
+	)
+
+	c := newTestClient(t)
+	res, err := c.InquireFluctuation(context.Background(), domestic.InquireFluctuationParams{
+		InputISCD: "0000",
+	})
+	require.NoError(t, err)
+	require.NotNil(t, res)
+
+	assert.Equal(t, "J", capturedQuery.Get("fid_cond_mrkt_div_code"))
+	assert.Equal(t, "20170", capturedQuery.Get("fid_cond_scr_div_code"))
+	assert.Equal(t, "0000", capturedQuery.Get("fid_input_iscd"))
+	assert.Equal(t, "0", capturedQuery.Get("fid_rank_sort_cls_code"))
+
+	require.Len(t, res.Output, 1)
+	assert.Equal(t, "005930", res.Output[0].StckShrnIscd)
+	assert.Equal(t, "삼성전자", res.Output[0].HtsKorIsnm)
+	assert.Equal(t, decimal.NewFromInt(75800), res.Output[0].StckPrpr)
+	assert.Equal(t, decimal.NewFromInt(76200), res.Output[0].StckHgpr)
+	assert.Equal(t, decimal.NewFromInt(75500), res.Output[0].StckLwpr)
+	assert.Equal(t, "131542", res.Output[0].HgprHour)
+}
