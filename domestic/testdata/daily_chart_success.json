@@ -1,0 +1,42 @@
+{
+  "rt_cd": "0",
+  "msg_cd": "MCA00000",
+  "msg1": "정상처리 되었습니다.",
+  "output1": {
+    "prdy_vrss": "-200",
+    "prdy_vrss_sign": "5",
+    "prdy_ctrt": "-0.26",
+    "stck_prdy_clpr": "76000",
+    "acml_vol": "12345678",
+    "acml_tr_pbmn": "938223456000",
+    "hts_kor_isnm": "삼성전자",
+    "stck_prpr": "75800",
+    "stck_shrn_iscd": "005930",
+    "prdy_vol": "11000000",
+    "stck_mxpr": "98500",
+    "stck_llam": "53100",
+    "stck_oprc": "76000",
+    "stck_hgpr": "76200",
+    "stck_lwpr": "75500",
+    "stck_prdy_oprc": "76500",
+    "stck_prdy_hgpr": "76800",
+    "stck_prdy_lwpr": "75900",
+    "askp": "75900",
+    "bidp": "75800",
+    "prdy_vrss_vol": "1345678",
+    "vol_tnrt": "0.21",
+    "stck_fcam": "100",
+    "lstn_stcn": "5969782550",
+    "cpfn": "778038308",
+    "hts_avls": "452312",
+    "per": "11.42",
+    "eps": "6638",
+    "pbr": "1.32",
+    "itewhol_loan_rmnd_ratem name": "0.45"
+  },
+  "output2": [
+    {"stck_bsop_date":"20260502","stck_clpr":"75800","stck_oprc":"76000","stck_hgpr":"76200","stck_lwpr":"75500","acml_vol":"12345678","acml_tr_pbmn":"938223456000","flng_cls_code":"00","prtt_rate":"0.00","mod_yn":"N","prdy_vrss_sign":"5","prdy_vrss":"-200","revl_issu_reas":""},
+    {"stck_bsop_date":"20260501","stck_clpr":"76000","stck_oprc":"76500","stck_hgpr":"76800","stck_lwpr":"75900","acml_vol":"11000000","acml_tr_pbmn":"836000000000","flng_cls_code":"00","prtt_rate":"0.00","mod_yn":"N","prdy_vrss_sign":"2","prdy_vrss":"100","revl_issu_reas":""},
+    {"stck_bsop_date":"20260430","stck_clpr":"75900","stck_oprc":"76200","stck_hgpr":"76400","stck_lwpr":"75600","acml_vol":"10500000","acml_tr_pbmn":"796950000000","flng_cls_code":"00","prtt_rate":"0.00","mod_yn":"N","prdy_vrss_sign":"5","prdy_vrss":"-300","revl_issu_reas":""}
+  ]
+}
