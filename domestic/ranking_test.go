@@ -120,6 +120,48 @@ func TestClient_InquireMarketCap(t *testing.T) {
 	assert.InDelta(t, 20.45, res.Output[0].MrktWholAvlsRlim, 0.001)
 }
 
+func TestClient_InquireDividendRate(t *testing.T) {
+	httpmock.Activate()
+	defer httpmock.DeactivateAndReset()
+
+	var capturedQuery url.Values
+	httpmock.RegisterResponder(
+		http.MethodGet,
+		`=~/ranking/dividend-rate`,
+		func(req *http.Request) (*http.Response, error) {
+			capturedQuery = req.URL.Query()
+			return httpmock.NewStringResponse(200, loadFixtureString(t, "dividend_rate_success.json")), nil
+		},
+	)
+
+	c := newTestClient(t)
+	res, err := c.InquireDividendRate(context.Background(), domestic.InquireDividendRateParams{
+		Sector:   "0001",
+		FromDate: "20250101",
+		ToDate:   "20251231",
+	})
+	require.NoError(t, err)
+	require.NotNil(t, res)
+
+	// 기본 query 검증
+	assert.Equal(t, "0", capturedQuery.Get("GB1"))
+	assert.Equal(t, "0001", capturedQuery.Get("UPJONG"))
+	assert.Equal(t, "0", capturedQuery.Get("GB2"))
+	assert.Equal(t, "1", capturedQuery.Get("GB3"))
+	assert.Equal(t, "20250101", capturedQuery.Get("F_DT"))
+	assert.Equal(t, "20251231", capturedQuery.Get("T_DT"))
+	assert.Equal(t, "0", capturedQuery.Get("GB4"))
+
+	require.Len(t, res.Output1, 2)
+	assert.Equal(t, "1", res.Output1[0].Rank)
+	assert.Equal(t, "005930", res.Output1[0].ShtCd)
+	assert.Equal(t, "삼성전자", res.Output1[0].IsinName)
+	assert.Equal(t, "20251231", res.Output1[0].RecordDate)
+	assert.Equal(t, decimal.NewFromInt(1444), res.Output1[0].PerStoDiviAmt)
+	assert.InDelta(t, 1.91, res.Output1[0].DiviRate, 0.001)
+	assert.Equal(t, "현금배당", res.Output1[0].DiviKind)
+}
+
 func TestClient_InquireFluctuation(t *testing.T) {
 	httpmock.Activate()
 	defer httpmock.DeactivateAndReset()

@@ -337,3 +337,85 @@ func (c *Client) InquireMarketCap(ctx context.Context, params InquireMarketCapPa
 	}
 	return &res, nil
 }
+
+// DividendRate 는 배당률 상위 (HHKDB13470100) 응답.
+//
+// 한투 docs: docs/api/국내주식/국내주식_배당률_상위.md
+// path: /uapi/domestic-stock/v1/ranking/dividend-rate
+type DividendRate struct {
+	Output1 []DividendRateItem `json:"output1"` // 응답상세 (output1)
+}
+
+// DividendRateItem 은 배당률 상위 응답의 한 행.
+type DividendRateItem struct {
+	Rank          string          `json:"rank"`             // 순위
+	ShtCd         string          `json:"sht_cd"`           // 종목코드
+	IsinName      string          `json:"isin_name"`        // 종목명
+	RecordDate    string          `json:"record_date"`      // 기준일 (YYYYMMDD)
+	PerStoDiviAmt decimal.Decimal `json:"per_sto_divi_amt"` // 현금/주식배당금
+	DiviRate      float64         `json:"divi_rate,string"` // 현금/주식배당률 (%)
+	DiviKind      string          `json:"divi_kind"`        // 배당종류
+}
+
+// InquireDividendRateParams 는 배당률 상위 조회 파라미터.
+//
+// 다른 ranking 과 query 형식이 다름. KIS docs 의 query 키 (CTS_AREA, GB1~GB4, UPJONG, F_DT, T_DT) 그대로 노출.
+type InquireDividendRateParams struct {
+	CtsArea     string // CTS_AREA — 빈 값(공백) default
+	Market      string // GB1 — KOSPI 구분: "0":전체, "1":코스피, "2":코스피200, "3":코스닥. 빈 값=>"0"
+	Sector      string // UPJONG — 업종구분 (필수). 예: "0001"(코스피 종합), "1001"(코스닥 종합)
+	StockType   string // GB2 — 종목선택: "0":전체, "6":보통주, "7":우선주. 빈 값=>"0"
+	DividendCls string // GB3 — 배당구분: "1":주식배당, "2":현금배당. 빈 값=>"1"
+	FromDate    string // F_DT — 기준일 From (필수, YYYYMMDD)
+	ToDate      string // T_DT — 기준일 To (필수, YYYYMMDD)
+	YearCls     string // GB4 — 결산/중간배당: "0":전체, "1":결산배당, "2":중간배당. 빈 값=>"0"
+}
+
+// InquireDividendRate 는 배당률 상위 호출.
+//
+// 한투 docs: docs/api/국내주식/국내주식_배당률_상위.md
+// path: /uapi/domestic-stock/v1/ranking/dividend-rate (HHKDB13470100)
+func (c *Client) InquireDividendRate(ctx context.Context, params InquireDividendRateParams) (*DividendRate, error) {
+	gb1 := params.Market
+	if gb1 == "" {
+		gb1 = "0"
+	}
+	gb2 := params.StockType
+	if gb2 == "" {
+		gb2 = "0"
+	}
+	gb3 := params.DividendCls
+	if gb3 == "" {
+		gb3 = "1"
+	}
+	gb4 := params.YearCls
+	if gb4 == "" {
+		gb4 = "0"
+	}
+
+	resp, err := c.http.Do(ctx, &httpclient.Request{
+		Method: http.MethodGet,
+		Path:   "/uapi/domestic-stock/v1/ranking/dividend-rate",
+		TrID:   "HHKDB13470100",
+		Query: map[string]string{
+			"CTS_AREA": params.CtsArea,
+			"GB1":      gb1,
+			"UPJONG":   params.Sector,
+			"GB2":      gb2,
+			"GB3":      gb3,
+			"F_DT":     params.FromDate,
+			"T_DT":     params.ToDate,
+			"GB4":      gb4,
+		},
+		CustType: "P",
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	var res DividendRate
+	if err := json.Unmarshal(resp.Raw, &res); err != nil {
+		return nil, fmt.Errorf("kis: parse DividendRate: %w", err)
+	}
+	return &res, nil
+}
