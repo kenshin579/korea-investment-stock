@@ -44,7 +44,7 @@ type KospiSymbol struct {
 }
 
 // kospiFieldSpecs 와 kospiColumns 는 한투 GitHub Python parsers/master_parser.py 의
-// field_specs / part2_columns 와 1:1 매핑. 라인 마지막 228 byte 의 fwf 영역.
+// field_specs / part2_columns 와 1:1 매핑. 라인 마지막 227 byte 의 fwf 영역.
 var kospiFieldSpecs = []int{
 	2, 1, 4, 4, 4,
 	1, 1, 1, 1, 1,
@@ -81,7 +81,7 @@ var kospiColumns = []string{
 
 // ParseKospi 는 KOSPI 마스터 ZIP 의 byte 를 받아 종목 슬라이스로 디코딩.
 func ParseKospi(zipBytes []byte) ([]KospiSymbol, error) {
-	const fwfLen = 228
+	const fwfLen = 227
 	mst, err := openMstFromZip(zipBytes)
 	if err != nil {
 		return nil, fmt.Errorf("krxmaster: kospi: %w", err)

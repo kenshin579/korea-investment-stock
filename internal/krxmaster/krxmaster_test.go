@@ -32,6 +32,16 @@ func TestParseKospi(t *testing.T) {
 		assert.GreaterOrEqual(t, len(s.Raw), 60,
 			"row %d: Raw 에 ~70 컬럼 (최소 60+)", i)
 	}
+
+	// 첫 행 (000020 동화약품) 의 핵심 필드 — 정확한 값 검증.
+	// testdata 는 commit 된 binary, 변동 없음.
+	require.GreaterOrEqual(t, len(syms), 1)
+	s0 := syms[0]
+	assert.Equal(t, "000020", s0.ShortCode)
+	assert.Equal(t, "ST", s0.GroupCode, "주권 그룹코드는 'ST'")
+	assert.Greater(t, s0.BasePrice, int64(0), "기준가 양수")
+	assert.True(t, s0.FaceValue.IsPositive(), "액면가 양수")
+	assert.Regexp(t, `^(0[1-9]|1[0-2])$`, s0.SettlementMonth, "결산월 01-12")
 }
 
 func TestParseKospi_InvalidZip(t *testing.T) {
