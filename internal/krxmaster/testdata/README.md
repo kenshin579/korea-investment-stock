@@ -1,6 +1,6 @@
 # krxmaster testdata
 
-`kospi_code_sample.mst.zip` 와 `kosdaq_code_sample.mst.zip` 는 KRX 종목 마스터 파일의 첫 3 행만 추출한 sample.
+`kospi_code_sample.mst.zip` 와 `kosdaq_code_sample.mst.zip` 는 KRX 종목 마스터 파일에서 6자리 단축코드 일반 주권 3 행만 추출한 sample (펀드/ETF 9자리 코드는 제외).
 
 ## 출처
 
@@ -15,9 +15,9 @@
 cd /tmp && rm -rf krxmaster && mkdir krxmaster && cd krxmaster
 curl -sSL -o kospi_code.mst.zip https://new.real.download.dws.co.kr/common/master/kospi_code.mst.zip
 unzip -o kospi_code.mst.zip
-head -n 3 kospi_code.mst > kospi_code_sample.mst
+LC_ALL=C grep -E '^[0-9]{6}' kospi_code.mst | head -n 3 > kospi_code_sample.mst
 zip kospi_code_sample.mst.zip kospi_code_sample.mst
-# kosdaq 동일
+# kosdaq 동일 (regular 6자리 단축코드 필터)
 ```
 
 ## 라이선스
