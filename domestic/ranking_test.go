@@ -88,6 +88,38 @@ func TestClient_InquireVolumeRank_Variant(t *testing.T) {
 	assert.True(t, rank.Output[0].PrdyVrss.IsNegative(), "PrdyVrss=-200 must be negative")
 }
 
+func TestClient_InquireMarketCap(t *testing.T) {
+	httpmock.Activate()
+	defer httpmock.DeactivateAndReset()
+
+	var capturedQuery url.Values
+	httpmock.RegisterResponder(
+		http.MethodGet,
+		`=~/ranking/market-cap`,
+		func(req *http.Request) (*http.Response, error) {
+			capturedQuery = req.URL.Query()
+			return httpmock.NewStringResponse(200, loadFixtureString(t, "market_cap_success.json")), nil
+		},
+	)
+
+	c := newTestClient(t)
+	res, err := c.InquireMarketCap(context.Background(), domestic.InquireMarketCapParams{
+		InputISCD: "0000",
+	})
+	require.NoError(t, err)
+	require.NotNil(t, res)
+
+	assert.Equal(t, "J", capturedQuery.Get("fid_cond_mrkt_div_code"))
+	assert.Equal(t, "20174", capturedQuery.Get("fid_cond_scr_div_code"))
+	assert.Equal(t, "0000", capturedQuery.Get("fid_input_iscd"))
+
+	require.Len(t, res.Output, 2)
+	assert.Equal(t, "삼성전자", res.Output[0].HtsKorIsnm)
+	assert.Equal(t, decimal.NewFromInt(75800), res.Output[0].StckPrpr)
+	assert.Equal(t, int64(452329543), res.Output[0].StckAvls)
+	assert.InDelta(t, 20.45, res.Output[0].MrktWholAvlsRlim, 0.001)
+}
+
 func TestClient_InquireFluctuation(t *testing.T) {
 	httpmock.Activate()
 	defer httpmock.DeactivateAndReset()

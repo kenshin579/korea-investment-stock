@@ -247,3 +247,93 @@ func (c *Client) InquireFluctuation(ctx context.Context, params InquireFluctuati
 	}
 	return &res, nil
 }
+
+// MarketCap 은 시가총액 상위 (FHPST01740000) 응답.
+//
+// 한투 docs: docs/api/국내주식/국내주식_시가총액_상위.md
+// path: /uapi/domestic-stock/v1/ranking/market-cap
+type MarketCap struct {
+	Output []MarketCapItem `json:"output"`
+}
+
+// MarketCapItem 은 시가총액 상위 응답의 한 행.
+type MarketCapItem struct {
+	MkscShrnIscd     string          `json:"mksc_shrn_iscd"`             // 유가증권 단축 종목코드
+	DataRank         string          `json:"data_rank"`                  // 데이터 순위
+	HtsKorIsnm       string          `json:"hts_kor_isnm"`               // HTS 한글 종목명
+	StckPrpr         decimal.Decimal `json:"stck_prpr"`                  // 주식 현재가
+	PrdyVrss         decimal.Decimal `json:"prdy_vrss"`                  // 전일 대비
+	PrdyVrssSign     string          `json:"prdy_vrss_sign"`             // 전일 대비 부호
+	PrdyCtrt         float64         `json:"prdy_ctrt,string"`           // 전일 대비율
+	AcmlVol          int64           `json:"acml_vol,string"`            // 누적 거래량
+	LstnStcn         int64           `json:"lstn_stcn,string"`           // 상장 주수
+	StckAvls         int64           `json:"stck_avls,string"`           // 시가 총액
+	MrktWholAvlsRlim float64         `json:"mrkt_whol_avls_rlim,string"` // 시장 전체 시가총액 비중
+}
+
+// InquireMarketCapParams 는 시가총액 상위 조회 파라미터.
+type InquireMarketCapParams struct {
+	InputPrice2   string // fid_input_price_2
+	MarketCode    string // fid_cond_mrkt_div_code — 빈 값=>"J"
+	ScreenCode    string // fid_cond_scr_div_code — 빈 값=>"20174"
+	DivCode       string // fid_div_cls_code — "0":전체, "1":보통주, "2":우선주. 빈 값=>"0"
+	InputISCD     string // fid_input_iscd — 필수, "0000"(전체)/"0001"(거래소)/"1001"(코스닥)/"2001"(코스피200)
+	TargetCode    string // fid_trgt_cls_code — 빈 값=>"0"
+	TargetExclude string // fid_trgt_exls_cls_code — 빈 값=>"0"
+	InputPrice1   string // fid_input_price_1
+	VolCount      string // fid_vol_cnt
+}
+
+// InquireMarketCap 은 시가총액 상위 호출.
+//
+// 한투 docs: docs/api/국내주식/국내주식_시가총액_상위.md
+// path: /uapi/domestic-stock/v1/ranking/market-cap (FHPST01740000)
+func (c *Client) InquireMarketCap(ctx context.Context, params InquireMarketCapParams) (*MarketCap, error) {
+	market := params.MarketCode
+	if market == "" {
+		market = "J"
+	}
+	scr := params.ScreenCode
+	if scr == "" {
+		scr = "20174"
+	}
+	div := params.DivCode
+	if div == "" {
+		div = "0"
+	}
+	tgt := params.TargetCode
+	if tgt == "" {
+		tgt = "0"
+	}
+	tgtExcl := params.TargetExclude
+	if tgtExcl == "" {
+		tgtExcl = "0"
+	}
+
+	resp, err := c.http.Do(ctx, &httpclient.Request{
+		Method: http.MethodGet,
+		Path:   "/uapi/domestic-stock/v1/ranking/market-cap",
+		TrID:   "FHPST01740000",
+		Query: map[string]string{
+			"fid_input_price_2":      params.InputPrice2,
+			"fid_cond_mrkt_div_code": market,
+			"fid_cond_scr_div_code":  scr,
+			"fid_div_cls_code":       div,
+			"fid_input_iscd":         params.InputISCD,
+			"fid_trgt_cls_code":      tgt,
+			"fid_trgt_exls_cls_code": tgtExcl,
+			"fid_input_price_1":      params.InputPrice1,
+			"fid_vol_cnt":            params.VolCount,
+		},
+		CustType: "P",
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	var res MarketCap
+	if err := json.Unmarshal(resp.Raw, &res); err != nil {
+		return nil, fmt.Errorf("kis: parse MarketCap: %w", err)
+	}
+	return &res, nil
+}
