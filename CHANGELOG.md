@@ -1,5 +1,24 @@
 # CHANGELOG
 
+## [1.2.0] - 2026-05-05
+
+### Added — Phase 1.4 (국내주식 투자자/업종/IPO)
+
+- `Domestic.InquireInvestorTradeByStockDaily` — 종목별 투자자매매동향 일별 (FHPTJ04160001)
+- `Domestic.InquireInvestorDailyByMarket` — 시장별 투자자매매동향 일별 (FHPTJ04040000)
+- `Domestic.InquireInvestorTimeByMarket` — 시장별 투자자매매동향 시세 (FHPTJ04030000)
+- `Domestic.InquireIndexPrice` — 국내업종 현재지수 (FHPUP02100000)
+- `Domestic.InquireIndexCategoryPrice` — 국내업종 구분별 전체시세 (FHPUP02140000)
+- `Domestic.InquirePubOffer` — 예탁원정보 공모주청약일정 (HHKDB669108C0)
+- examples: `domestic_investor`
+
+### Notes
+
+- IPO helpers 9개 omit — Phase 1.2 amendment 의 "Python wrapper convenience 미반영" 정책 일관 (client-side data 가공이라 caller 가 직접 처리)
+- 투자자 매매동향 응답이 매우 큼 (종목별 일별: 95+ 필드, 시세: 78 필드) — KIS docs 1:1 매핑, struct field 모두 포함
+- `InquireInvestorTimeByMarket` 의 query 키가 소문자 `fid_input_iscd` (다른 quotations/ 메서드와 다름) — KIS docs 그대로 노출
+- `InquirePubOffer` 의 query 키가 대문자+한글식 (`SHT_CD`, `CTS`, `F_DT`, `T_DT`) + path 가 `ksdinfo/` (다른 메서드의 `quotations/`/`ranking/`/`finance/` 와 다름)
+
 ## [1.1.0] - 2026-05-04
 
 ### Added — Phase 1.3 (국내주식 순위/재무)

@@ -53,42 +53,42 @@ type InvestorTradeByStockDailyItem struct {
 	StckLwpr     decimal.Decimal `json:"stck_lwpr"`           // 최저가
 
 	// 외국인 (10 fields)
-	FrgnNtbyQty       int64 `json:"frgn_ntby_qty,string"`        // 외국인 순매수 수량
-	FrgnRegNtbyQty    int64 `json:"frgn_reg_ntby_qty,string"`    // 외국인 등록 순매수 수량
-	FrgnNregNtbyQty   int64 `json:"frgn_nreg_ntby_qty,string"`   // 외국인 비등록 순매수 수량
-	FrgnRegNtbyPbmn   int64 `json:"frgn_reg_ntby_pbmn,string"`   // 외국인 등록 순매수 대금
-	FrgnNtbyTrPbmn    int64 `json:"frgn_ntby_tr_pbmn,string"`    // 외국인 순매수 거래 대금
-	FrgnNregNtbyPbmn  int64 `json:"frgn_nreg_ntby_pbmn,string"`  // 외국인 비등록 순매수 대금
-	FrgnSelnVol       int64 `json:"frgn_seln_vol,string"`        // 외국인 매도 거래량
-	FrgnShnuVol       int64 `json:"frgn_shnu_vol,string"`        // 외국인 매수 거래량
-	FrgnSelnTrPbmn    int64 `json:"frgn_seln_tr_pbmn,string"`    // 외국인 매도 거래 대금
-	FrgnShnuTrPbmn    int64 `json:"frgn_shnu_tr_pbmn,string"`    // 외국인 매수 거래 대금
+	FrgnNtbyQty      int64 `json:"frgn_ntby_qty,string"`       // 외국인 순매수 수량
+	FrgnRegNtbyQty   int64 `json:"frgn_reg_ntby_qty,string"`   // 외국인 등록 순매수 수량
+	FrgnNregNtbyQty  int64 `json:"frgn_nreg_ntby_qty,string"`  // 외국인 비등록 순매수 수량
+	FrgnRegNtbyPbmn  int64 `json:"frgn_reg_ntby_pbmn,string"`  // 외국인 등록 순매수 대금
+	FrgnNtbyTrPbmn   int64 `json:"frgn_ntby_tr_pbmn,string"`   // 외국인 순매수 거래 대금
+	FrgnNregNtbyPbmn int64 `json:"frgn_nreg_ntby_pbmn,string"` // 외국인 비등록 순매수 대금
+	FrgnSelnVol      int64 `json:"frgn_seln_vol,string"`       // 외국인 매도 거래량
+	FrgnShnuVol      int64 `json:"frgn_shnu_vol,string"`       // 외국인 매수 거래량
+	FrgnSelnTrPbmn   int64 `json:"frgn_seln_tr_pbmn,string"`   // 외국인 매도 거래 대금
+	FrgnShnuTrPbmn   int64 `json:"frgn_shnu_tr_pbmn,string"`   // 외국인 매수 거래 대금
 
 	// 외국인 등록/비등록 매도매수 (8 fields)
-	FrgnRegAskpQty   int64 `json:"frgn_reg_askp_qty,string"`    // 외국인 등록 매도 수량
-	FrgnRegBidpQty   int64 `json:"frgn_reg_bidp_qty,string"`    // 외국인 등록 매수 수량
-	FrgnRegAskpPbmn  int64 `json:"frgn_reg_askp_pbmn,string"`   // 외국인 등록 매도 대금
-	FrgnRegBidpPbmn  int64 `json:"frgn_reg_bidp_pbmn,string"`   // 외국인 등록 매수 대금
-	FrgnNregAskpQty  int64 `json:"frgn_nreg_askp_qty,string"`   // 외국인 비등록 매도 수량
-	FrgnNregBidpQty  int64 `json:"frgn_nreg_bidp_qty,string"`   // 외국인 비등록 매수 수량
-	FrgnNregAskpPbmn int64 `json:"frgn_nreg_askp_pbmn,string"`  // 외국인 비등록 매도 대금
-	FrgnNregBidpPbmn int64 `json:"frgn_nreg_bidp_pbmn,string"`  // 외국인 비등록 매수 대금
+	FrgnRegAskpQty   int64 `json:"frgn_reg_askp_qty,string"`   // 외국인 등록 매도 수량
+	FrgnRegBidpQty   int64 `json:"frgn_reg_bidp_qty,string"`   // 외국인 등록 매수 수량
+	FrgnRegAskpPbmn  int64 `json:"frgn_reg_askp_pbmn,string"`  // 외국인 등록 매도 대금
+	FrgnRegBidpPbmn  int64 `json:"frgn_reg_bidp_pbmn,string"`  // 외국인 등록 매수 대금
+	FrgnNregAskpQty  int64 `json:"frgn_nreg_askp_qty,string"`  // 외국인 비등록 매도 수량
+	FrgnNregBidpQty  int64 `json:"frgn_nreg_bidp_qty,string"`  // 외국인 비등록 매수 수량
+	FrgnNregAskpPbmn int64 `json:"frgn_nreg_askp_pbmn,string"` // 외국인 비등록 매도 대금
+	FrgnNregBidpPbmn int64 `json:"frgn_nreg_bidp_pbmn,string"` // 외국인 비등록 매수 대금
 
 	// 개인 (6 fields)
-	PrsnNtbyQty    int64 `json:"prsn_ntby_qty,string"`      // 개인 순매수 수량
-	PrsnNtbyTrPbmn int64 `json:"prsn_ntby_tr_pbmn,string"`  // 개인 순매수 거래 대금
-	PrsnSelnVol    int64 `json:"prsn_seln_vol,string"`      // 개인 매도 거래량
-	PrsnShnuVol    int64 `json:"prsn_shnu_vol,string"`      // 개인 매수 거래량
-	PrsnSelnTrPbmn int64 `json:"prsn_seln_tr_pbmn,string"`  // 개인 매도 거래 대금
-	PrsnShnuTrPbmn int64 `json:"prsn_shnu_tr_pbmn,string"`  // 개인 매수 거래 대금
+	PrsnNtbyQty    int64 `json:"prsn_ntby_qty,string"`     // 개인 순매수 수량
+	PrsnNtbyTrPbmn int64 `json:"prsn_ntby_tr_pbmn,string"` // 개인 순매수 거래 대금
+	PrsnSelnVol    int64 `json:"prsn_seln_vol,string"`     // 개인 매도 거래량
+	PrsnShnuVol    int64 `json:"prsn_shnu_vol,string"`     // 개인 매수 거래량
+	PrsnSelnTrPbmn int64 `json:"prsn_seln_tr_pbmn,string"` // 개인 매도 거래 대금
+	PrsnShnuTrPbmn int64 `json:"prsn_shnu_tr_pbmn,string"` // 개인 매수 거래 대금
 
 	// 기관계 (6 fields)
-	OrgnNtbyQty    int64 `json:"orgn_ntby_qty,string"`      // 기관계 순매수 수량
-	OrgnNtbyTrPbmn int64 `json:"orgn_ntby_tr_pbmn,string"`  // 기관계 순매수 거래 대금
-	OrgnSelnVol    int64 `json:"orgn_seln_vol,string"`      // 기관계 매도 거래량
-	OrgnShnuVol    int64 `json:"orgn_shnu_vol,string"`      // 기관계 매수 거래량
-	OrgnSelnTrPbmn int64 `json:"orgn_seln_tr_pbmn,string"`  // 기관계 매도 거래 대금
-	OrgnShnuTrPbmn int64 `json:"orgn_shnu_tr_pbmn,string"`  // 기관계 매수 거래 대금
+	OrgnNtbyQty    int64 `json:"orgn_ntby_qty,string"`     // 기관계 순매수 수량
+	OrgnNtbyTrPbmn int64 `json:"orgn_ntby_tr_pbmn,string"` // 기관계 순매수 거래 대금
+	OrgnSelnVol    int64 `json:"orgn_seln_vol,string"`     // 기관계 매도 거래량
+	OrgnShnuVol    int64 `json:"orgn_shnu_vol,string"`     // 기관계 매수 거래량
+	OrgnSelnTrPbmn int64 `json:"orgn_seln_tr_pbmn,string"` // 기관계 매도 거래 대금
+	OrgnShnuTrPbmn int64 `json:"orgn_shnu_tr_pbmn,string"` // 기관계 매수 거래 대금
 
 	// 증권 (6 fields)
 	ScrtNtbyQty    int64 `json:"scrt_ntby_qty,string"`

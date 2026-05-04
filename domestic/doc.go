@@ -22,5 +22,14 @@
 //   - InquireProfitRatio           — 수익성비율 (FHKST66430400)
 //   - InquireGrowthRatio           — 성장성비율 (FHKST66430800)
 //
+// Phase 1.4 메서드 (6):
+//
+//   - InquireInvestorTradeByStockDaily — 종목별 투자자매매동향 일별 (FHPTJ04160001)
+//   - InquireInvestorDailyByMarket    — 시장별 투자자매매동향 일별 (FHPTJ04040000)
+//   - InquireInvestorTimeByMarket     — 시장별 투자자매매동향 시세 (FHPTJ04030000)
+//   - InquireIndexPrice               — 국내업종 현재지수 (FHPUP02100000)
+//   - InquireIndexCategoryPrice       — 국내업종 구분별 전체시세 (FHPUP02140000)
+//   - InquirePubOffer                 — 예탁원정보 공모주청약일정 (HHKDB669108C0)
+//
 // 사용자는 root kis.Client 의 Domestic 필드로 접근.
 package domestic
