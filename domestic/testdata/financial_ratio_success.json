@@ -1,0 +1,31 @@
+{
+  "rt_cd": "0",
+  "msg_cd": "MCA00000",
+  "msg1": "정상처리 되었습니다.",
+  "output": [
+    {
+      "stac_yymm": "202412",
+      "grs": "5.42",
+      "bsop_prfi_inrt": "12.30",
+      "ntin_inrt": "8.75",
+      "roe_val": "11.50",
+      "eps": "6638",
+      "sps": "55432",
+      "bps": "57420",
+      "rsrv_rate": "32.45",
+      "lblt_rate": "28.10"
+    },
+    {
+      "stac_yymm": "202312",
+      "grs": "3.21",
+      "bsop_prfi_inrt": "-2.50",
+      "ntin_inrt": "-5.10",
+      "roe_val": "9.80",
+      "eps": "6105",
+      "sps": "52600",
+      "bps": "53000",
+      "rsrv_rate": "30.10",
+      "lblt_rate": "29.50"
+    }
+  ]
+}

@@ -87,21 +87,27 @@
 
 **한투 spec 충실 원칙**: Python `fetch_price` 의 ETF tr_id 분기, `fetch_stock_info` 의 country_code fallback 루프, `fetch_search_stock_info` 의 "KR" 검사 등 Python 자체 wrapper 동작은 모두 미구현. 한투 spec 의 query param 그대로 노출.
 
-### Phase 1.3 — 국내 순위 + 재무 (`v0.3.0`)
+### Phase 1.3 — 국내 순위 + 재무 (`v1.1.0`)
 
-| 메서드 | 위치 | 한투 API |
-|-------|------|---------|
-| `FetchVolumeRanking` | `domestic/ranking.go` | 거래량순위 |
-| `FetchChangeRateRanking` | `domestic/ranking.go` | 등락률 순위 |
-| `FetchMarketCapRanking` | `domestic/ranking.go` | 시가총액 상위 |
-| `FetchDividendRanking` | `domestic/ranking.go` | 배당률 상위 |
-| `FetchFinancialRatio` | `domestic/financial.go` | 재무비율 |
-| `FetchIncomeStatement` | `domestic/financial.go` | 손익계산서 |
-| `FetchBalanceSheet` | `domestic/financial.go` | 대차대조표 |
-| `FetchProfitabilityRatio` | `domestic/financial.go` | 수익성비율 |
-| `FetchGrowthRatio` | `domestic/financial.go` | 성장성비율 |
+> **Amendment (2026-05-04, Phase 1.3 brainstorming)**: 메서드명을 Phase 1.2 와 동일한 Style A (한투 endpoint path 의 마지막 segment 를 PascalCase 로 1:1 매핑) 로 갱신. release tag 는 v1.0.0 publish 이후 Python 시대 태그와 namespace 분리됨에 따라 `v0.3.0` → `v1.1.0`. Python parity wrapper 인 `FetchVolumeRanking`/`FetchChangeRateRanking` 등은 한투 API 의 path 직접 노출로 변경.
+
+| 메서드 | 위치 | 한투 path | TR_ID |
+|-------|------|----------|-------|
+| `Domestic.InquireVolumeRank` | `domestic/ranking.go` | `quotations/volume-rank` | FHPST01710000 |
+| `Domestic.InquireFluctuation` | `domestic/ranking.go` | `ranking/fluctuation` | FHPST01700000 |
+| `Domestic.InquireMarketCap` | `domestic/ranking.go` | `ranking/market-cap` | FHPST01740000 |
+| `Domestic.InquireDividendRate` | `domestic/ranking.go` | `ranking/dividend-rate` | HHKDB13470100 |
+| `Domestic.InquireFinancialRatio` | `domestic/financial.go` | `finance/financial-ratio` | FHKST66430300 |
+| `Domestic.InquireIncomeStatement` | `domestic/financial.go` | `finance/income-statement` | FHKST66430200 |
+| `Domestic.InquireBalanceSheet` | `domestic/financial.go` | `finance/balance-sheet` | FHKST66430100 |
+| `Domestic.InquireProfitRatio` | `domestic/financial.go` | `finance/profit-ratio` | FHKST66430400 |
+| `Domestic.InquireGrowthRatio` | `domestic/financial.go` | `finance/growth-ratio` | FHKST66430800 |
 
 총 **9 메서드**
+
+**응답 typed struct 명**: `VolumeRank`, `Fluctuation`, `MarketCap`, `DividendRate`, `FinancialRatio`, `IncomeStatement`, `BalanceSheet`, `ProfitRatio`, `GrowthRatio`. Params struct 는 `<MethodName>Params` (예 `InquireVolumeRankParams`).
+
+**한투 spec 충실 원칙** (Phase 1.2 와 동일): query param/응답 필드를 한투 docs (`docs/api/국내주식/<API>.md`) 그대로 노출. Python wrapper convenience 미반영.
 
 ### Phase 1.4 — 국내 투자자 + 업종 + IPO (`v0.4.0`)
 
@@ -133,8 +139,8 @@
 ### 합계
 
 - **인프라**: 1 PR
-- **메서드**: 28 + 9 = 37 (28개 fetch + 9 IPO helpers)
-- **Release tags**: `v0.1.0`, `v0.2.0`, `v0.3.0`, `v0.4.0`, **`v1.0.0`**
+- **메서드**: 28 + 9 = 37 (28개 inquiry + 9 IPO helpers)
+- **Release tags**: ~~v0.1.0/v0.2.0~~ (Python era namespace 충돌로 삭제) → **`v1.0.0`** (Phase 1.1+1.2 통합), `v1.1.0` (Phase 1.3), `v1.2.0` (Phase 1.4), `v1.3.0` (Phase 1.5 — 해외 전체, Python parity 완성)
 
 ---
 
