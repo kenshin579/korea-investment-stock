@@ -209,3 +209,106 @@ func (c *Client) InquireInvestorTradeByStockDaily(ctx context.Context, params In
 	}
 	return &res, nil
 }
+
+// InvestorDailyByMarket 은 시장별 투자자매매동향(일별) (FHPTJ04040000) 응답.
+//
+// 한투 docs: docs/api/국내주식/시장별_투자자매매동향(일별).md
+// path: /uapi/domestic-stock/v1/quotations/inquire-investor-daily-by-market
+type InvestorDailyByMarket struct {
+	Output []InvestorDailyByMarketItem `json:"output"`
+}
+
+// InvestorDailyByMarketItem 은 응답 한 행 (한 일자).
+type InvestorDailyByMarketItem struct {
+	// 일자 + 지수 (9 fields)
+	StckBsopDate     string          `json:"stck_bsop_date"`             // 주식 영업 일자
+	BstpNmixPrpr     decimal.Decimal `json:"bstp_nmix_prpr"`             // 업종 지수 현재가
+	BstpNmixPrdyVrss decimal.Decimal `json:"bstp_nmix_prdy_vrss"`        // 업종 지수 전일 대비
+	PrdyVrssSign     string          `json:"prdy_vrss_sign"`             // 전일 대비 부호
+	BstpNmixPrdyCtrt float64         `json:"bstp_nmix_prdy_ctrt,string"` // 업종 지수 전일 대비율
+	BstpNmixOprc     decimal.Decimal `json:"bstp_nmix_oprc"`             // 업종 지수 시가
+	BstpNmixHgpr     decimal.Decimal `json:"bstp_nmix_hgpr"`             // 업종 지수 최고가
+	BstpNmixLwpr     decimal.Decimal `json:"bstp_nmix_lwpr"`             // 업종 지수 최저가
+	StckPrdyClpr     decimal.Decimal `json:"stck_prdy_clpr"`             // 전일 종가
+
+	// 13 type ntby_qty (수량)
+	FrgnNtbyQty     int64 `json:"frgn_ntby_qty,string"`      // 외국인 순매수 수량
+	FrgnRegNtbyQty  int64 `json:"frgn_reg_ntby_qty,string"`  // 외국인 등록 순매수 수량
+	FrgnNregNtbyQty int64 `json:"frgn_nreg_ntby_qty,string"` // 외국인 비등록 순매수 수량
+	PrsnNtbyQty     int64 `json:"prsn_ntby_qty,string"`      // 개인 순매수 수량
+	OrgnNtbyQty     int64 `json:"orgn_ntby_qty,string"`      // 기관계 순매수 수량
+	ScrtNtbyQty     int64 `json:"scrt_ntby_qty,string"`      // 증권 순매수 수량
+	IvtrNtbyQty     int64 `json:"ivtr_ntby_qty,string"`      // 투자신탁 순매수 수량
+	PeFundNtbyVol   int64 `json:"pe_fund_ntby_vol,string"`   // 사모 펀드 순매수 거래량 (vol)
+	BankNtbyQty     int64 `json:"bank_ntby_qty,string"`      // 은행 순매수 수량
+	InsuNtbyQty     int64 `json:"insu_ntby_qty,string"`      // 보험 순매수 수량
+	MrbnNtbyQty     int64 `json:"mrbn_ntby_qty,string"`      // 종금 순매수 수량
+	FundNtbyQty     int64 `json:"fund_ntby_qty,string"`      // 기금 순매수 수량
+	EtcNtbyQty      int64 `json:"etc_ntby_qty,string"`       // 기타 순매수 수량
+	EtcOrgtNtbyVol  int64 `json:"etc_orgt_ntby_vol,string"`  // 기타 단체 순매수 거래량
+	EtcCorpNtbyVol  int64 `json:"etc_corp_ntby_vol,string"`  // 기타 법인 순매수 거래량
+
+	// 14 type ntby_tr_pbmn (거래대금)
+	FrgnNtbyTrPbmn    int64 `json:"frgn_ntby_tr_pbmn,string"`     // 외국인 순매수 거래 대금
+	FrgnRegNtbyPbmn   int64 `json:"frgn_reg_ntby_pbmn,string"`    // 외국인 등록 순매수 대금
+	FrgnNregNtbyPbmn  int64 `json:"frgn_nreg_ntby_pbmn,string"`   // 외국인 비등록 순매수 대금
+	PrsnNtbyTrPbmn    int64 `json:"prsn_ntby_tr_pbmn,string"`     // 개인 순매수 거래 대금
+	OrgnNtbyTrPbmn    int64 `json:"orgn_ntby_tr_pbmn,string"`     // 기관계 순매수 거래 대금
+	ScrtNtbyTrPbmn    int64 `json:"scrt_ntby_tr_pbmn,string"`     // 증권
+	IvtrNtbyTrPbmn    int64 `json:"ivtr_ntby_tr_pbmn,string"`     // 투자신탁
+	PeFundNtbyTrPbmn  int64 `json:"pe_fund_ntby_tr_pbmn,string"`  // 사모 펀드
+	BankNtbyTrPbmn    int64 `json:"bank_ntby_tr_pbmn,string"`     // 은행
+	InsuNtbyTrPbmn    int64 `json:"insu_ntby_tr_pbmn,string"`     // 보험
+	MrbnNtbyTrPbmn    int64 `json:"mrbn_ntby_tr_pbmn,string"`     // 종금
+	FundNtbyTrPbmn    int64 `json:"fund_ntby_tr_pbmn,string"`     // 기금
+	EtcNtbyTrPbmn     int64 `json:"etc_ntby_tr_pbmn,string"`      // 기타
+	EtcOrgtNtbyTrPbmn int64 `json:"etc_orgt_ntby_tr_pbmn,string"` // 기타 단체
+	EtcCorpNtbyTrPbmn int64 `json:"etc_corp_ntby_tr_pbmn,string"` // 기타 법인
+}
+
+// InquireInvestorDailyByMarketParams 는 시장별 투자자매매동향(일별) 조회 파라미터.
+//
+// KIS docs 의 query 키 그대로 노출. FID_INPUT_ISCD = 업종분류코드, FID_INPUT_ISCD_1 = 시장 (KSP/KSQ), FID_INPUT_ISCD_2 = 하위 분류.
+type InquireInvestorDailyByMarketParams struct {
+	MarketCode string // FID_COND_MRKT_DIV_CODE — 빈 값=>"J"
+	Symbol     string // FID_INPUT_ISCD — 업종분류코드 (예 "0001":코스피 종합)
+	BaseDate   string // FID_INPUT_DATE_1 — YYYYMMDD
+	Market     string // FID_INPUT_ISCD_1 — "KSP"(코스피) 또는 "KSQ"(코스닥)
+	BaseDate2  string // FID_INPUT_DATE_2 — BaseDate 와 동일 일자
+	SubCode    string // FID_INPUT_ISCD_2 — 하위 분류코드 (업종분류코드)
+}
+
+// InquireInvestorDailyByMarket 은 시장별 투자자매매동향(일별) 호출.
+//
+// 한투 docs: docs/api/국내주식/시장별_투자자매매동향(일별).md
+// path: /uapi/domestic-stock/v1/quotations/inquire-investor-daily-by-market (FHPTJ04040000)
+func (c *Client) InquireInvestorDailyByMarket(ctx context.Context, params InquireInvestorDailyByMarketParams) (*InvestorDailyByMarket, error) {
+	market := params.MarketCode
+	if market == "" {
+		market = "J"
+	}
+
+	resp, err := c.http.Do(ctx, &httpclient.Request{
+		Method: http.MethodGet,
+		Path:   "/uapi/domestic-stock/v1/quotations/inquire-investor-daily-by-market",
+		TrID:   "FHPTJ04040000",
+		Query: map[string]string{
+			"FID_COND_MRKT_DIV_CODE": market,
+			"FID_INPUT_ISCD":         params.Symbol,
+			"FID_INPUT_DATE_1":       params.BaseDate,
+			"FID_INPUT_ISCD_1":       params.Market,
+			"FID_INPUT_DATE_2":       params.BaseDate2,
+			"FID_INPUT_ISCD_2":       params.SubCode,
+		},
+		CustType: "P",
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	var res InvestorDailyByMarket
+	if err := json.Unmarshal(resp.Raw, &res); err != nil {
+		return nil, fmt.Errorf("kis: parse InvestorDailyByMarket: %w", err)
+	}
+	return &res, nil
+}

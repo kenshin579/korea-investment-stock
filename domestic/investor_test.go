@@ -54,3 +54,39 @@ func TestClient_InquireInvestorTradeByStockDaily(t *testing.T) {
 	assert.Equal(t, int64(234567), res.Output2[0].PrsnNtbyQty)
 	assert.Equal(t, int64(-100000), res.Output2[0].OrgnNtbyQty)
 }
+
+func TestClient_InquireInvestorDailyByMarket(t *testing.T) {
+	httpmock.Activate()
+	defer httpmock.DeactivateAndReset()
+
+	var capturedQuery url.Values
+	httpmock.RegisterResponder(
+		http.MethodGet,
+		`=~/quotations/inquire-investor-daily-by-market`,
+		func(req *http.Request) (*http.Response, error) {
+			capturedQuery = req.URL.Query()
+			return httpmock.NewStringResponse(200, loadFixtureString(t, "investor_daily_by_market_success.json")), nil
+		},
+	)
+
+	c := newTestClient(t)
+	res, err := c.InquireInvestorDailyByMarket(context.Background(), domestic.InquireInvestorDailyByMarketParams{
+		Symbol:    "0001", // 코스피 종합
+		BaseDate:  "20260505",
+		Market:    "KSP",
+		BaseDate2: "20260505",
+		SubCode:   "0001",
+	})
+	require.NoError(t, err)
+	require.NotNil(t, res)
+
+	assert.Equal(t, "0001", capturedQuery.Get("FID_INPUT_ISCD"))
+	assert.Equal(t, "20260505", capturedQuery.Get("FID_INPUT_DATE_1"))
+	assert.Equal(t, "KSP", capturedQuery.Get("FID_INPUT_ISCD_1"))
+
+	require.Len(t, res.Output, 1)
+	assert.Equal(t, "20260505", res.Output[0].StckBsopDate)
+	assert.Equal(t, "5", res.Output[0].PrdyVrssSign)
+	assert.Equal(t, int64(-123456), res.Output[0].FrgnNtbyQty)
+	assert.Equal(t, int64(234567), res.Output[0].PrsnNtbyQty)
+}
