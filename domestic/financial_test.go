@@ -119,3 +119,28 @@ func TestClient_InquireBalanceSheet(t *testing.T) {
 	assert.Equal(t, int64(94000000), res.Output[0].TotalLblt)
 	assert.Equal(t, int64(340000000), res.Output[0].TotalCptl)
 }
+
+func TestClient_InquireProfitRatio(t *testing.T) {
+	httpmock.Activate()
+	defer httpmock.DeactivateAndReset()
+
+	httpmock.RegisterResponder(
+		http.MethodGet,
+		`=~/finance/profit-ratio`,
+		httpmock.NewStringResponder(200, loadFixtureString(t, "profit_ratio_success.json")),
+	)
+
+	c := newTestClient(t)
+	res, err := c.InquireProfitRatio(context.Background(), domestic.InquireProfitRatioParams{
+		Symbol: "005930",
+	})
+	require.NoError(t, err)
+	require.NotNil(t, res)
+
+	require.Len(t, res.Output, 1)
+	assert.Equal(t, "202412", res.Output[0].StacYymm)
+	assert.InDelta(t, 8.45, res.Output[0].CptlNtinRate, 0.001)
+	assert.InDelta(t, 11.50, res.Output[0].SelfCptlNtinInrt, 0.001)
+	assert.InDelta(t, 12.30, res.Output[0].SaleNtinRate, 0.001)
+	assert.InDelta(t, 37.05, res.Output[0].SaleTotlRate, 0.001)
+}

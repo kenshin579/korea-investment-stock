@@ -191,3 +191,49 @@ func (c *Client) InquireBalanceSheet(ctx context.Context, params InquireBalanceS
 	}
 	return &res, nil
 }
+
+// ProfitRatio 는 수익성비율 (FHKST66430400) 응답.
+//
+// 한투 docs: docs/api/국내주식/국내주식_수익성비율.md
+// path: /uapi/domestic-stock/v1/finance/profit-ratio
+type ProfitRatio struct {
+	Output []ProfitRatioItem `json:"output"`
+}
+
+// ProfitRatioItem 은 수익성비율 응답의 한 행.
+type ProfitRatioItem struct {
+	StacYymm         string  `json:"stac_yymm"`                  // 결산 년월
+	CptlNtinRate     float64 `json:"cptl_ntin_rate,string"`      // 총자본 순이익율
+	SelfCptlNtinInrt float64 `json:"self_cptl_ntin_inrt,string"` // 자기자본 순이익율
+	SaleNtinRate     float64 `json:"sale_ntin_rate,string"`      // 매출액 순이익율
+	SaleTotlRate     float64 `json:"sale_totl_rate,string"`      // 매출액 총이익율
+}
+
+// InquireProfitRatioParams 는 수익성비율 조회 파라미터.
+type InquireProfitRatioParams struct {
+	Symbol  string // fid_input_iscd (필수)
+	Quarter bool   // FID_DIV_CLS_CODE
+}
+
+// InquireProfitRatio 는 수익성비율 호출.
+//
+// 한투 docs: docs/api/국내주식/국내주식_수익성비율.md
+// path: /uapi/domestic-stock/v1/finance/profit-ratio (FHKST66430400)
+func (c *Client) InquireProfitRatio(ctx context.Context, params InquireProfitRatioParams) (*ProfitRatio, error) {
+	resp, err := c.http.Do(ctx, &httpclient.Request{
+		Method:   http.MethodGet,
+		Path:     "/uapi/domestic-stock/v1/finance/profit-ratio",
+		TrID:     "FHKST66430400",
+		Query:    inquireFinanceQuery(params.Symbol, params.Quarter),
+		CustType: "P",
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	var res ProfitRatio
+	if err := json.Unmarshal(resp.Raw, &res); err != nil {
+		return nil, fmt.Errorf("kis: parse ProfitRatio: %w", err)
+	}
+	return &res, nil
+}
