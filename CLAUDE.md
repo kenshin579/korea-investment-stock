@@ -2,10 +2,11 @@
 
 Go client library for the Korea Investment Securities OpenAPI.
 
-> **Phase 0 — skeleton.** API methods are added in Phase 1.
+> **Phase 1.2 — domestic 시세/심볼/차트 (v0.2.0).** Phase 1.3+ 메서드는 추후 sub-plan 으로.
 
 - Design spec: [`docs/superpowers/specs/2026-05-03-korea-investment-go-migration-design.md`](docs/superpowers/specs/2026-05-03-korea-investment-go-migration-design.md)
 - Phase 0 implementation plan: [`docs/superpowers/specs/2026-05-03-phase0-step1-implementation-plan.md`](docs/superpowers/specs/2026-05-03-phase0-step1-implementation-plan.md)
+- Phase 1.2 implementation plan: [`docs/superpowers/specs/2026-05-03-phase1-2-domestic-quotes-implementation-plan.md`](docs/superpowers/specs/2026-05-03-phase1-2-domestic-quotes-implementation-plan.md)
 - Legacy Python: see `python-final` tag (commit `e3fc52f`); PyPI `korea-investment-stock` v0.19.0 deprecated.
 
 ## Stack
@@ -37,7 +38,7 @@ go mod tidy
 
 ## Conventions
 
-- Call style: `client.Domestic.FetchPrice(ctx, ...)` (1-level service grouping)
+- Call style: `client.Domestic.InquirePrice(ctx, ...)` (1-level service grouping)
 - Errors: `*kis.APIError` + sentinel (`ErrTokenExpired`, `ErrRateLimited`, `ErrNotFound`)
 - Korean comments preferred for domain-specific code
 

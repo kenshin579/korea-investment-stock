@@ -30,31 +30,48 @@ import (
     "context"
     "fmt"
     "log"
-    "os"
 
     kis "github.com/kenshin579/korea-investment-stock"
+    "github.com/kenshin579/korea-investment-stock/domestic"
 )
 
 func main() {
-    client, err := kis.NewClient(
-        os.Getenv("KOREA_INVESTMENT_API_KEY"),
-        os.Getenv("KOREA_INVESTMENT_API_SECRET"),
-        os.Getenv("KOREA_INVESTMENT_ACCOUNT_NO"),
-    )
+    client, err := kis.NewClientFromEnv()
     if err != nil {
         log.Fatal(err)
     }
-
     ctx := context.Background()
-    price, err := client.Domestic.FetchPrice(ctx, "005930")
-    if err != nil {
-        log.Fatal(err)
-    }
-    fmt.Printf("Samsung Electronics: %s KRW\n", price.Current.String())
+
+    // 1. 현재가
+    price, _ := client.Domestic.InquirePrice(ctx, "005930")
+    fmt.Printf("삼성전자 현재가: %s\n", price.StckPrpr)
+
+    // 2. 일봉 차트
+    chart, _ := client.Domestic.InquireDailyItemChartPrice(ctx, domestic.InquireDailyItemChartPriceParams{
+        Symbol:   "005930",
+        Period:   "D",
+        FromDate: "20260401",
+        ToDate:   "20260503",
+    })
+    fmt.Printf("일봉 %d 개\n", len(chart.Output2))
+
+    // 3. KOSPI 종목 마스터
+    syms, _ := client.Domestic.FetchKospiSymbols(ctx)
+    fmt.Printf("KOSPI 종목 %d\n", len(syms))
 }
 ```
 
-> Phase 1 에서 실제 메서드들이 추가됩니다. 현재 main 의 `client.Domestic.FetchPrice` 는 정의만 되어 있고 구현은 Phase 1 에서 채워집니다.
+## Available Methods (Phase 1.2)
+
+| Method | 한투 path | TR_ID |
+|--------|----------|-------|
+| `Domestic.InquirePrice` | `inquire-price` | FHKST01010100 |
+| `Domestic.SearchInfo` | `search-info` | CTPF1604R |
+| `Domestic.SearchStockInfo` | `search-stock-info` | CTPF1002R |
+| `Domestic.InquireDailyItemChartPrice` | `inquire-daily-itemchartprice` | FHKST03010100 |
+| `Domestic.InquireTimeItemChartPrice` | `inquire-time-itemchartprice` | FHKST03010200 |
+| `Domestic.FetchKospiSymbols` | (KRX 공개 마스터) | — |
+| `Domestic.FetchKosdaqSymbols` | (KRX 공개 마스터) | — |
 
 ## Design
 
