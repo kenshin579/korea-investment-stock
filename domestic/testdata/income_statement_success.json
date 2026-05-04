@@ -1,0 +1,22 @@
+{
+  "rt_cd": "0",
+  "msg_cd": "MCA00000",
+  "msg1": "정상처리 되었습니다.",
+  "output": [
+    {
+      "stac_yymm": "202412",
+      "sale_account": "279600000",
+      "sale_cost": "176000000",
+      "sale_totl_prfi": "103600000",
+      "depr_cost": "99.99",
+      "sell_mang": "99.99",
+      "bsop_prti": "32830000",
+      "bsop_non_ernn": "99.99",
+      "bsop_non_expn": "99.99",
+      "op_prfi": "30450000",
+      "spec_prfi": "1200000",
+      "spec_loss": "800000",
+      "thtr_ntin": "23456000"
+    }
+  ]
+}
