@@ -80,3 +80,62 @@ func (c *Client) InquireFinancialRatio(ctx context.Context, params InquireFinanc
 	}
 	return &res, nil
 }
+
+// IncomeStatement 는 손익계산서 (FHKST66430200) 응답.
+//
+// 한투 docs: docs/api/국내주식/국내주식_손익계산서.md
+// path: /uapi/domestic-stock/v1/finance/income-statement
+//
+// 분기 데이터는 연단위 누적 합산.
+type IncomeStatement struct {
+	Output []IncomeStatementItem `json:"output"`
+}
+
+// IncomeStatementItem 은 손익계산서 응답의 한 행.
+type IncomeStatementItem struct {
+	StacYymm     string `json:"stac_yymm"`             // 결산 년월
+	SaleAccount  int64  `json:"sale_account,string"`   // 매출액
+	SaleCost     int64  `json:"sale_cost,string"`      // 매출 원가
+	SaleTotlPrfi int64  `json:"sale_totl_prfi,string"` // 매출 총 이익
+	DeprCost     string `json:"depr_cost"`             // 감가상각비 (출력 안 되면 "99.99" — string 그대로)
+	SellMang     string `json:"sell_mang"`             // 판매 및 관리비 (출력 안 되면 "99.99")
+	BsopPrti     int64  `json:"bsop_prti,string"`      // 영업 이익
+	BsopNonErnn  string `json:"bsop_non_ernn"`         // 영업 외 수익 (출력 안 되면 "99.99")
+	BsopNonExpn  string `json:"bsop_non_expn"`         // 영업 외 비용 (출력 안 되면 "99.99")
+	OpPrfi       int64  `json:"op_prfi,string"`        // 경상 이익
+	SpecPrfi     int64  `json:"spec_prfi,string"`      // 특별 이익
+	SpecLoss     int64  `json:"spec_loss,string"`      // 특별 손실
+	ThtrNtin     int64  `json:"thtr_ntin,string"`      // 당기순이익
+}
+
+// InquireIncomeStatementParams 는 손익계산서 조회 파라미터.
+type InquireIncomeStatementParams struct {
+	Symbol  string // fid_input_iscd (필수)
+	Quarter bool   // FID_DIV_CLS_CODE — false=>년, true=>분기 (분기는 누적 합산)
+}
+
+// InquireIncomeStatement 는 손익계산서 호출.
+//
+// 한투 docs: docs/api/국내주식/국내주식_손익계산서.md
+// path: /uapi/domestic-stock/v1/finance/income-statement (FHKST66430200)
+//
+// ※ 분기 데이터는 연단위 누적 합산. depr_cost / sell_mang / bsop_non_ernn / bsop_non_expn
+// 은 출력 안 되면 "99.99" — caller 는 string 으로 받아 "99.99" 검사 후 처리.
+func (c *Client) InquireIncomeStatement(ctx context.Context, params InquireIncomeStatementParams) (*IncomeStatement, error) {
+	resp, err := c.http.Do(ctx, &httpclient.Request{
+		Method:   http.MethodGet,
+		Path:     "/uapi/domestic-stock/v1/finance/income-statement",
+		TrID:     "FHKST66430200",
+		Query:    inquireFinanceQuery(params.Symbol, params.Quarter),
+		CustType: "P",
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	var res IncomeStatement
+	if err := json.Unmarshal(resp.Raw, &res); err != nil {
+		return nil, fmt.Errorf("kis: parse IncomeStatement: %w", err)
+	}
+	return &res, nil
+}

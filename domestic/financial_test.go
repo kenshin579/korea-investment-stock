@@ -69,3 +69,28 @@ func TestClient_InquireFinancialRatio_Quarter(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, "1", capturedQuery.Get("FID_DIV_CLS_CODE")) // 1=분기
 }
+
+func TestClient_InquireIncomeStatement(t *testing.T) {
+	httpmock.Activate()
+	defer httpmock.DeactivateAndReset()
+
+	httpmock.RegisterResponder(
+		http.MethodGet,
+		`=~/finance/income-statement`,
+		httpmock.NewStringResponder(200, loadFixtureString(t, "income_statement_success.json")),
+	)
+
+	c := newTestClient(t)
+	res, err := c.InquireIncomeStatement(context.Background(), domestic.InquireIncomeStatementParams{
+		Symbol: "005930",
+	})
+	require.NoError(t, err)
+	require.NotNil(t, res)
+
+	require.Len(t, res.Output, 1)
+	assert.Equal(t, "202412", res.Output[0].StacYymm)
+	assert.Equal(t, int64(279600000), res.Output[0].SaleAccount)
+	assert.Equal(t, int64(176000000), res.Output[0].SaleCost)
+	assert.Equal(t, int64(32830000), res.Output[0].BsopPrti)
+	assert.Equal(t, int64(23456000), res.Output[0].ThtrNtin)
+}
