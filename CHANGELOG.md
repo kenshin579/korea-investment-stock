@@ -1,6 +1,20 @@
 # CHANGELOG
 
-## [0.2.0] - 2026-05-04
+## [1.0.0] - 2026-05-04
+
+> Go 라이브러리 첫 stable release. Phase 1.1 (인프라+Config) + Phase 1.2 (국내 시세/심볼/차트) 통합.
+>
+> **Namespace transition**: Python 시대 (`v0.6.0` ~ `v0.19.0`) 와 명확한 분리를 위해 Go 라이브러리는 `v1.0.0` 부터 publish. 이전 Go pre-release 태그 (`v0.1.0`, `v0.2.0`) 는 삭제됨.
+
+### Added — Phase 1.1 (인프라 + Config)
+
+- **3 진입점**: `kis.NewClient(apiKey, apiSecret, accountNo, ...opts)`, `kis.NewClientFromEnv()`, `kis.NewClientFromYAML(path)`
+- **10 functional options**: `WithBaseURL`, `WithRetries`, `WithRateLimit`, `WithHTTPClient`, `WithTokenStorage`, `WithMasterCacheDir`, `WithLogger`, `WithTimeout`, `WithUserAgent`, `WithRedisURL`
+- **`internal/httpclient`**: `go-resty/resty/v2` wrapper. tr_id 헤더, 토큰 자동 재발급 (`EGW00123` 만료 감지), 5xx/429 retry with exponential backoff, 응답 정규화 (`rt_cd`/`msg_cd`/`msg1` + `output`/`output1`/`output2`)
+- **`internal/ratelimit`**: token bucket rate limiter (default 15 calls/sec)
+- **`internal/token`**: token storage abstraction. `FileStorage` (JSON file in `~/Library/Caches/kis/`), `RedisStorage` (TTL-aware), 자동 만료 감지 + refresh
+- **`internal/mastercache`**: 디스크 file cache (default TTL 7일). atomic write (temp + rename), stale fallback on fetch error
+- examples: `basic_example`, `env_config_example`, `yaml_config_example`
 
 ### Added — Phase 1.2 (국내주식 시세/심볼/차트)
 
@@ -13,19 +27,22 @@
 - `internal/krxmaster` 패키지 — KRX 마스터 파일 파싱
 - examples: `domestic_price`, `domestic_chart`, `kospi_symbols`
 
-### Changed
+### Conventions
 
-- `domestic.New(http, master)` 시그니처 — `*mastercache.Cache` 파라미터 추가 (internal API; BC-safe)
-- `client.Domestic.X` 호출 스타일 — 한투 API path 1:1 매핑 (Style A)
+- **호출 스타일**: `client.Domestic.InquirePrice(ctx, "005930")` — 한투 API path 의 마지막 segment 를 PascalCase 로 1:1 매핑 (Style A)
+- **응답 typed struct**: 한투 API 약어 그대로 PascalCase 변환 (`stck_prpr` → `StckPrpr`), 인라인 한국어 코멘트, JSON 태그 한투 원본 preserve
+- **타입 매핑**: 가격/액면가 = `decimal.Decimal` (bare tag), 수량/백만원 단위 = `int64,string`, 비율/PER/PBR = `float64,string`, 코드/Y-N/날짜 = `string`
+- **Params struct**: 차트류 메서드는 `XxxParams` struct (zero-value default — `Period=""→"D"`, `OriginalPrice false→수정주가`)
+- **Output1+Output2**: 차트는 KIS 키 verbatim 노출
 
 ### Removed
 
-- `kis.APIError` 타입 + sentinel errors (`ErrTokenExpired`, `ErrRateLimited`, `ErrNotFound`, `ErrUnauthorized`) — 미구현 dead code 정리. 에러는 `error.Error()` 메시지의 `msg_cd`/`msg1` 로 구분 (typed error 는 추후 사용자 demand 시 재도입 검토).
+- `kis.APIError` 타입 + sentinel errors (`ErrTokenExpired`, `ErrRateLimited`, `ErrNotFound`, `ErrUnauthorized`) — 미구현 dead code 정리. 에러는 `error.Error()` 메시지의 `msg_cd`/`msg1` 로 구분 (typed error 는 추후 사용자 demand 시 재도입 검토)
 
 ### Notes
 
-- KRX 마스터의 `fwfLen` plan 값 (228 / 222) 실제 (227 / 221) 로 수정 — 첫 행 fund-record 회피 위해 일반 주권 6자리 코드 grep 필터 testdata 사용.
-- `DailyChartSummary` 에 `itewhol_loan_rmnd_ratem` (전체 융자 잔고 비율) 필드 추가.
+- KRX 마스터의 `fwfLen` plan 값 (228 / 222) 실제 (227 / 221) 로 수정 — 첫 행 fund-record 회피 위해 일반 주권 6자리 코드 grep 필터 testdata 사용
+- `DailyChartSummary` 에 `itewhol_loan_rmnd_ratem` (전체 융자 잔고 비율) 필드 추가
 
 ## [Unreleased]
 
