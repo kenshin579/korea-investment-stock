@@ -1,0 +1,25 @@
+{
+  "rt_cd": "0",
+  "msg_cd": "MCA00000",
+  "msg1": "정상처리 되었습니다.",
+  "output": {
+    "frgn_seln_vol": "5000000",
+    "frgn_shnu_vol": "4876544",
+    "frgn_ntby_qty": "-123456",
+    "frgn_seln_tr_pbmn": "379500",
+    "frgn_shnu_tr_pbmn": "370143",
+    "frgn_ntby_tr_pbmn": "-9357",
+    "prsn_seln_vol": "10000000",
+    "prsn_shnu_vol": "10234567",
+    "prsn_ntby_qty": "234567",
+    "prsn_seln_tr_pbmn": "759000",
+    "prsn_shnu_tr_pbmn": "776783",
+    "prsn_ntby_tr_pbmn": "17783",
+    "orgn_seln_vol": "3000000",
+    "orgn_shnu_vol": "2900000",
+    "orgn_ntby_qty": "-100000",
+    "orgn_seln_tr_pbmn": "227700",
+    "orgn_shnu_tr_pbmn": "220120",
+    "orgn_ntby_tr_pbmn": "-7580"
+  }
+}

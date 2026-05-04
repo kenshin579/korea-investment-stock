@@ -1,0 +1,24 @@
+{
+  "rt_cd": "0",
+  "msg_cd": "MCA00000",
+  "msg1": "정상처리 되었습니다.",
+  "output": [
+    {
+      "stck_bsop_date": "20260505",
+      "bstp_nmix_prpr": "2650.45",
+      "bstp_nmix_prdy_vrss": "-12.30",
+      "prdy_vrss_sign": "5",
+      "bstp_nmix_prdy_ctrt": "-0.46",
+      "bstp_nmix_oprc": "2660.00",
+      "bstp_nmix_hgpr": "2665.20",
+      "bstp_nmix_lwpr": "2645.10",
+      "stck_prdy_clpr": "2662.75",
+      "frgn_ntby_qty": "-123456",
+      "prsn_ntby_qty": "234567",
+      "orgn_ntby_qty": "-100000",
+      "frgn_ntby_tr_pbmn": "-9357",
+      "prsn_ntby_tr_pbmn": "17783",
+      "orgn_ntby_tr_pbmn": "-7580"
+    }
+  ]
+}

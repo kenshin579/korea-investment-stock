@@ -61,7 +61,7 @@ func main() {
 }
 ```
 
-## Available Methods (Phase 1.2 + 1.3)
+## Available Methods (Phase 1.2 + 1.3 + 1.4)
 
 | Method | 한투 path | TR_ID |
 |--------|----------|-------|
@@ -81,6 +81,12 @@ func main() {
 | `Domestic.InquireBalanceSheet` | `finance/balance-sheet` | FHKST66430100 |
 | `Domestic.InquireProfitRatio` | `finance/profit-ratio` | FHKST66430400 |
 | `Domestic.InquireGrowthRatio` | `finance/growth-ratio` | FHKST66430800 |
+| `Domestic.InquireInvestorTradeByStockDaily` | `quotations/investor-trade-by-stock-daily` | FHPTJ04160001 |
+| `Domestic.InquireInvestorDailyByMarket` | `quotations/inquire-investor-daily-by-market` | FHPTJ04040000 |
+| `Domestic.InquireInvestorTimeByMarket` | `quotations/inquire-investor-time-by-market` | FHPTJ04030000 |
+| `Domestic.InquireIndexPrice` | `quotations/inquire-index-price` | FHPUP02100000 |
+| `Domestic.InquireIndexCategoryPrice` | `quotations/inquire-index-category-price` | FHPUP02140000 |
+| `Domestic.InquirePubOffer` | `ksdinfo/pub-offer` | HHKDB669108C0 |
 
 ## Design
 

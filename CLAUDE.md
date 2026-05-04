@@ -2,12 +2,13 @@
 
 Go client library for the Korea Investment Securities OpenAPI.
 
-> **Phase 1.3 — domestic 순위/재무 (v1.1.0).** Phase 1.4+ 메서드는 추후 sub-plan 으로.
+> **Phase 1.4 — domestic 투자자/업종/IPO (v1.2.0).** Phase 1.5+ 메서드는 추후 sub-plan 으로.
 
 - Design spec: [`docs/superpowers/specs/2026-05-03-korea-investment-go-migration-design.md`](docs/superpowers/specs/2026-05-03-korea-investment-go-migration-design.md)
 - Phase 0 implementation plan: [`docs/superpowers/specs/2026-05-03-phase0-step1-implementation-plan.md`](docs/superpowers/specs/2026-05-03-phase0-step1-implementation-plan.md)
 - Phase 1.2 implementation plan: [`docs/superpowers/specs/2026-05-03-phase1-2-domestic-quotes-implementation-plan.md`](docs/superpowers/specs/2026-05-03-phase1-2-domestic-quotes-implementation-plan.md)
 - Phase 1.3 implementation plan: [`docs/superpowers/specs/2026-05-04-phase1-3-ranking-financial-implementation-plan.md`](docs/superpowers/specs/2026-05-04-phase1-3-ranking-financial-implementation-plan.md)
+- Phase 1.4 implementation plan: [`docs/superpowers/specs/2026-05-05-phase1-4-investor-industry-ipo-implementation-plan.md`](docs/superpowers/specs/2026-05-05-phase1-4-investor-industry-ipo-implementation-plan.md)
 - Legacy Python: see `python-final` tag (commit `e3fc52f`); PyPI `korea-investment-stock` v0.19.0 deprecated.
 
 ## Stack
