@@ -86,3 +86,62 @@ func TestClient_InquireDailyItemChartPrice_OriginalPrice(t *testing.T) {
 	assert.Equal(t, "W", capturedQuery.Get("FID_PERIOD_DIV_CODE"))
 	assert.Equal(t, "1", capturedQuery.Get("FID_ORG_ADJ_PRC")) // 1 = 원주가
 }
+
+func TestClient_InquireTimeItemChartPrice(t *testing.T) {
+	httpmock.Activate()
+	defer httpmock.DeactivateAndReset()
+
+	var capturedQuery url.Values
+	httpmock.RegisterResponder(
+		http.MethodGet,
+		`=~/quotations/inquire-time-itemchartprice`,
+		func(req *http.Request) (*http.Response, error) {
+			capturedQuery = req.URL.Query()
+			return httpmock.NewStringResponse(200, loadFixtureString(t, "minute_chart_success.json")), nil
+		},
+	)
+
+	c := newTestClient(t)
+	chart, err := c.InquireTimeItemChartPrice(context.Background(), domestic.InquireTimeItemChartPriceParams{
+		Symbol:   "005930",
+		TimeFrom: "150000",
+	})
+	require.NoError(t, err)
+	require.NotNil(t, chart)
+
+	assert.Equal(t, "J", capturedQuery.Get("FID_COND_MRKT_DIV_CODE"))
+	assert.Equal(t, "005930", capturedQuery.Get("FID_INPUT_ISCD"))
+	assert.Equal(t, "150000", capturedQuery.Get("FID_INPUT_HOUR_1"))
+	assert.Equal(t, "N", capturedQuery.Get("FID_PW_DATA_INCU_YN"))
+
+	require.Len(t, chart.Output2, 3)
+	assert.Equal(t, "150000", chart.Output2[0].StckCntgHour)
+	assert.Equal(t, decimal.NewFromInt(75800), chart.Output2[0].StckPrpr)
+	assert.Equal(t, int64(12345), chart.Output2[0].CntgVol)
+}
+
+func TestClient_InquireTimeItemChartPrice_PastDataInclude(t *testing.T) {
+	httpmock.Activate()
+	defer httpmock.DeactivateAndReset()
+
+	var capturedQuery url.Values
+	httpmock.RegisterResponder(
+		http.MethodGet,
+		`=~/quotations/inquire-time-itemchartprice`,
+		func(req *http.Request) (*http.Response, error) {
+			capturedQuery = req.URL.Query()
+			return httpmock.NewStringResponse(200, loadFixtureString(t, "minute_chart_success.json")), nil
+		},
+	)
+
+	c := newTestClient(t)
+	_, err := c.InquireTimeItemChartPrice(context.Background(), domestic.InquireTimeItemChartPriceParams{
+		Symbol:          "005930",
+		TimeFrom:        "150000",
+		PastDataInclude: true,
+		MarketCode:      "UN",
+	})
+	require.NoError(t, err)
+	assert.Equal(t, "Y", capturedQuery.Get("FID_PW_DATA_INCU_YN"))
+	assert.Equal(t, "UN", capturedQuery.Get("FID_COND_MRKT_DIV_CODE"))
+}
