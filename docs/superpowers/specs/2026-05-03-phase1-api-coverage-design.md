@@ -109,18 +109,26 @@
 
 **한투 spec 충실 원칙** (Phase 1.2 와 동일): query param/응답 필드를 한투 docs (`docs/api/국내주식/<API>.md`) 그대로 노출. Python wrapper convenience 미반영.
 
-### Phase 1.4 — 국내 투자자 + 업종 + IPO (`v0.4.0`)
+### Phase 1.4 — 국내 투자자 + 업종 + IPO (`v1.2.0`)
 
-| 메서드 | 위치 | 한투 API |
-|-------|------|---------|
-| `FetchInvestorTradingByStockDaily` | `domestic/investor.go` | 종목별 투자자매매동향(일별) |
-| `FetchInvestorTrendByMarket` | `domestic/investor.go` | 시장별 투자자매매동향(일별) |
-| `FetchIndustryIndex` | `domestic/industry.go` | 업종 현재지수 |
-| `FetchIndustryCategoryPrice` | `domestic/industry.go` | 업종 구분별전체시세 |
-| `FetchIPOSchedule` | `domestic/ipo.go` | 예탁원정보(공모주청약일정) |
-| IPO helpers (9개) | `domestic/ipo.go` | (데이터 가공) |
+> **Amendment (2026-05-05, Phase 1.4 brainstorming)**: 메서드명을 Phase 1.2/1.3 와 동일한 Style A (path 의 last segment PascalCase) 로 갱신. 시장별 투자자매매동향 (시세) 1개 추가 (총 6 메서드). IPO helpers 9개 제거 — Phase 1.2 amendment 의 "Python wrapper convenience 미반영" 정책과 일관 (helpers 는 client-side data 가공이라 caller 가 직접 처리). release tag `v0.4.0` → `v1.2.0`.
 
-총 **5 메서드 + 9 helpers**
+| 메서드 | 위치 | 한투 path | TR_ID |
+|-------|------|----------|-------|
+| `Domestic.InquireInvestorTradeByStockDaily` | `domestic/investor.go` | `quotations/investor-trade-by-stock-daily` | FHPTJ04160001 |
+| `Domestic.InquireInvestorDailyByMarket` | `domestic/investor.go` | `quotations/inquire-investor-daily-by-market` | FHPTJ04040000 |
+| `Domestic.InquireInvestorTimeByMarket` | `domestic/investor.go` | `quotations/inquire-investor-time-by-market` | FHPTJ04030000 |
+| `Domestic.InquireIndexPrice` | `domestic/industry.go` | `quotations/inquire-index-price` | FHPUP02100000 |
+| `Domestic.InquireIndexCategoryPrice` | `domestic/industry.go` | `quotations/inquire-index-category-price` | FHPUP02140000 |
+| `Domestic.InquirePubOffer` | `domestic/ipo.go` | `ksdinfo/pub-offer` | HHKDB669108C0 |
+
+총 **6 메서드** (helpers 제외)
+
+**응답 typed struct 명**: `InvestorTradeByStockDaily`, `InvestorDailyByMarket`, `InvestorTimeByMarket`, `IndexPrice`, `IndexCategoryPrice`, `PubOffer`. Params struct 는 `<MethodName>Params`.
+
+**IPO 메서드명 결정**: `InquirePubOffer` 는 Style A 룰 (path last segment `pub-offer` → `PubOffer`) 정확히 따름. godoc 으로 "공모주청약일정 (IPO Schedule) 조회" 명시.
+
+**한투 spec 충실 원칙** (Phase 1.2/1.3 와 동일): query param/응답 필드를 한투 docs (`docs/api/국내주식/<API>.md`) 그대로 노출. Python wrapper convenience 미반영.
 
 ### Phase 1.5 — 해외 전체 (`v1.0.0` ← Python parity 완성)
 
@@ -139,8 +147,8 @@
 ### 합계
 
 - **인프라**: 1 PR
-- **메서드**: 28 + 9 = 37 (28개 inquiry + 9 IPO helpers)
-- **Release tags**: ~~v0.1.0/v0.2.0~~ (Python era namespace 충돌로 삭제) → **`v1.0.0`** (Phase 1.1+1.2 통합), `v1.1.0` (Phase 1.3), `v1.2.0` (Phase 1.4), `v1.3.0` (Phase 1.5 — 해외 전체, Python parity 완성)
+- **메서드**: 7 (1.2) + 9 (1.3) + 6 (1.4) + 7 (1.5) = **29 메서드** (IPO helpers 9개 제거 — Phase 1.4 amendment, 시장별 매매동향 시세 1개 추가)
+- **Release tags**: ~~v0.1.0/v0.2.0~~ (Python era namespace 충돌로 삭제) → **`v1.0.0`** (Phase 1.1+1.2 통합), `v1.1.0` (Phase 1.3), `v1.2.0` (Phase 1.4), `v1.3.0` (Phase 1.5 — 해외 전체)
 
 ---
 
