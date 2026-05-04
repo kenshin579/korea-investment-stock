@@ -34,7 +34,7 @@ type VolumeRankItem struct {
 	PrdyVol               int64           `json:"prdy_vol,string"`                   // 전일 거래량
 	LstnStcn              int64           `json:"lstn_stcn,string"`                  // 상장 주수
 	AvrgVol               int64           `json:"avrg_vol,string"`                   // 평균 거래량
-	NBefRClprVrssPrprRate float64         `json:"n_befr_clpr_vrss_prpr_rate,string"` // N일전종가대비현재가대비율
+	NBefrClprVrssPrprRate float64         `json:"n_befr_clpr_vrss_prpr_rate,string"` // N일전종가대비현재가대비율
 	VolInrt               float64         `json:"vol_inrt,string"`                   // 거래량 증가율
 	VolTnrt               float64         `json:"vol_tnrt,string"`                   // 거래량 회전율
 	NdayVolTnrt           float64         `json:"nday_vol_tnrt,string"`              // N일 거래량 회전율

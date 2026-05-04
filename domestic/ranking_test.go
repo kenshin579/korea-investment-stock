@@ -54,3 +54,36 @@ func TestClient_InquireVolumeRank(t *testing.T) {
 	assert.InDelta(t, 0.21, rank.Output[0].VolTnrt, 0.001)
 	assert.Equal(t, int64(938223456000), rank.Output[0].AcmlTrPbmn)
 }
+
+func TestClient_InquireVolumeRank_Variant(t *testing.T) {
+	httpmock.Activate()
+	defer httpmock.DeactivateAndReset()
+
+	var capturedQuery url.Values
+	httpmock.RegisterResponder(
+		http.MethodGet,
+		`=~/quotations/volume-rank`,
+		func(req *http.Request) (*http.Response, error) {
+			capturedQuery = req.URL.Query()
+			return httpmock.NewStringResponse(200, loadFixtureString(t, "volume_rank_success.json")), nil
+		},
+	)
+
+	c := newTestClient(t)
+	rank, err := c.InquireVolumeRank(context.Background(), domestic.InquireVolumeRankParams{
+		MarketCode: "NX",
+		InputISCD:  "0000",
+		DivCode:    "1",      // 보통주
+		BelongCode: "3",      // 거래금액순
+	})
+	require.NoError(t, err)
+
+	// Override 검증
+	assert.Equal(t, "NX", capturedQuery.Get("FID_COND_MRKT_DIV_CODE"))
+	assert.Equal(t, "1", capturedQuery.Get("FID_DIV_CLS_CODE"))
+	assert.Equal(t, "3", capturedQuery.Get("FID_BLNG_CLS_CODE"))
+
+	// negative decimal 검증
+	require.GreaterOrEqual(t, len(rank.Output), 1)
+	assert.True(t, rank.Output[0].PrdyVrss.IsNegative(), "PrdyVrss=-200 must be negative")
+}
