@@ -39,7 +39,7 @@ go mod tidy
 ## Conventions
 
 - Call style: `client.Domestic.InquirePrice(ctx, ...)` (1-level service grouping)
-- Errors: `*kis.APIError` + sentinel (`ErrTokenExpired`, `ErrRateLimited`, `ErrNotFound`)
+- Errors: `error` 반환. `error.Error()` 에 `msg_cd`/`msg1` 포함. typed error 는 추후 재도입 예정.
 - Korean comments preferred for domain-specific code
 
 ## Out of Scope (Phase 0)

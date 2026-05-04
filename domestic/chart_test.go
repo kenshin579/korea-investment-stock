@@ -49,6 +49,7 @@ func TestClient_InquireDailyItemChartPrice(t *testing.T) {
 	assert.Equal(t, "삼성전자", chart.Output1.HtsKorIsnm)
 	assert.Equal(t, decimal.NewFromInt(75800), chart.Output1.StckPrpr)
 	assert.Equal(t, "005930", chart.Output1.StckShrnIscd)
+	assert.InDelta(t, 0.45, chart.Output1.ItewholLoanRmndRatem, 0.001) // 전체 융자 잔고 비율
 
 	// output2 검증
 	require.Len(t, chart.Output2, 3)

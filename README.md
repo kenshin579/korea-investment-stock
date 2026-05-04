@@ -77,7 +77,7 @@ func main() {
 
 - **호출 스타일**: `client.Domestic.<Method>(ctx, ...)` 1단계 그룹화 (go-github / stripe-go 패턴)
 - **응답**: typed struct, 한투 API 의 한글 약어 필드는 JSON 태그로 매핑하고 영문 필드명으로 노출
-- **에러**: `*kis.APIError` (rt_cd / msg_cd / msg1) + sentinel 에러 (`ErrTokenExpired`, `ErrRateLimited`, `ErrNotFound`)
+- **에러**: `error` 반환. `error.Error()` 메시지에 `msg_cd` / `msg1` 가 포함됩니다 (예: `"kis: API error [EGW00201] 초당 거래건수를 초과하였습니다."`). typed error 분기는 추후 사용자 demand 시 재도입 예정.
 - **자동 처리**: 토큰 갱신, rate limit (token bucket, 기본 15 req/sec), 429/5xx 재시도
 - **HTTP**: 내부적으로 [resty](https://github.com/go-resty/resty) 사용 (사용자는 표준 `*http.Client` 만 알면 됨)
 - **금융 정밀도**: 가격 필드는 [shopspring/decimal](https://github.com/shopspring/decimal)

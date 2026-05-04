@@ -21,35 +21,36 @@ type DailyChart struct {
 
 // DailyChartSummary 는 차트 응답의 output1 (단일 객체, 요약 정보).
 type DailyChartSummary struct {
-	PrdyVrss     decimal.Decimal `json:"prdy_vrss"`
-	PrdyVrssSign string          `json:"prdy_vrss_sign"`
-	PrdyCtrt     float64         `json:"prdy_ctrt,string"`
-	StckPrdyClpr decimal.Decimal `json:"stck_prdy_clpr"`
-	AcmlVol      int64           `json:"acml_vol,string"`
-	AcmlTrPbmn   int64           `json:"acml_tr_pbmn,string"`
-	HtsKorIsnm   string          `json:"hts_kor_isnm"`
-	StckPrpr     decimal.Decimal `json:"stck_prpr"`
-	StckShrnIscd string          `json:"stck_shrn_iscd"`
-	PrdyVol      int64           `json:"prdy_vol,string"`
-	StckMxpr     decimal.Decimal `json:"stck_mxpr"`
-	StckLlam     decimal.Decimal `json:"stck_llam"`
-	StckOprc     decimal.Decimal `json:"stck_oprc"`
-	StckHgpr     decimal.Decimal `json:"stck_hgpr"`
-	StckLwpr     decimal.Decimal `json:"stck_lwpr"`
-	StckPrdyOprc decimal.Decimal `json:"stck_prdy_oprc"`
-	StckPrdyHgpr decimal.Decimal `json:"stck_prdy_hgpr"`
-	StckPrdyLwpr decimal.Decimal `json:"stck_prdy_lwpr"`
-	Askp         decimal.Decimal `json:"askp"`
-	Bidp         decimal.Decimal `json:"bidp"`
-	PrdyVrssVol  int64           `json:"prdy_vrss_vol,string"`
-	VolTnrt      float64         `json:"vol_tnrt,string"`
-	StckFcam     decimal.Decimal `json:"stck_fcam"`
-	LstnStcn     int64           `json:"lstn_stcn,string"`
-	Cpfn         int64           `json:"cpfn,string"`
-	HtsAvls      int64           `json:"hts_avls,string"`
-	Per          float64         `json:"per,string"`
-	Eps          decimal.Decimal `json:"eps"`
-	Pbr          float64         `json:"pbr,string"`
+	PrdyVrss             decimal.Decimal `json:"prdy_vrss"`
+	PrdyVrssSign         string          `json:"prdy_vrss_sign"`
+	PrdyCtrt             float64         `json:"prdy_ctrt,string"`
+	StckPrdyClpr         decimal.Decimal `json:"stck_prdy_clpr"`
+	AcmlVol              int64           `json:"acml_vol,string"`
+	AcmlTrPbmn           int64           `json:"acml_tr_pbmn,string"`
+	HtsKorIsnm           string          `json:"hts_kor_isnm"`
+	StckPrpr             decimal.Decimal `json:"stck_prpr"`
+	StckShrnIscd         string          `json:"stck_shrn_iscd"`
+	PrdyVol              int64           `json:"prdy_vol,string"`
+	StckMxpr             decimal.Decimal `json:"stck_mxpr"`
+	StckLlam             decimal.Decimal `json:"stck_llam"`
+	StckOprc             decimal.Decimal `json:"stck_oprc"`
+	StckHgpr             decimal.Decimal `json:"stck_hgpr"`
+	StckLwpr             decimal.Decimal `json:"stck_lwpr"`
+	StckPrdyOprc         decimal.Decimal `json:"stck_prdy_oprc"`
+	StckPrdyHgpr         decimal.Decimal `json:"stck_prdy_hgpr"`
+	StckPrdyLwpr         decimal.Decimal `json:"stck_prdy_lwpr"`
+	Askp                 decimal.Decimal `json:"askp"`
+	Bidp                 decimal.Decimal `json:"bidp"`
+	PrdyVrssVol          int64           `json:"prdy_vrss_vol,string"`
+	VolTnrt              float64         `json:"vol_tnrt,string"`
+	StckFcam             decimal.Decimal `json:"stck_fcam"`
+	LstnStcn             int64           `json:"lstn_stcn,string"`
+	Cpfn                 int64           `json:"cpfn,string"`
+	HtsAvls              int64           `json:"hts_avls,string"`
+	Per                  float64         `json:"per,string"`
+	Eps                  decimal.Decimal `json:"eps"`
+	Pbr                  float64         `json:"pbr,string"`
+	ItewholLoanRmndRatem float64         `json:"itewhol_loan_rmnd_ratem,string"` // 전체 융자 잔고 비율
 }
 
 // DailyChartCandle 은 차트 응답의 output2 한 행 (한 캔들).

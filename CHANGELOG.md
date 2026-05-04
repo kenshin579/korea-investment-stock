@@ -1,5 +1,32 @@
 # CHANGELOG
 
+## [0.2.0] - 2026-05-04
+
+### Added — Phase 1.2 (국내주식 시세/심볼/차트)
+
+- `Domestic.InquirePrice` — 주식현재가 시세 (FHKST01010100)
+- `Domestic.SearchInfo` — 상품기본조회 (CTPF1604R)
+- `Domestic.SearchStockInfo` — 주식기본조회 (CTPF1002R)
+- `Domestic.InquireDailyItemChartPrice` — 국내주식기간별시세 일/주/월/년 (FHKST03010100)
+- `Domestic.InquireTimeItemChartPrice` — 주식당일분봉조회 (FHKST03010200)
+- `Domestic.FetchKospiSymbols` / `FetchKosdaqSymbols` — KRX 종목 마스터 (cp949+fwf 파서, mastercache 디스크 캐시)
+- `internal/krxmaster` 패키지 — KRX 마스터 파일 파싱
+- examples: `domestic_price`, `domestic_chart`, `kospi_symbols`
+
+### Changed
+
+- `domestic.New(http, master)` 시그니처 — `*mastercache.Cache` 파라미터 추가 (internal API; BC-safe)
+- `client.Domestic.X` 호출 스타일 — 한투 API path 1:1 매핑 (Style A)
+
+### Removed
+
+- `kis.APIError` 타입 + sentinel errors (`ErrTokenExpired`, `ErrRateLimited`, `ErrNotFound`, `ErrUnauthorized`) — 미구현 dead code 정리. 에러는 `error.Error()` 메시지의 `msg_cd`/`msg1` 로 구분 (typed error 는 추후 사용자 demand 시 재도입 검토).
+
+### Notes
+
+- KRX 마스터의 `fwfLen` plan 값 (228 / 222) 실제 (227 / 221) 로 수정 — 첫 행 fund-record 회피 위해 일반 주권 6자리 코드 grep 필터 testdata 사용.
+- `DailyChartSummary` 에 `itewhol_loan_rmnd_ratem` (전체 융자 잔고 비율) 필드 추가.
+
 ## [Unreleased]
 
 > 본 repo 는 Go 로 마이그레이션 중입니다. Python 신규 기능 추가는 중단되었습니다.

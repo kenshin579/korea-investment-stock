@@ -119,8 +119,8 @@ func TestParseFwf_LineTooShort(t *testing.T) {
 }
 
 func TestAtoi64_InvalidString(t *testing.T) {
-	assert.Equal(t, int64(0), atoi64("abc"))  // 파싱 실패 → 0
-	assert.Equal(t, int64(0), atoi64(""))     // 빈 문자열 → 0
+	assert.Equal(t, int64(0), atoi64("abc"))   // 파싱 실패 → 0
+	assert.Equal(t, int64(0), atoi64(""))      // 빈 문자열 → 0
 	assert.Equal(t, int64(42), atoi64(" 42 ")) // 공백 포함 → 42
 }
 

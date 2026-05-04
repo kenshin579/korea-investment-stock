@@ -32,7 +32,7 @@
     "per": "11.42",
     "eps": "6638",
     "pbr": "1.32",
-    "itewhol_loan_rmnd_ratem name": "0.45"
+    "itewhol_loan_rmnd_ratem": "0.45"
   },
   "output2": [
     {"stck_bsop_date":"20260502","stck_clpr":"75800","stck_oprc":"76000","stck_hgpr":"76200","stck_lwpr":"75500","acml_vol":"12345678","acml_tr_pbmn":"938223456000","flng_cls_code":"00","prtt_rate":"0.00","mod_yn":"N","prdy_vrss_sign":"5","prdy_vrss":"-200","revl_issu_reas":""},
