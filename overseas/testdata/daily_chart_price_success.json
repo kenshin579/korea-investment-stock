@@ -1,0 +1,39 @@
+{
+  "rt_cd": "0",
+  "msg_cd": "MCA00000",
+  "msg1": "정상처리 되었습니다.",
+  "output1": {
+    "ovrs_nmix_prdy_vrss": "12.4500",
+    "prdy_vrss_sign": "2",
+    "prdy_ctrt": "0.25",
+    "ovrs_nmix_prdy_clpr": "5012.3400",
+    "acml_vol": "1234567",
+    "hts_kor_isnm": "S&P 500",
+    "ovrs_nmix_prpr": "5024.7900",
+    "stck_shrn_iscd": "SPX",
+    "prdy_vol": "1100000",
+    "ovrs_prod_oprc": "5015.0000",
+    "ovrs_prod_hgpr": "5028.5000",
+    "ovrs_prod_lwpr": "5010.2000"
+  },
+  "output2": [
+    {
+      "stck_bsop_date": "20260505",
+      "ovrs_nmix_prpr": "5024.7900",
+      "ovrs_nmix_oprc": "5015.0000",
+      "ovrs_nmix_hgpr": "5028.5000",
+      "ovrs_nmix_lwpr": "5010.2000",
+      "acml_vol": "1234567",
+      "mod_yn": "N"
+    },
+    {
+      "stck_bsop_date": "20260502",
+      "ovrs_nmix_prpr": "5012.3400",
+      "ovrs_nmix_oprc": "5008.0000",
+      "ovrs_nmix_hgpr": "5018.7000",
+      "ovrs_nmix_lwpr": "5005.1000",
+      "acml_vol": "1100000",
+      "mod_yn": "N"
+    }
+  ]
+}
