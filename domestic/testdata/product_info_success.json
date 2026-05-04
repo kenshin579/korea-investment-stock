@@ -1,0 +1,27 @@
+{
+  "rt_cd": "0",
+  "msg_cd": "MCA00000",
+  "msg1": "정상처리 되었습니다.",
+  "output": {
+    "pdno": "005930",
+    "prdt_type_cd": "300",
+    "prdt_name": "삼성전자",
+    "prdt_name120": "삼성전자보통주",
+    "prdt_abrv_name": "삼성전자",
+    "prdt_eng_name": "SAMSUNG ELECTRONICS",
+    "prdt_eng_name120": "SAMSUNG ELECTRONICS CO.,LTD.",
+    "prdt_eng_abrv_name": "SAMSUNG",
+    "std_pdno": "KR7005930003",
+    "shtn_pdno": "005930",
+    "prdt_sale_stat_cd": "01",
+    "prdt_risk_grade_cd": "5",
+    "prdt_clsf_cd": "STK",
+    "prdt_clsf_name": "주권",
+    "sale_strt_dt": "19750611",
+    "sale_end_dt": "99991231",
+    "wrap_asst_type_cd": "00",
+    "ivst_prdt_type_cd": "100",
+    "ivst_prdt_type_cd_name": "국내주식",
+    "frst_erlm_dt": "19750611"
+  }
+}
