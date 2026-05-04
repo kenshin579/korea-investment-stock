@@ -10,9 +10,11 @@
 
 ## §1. 목적과 결정 요약
 
+> **Amendment (2026-05-03, Phase 1.2 brainstorming)**: 본 spec 의 "Python parity" framing 은 메서드 *범위* 기준 (Python 의 28 fetch + 9 IPO helpers 와 같은 도메인 커버리지) 으로 한정. 메서드 *시그니처* 와 *동작* 은 한투 API 문서를 source of truth 로 함 — Python wrapper 의 자체 편의 동작 (country_code 통합 진입점, ETF tr_id 분기, 다국가 fallback 루프 등) 은 미구현. 메서드 명명 스타일은 한투 endpoint path 1:1 (Style A) — §2.2 표 참조.
+
 ### Phase 1 목적
 
-`korea-investment-stock` Go 라이브러리를 외부 사용자가 import 해서 쓸 수 있는 **Python parity 첫 사용 가능 release (`v1.0.0`)** 으로 만든다.
+`korea-investment-stock` Go 라이브러리를 외부 사용자가 import 해서 쓸 수 있는 **첫 사용 가능 release (`v1.0.0`)** 으로 만든다. Python `v0.18.x` 와 동일한 한투 API 커버리지를 한투 docs 충실 디자인으로 재구현.
 
 ### 핵심 결정
 
@@ -23,7 +25,7 @@
 | 인프라 범위 | rate limiter (token bucket), token manager (auto refresh, file/redis storage), HTTP client (resty + 재시도), hashkey, master file cache (KOSPI/KOSDAQ ZIP 등) |
 | **제외** | Memory cache (사용자가 외부 라이브러리 활용), 선물옵션, 장내채권, 실시간 WebSocket, 주식 주문/잔고 |
 | Sub-plan 분해 | 5개 묶음 (각 PR 단위) |
-| 호출 스타일 | `client.Domestic.FetchPrice(ctx, "005930")` 형태. **메서드는 sub-package 에 정의** (`domestic.Client.FetchPrice`) — Phase 0 spec §3 일부 refine |
+| 호출 스타일 | `client.Domestic.InquirePrice(ctx, "005930")` 형태 (한투 endpoint path 의 마지막 segment 를 PascalCase). **메서드는 sub-package 에 정의** (`domestic.Client.InquirePrice`) — Phase 0 spec §3 일부 refine |
 | Config 진입점 | 3개: `NewClient(...)`, `NewClientFromEnv(...)`, `NewClientFromYAML(path, ...)` |
 | Master cache | default `os.UserCacheDir()/kis/`, `WithMasterCacheDir(path)` 로 override |
 | 응답 typed struct | 한투 API 약어를 PascalCase 로 변환해 그대로 사용 (`StckPrpr`, `PrdyVrss`). 인라인 한국어 코멘트 |
@@ -67,18 +69,23 @@
 
 ### Phase 1.2 — 국내 시세 + 심볼 + 차트 (`v0.2.0`)
 
-| 메서드 | 위치 | 한투 API |
-|-------|------|---------|
-| `FetchPrice` (KR/US 통합 진입점) | root client.go (둘 다 호출) | 다양 |
-| `FetchDomesticPrice` | `domestic/price.go` | 주식현재가_시세 |
-| `FetchStockInfo` | `domestic/info.go` | 상품기본조회 |
-| `FetchSearchStockInfo` | `domestic/info.go` | 주식기본조회 |
-| `FetchKospiSymbols` | `domestic/symbols.go` | (master file) |
-| `FetchKosdaqSymbols` | `domestic/symbols.go` | (master file) |
-| `FetchDomesticChart` | `domestic/chart.go` | 국내주식기간별시세 |
-| `FetchDomesticMinuteChart` | `domestic/chart.go` | 주식당일분봉조회 |
+> **Amendment (2026-05-03, brainstorming 결과)**: 본 sub-plan 은 한투 API 문서를 source of truth 로 재정렬. Python parity wrapper 인 root `FetchPrice (KR/US 통합)` 제거, 메서드명 스타일은 한투 endpoint path 의 마지막 segment 를 PascalCase 로 1:1 매핑 (Style A). KRX 공개 마스터 파일은 한투 API 가 아니므로 `Fetch` prefix 로 구분.
 
-총 **8 메서드**
+| 메서드 | 위치 | 한투 path | TR_ID |
+|-------|------|----------|-------|
+| `Domestic.InquirePrice` | `domestic/price.go` | `inquire-price` | FHKST01010100 |
+| `Domestic.SearchInfo` | `domestic/info.go` | `search-info` | CTPF1604R |
+| `Domestic.SearchStockInfo` | `domestic/info.go` | `search-stock-info` | CTPF1002R |
+| `Domestic.InquireDailyItemChartPrice` | `domestic/chart.go` | `inquire-daily-itemchartprice` | FHKST03010100 |
+| `Domestic.InquireTimeItemChartPrice` | `domestic/chart.go` | `inquire-time-itemchartprice` | FHKST03010200 |
+| `Domestic.FetchKospiSymbols` | `domestic/symbols.go` | KRX 마스터 (한투 API 아님) | — |
+| `Domestic.FetchKosdaqSymbols` | `domestic/symbols.go` | KRX 마스터 (한투 API 아님) | — |
+
+총 **7 메서드** (root `FetchPrice` 통합 진입점 제거 — 한투 API 에 없는 wrapper)
+
+**응답 typed struct 명**: `Price`, `ProductInfo` (search-info), `StockInfo` (search-stock-info, 국내 디테일), `DailyChart`, `MinuteChart`. Params struct 는 `<MethodName>Params` (예 `InquireDailyItemChartPriceParams`).
+
+**한투 spec 충실 원칙**: Python `fetch_price` 의 ETF tr_id 분기, `fetch_stock_info` 의 country_code fallback 루프, `fetch_search_stock_info` 의 "KR" 검사 등 Python 자체 wrapper 동작은 모두 미구현. 한투 spec 의 query param 그대로 노출.
 
 ### Phase 1.3 — 국내 순위 + 재무 (`v0.3.0`)
 
@@ -361,6 +368,9 @@ func LoadConfigFromYAML(path string) (*Config, error)
 ---
 
 ## §5. 메서드 디자인
+
+> **Amendment (2026-05-03, Phase 1.2 brainstorming)**: 본 §5 의 메서드명 (`FetchPrice` 등) 과 디렉터리 구조 (`info.go` 등) 코드 예시는 Phase 0 시점의 일반 패턴 시각화이며, **실제 sub-plan 의 메서드명/응답 typed struct 명은 각 sub-plan 표 (§2.2~§2.5) 의 한투 endpoint path 1:1 매핑 (Style A) 을 source of truth 로 함**. 본 §5 의 코드 예시는 godoc/typed struct/에러처리/JSON tag 등 *구조적 패턴* 만 참조하고, 식별자는 sub-plan 표 기준으로 적용.
+
 
 ### 디렉터리 구조 (Phase 0 spec §3 refine — 메서드 sub-package 이동)
 

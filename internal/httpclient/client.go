@@ -101,7 +101,7 @@ type Response struct {
 }
 
 // APIError 는 한투 응답의 rt_cd != "0" 케이스 — internal 패키지 전용.
-// 외부 사용자에게는 root kis.APIError 로 wrap 되어 노출됨 (Task 14 의 NewClient 가 처리).
+// error.Error() 에 msg_cd / msg1 이 포함되어 호출자가 메시지로 구분 가능.
 type APIError struct {
 	RtCode  string
 	MsgCode string

@@ -78,7 +78,7 @@ func NewClient(apiKey, apiSecret, accountNo string, opts ...Option) (*Client, er
 	if err := c.wireInfra(); err != nil {
 		return nil, err
 	}
-	c.Domestic = domestic.New(c.httpClient)
+	c.Domestic = domestic.New(c.httpClient, c.masterC)
 	c.Overseas = overseas.New(c.httpClient)
 	return c, nil
 }
