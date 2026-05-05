@@ -95,3 +95,48 @@ func TestClient_InquireMarketCap(t *testing.T) {
 	assert.Equal(t, int64(1), res.Output2[0].Rank)
 	assert.Equal(t, "APPLE INC", res.Output2[0].Ename)
 }
+
+func TestClient_InquireTradeVol(t *testing.T) {
+	httpmock.Activate()
+	defer httpmock.DeactivateAndReset()
+
+	var capturedQuery url.Values
+	httpmock.RegisterResponder(
+		http.MethodGet,
+		`=~/ranking/trade-vol`,
+		func(req *http.Request) (*http.Response, error) {
+			capturedQuery = req.URL.Query()
+			return httpmock.NewStringResponse(200, loadFixtureString(t, "trade_vol_success.json")), nil
+		},
+	)
+
+	c := newTestClient(t)
+	res, err := c.InquireTradeVol(context.Background(), overseas.InquireTradeVolParams{
+		ExcdCode: "NAS",
+		NDay:     "0",
+	})
+	require.NoError(t, err)
+	require.NotNil(t, res)
+
+	assert.Equal(t, "NAS", capturedQuery.Get("EXCD"))
+	assert.Equal(t, "0", capturedQuery.Get("NDAY"))
+	assert.Equal(t, "0", capturedQuery.Get("VOL_RANG"))
+
+	// output1 검증
+	assert.Equal(t, int64(2), res.Output1.Crec)
+	assert.Equal(t, int64(30), res.Output1.Nrec)
+
+	// output2[0] 검증
+	require.Len(t, res.Output2, 2)
+	assert.Equal(t, "AAPL", res.Output2[0].Symb)
+	d, _ := decimal.NewFromString("189.30")
+	assert.True(t, d.Equal(res.Output2[0].Last))
+	pask, _ := decimal.NewFromString("189.35")
+	assert.True(t, pask.Equal(res.Output2[0].Pask))
+	pbid, _ := decimal.NewFromString("189.25")
+	assert.True(t, pbid.Equal(res.Output2[0].Pbid))
+	assert.Equal(t, int64(55000000), res.Output2[0].Tvol)
+	assert.Equal(t, int64(10411500000), res.Output2[0].Tamt)
+	assert.Equal(t, int64(48000000), res.Output2[0].ATvol)
+	assert.Equal(t, int64(1), res.Output2[0].Rank)
+}
