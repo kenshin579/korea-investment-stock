@@ -263,3 +263,50 @@ func TestClient_InquireVolumePower(t *testing.T) {
 	assert.InDelta(t, 143.25, res.Output2[0].Tpow, 0.01)
 	assert.InDelta(t, 138.90, res.Output2[0].Powx, 0.01)
 }
+
+func TestClient_InquireNewHighlow(t *testing.T) {
+	httpmock.Activate()
+	defer httpmock.DeactivateAndReset()
+
+	var capturedQuery url.Values
+	httpmock.RegisterResponder(
+		http.MethodGet,
+		`=~/ranking/new-highlow`,
+		func(req *http.Request) (*http.Response, error) {
+			capturedQuery = req.URL.Query()
+			return httpmock.NewStringResponse(200, loadFixtureString(t, "new_highlow_success.json")), nil
+		},
+	)
+
+	c := newTestClient(t)
+	res, err := c.InquireNewHighlow(context.Background(), overseas.InquireNewHighlowParams{
+		ExcdCode: "NAS",
+		Gubn:     "1", // 신고(1)
+		Gubn2:    "1", // 돌파유지(1)
+		NDay:     "6", // 52주
+	})
+	require.NoError(t, err)
+	require.NotNil(t, res)
+
+	assert.Equal(t, "NAS", capturedQuery.Get("EXCD"))
+	assert.Equal(t, "1", capturedQuery.Get("GUBN"))
+	assert.Equal(t, "1", capturedQuery.Get("GUBN2"))
+	assert.Equal(t, "6", capturedQuery.Get("NDAY"))
+	assert.Equal(t, "0", capturedQuery.Get("VOL_RANG"))
+
+	// output1 검증 — 3-field MinSummary
+	assert.Equal(t, int64(30), res.Output1.Nrec)
+
+	// output2[0] 검증 — name/ename (knam/enam 아님) + n_base/n_diff/n_rate
+	require.Len(t, res.Output2, 2)
+	assert.Equal(t, "AAPL", res.Output2[0].Symb)
+	assert.Equal(t, "애플", res.Output2[0].Name)
+	assert.Equal(t, "APPLE INC", res.Output2[0].Ename)
+	d, _ := decimal.NewFromString("189.30")
+	assert.True(t, d.Equal(res.Output2[0].Last))
+	nbase, _ := decimal.NewFromString("160.00")
+	assert.True(t, nbase.Equal(res.Output2[0].NBase))
+	ndiff, _ := decimal.NewFromString("29.30")
+	assert.True(t, ndiff.Equal(res.Output2[0].NDiff))
+	assert.InDelta(t, 18.31, res.Output2[0].NRate, 0.01)
+}

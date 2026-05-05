@@ -529,3 +529,97 @@ func (c *Client) InquireVolumePower(ctx context.Context, params InquireVolumePow
 	}
 	return &res, nil
 }
+
+// NewHighlow 는 해외주식_신고/신저가 (HHDFS76300000) 응답.
+//
+// 한투 docs: docs/api/해외주식/해외주식_신고_신저가.md
+// path: /uapi/overseas-stock/v1/ranking/new-highlow
+type NewHighlow struct {
+	Output1 OverseasRankingMinSummary `json:"output1"`
+	Output2 []NewHighlowItem          `json:"output2"`
+}
+
+// NewHighlowItem 은 신고/신저가 output2 의 한 행 (16 fields).
+//
+// 주의: 종목명 필드가 name/ename — VolumeSurge/VolumePower 의 knam/enam 와 다름.
+type NewHighlowItem struct {
+	Rsym   string          `json:"rsym"`          // 실시간조회심볼
+	Excd   string          `json:"excd"`          // 거래소코드
+	Symb   string          `json:"symb"`          // 종목코드
+	Name   string          `json:"name"`          // 종목명 (한글) — knam 아님
+	Last   decimal.Decimal `json:"last"`          // 현재가
+	Sign   string          `json:"sign"`          // 기호
+	Diff   decimal.Decimal `json:"diff"`          // 대비
+	Rate   float64         `json:"rate,string"`   // 등락율
+	Tvol   int64           `json:"tvol,string"`   // 거래량
+	Pask   decimal.Decimal `json:"pask"`          // 매도호가
+	Pbid   decimal.Decimal `json:"pbid"`          // 매수호가
+	NBase  decimal.Decimal `json:"n_base"`        // 기준가
+	NDiff  decimal.Decimal `json:"n_diff"`        // 기준가대비
+	NRate  float64         `json:"n_rate,string"` // 기준가대비율
+	Ename  string          `json:"ename"`         // 영문종목명 — enam 아님
+	EOrdyn string          `json:"e_ordyn"`       // 매매가능
+}
+
+// InquireNewHighlowParams 는 해외주식_신고/신저가 조회 파라미터.
+type InquireNewHighlowParams struct {
+	KeyB     string // KEYB — NEXT KEY BUFF. 빈 값 default
+	Auth     string // AUTH — 사용자권한정보. 빈 값 default
+	ExcdCode string // EXCD — 거래소코드. 필수
+	Gubn     string // GUBN — 신고(1)/신저(0) 구분. 빈 값=>"1"
+	Gubn2    string // GUBN2 — 일시돌파(0)/돌파유지(1) 구분. 빈 값=>"1"
+	NDay     string // NDAY — N일자값: 0(5일),1(10일),2(20일),3(30일),4(60일),5(120일),6(52주),7(1년). 빈 값=>"6" (52주)
+	VolRang  string // VOL_RANG — 거래량조건. 빈 값=>"0" (전체)
+}
+
+// InquireNewHighlow 는 해외주식_신고/신저가 호출.
+//
+// 한투 docs: docs/api/해외주식/해외주식_신고_신저가.md
+// path: /uapi/overseas-stock/v1/ranking/new-highlow (HHDFS76300000)
+func (c *Client) InquireNewHighlow(ctx context.Context, params InquireNewHighlowParams) (*NewHighlow, error) {
+	excd := params.ExcdCode
+	if excd == "" {
+		return nil, fmt.Errorf("kis: ExcdCode required for InquireNewHighlow")
+	}
+	gubn := params.Gubn
+	if gubn == "" {
+		gubn = "1"
+	}
+	gubn2 := params.Gubn2
+	if gubn2 == "" {
+		gubn2 = "1"
+	}
+	nday := params.NDay
+	if nday == "" {
+		nday = "6"
+	}
+	vol := params.VolRang
+	if vol == "" {
+		vol = "0"
+	}
+
+	resp, err := c.http.Do(ctx, &httpclient.Request{
+		Method: http.MethodGet,
+		Path:   "/uapi/overseas-stock/v1/ranking/new-highlow",
+		TrID:   "HHDFS76300000",
+		Query: map[string]string{
+			"KEYB":     params.KeyB,
+			"AUTH":     params.Auth,
+			"EXCD":     excd,
+			"GUBN":     gubn,
+			"GUBN2":    gubn2,
+			"NDAY":     nday,
+			"VOL_RANG": vol,
+		},
+		CustType: "P",
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	var res NewHighlow
+	if err := json.Unmarshal(resp.Raw, &res); err != nil {
+		return nil, fmt.Errorf("kis: parse NewHighlow: %w", err)
+	}
+	return &res, nil
+}
