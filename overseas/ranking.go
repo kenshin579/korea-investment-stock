@@ -98,3 +98,87 @@ func (c *Client) InquireUpdownRate(ctx context.Context, params InquireUpdownRate
 	}
 	return &res, nil
 }
+
+// OverseasRankingFullSummary 는 output1 5-field tier (시가총액/거래량/거래대금순위).
+//
+// 해당 메서드: InquireMarketCap, InquireTradeVol, InquireTradePbmn.
+type OverseasRankingFullSummary struct {
+	Zdiv string `json:"zdiv"`        // 소수점자리수
+	Stat string `json:"stat"`        // 거래상태정보
+	Crec int64  `json:"crec,string"` // 현재조회종목수
+	Trec int64  `json:"trec,string"` // 전체조회종목수
+	Nrec int64  `json:"nrec,string"` // RecordCount
+}
+
+// MarketCap 은 해외주식_시가총액순위 (HHDFS76350100) 응답.
+//
+// 한투 docs: docs/api/해외주식/해외주식_시가총액순위.md
+// path: /uapi/overseas-stock/v1/ranking/market-cap
+type MarketCap struct {
+	Output1 OverseasRankingFullSummary `json:"output1"`
+	Output2 []MarketCapItem            `json:"output2"`
+}
+
+// MarketCapItem 은 시가총액순위 output2 의 한 행 (15 fields).
+type MarketCapItem struct {
+	Rsym   string          `json:"rsym"`        // 실시간조회심볼
+	Excd   string          `json:"excd"`        // 거래소코드
+	Symb   string          `json:"symb"`        // 종목코드
+	Name   string          `json:"name"`        // 종목명 (한글)
+	Last   decimal.Decimal `json:"last"`        // 현재가
+	Sign   string          `json:"sign"`        // 기호
+	Diff   decimal.Decimal `json:"diff"`        // 대비
+	Rate   float64         `json:"rate,string"` // 등락율
+	Tvol   int64           `json:"tvol,string"` // 거래량
+	Shar   int64           `json:"shar,string"` // 상장주식수
+	Tomv   decimal.Decimal `json:"tomv"`        // 시가총액
+	Grav   float64         `json:"grav,string"` // 비중
+	Rank   int64           `json:"rank,string"` // 순위
+	Ename  string          `json:"ename"`       // 영문종목명
+	EOrdyn string          `json:"e_ordyn"`     // 매매가능
+}
+
+// InquireMarketCapParams 는 해외주식_시가총액순위 조회 파라미터.
+type InquireMarketCapParams struct {
+	KeyB     string // KEYB — NEXT KEY BUFF. 빈 값 default
+	Auth     string // AUTH — 사용자권한정보. 빈 값 default
+	ExcdCode string // EXCD — 거래소코드 (NYS/NAS/AMS/HKS/SHS/SZS/HSX/HNX/TSE). 필수
+	VolRang  string // VOL_RANG — 거래량조건. 빈 값=>"0" (전체)
+}
+
+// InquireMarketCap 은 해외주식_시가총액순위 호출.
+//
+// 한투 docs: docs/api/해외주식/해외주식_시가총액순위.md
+// path: /uapi/overseas-stock/v1/ranking/market-cap (HHDFS76350100)
+func (c *Client) InquireMarketCap(ctx context.Context, params InquireMarketCapParams) (*MarketCap, error) {
+	excd := params.ExcdCode
+	if excd == "" {
+		return nil, fmt.Errorf("kis: ExcdCode required for InquireMarketCap")
+	}
+	vol := params.VolRang
+	if vol == "" {
+		vol = "0"
+	}
+
+	resp, err := c.http.Do(ctx, &httpclient.Request{
+		Method: http.MethodGet,
+		Path:   "/uapi/overseas-stock/v1/ranking/market-cap",
+		TrID:   "HHDFS76350100",
+		Query: map[string]string{
+			"KEYB":     params.KeyB,
+			"AUTH":     params.Auth,
+			"EXCD":     excd,
+			"VOL_RANG": vol,
+		},
+		CustType: "P",
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	var res MarketCap
+	if err := json.Unmarshal(resp.Raw, &res); err != nil {
+		return nil, fmt.Errorf("kis: parse MarketCap: %w", err)
+	}
+	return &res, nil
+}
