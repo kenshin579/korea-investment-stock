@@ -77,3 +77,61 @@ func (c *Client) InquireKsdDividend(ctx context.Context, params InquireKsdDivide
 	}
 	return &res, nil
 }
+
+// KsdBonusIssue 는 예탁원정보(무상증자) (HHKDB669101C0) 응답.
+//
+// 한투 docs: docs/api/국내주식/예탁원정보(무상증자).md
+// path: /uapi/domestic-stock/v1/ksdinfo/bonus-issue
+type KsdBonusIssue struct {
+	Output1 []KsdBonusIssueItem `json:"output1"`
+}
+
+// KsdBonusIssueItem 은 무상증자 한 행. 모든 필드 string (KIS docs).
+type KsdBonusIssueItem struct {
+	RecordDate     string `json:"record_date"`       // 기준일
+	ShtCd          string `json:"sht_cd"`            // 종목코드
+	IsinName       string `json:"isin_name"`         // 종목명
+	FixRate        string `json:"fix_rate"`          // 확정배정율
+	OddRecPrice    string `json:"odd_rec_price"`     // 단주기준가
+	RightDt        string `json:"right_dt"`          // 권리락일
+	OddPayDt       string `json:"odd_pay_dt"`        // 단주대금지급일
+	ListDate       string `json:"list_date"`         // 상장/등록일
+	TotIssueStkQty string `json:"tot_issue_stk_qty"` // 발행주식
+	IssueStkQty    string `json:"issue_stk_qty"`     // 발행할주식
+	StkKind        string `json:"stk_kind"`          // 주식종류
+}
+
+// InquireKsdBonusIssueParams 는 무상증자 조회 파라미터.
+type InquireKsdBonusIssueParams struct {
+	Cts      string // CTS — 공백 입력 (default "")
+	FromDate string // F_DT — 조회시작일 YYYYMMDD
+	ToDate   string // T_DT — 조회종료일 YYYYMMDD
+	Symbol   string // SHT_CD — 종목코드 (공백=전체)
+}
+
+// InquireKsdBonusIssue 호출.
+//
+// 한투 docs: docs/api/국내주식/예탁원정보(무상증자).md
+// path: /uapi/domestic-stock/v1/ksdinfo/bonus-issue (HHKDB669101C0)
+func (c *Client) InquireKsdBonusIssue(ctx context.Context, params InquireKsdBonusIssueParams) (*KsdBonusIssue, error) {
+	resp, err := c.http.Do(ctx, &httpclient.Request{
+		Method: http.MethodGet,
+		Path:   "/uapi/domestic-stock/v1/ksdinfo/bonus-issue",
+		TrID:   "HHKDB669101C0",
+		Query: map[string]string{
+			"CTS":    params.Cts,
+			"F_DT":   params.FromDate,
+			"T_DT":   params.ToDate,
+			"SHT_CD": params.Symbol,
+		},
+		CustType: "P",
+	})
+	if err != nil {
+		return nil, err
+	}
+	var res KsdBonusIssue
+	if err := json.Unmarshal(resp.Raw, &res); err != nil {
+		return nil, fmt.Errorf("kis: parse KsdBonusIssue: %w", err)
+	}
+	return &res, nil
+}
