@@ -57,3 +57,39 @@ func TestClient_InquireNearNewHighlow(t *testing.T) {
 	assert.True(t, d3.Equal(res.Output[0].NewLwpr))
 	assert.InDelta(t, 2.43, res.Output[0].LwprNearRate, 0.01)
 }
+
+func TestClient_InquireOvertimePrice(t *testing.T) {
+	httpmock.Activate()
+	defer httpmock.DeactivateAndReset()
+
+	var capturedQuery url.Values
+	httpmock.RegisterResponder(
+		http.MethodGet,
+		`=~/quotations/inquire-overtime-price`,
+		func(req *http.Request) (*http.Response, error) {
+			capturedQuery = req.URL.Query()
+			return httpmock.NewStringResponse(200, loadFixtureString(t, "overtime_price_success.json")), nil
+		},
+	)
+
+	c := newTestClient(t)
+	res, err := c.InquireOvertimePrice(context.Background(), domestic.InquireOvertimePriceParams{
+		Symbol: "005930",
+	})
+	require.NoError(t, err)
+	require.NotNil(t, res)
+
+	assert.Equal(t, "J", capturedQuery.Get("FID_COND_MRKT_DIV_CODE"))
+	assert.Equal(t, "005930", capturedQuery.Get("FID_INPUT_ISCD"))
+
+	// output 필드 검증
+	assert.Equal(t, "전기전자", res.Output.BstpKorIsnm)
+	d, _ := decimal.NewFromString("75700")
+	assert.True(t, d.Equal(res.Output.OvtmUntpPrpr))
+	assert.Equal(t, int64(234567), res.Output.OvtmUntpVol)
+	assert.InDelta(t, 20.00, res.Output.MargRate, 0.01)
+	assert.Equal(t, "N", res.Output.TrhtYn)
+	assert.Equal(t, "KOSPI", res.Output.RprsMrktKorName)
+	d2, _ := decimal.NewFromString("75700")
+	assert.True(t, d2.Equal(res.Output.Bidp))
+}

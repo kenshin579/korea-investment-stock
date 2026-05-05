@@ -128,3 +128,89 @@ func (c *Client) InquireNearNewHighlow(ctx context.Context, params InquireNearNe
 	}
 	return &res, nil
 }
+
+// OvertimePrice 는 국내주식 시간외현재가 (FHPST02300000) 응답.
+//
+// 한투 docs: docs/api/국내주식/국내주식_시간외현재가.md
+// path: /uapi/domestic-stock/v1/quotations/inquire-overtime-price
+//
+// 시간외 단일가 현재가 + 예상체결 + 상하한가 + 증거금비율 + 관리구분 등.
+type OvertimePrice struct {
+	Output OvertimePriceOutput `json:"output"`
+}
+
+// OvertimePriceOutput 은 시간외현재가 응답의 output object.
+type OvertimePriceOutput struct {
+	BstpKorIsnm              string          `json:"bstp_kor_isnm"`                   // 업종 한글 종목명
+	MangIssuClsName          string          `json:"mang_issu_cls_name"`              // 관리 종목 구분 명
+	OvtmUntpPrpr             decimal.Decimal `json:"ovtm_untp_prpr"`                  // 시간외 단일가 현재가
+	OvtmUntpPrdyVrss         decimal.Decimal `json:"ovtm_untp_prdy_vrss"`             // 시간외 단일가 전일 대비
+	OvtmUntpPrdyVrssSign     string          `json:"ovtm_untp_prdy_vrss_sign"`        // 시간외 단일가 전일 대비 부호
+	OvtmUntpPrdyCtrt         float64         `json:"ovtm_untp_prdy_ctrt,string"`      // 시간외 단일가 전일 대비율
+	OvtmUntpVol              int64           `json:"ovtm_untp_vol,string"`            // 시간외 단일가 거래량
+	OvtmUntpTrPbmn           int64           `json:"ovtm_untp_tr_pbmn,string"`        // 시간외 단일가 거래 대금
+	OvtmUntpMxpr             decimal.Decimal `json:"ovtm_untp_mxpr"`                  // 시간외 단일가 상한가
+	OvtmUntpLlam             decimal.Decimal `json:"ovtm_untp_llam"`                  // 시간외 단일가 하한가
+	OvtmUntpOprc             decimal.Decimal `json:"ovtm_untp_oprc"`                  // 시간외 단일가 시가2
+	OvtmUntpHgpr             decimal.Decimal `json:"ovtm_untp_hgpr"`                  // 시간외 단일가 최고가
+	OvtmUntpLwpr             decimal.Decimal `json:"ovtm_untp_lwpr"`                  // 시간외 단일가 최저가
+	MargRate                 float64         `json:"marg_rate,string"`                // 증거금 비율
+	OvtmUntpAntcCnpr         decimal.Decimal `json:"ovtm_untp_antc_cnpr"`             // 시간외 단일가 예상 체결가
+	OvtmUntpAntcCntgVrss     decimal.Decimal `json:"ovtm_untp_antc_cntg_vrss"`        // 시간외 단일가 예상 체결 대비
+	OvtmUntpAntcCntgVrssSign string          `json:"ovtm_untp_antc_cntg_vrss_sign"`   // 시간외 단일가 예상 체결 대비 부호
+	OvtmUntpAntcCntgCtrt     float64         `json:"ovtm_untp_antc_cntg_ctrt,string"` // 시간외 단일가 예상 체결 대비율
+	OvtmUntpAntcCnqn         int64           `json:"ovtm_untp_antc_cnqn,string"`      // 시간외 단일가 예상 체결량
+	CrdtAbleYn               string          `json:"crdt_able_yn"`                    // 신용 가능 여부
+	NewLstnClsName           string          `json:"new_lstn_cls_name"`               // 신규 상장 구분 명
+	SltrYn                   string          `json:"sltr_yn"`                         // 정리매매 여부
+	MangIssuYn               string          `json:"mang_issu_yn"`                    // 관리 종목 여부
+	MrktWarnClsCode          string          `json:"mrkt_warn_cls_code"`              // 시장 경고 구분 코드
+	TrhtYn                   string          `json:"trht_yn"`                         // 거래정지 여부
+	VlntDealClsName          string          `json:"vlnt_deal_cls_name"`              // 임의 매매 구분 명
+	OvtmUntpSdpr             decimal.Decimal `json:"ovtm_untp_sdpr"`                  // 시간외 단일가 기준가
+	MrktWarnClsName          string          `json:"mrkt_warn_cls_name"`              // 시장 경고 구분 명
+	RevlIssuReasName         string          `json:"revl_issu_reas_name"`             // 재평가 종목 사유 명
+	InsnPbntYn               string          `json:"insn_pbnt_yn"`                    // 불성실 공시 여부
+	FlngClsName              string          `json:"flng_cls_name"`                   // 락 구분 이름
+	RprsMrktKorName          string          `json:"rprs_mrkt_kor_name"`              // 대표 시장 한글 명
+	OvtmViClsCode            string          `json:"ovtm_vi_cls_code"`                // 시간외단일가VI적용구분코드
+	Bidp                     decimal.Decimal `json:"bidp"`                            // 매수호가
+	Askp                     decimal.Decimal `json:"askp"`                            // 매도호가
+}
+
+// InquireOvertimePriceParams 는 시간외현재가 조회 파라미터.
+type InquireOvertimePriceParams struct {
+	MarketCode string // FID_COND_MRKT_DIV_CODE — "J":KRX. 빈 값=>"J"
+	Symbol     string // FID_INPUT_ISCD — 종목코드 (예 "005930")
+}
+
+// InquireOvertimePrice 는 국내주식 시간외현재가 호출.
+//
+// 한투 docs: docs/api/국내주식/국내주식_시간외현재가.md
+// path: /uapi/domestic-stock/v1/quotations/inquire-overtime-price (FHPST02300000)
+func (c *Client) InquireOvertimePrice(ctx context.Context, params InquireOvertimePriceParams) (*OvertimePrice, error) {
+	market := params.MarketCode
+	if market == "" {
+		market = "J"
+	}
+
+	resp, err := c.http.Do(ctx, &httpclient.Request{
+		Method: http.MethodGet,
+		Path:   "/uapi/domestic-stock/v1/quotations/inquire-overtime-price",
+		TrID:   "FHPST02300000",
+		Query: map[string]string{
+			"FID_COND_MRKT_DIV_CODE": market,
+			"FID_INPUT_ISCD":         params.Symbol,
+		},
+		CustType: "P",
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	var res OvertimePrice
+	if err := json.Unmarshal(resp.Raw, &res); err != nil {
+		return nil, fmt.Errorf("kis: parse OvertimePrice: %w", err)
+	}
+	return &res, nil
+}
