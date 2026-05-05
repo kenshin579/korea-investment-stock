@@ -1,0 +1,50 @@
+// File: domestic/program_trade_test.go
+package domestic_test
+
+import (
+	"context"
+	"net/http"
+	"net/url"
+	"testing"
+
+	"github.com/jarcoal/httpmock"
+	"github.com/shopspring/decimal"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
+	"github.com/kenshin579/korea-investment-stock/domestic"
+)
+
+func TestClient_InquireProgramTradeByStockDaily(t *testing.T) {
+	httpmock.Activate()
+	defer httpmock.DeactivateAndReset()
+
+	var capturedQuery url.Values
+	httpmock.RegisterResponder(
+		http.MethodGet,
+		`=~/quotations/program-trade-by-stock-daily`,
+		func(req *http.Request) (*http.Response, error) {
+			capturedQuery = req.URL.Query()
+			return httpmock.NewStringResponse(200, loadFixtureString(t, "program_trade_by_stock_daily_success.json")), nil
+		},
+	)
+
+	c := newTestClient(t)
+	res, err := c.InquireProgramTradeByStockDaily(context.Background(), domestic.InquireProgramTradeByStockDailyParams{
+		Symbol:   "005930",
+		BaseDate: "0020260505",
+	})
+	require.NoError(t, err)
+	require.NotNil(t, res)
+
+	assert.Equal(t, "J", capturedQuery.Get("FID_COND_MRKT_DIV_CODE"))
+	assert.Equal(t, "005930", capturedQuery.Get("FID_INPUT_ISCD"))
+	assert.Equal(t, "0020260505", capturedQuery.Get("FID_INPUT_DATE_1"))
+
+	require.Len(t, res.Output, 2)
+	assert.Equal(t, "20260505", res.Output[0].StckBsopDate)
+	assert.Equal(t, decimal.NewFromInt(75800), res.Output[0].StckClpr)
+	assert.Equal(t, int64(150000), res.Output[0].WholSmtnNtbyQty)
+	assert.Equal(t, int64(10000), res.Output[0].WholNtbyVolIcdc)
+	assert.Equal(t, int64(500000000), res.Output[0].WholNtbyTrPbmnIcdc2)
+}
