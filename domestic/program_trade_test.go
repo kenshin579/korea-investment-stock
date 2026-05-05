@@ -48,3 +48,35 @@ func TestClient_InquireProgramTradeByStockDaily(t *testing.T) {
 	assert.Equal(t, int64(10000), res.Output[0].WholNtbyVolIcdc)
 	assert.Equal(t, int64(500000000), res.Output[0].WholNtbyTrPbmnIcdc2)
 }
+
+func TestClient_InquireProgramTradeByStock(t *testing.T) {
+	httpmock.Activate()
+	defer httpmock.DeactivateAndReset()
+
+	var capturedQuery url.Values
+	httpmock.RegisterResponder(
+		http.MethodGet,
+		`=~/quotations/program-trade-by-stock`,
+		func(req *http.Request) (*http.Response, error) {
+			capturedQuery = req.URL.Query()
+			return httpmock.NewStringResponse(200, loadFixtureString(t, "program_trade_by_stock_success.json")), nil
+		},
+	)
+
+	c := newTestClient(t)
+	res, err := c.InquireProgramTradeByStock(context.Background(), domestic.InquireProgramTradeByStockParams{
+		Symbol: "005930",
+	})
+	require.NoError(t, err)
+	require.NotNil(t, res)
+
+	assert.Equal(t, "J", capturedQuery.Get("FID_COND_MRKT_DIV_CODE"))
+	assert.Equal(t, "005930", capturedQuery.Get("FID_INPUT_ISCD"))
+
+	require.Len(t, res.Output, 2)
+	assert.Equal(t, "090100", res.Output[0].BsopHour)
+	assert.Equal(t, decimal.NewFromInt(75800), res.Output[0].StckPrpr)
+	assert.Equal(t, int64(1500), res.Output[0].WholSmtnNtbyQty)
+	assert.Equal(t, int64(200), res.Output[0].WholNtbyVolIcdc)
+	assert.Equal(t, int64(15160000), res.Output[0].WholNtbyTrPbmnIcdc)
+}

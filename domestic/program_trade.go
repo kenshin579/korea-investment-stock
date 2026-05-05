@@ -82,3 +82,68 @@ func (c *Client) InquireProgramTradeByStockDaily(ctx context.Context, params Inq
 	}
 	return &res, nil
 }
+
+// ProgramTradeByStock 는 종목별 프로그램매매추이(체결) (FHPPG04650101) 응답.
+//
+// 한투 docs: docs/api/국내주식/종목별_프로그램매매추이(체결).md
+// path: /uapi/domestic-stock/v1/quotations/program-trade-by-stock
+type ProgramTradeByStock struct {
+	Output []ProgramTradeByStockItem `json:"output"`
+}
+
+// ProgramTradeByStockItem 은 응답 output 한 행 (시간대별 프로그램 체결).
+//
+// WholNtbyTrPbmnIcdc: 마지막 필드. trailing "2" 없음 — EP3 의 WholNtbyTrPbmnIcdc2 와 구분.
+type ProgramTradeByStockItem struct {
+	BsopHour           string          `json:"bsop_hour"`                     // 영업 시간
+	StckPrpr           decimal.Decimal `json:"stck_prpr"`                     // 주식 현재가
+	PrdyVrss           decimal.Decimal `json:"prdy_vrss"`                     // 전일 대비
+	PrdyVrssSign       string          `json:"prdy_vrss_sign"`                // 전일 대비 부호
+	PrdyCtrt           float64         `json:"prdy_ctrt,string"`              // 전일 대비율
+	AcmlVol            int64           `json:"acml_vol,string"`               // 누적 거래량
+	WholSmtnSelnVol    int64           `json:"whol_smtn_seln_vol,string"`     // 전체 합산 매도 수량
+	WholSmtnShnuVol    int64           `json:"whol_smtn_shnu_vol,string"`     // 전체 합산 매수 수량
+	WholSmtnNtbyQty    int64           `json:"whol_smtn_ntby_qty,string"`     // 전체 합산 순매수 수량
+	WholSmtnSelnTrPbmn int64           `json:"whol_smtn_seln_tr_pbmn,string"` // 전체 합산 매도 거래대금
+	WholSmtnShnuTrPbmn int64           `json:"whol_smtn_shnu_tr_pbmn,string"` // 전체 합산 매수 거래대금
+	WholSmtnNtbyTrPbmn int64           `json:"whol_smtn_ntby_tr_pbmn,string"` // 전체 합산 순매수 거래대금
+	WholNtbyVolIcdc    int64           `json:"whol_ntby_vol_icdc,string"`     // 전체 순매수 거래량 증감
+	WholNtbyTrPbmnIcdc int64           `json:"whol_ntby_tr_pbmn_icdc,string"` // 전체 순매수 거래대금 증감 (no trailing "2")
+}
+
+// InquireProgramTradeByStockParams 는 종목별 프로그램매매추이(체결) 조회 파라미터.
+type InquireProgramTradeByStockParams struct {
+	MarketCode string // FID_COND_MRKT_DIV_CODE — 빈 값=>"J"
+	Symbol     string // FID_INPUT_ISCD — 필수
+}
+
+// InquireProgramTradeByStock 는 종목별 프로그램매매추이(체결) 호출.
+//
+// 한투 docs: docs/api/국내주식/종목별_프로그램매매추이(체결).md
+// path: /uapi/domestic-stock/v1/quotations/program-trade-by-stock (FHPPG04650101)
+func (c *Client) InquireProgramTradeByStock(ctx context.Context, params InquireProgramTradeByStockParams) (*ProgramTradeByStock, error) {
+	mkt := params.MarketCode
+	if mkt == "" {
+		mkt = "J"
+	}
+
+	resp, err := c.http.Do(ctx, &httpclient.Request{
+		Method: http.MethodGet,
+		Path:   "/uapi/domestic-stock/v1/quotations/program-trade-by-stock",
+		TrID:   "FHPPG04650101",
+		Query: map[string]string{
+			"FID_COND_MRKT_DIV_CODE": mkt,
+			"FID_INPUT_ISCD":         params.Symbol,
+		},
+		CustType: "P",
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	var res ProgramTradeByStock
+	if err := json.Unmarshal(resp.Raw, &res); err != nil {
+		return nil, fmt.Errorf("kis: parse ProgramTradeByStock: %w", err)
+	}
+	return &res, nil
+}
