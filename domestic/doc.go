@@ -45,5 +45,19 @@
 //   - InquireOvertimeVolume      — 국내주식 시간외거래량순위 (FHPST02350000)
 //   - InquireOvertimeFluctuation — 국내주식 시간외등락율순위 (FHPST02340000)
 //
+// Phase 2.4 메서드 (11):
+//
+//   - InquireKsdDividend    — 예탁원정보 배당일정 (HHKDB669102C0)
+//   - InquireKsdBonusIssue  — 예탁원정보 무상증자 (HHKDB669101C0)
+//   - InquireKsdPaidinCapin — 예탁원정보 유상증자 (HHKDB669100C0) [output key: output]
+//   - InquireKsdSharehldMeet — 예탁원정보 주주총회 (HHKDB669111C0)
+//   - InquireKsdMergerSplit  — 예탁원정보 합병/분할 (HHKDB669104C0) [no isin_name]
+//   - InquireKsdRevSplit     — 예탁원정보 액면변경 (HHKDB669105C0) [+MARKET_GB]
+//   - InquireKsdForfeit      — 예탁원정보 실권주청약 (HHKDB669109C0)
+//   - InquireKsdMandDeposit  — 예탁원정보 의무보호예수 (HHKDB669110C0) [depo_date]
+//   - InquireKsdCapDcrs      — 예탁원정보 감자 (HHKDB669106C0)
+//   - InquireKsdPurreq       — 예탁원정보 주식매수청구 (HHKDB669103C0)
+//   - InquireKsdListInfo     — 예탁원정보 주식상장정보 (HHKDB669107C0) [list_dt]
+//
 // 사용자는 root kis.Client 의 Domestic 필드로 접근.
 package domestic

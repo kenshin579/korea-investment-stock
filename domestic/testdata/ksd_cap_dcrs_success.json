@@ -1,0 +1,29 @@
+{
+  "rt_cd": "0",
+  "msg_cd": "MCA00000",
+  "msg1": "정상처리 되었습니다.",
+  "output1": [
+    {
+      "record_date": "20260320",
+      "sht_cd": "005930",
+      "isin_name": "삼성전자",
+      "stk_kind": "보통주",
+      "reduce_cap_type": "유상감자",
+      "reduce_cap_rate": "0.20",
+      "comp_way": "주식병합",
+      "td_stop_dt": "20260319 ~ 20260321",
+      "list_dt": "20260322"
+    },
+    {
+      "record_date": "20260320",
+      "sht_cd": "000660",
+      "isin_name": "SK하이닉스",
+      "stk_kind": "보통주",
+      "reduce_cap_type": "무상감자",
+      "reduce_cap_rate": "0.50",
+      "comp_way": "주식소각",
+      "td_stop_dt": "20260319 ~ 20260321",
+      "list_dt": "20260322"
+    }
+  ]
+}

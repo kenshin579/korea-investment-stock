@@ -61,7 +61,7 @@ func main() {
 }
 ```
 
-## Available Methods (Phase 1.2 ~ 2.3)
+## Available Methods (Phase 1.2 ~ 2.4)
 
 | Method | 한투 path | TR_ID |
 |--------|----------|-------|
@@ -107,6 +107,17 @@ func main() {
 | `Overseas.InquireVolumeSurge` | `ranking/volume-surge` | HHDFS76270000 |
 | `Overseas.InquireVolumePower` | `ranking/volume-power` | HHDFS76280000 |
 | `Overseas.InquireNewHighlow` | `ranking/new-highlow` | HHDFS76300000 |
+| `Domestic.InquireKsdDividend` | `ksdinfo/dividend` | HHKDB669102C0 |
+| `Domestic.InquireKsdBonusIssue` | `ksdinfo/bonus-issue` | HHKDB669101C0 |
+| `Domestic.InquireKsdPaidinCapin` | `ksdinfo/paidin-capin` | HHKDB669100C0 |
+| `Domestic.InquireKsdSharehldMeet` | `ksdinfo/sharehld-meet` | HHKDB669111C0 |
+| `Domestic.InquireKsdMergerSplit` | `ksdinfo/merger-split` | HHKDB669104C0 |
+| `Domestic.InquireKsdRevSplit` | `ksdinfo/rev-split` | HHKDB669105C0 |
+| `Domestic.InquireKsdForfeit` | `ksdinfo/forfeit` | HHKDB669109C0 |
+| `Domestic.InquireKsdMandDeposit` | `ksdinfo/mand-deposit` | HHKDB669110C0 |
+| `Domestic.InquireKsdCapDcrs` | `ksdinfo/cap-dcrs` | HHKDB669106C0 |
+| `Domestic.InquireKsdPurreq` | `ksdinfo/purreq` | HHKDB669103C0 |
+| `Domestic.InquireKsdListInfo` | `ksdinfo/list-info` | HHKDB669107C0 |
 
 ## Design
 
