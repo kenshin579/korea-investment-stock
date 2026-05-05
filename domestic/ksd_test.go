@@ -321,3 +321,34 @@ func TestClient_InquireKsdPurreq(t *testing.T) {
 	assert.Equal(t, "69000", res.Output1[0].BuyReqPrice)
 	assert.Equal(t, "20260326", res.Output1[0].GetMeetDt)
 }
+
+func TestClient_InquireKsdListInfo(t *testing.T) {
+	httpmock.Activate()
+	defer httpmock.DeactivateAndReset()
+
+	var capturedQuery url.Values
+	httpmock.RegisterResponder(
+		http.MethodGet,
+		`=~/ksdinfo/list-info`,
+		func(req *http.Request) (*http.Response, error) {
+			capturedQuery = req.URL.Query()
+			return httpmock.NewStringResponse(200, loadFixtureString(t, "ksd_list_info_success.json")), nil
+		},
+	)
+
+	c := newTestClient(t)
+	res, err := c.InquireKsdListInfo(context.Background(), domestic.InquireKsdListInfoParams{
+		FromDate: "20260101",
+		ToDate:   "20260505",
+	})
+	require.NoError(t, err)
+	require.NotNil(t, res)
+
+	assert.Equal(t, "20260101", capturedQuery.Get("F_DT"))
+
+	require.Len(t, res.Output1, 2)
+	assert.Equal(t, "005930", res.Output1[0].ShtCd)
+	assert.Equal(t, "20260102", res.Output1[0].ListDt) // list_dt (not record_date)
+	assert.Equal(t, "유상증자", res.Output1[0].IssueType)
+	assert.Equal(t, "68000", res.Output1[0].IssuePrice)
+}

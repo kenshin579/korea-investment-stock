@@ -603,3 +603,60 @@ func (c *Client) InquireKsdPurreq(ctx context.Context, params InquireKsdPurreqPa
 	}
 	return &res, nil
 }
+
+// KsdListInfo 는 예탁원정보(주식상장정보) (HHKDB669107C0) 응답.
+//
+// 한투 docs: docs/api/국내주식/예탁원정보(주식상장정보).md
+// path: /uapi/domestic-stock/v1/ksdinfo/list-info
+// ANOMALY: leading date field 는 list_dt (record_date 없음).
+type KsdListInfo struct {
+	Output1 []KsdListInfoItem `json:"output1"`
+}
+
+// KsdListInfoItem 은 주식상장정보 한 행. 모든 필드 string (KIS docs).
+// RecordDate 없음 — list_dt 가 날짜 기준 필드 (첫 번째 필드).
+type KsdListInfoItem struct {
+	ListDt         string `json:"list_dt"`           // 상장/등록일 (날짜 key — not record_date)
+	ShtCd          string `json:"sht_cd"`            // 종목코드
+	IsinName       string `json:"isin_name"`         // 종목명
+	StkKind        string `json:"stk_kind"`          // 주식종류
+	IssueType      string `json:"issue_type"`        // 사유
+	IssueStkQty    string `json:"issue_stk_qty"`     // 상장주식수
+	TotIssueStkQty string `json:"tot_issue_stk_qty"` // 총발행주식수
+	IssuePrice     string `json:"issue_price"`       // 발행가
+}
+
+// InquireKsdListInfoParams 는 주식상장정보 조회 파라미터.
+type InquireKsdListInfoParams struct {
+	Symbol   string // SHT_CD — 종목코드 (공백=전체)
+	ToDate   string // T_DT — 조회종료일 YYYYMMDD
+	FromDate string // F_DT — 조회시작일 YYYYMMDD
+	Cts      string // CTS — 공백 입력 (default "")
+}
+
+// InquireKsdListInfo 호출.
+//
+// 한투 docs: docs/api/국내주식/예탁원정보(주식상장정보).md
+// path: /uapi/domestic-stock/v1/ksdinfo/list-info (HHKDB669107C0)
+func (c *Client) InquireKsdListInfo(ctx context.Context, params InquireKsdListInfoParams) (*KsdListInfo, error) {
+	resp, err := c.http.Do(ctx, &httpclient.Request{
+		Method: http.MethodGet,
+		Path:   "/uapi/domestic-stock/v1/ksdinfo/list-info",
+		TrID:   "HHKDB669107C0",
+		Query: map[string]string{
+			"SHT_CD": params.Symbol,
+			"T_DT":   params.ToDate,
+			"F_DT":   params.FromDate,
+			"CTS":    params.Cts,
+		},
+		CustType: "P",
+	})
+	if err != nil {
+		return nil, err
+	}
+	var res KsdListInfo
+	if err := json.Unmarshal(resp.Raw, &res); err != nil {
+		return nil, fmt.Errorf("kis: parse KsdListInfo: %w", err)
+	}
+	return &res, nil
+}
