@@ -443,3 +443,111 @@ func (c *Client) InquireOvertimeVolume(ctx context.Context, params InquireOverti
 	}
 	return &res, nil
 }
+
+// OvertimeFluctuation 은 국내주식 시간외등락율순위 (FHPST02340000) 응답.
+//
+// 한투 docs: docs/api/국내주식/국내주식_시간외등락율순위.md
+// path: /uapi/domestic-stock/v1/ranking/overtime-fluctuation
+//
+// output1: 상한/상승/보합/하한/하락 종목 수 + 거래량/대금 합계 (11 fields).
+// output2: 종목별 시간외 등락율 순위 array (16 fields/item).
+type OvertimeFluctuation struct {
+	Output1 OvertimeFluctuationSummary `json:"output1"`
+	Output2 []OvertimeFluctuationItem  `json:"output2"`
+}
+
+// OvertimeFluctuationSummary 는 시간외등락율순위 output1 — 시장 전체 통계.
+type OvertimeFluctuationSummary struct {
+	OvtmUntpUplmIssuCnt  int64 `json:"ovtm_untp_uplm_issu_cnt,string"`  // 시간외 단일가 상한 종목 수
+	OvtmUntpAscnIssuCnt  int64 `json:"ovtm_untp_ascn_issu_cnt,string"`  // 시간외 단일가 상승 종목 수
+	OvtmUntpStnrIssuCnt  int64 `json:"ovtm_untp_stnr_issu_cnt,string"`  // 시간외 단일가 보합 종목 수
+	OvtmUntpLslmIssuCnt  int64 `json:"ovtm_untp_lslm_issu_cnt,string"`  // 시간외 단일가 하한 종목 수
+	OvtmUntpDownIssuCnt  int64 `json:"ovtm_untp_down_issu_cnt,string"`  // 시간외 단일가 하락 종목 수
+	OvtmUntpAcmlVol      int64 `json:"ovtm_untp_acml_vol,string"`       // 시간외 단일가 누적 거래량
+	OvtmUntpAcmlTrPbmn   int64 `json:"ovtm_untp_acml_tr_pbmn,string"`   // 시간외 단일가 누적 거래대금
+	OvtmUntpExchVol      int64 `json:"ovtm_untp_exch_vol,string"`       // 시간외 단일가 거래소 거래량
+	OvtmUntpExchTrPbmn   int64 `json:"ovtm_untp_exch_tr_pbmn,string"`   // 시간외 단일가 거래소 거래대금
+	OvtmUntpKosdaqVol    int64 `json:"ovtm_untp_kosdaq_vol,string"`     // 시간외 단일가 KOSDAQ 거래량
+	OvtmUntpKosdaqTrPbmn int64 `json:"ovtm_untp_kosdaq_tr_pbmn,string"` // 시간외 단일가 KOSDAQ 거래대금
+}
+
+// OvertimeFluctuationItem 은 시간외등락율순위 output2 의 한 행.
+type OvertimeFluctuationItem struct {
+	MkscShrnIscd         string          `json:"mksc_shrn_iscd"`                 // 유가증권 단축 종목코드
+	HtsKorIsnm           string          `json:"hts_kor_isnm"`                   // HTS 한글 종목명
+	OvtmUntpPrpr         decimal.Decimal `json:"ovtm_untp_prpr"`                 // 시간외 단일가 현재가
+	OvtmUntpPrdyVrss     decimal.Decimal `json:"ovtm_untp_prdy_vrss"`            // 시간외 단일가 전일 대비
+	OvtmUntpPrdyVrssSign string          `json:"ovtm_untp_prdy_vrss_sign"`       // 시간외 단일가 전일 대비 부호
+	OvtmUntpPrdyCtrt     float64         `json:"ovtm_untp_prdy_ctrt,string"`     // 시간외 단일가 전일 대비율
+	OvtmUntpAskp1        decimal.Decimal `json:"ovtm_untp_askp1"`                // 시간외 단일가 매도호가1
+	OvtmUntpSelnRsqn     int64           `json:"ovtm_untp_seln_rsqn,string"`     // 시간외 단일가 매도 잔량
+	OvtmUntpBidp1        decimal.Decimal `json:"ovtm_untp_bidp1"`                // 시간외 단일가 매수호가1
+	OvtmUntpShnuRsqn     int64           `json:"ovtm_untp_shnu_rsqn,string"`     // 시간외 단일가 매수 잔량
+	OvtmUntpVol          int64           `json:"ovtm_untp_vol,string"`           // 시간외 단일가 거래량
+	OvtmVrssAcmlVolRlim  float64         `json:"ovtm_vrss_acml_vol_rlim,string"` // 시간외 대비 누적 거래량 비중
+	StckPrpr             decimal.Decimal `json:"stck_prpr"`                      // 주식 현재가 (정규장)
+	AcmlVol              int64           `json:"acml_vol,string"`                // 누적 거래량 (정규장)
+	Bidp                 decimal.Decimal `json:"bidp"`                           // 매수호가
+	Askp                 decimal.Decimal `json:"askp"`                           // 매도호가
+}
+
+// InquireOvertimeFluctuationParams 는 시간외등락율순위 조회 파라미터.
+//
+// FID_COND_SCR_DIV_CODE = "20234" 고정 (사용자 변경 불가).
+type InquireOvertimeFluctuationParams struct {
+	MarketCode   string // FID_COND_MRKT_DIV_CODE — "J":KRX. 빈 값=>"J"
+	MrktClsCode  string // FID_MRKT_CLS_CODE — 공백 입력
+	InputISCD    string // FID_INPUT_ISCD — 0000:전체, 0001:코스피, 1001:코스닥
+	DivClsCode   string // FID_DIV_CLS_CODE — 1:상한가, 2:상승률, 3:보합, 4:하한가, 5:하락률. 빈 값=>"2"
+	InputPrice1  string // FID_INPUT_PRICE_1 — 가격 ~. 빈 값 OK
+	InputPrice2  string // FID_INPUT_PRICE_2 — ~ 가격. 빈 값 OK
+	VolCount     string // FID_VOL_CNT — 거래량 ~. 빈 값 OK
+	TrgtClsCode  string // FID_TRGT_CLS_CODE — 공백 입력
+	TrgtExlsCode string // FID_TRGT_EXLS_CLS_CODE — 공백 입력
+}
+
+// InquireOvertimeFluctuation 은 국내주식 시간외등락율순위 호출.
+//
+// 한투 docs: docs/api/국내주식/국내주식_시간외등락율순위.md
+// path: /uapi/domestic-stock/v1/ranking/overtime-fluctuation (FHPST02340000)
+//
+// output1: 상한/상승/보합/하한/하락 종목 수 + 거래량/대금 합계.
+// output2: 최대 30건 종목별 시간외 등락율 순위.
+func (c *Client) InquireOvertimeFluctuation(ctx context.Context, params InquireOvertimeFluctuationParams) (*OvertimeFluctuation, error) {
+	market := params.MarketCode
+	if market == "" {
+		market = "J"
+	}
+	div := params.DivClsCode
+	if div == "" {
+		div = "2"
+	}
+
+	resp, err := c.http.Do(ctx, &httpclient.Request{
+		Method: http.MethodGet,
+		Path:   "/uapi/domestic-stock/v1/ranking/overtime-fluctuation",
+		TrID:   "FHPST02340000",
+		Query: map[string]string{
+			"FID_COND_MRKT_DIV_CODE": market,
+			"FID_MRKT_CLS_CODE":      params.MrktClsCode,
+			"FID_COND_SCR_DIV_CODE":  "20234",
+			"FID_INPUT_ISCD":         params.InputISCD,
+			"FID_DIV_CLS_CODE":       div,
+			"FID_INPUT_PRICE_1":      params.InputPrice1,
+			"FID_INPUT_PRICE_2":      params.InputPrice2,
+			"FID_VOL_CNT":            params.VolCount,
+			"FID_TRGT_CLS_CODE":      params.TrgtClsCode,
+			"FID_TRGT_EXLS_CLS_CODE": params.TrgtExlsCode,
+		},
+		CustType: "P",
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	var res OvertimeFluctuation
+	if err := json.Unmarshal(resp.Raw, &res); err != nil {
+		return nil, fmt.Errorf("kis: parse OvertimeFluctuation: %w", err)
+	}
+	return &res, nil
+}

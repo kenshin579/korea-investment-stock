@@ -171,3 +171,45 @@ func TestClient_InquireOvertimeVolume(t *testing.T) {
 	assert.Equal(t, int64(234567), res.Output2[0].OvtmUntpVol)
 	assert.InDelta(t, 1.90, res.Output2[0].OvtmVrssAcmlVolRlim, 0.01)
 }
+
+func TestClient_InquireOvertimeFluctuation(t *testing.T) {
+	httpmock.Activate()
+	defer httpmock.DeactivateAndReset()
+
+	var capturedQuery url.Values
+	httpmock.RegisterResponder(
+		http.MethodGet,
+		`=~/ranking/overtime-fluctuation`,
+		func(req *http.Request) (*http.Response, error) {
+			capturedQuery = req.URL.Query()
+			return httpmock.NewStringResponse(200, loadFixtureString(t, "overtime_fluctuation_success.json")), nil
+		},
+	)
+
+	c := newTestClient(t)
+	res, err := c.InquireOvertimeFluctuation(context.Background(), domestic.InquireOvertimeFluctuationParams{
+		InputISCD:  "0000",
+		DivClsCode: "2",
+	})
+	require.NoError(t, err)
+	require.NotNil(t, res)
+
+	assert.Equal(t, "J", capturedQuery.Get("FID_COND_MRKT_DIV_CODE"))
+	assert.Equal(t, "20234", capturedQuery.Get("FID_COND_SCR_DIV_CODE"))
+	assert.Equal(t, "0000", capturedQuery.Get("FID_INPUT_ISCD"))
+	assert.Equal(t, "2", capturedQuery.Get("FID_DIV_CLS_CODE"))
+
+	// output1 검증
+	assert.Equal(t, int64(5), res.Output1.OvtmUntpUplmIssuCnt)
+	assert.Equal(t, int64(312), res.Output1.OvtmUntpAscnIssuCnt)
+	assert.Equal(t, int64(22345678), res.Output1.OvtmUntpAcmlVol)
+
+	// output2 검증
+	require.Len(t, res.Output2, 2)
+	assert.Equal(t, "005930", res.Output2[0].MkscShrnIscd)
+	d, _ := decimal.NewFromString("75700")
+	assert.True(t, d.Equal(res.Output2[0].OvtmUntpPrpr))
+	assert.InDelta(t, -0.39, res.Output2[0].OvtmUntpPrdyCtrt, 0.01)
+	assert.Equal(t, int64(234567), res.Output2[0].OvtmUntpVol)
+	assert.InDelta(t, 1.90, res.Output2[0].OvtmVrssAcmlVolRlim, 0.01)
+}
