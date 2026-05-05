@@ -1,5 +1,30 @@
 # CHANGELOG
 
+## [1.7.0] - 2026-05-05
+
+### Added
+- `domestic.InquireKsdDividend` — 예탁원정보 배당일정 (HHKDB669102C0)
+- `domestic.InquireKsdBonusIssue` — 예탁원정보 무상증자 (HHKDB669101C0)
+- `domestic.InquireKsdPaidinCapin` — 예탁원정보 유상증자 (HHKDB669100C0)
+- `domestic.InquireKsdSharehldMeet` — 예탁원정보 주주총회 (HHKDB669111C0)
+- `domestic.InquireKsdMergerSplit` — 예탁원정보 합병/분할 (HHKDB669104C0)
+- `domestic.InquireKsdRevSplit` — 예탁원정보 액면변경 (HHKDB669105C0)
+- `domestic.InquireKsdForfeit` — 예탁원정보 실권주청약 (HHKDB669109C0)
+- `domestic.InquireKsdMandDeposit` — 예탁원정보 의무보호예수 (HHKDB669110C0)
+- `domestic.InquireKsdCapDcrs` — 예탁원정보 감자 (HHKDB669106C0)
+- `domestic.InquireKsdPurreq` — 예탁원정보 주식매수청구 (HHKDB669103C0)
+- `domestic.InquireKsdListInfo` — 예탁원정보 주식상장정보 (HHKDB669107C0)
+- `examples/domestic_ksd/main.go` — KSD 11 메서드 통합 예시
+
+### Notes
+- KSD 모든 응답 필드는 KIS docs 명시 String — Go plain `string` (decimal/int64 변환 미적용)
+- `InquireKsdPaidinCapin`: output key `output` (not `output1`) — KIS API 응답 구조 그대로
+- `InquireKsdMergerSplit`: `isin_name` 없음; `opp_cust_cd`/`opp_cust_nm` + `cust_cd`/`cust_nm` pair
+- `InquireKsdRevSplit`: extra `MARKET_GB` query param (default "0")
+- `InquireKsdMandDeposit`: `record_date` 없음; `depo_date` 가 날짜 key
+- `InquireKsdListInfo`: leading date field `list_dt` (not `record_date`)
+- Total methods: 42 → 53
+
 ## [1.6.0] - 2026-05-05
 
 ### Added — Phase 2.3 (해외주식 추가 Ranking)
