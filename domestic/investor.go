@@ -450,3 +450,55 @@ func (c *Client) InquireInvestorTimeByMarket(ctx context.Context, params Inquire
 	}
 	return &res, nil
 }
+
+// InvestorTrendEstimate 는 주식현재가 투자자 가집계 (HHPTJ04160200) 응답.
+//
+// 한투 docs: docs/api/국내주식/주식현재가_투자자.md
+// path: /uapi/domestic-stock/v1/quotations/investor-trend-estimate
+//
+// output2 (시간대별 가집계 Array). output1 없음. query 키가 FID_ prefix 없는 MKSC_SHRN_ISCD.
+type InvestorTrendEstimate struct {
+	Output2 []InvestorTrendEstimateItem `json:"output2"`
+}
+
+// InvestorTrendEstimateItem 은 응답 output2 한 행 (시간대 가집계).
+//
+// bsop_hour_gb: 1=09:30, 2=10:00, 3=11:20, 4=13:20, 5=14:30
+type InvestorTrendEstimateItem struct {
+	BsopHourGb      string `json:"bsop_hour_gb"`              // 입력구분 (1~5)
+	FrgnFakeNtbyQty int64  `json:"frgn_fake_ntby_qty,string"` // 외국인 순매수 수량(가집계)
+	OrgnFakeNtbyQty int64  `json:"orgn_fake_ntby_qty,string"` // 기관 순매수 수량(가집계)
+	SumFakeNtbyQty  int64  `json:"sum_fake_ntby_qty,string"`  // 합산 순매수 수량(가집계)
+}
+
+// InquireInvestorTrendEstimateParams 는 주식현재가 투자자 가집계 조회 파라미터.
+//
+// query 키 MKSC_SHRN_ISCD — FID_ prefix 없음 (KIS docs 그대로).
+type InquireInvestorTrendEstimateParams struct {
+	Symbol string // MKSC_SHRN_ISCD — 필수, 종목코드 (6자리)
+}
+
+// InquireInvestorTrendEstimate 는 주식현재가 투자자 가집계 호출.
+//
+// 한투 docs: docs/api/국내주식/주식현재가_투자자.md
+// path: /uapi/domestic-stock/v1/quotations/investor-trend-estimate (HHPTJ04160200)
+func (c *Client) InquireInvestorTrendEstimate(ctx context.Context, params InquireInvestorTrendEstimateParams) (*InvestorTrendEstimate, error) {
+	resp, err := c.http.Do(ctx, &httpclient.Request{
+		Method: http.MethodGet,
+		Path:   "/uapi/domestic-stock/v1/quotations/investor-trend-estimate",
+		TrID:   "HHPTJ04160200",
+		Query: map[string]string{
+			"MKSC_SHRN_ISCD": params.Symbol,
+		},
+		CustType: "P",
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	var res InvestorTrendEstimate
+	if err := json.Unmarshal(resp.Raw, &res); err != nil {
+		return nil, fmt.Errorf("kis: parse InvestorTrendEstimate: %w", err)
+	}
+	return &res, nil
+}
