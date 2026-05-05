@@ -59,5 +59,15 @@
 //   - InquireKsdPurreq       — 예탁원정보 주식매수청구 (HHKDB669103C0)
 //   - InquireKsdListInfo     — 예탁원정보 주식상장정보 (HHKDB669107C0) [list_dt]
 //
+// Phase 2.5 — 투자자/매매 동향 (v1.8.0)
+//
+//	InquireInvestorTrendEstimate       HHPTJ04160200  투자자 매매 추정 가집계
+//	InquireForeignInstitutionTotal     FHPTJ04400000  외인기관 매매종목가 집계
+//	InquireProgramTradeByStockDaily    FHPPG04650201  종목별 프로그램매매 추이(일별)
+//	InquireProgramTradeByStock         FHPPG04650101  종목별 프로그램매매 추이(체결)
+//	InquireCompProgramTradeToday       FHPPG04600101  프로그램매매 종합현황(시간)
+//	InquireCompProgramTradeDaily       FHPPG04600001  프로그램매매 종합현황(일별)
+//	InquireInvestorProgramTradeToday   HHPPG046600C1  당일 투자자별 프로그램매매 동향
+//
 // 사용자는 root kis.Client 의 Domestic 필드로 접근.
 package domestic

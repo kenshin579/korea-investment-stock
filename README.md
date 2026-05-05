@@ -61,7 +61,7 @@ func main() {
 }
 ```
 
-## Available Methods (Phase 1.2 ~ 2.4)
+## Available Methods (Phase 1.2 ~ 2.5)
 
 | Method | 한투 path | TR_ID |
 |--------|----------|-------|
@@ -118,6 +118,13 @@ func main() {
 | `Domestic.InquireKsdCapDcrs` | `ksdinfo/cap-dcrs` | HHKDB669106C0 |
 | `Domestic.InquireKsdPurreq` | `ksdinfo/purreq` | HHKDB669103C0 |
 | `Domestic.InquireKsdListInfo` | `ksdinfo/list-info` | HHKDB669107C0 |
+| `Domestic.InquireInvestorTrendEstimate` | `quotations/investor-trend-estimate` | HHPTJ04160200 |
+| `Domestic.InquireForeignInstitutionTotal` | `quotations/foreign-institution-total` | FHPTJ04400000 |
+| `Domestic.InquireProgramTradeByStockDaily` | `quotations/program-trade-by-stock-daily` | FHPPG04650201 |
+| `Domestic.InquireProgramTradeByStock` | `quotations/program-trade-by-stock` | FHPPG04650101 |
+| `Domestic.InquireCompProgramTradeToday` | `quotations/comp-program-trade-today` | FHPPG04600101 |
+| `Domestic.InquireCompProgramTradeDaily` | `quotations/comp-program-trade-daily` | FHPPG04600001 |
+| `Domestic.InquireInvestorProgramTradeToday` | `quotations/investor-program-trade-today` | HHPPG046600C1 |
 
 ## Design
 

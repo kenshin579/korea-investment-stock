@@ -1,5 +1,27 @@
 # CHANGELOG
 
+## [1.8.0] - 2026-05-05
+
+### Added — Phase 2.5 (투자자/매매 동향)
+
+- `Domestic.InquireInvestorTrendEstimate` — 투자자 매매 추정 가집계 (HHPTJ04160200) — 외국인/기관/합산 가집계 4 fields
+- `Domestic.InquireForeignInstitutionTotal` — 외인기관 매매종목가 집계 (FHPTJ04400000) — 26 fields, 8 투자자 종류 ntby
+- `Domestic.InquireProgramTradeByStockDaily` — 종목별 프로그램매매추이(일별) (FHPPG04650201) — 15 fields
+- `Domestic.InquireProgramTradeByStock` — 종목별 프로그램매매추이(체결) (FHPPG04650101) — 14 fields
+- `Domestic.InquireCompProgramTradeToday` — 프로그램매매 종합현황(시간) (FHPPG04600101) — 18 fields
+- `Domestic.InquireCompProgramTradeDaily` — 프로그램매매 종합현황(일별) (FHPPG04600001) — 97 fields (largest in Phase 2.5)
+- `Domestic.InquireInvestorProgramTradeToday` — 당일 투자자별 프로그램매매 동향 (HHPPG046600C1) — 20 fields, 차익/비차익 breakdown
+- examples: `domestic_investor_flow`
+
+### Notes
+
+- EP2 응답 키는 `Output` (대문자 O) — KIS docs 명시. `json:"Output"` 사용.
+- EP3 의 `FID_INPUT_DATE_1` 은 KIS docs 예시에서 "002" prefix 사용 (e.g., "0020240308"). 호출자가 raw string 전달.
+- EP3 vs EP4: 마지막 필드 `whol_ntby_tr_pbmn_icdc2` (EP3) vs `whol_ntby_tr_pbmn_icdc` (EP4) — 변경 시 주의.
+- EP5/EP6 의 일부 rate field 명에 `shun` 타이포 (KIS docs 명시) 보존: `arbt_smtm_shun_tr_pbmn_rate`, `nabt_smtm_shun_tr_pbmn_rate`, `whol_shun_vol_rate`, `whol_shun_tr_pbmn_rate` 등.
+- EP6 응답 struct 97 필드 (Phase 2.5 최대). 8개월 lookback 한도.
+- EP7 query param 은 비-FID prefix (`EXCH_DIV_CLS_CODE`, `MRKT_DIV_CLS_CODE`) + MRKT 값 "1"/"4" (코스피/코스닥). 필드 suffix 는 `_amt` (다른 endpoint 의 `_tr_pbmn` 와 다름).
+
 ## [1.7.0] - 2026-05-05
 
 ### Added
