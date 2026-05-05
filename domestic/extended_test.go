@@ -133,3 +133,41 @@ func TestClient_InquireOvertimeAskingPrice(t *testing.T) {
 	assert.Equal(t, int64(11100), res.Output1.TotalAskpRsqn)
 	assert.Equal(t, int64(13400), res.Output1.TotalBidpRsqn)
 }
+
+func TestClient_InquireOvertimeVolume(t *testing.T) {
+	httpmock.Activate()
+	defer httpmock.DeactivateAndReset()
+
+	var capturedQuery url.Values
+	httpmock.RegisterResponder(
+		http.MethodGet,
+		`=~/ranking/overtime-volume`,
+		func(req *http.Request) (*http.Response, error) {
+			capturedQuery = req.URL.Query()
+			return httpmock.NewStringResponse(200, loadFixtureString(t, "overtime_volume_success.json")), nil
+		},
+	)
+
+	c := newTestClient(t)
+	res, err := c.InquireOvertimeVolume(context.Background(), domestic.InquireOvertimeVolumeParams{
+		InputISCD: "0000",
+	})
+	require.NoError(t, err)
+	require.NotNil(t, res)
+
+	assert.Equal(t, "J", capturedQuery.Get("FID_COND_MRKT_DIV_CODE"))
+	assert.Equal(t, "20235", capturedQuery.Get("FID_COND_SCR_DIV_CODE"))
+	assert.Equal(t, "0000", capturedQuery.Get("FID_INPUT_ISCD"))
+
+	// output1 검증
+	assert.Equal(t, int64(12345678), res.Output1.OvtmUntpExchVol)
+	assert.Equal(t, int64(9876543), res.Output1.OvtmUntpKosdaqVol)
+
+	// output2 검증
+	require.Len(t, res.Output2, 2)
+	assert.Equal(t, "005930", res.Output2[0].StckShrnIscd)
+	d, _ := decimal.NewFromString("75700")
+	assert.True(t, d.Equal(res.Output2[0].OvtmUntpPrpr))
+	assert.Equal(t, int64(234567), res.Output2[0].OvtmUntpVol)
+	assert.InDelta(t, 1.90, res.Output2[0].OvtmVrssAcmlVolRlim, 0.01)
+}

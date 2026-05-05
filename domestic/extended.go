@@ -348,3 +348,98 @@ func (c *Client) InquireOvertimeAskingPrice(ctx context.Context, params InquireO
 	}
 	return &res, nil
 }
+
+// OvertimeVolume 은 국내주식 시간외거래량순위 (FHPST02350000) 응답.
+//
+// 한투 docs: docs/api/국내주식/국내주식_시간외거래량순위.md
+// path: /uapi/domestic-stock/v1/ranking/overtime-volume
+//
+// output1: 거래소/코스닥 합계 (4 fields). output2: 종목별 시간외 거래량 순위 array.
+type OvertimeVolume struct {
+	Output1 OvertimeVolumeSummary `json:"output1"`
+	Output2 []OvertimeVolumeItem  `json:"output2"`
+}
+
+// OvertimeVolumeSummary 는 시간외거래량순위 output1 — 시장 전체 합계.
+type OvertimeVolumeSummary struct {
+	OvtmUntpExchVol      int64 `json:"ovtm_untp_exch_vol,string"`       // 시간외 단일가 거래소 거래량
+	OvtmUntpExchTrPbmn   int64 `json:"ovtm_untp_exch_tr_pbmn,string"`   // 시간외 단일가 거래소 거래대금
+	OvtmUntpKosdaqVol    int64 `json:"ovtm_untp_kosdaq_vol,string"`     // 시간외 단일가 KOSDAQ 거래량
+	OvtmUntpKosdaqTrPbmn int64 `json:"ovtm_untp_kosdaq_tr_pbmn,string"` // 시간외 단일가 KOSDAQ 거래대금
+}
+
+// OvertimeVolumeItem 은 시간외거래량순위 output2 의 한 행.
+type OvertimeVolumeItem struct {
+	StckShrnIscd         string          `json:"stck_shrn_iscd"`                 // 주식 단축 종목코드
+	HtsKorIsnm           string          `json:"hts_kor_isnm"`                   // HTS 한글 종목명
+	OvtmUntpPrpr         decimal.Decimal `json:"ovtm_untp_prpr"`                 // 시간외 단일가 현재가
+	OvtmUntpPrdyVrss     decimal.Decimal `json:"ovtm_untp_prdy_vrss"`            // 시간외 단일가 전일 대비
+	OvtmUntpPrdyVrssSign string          `json:"ovtm_untp_prdy_vrss_sign"`       // 시간외 단일가 전일 대비 부호
+	OvtmUntpPrdyCtrt     float64         `json:"ovtm_untp_prdy_ctrt,string"`     // 시간외 단일가 전일 대비율
+	OvtmUntpSelnRsqn     int64           `json:"ovtm_untp_seln_rsqn,string"`     // 시간외 단일가 매도 잔량
+	OvtmUntpShnuRsqn     int64           `json:"ovtm_untp_shnu_rsqn,string"`     // 시간외 단일가 매수 잔량
+	OvtmUntpVol          int64           `json:"ovtm_untp_vol,string"`           // 시간외 단일가 거래량
+	OvtmVrssAcmlVolRlim  float64         `json:"ovtm_vrss_acml_vol_rlim,string"` // 시간외 대비 누적 거래량 비중
+	StckPrpr             decimal.Decimal `json:"stck_prpr"`                      // 주식 현재가 (정규장)
+	AcmlVol              int64           `json:"acml_vol,string"`                // 누적 거래량 (정규장)
+	Bidp                 decimal.Decimal `json:"bidp"`                           // 매수호가
+	Askp                 decimal.Decimal `json:"askp"`                           // 매도호가
+}
+
+// InquireOvertimeVolumeParams 는 시간외거래량순위 조회 파라미터.
+//
+// FID_COND_SCR_DIV_CODE = "20235" 고정 (사용자 변경 불가).
+type InquireOvertimeVolumeParams struct {
+	MarketCode   string // FID_COND_MRKT_DIV_CODE — "J":KRX. 빈 값=>"J"
+	InputISCD    string // FID_INPUT_ISCD — 0000:전체, 0001:코스피, 1001:코스닥
+	RankSortCode string // FID_RANK_SORT_CLS_CODE — 0:매수잔량, 1:매도잔량, 2:거래량. 빈 값=>"2"
+	InputPrice1  string // FID_INPUT_PRICE_1 — 가격 ~. 빈 값 OK
+	InputPrice2  string // FID_INPUT_PRICE_2 — ~ 가격. 빈 값 OK
+	VolCount     string // FID_VOL_CNT — 거래량 ~. 빈 값 OK
+	TrgtClsCode  string // FID_TRGT_CLS_CODE — 공백 입력
+	TrgtExlsCode string // FID_TRGT_EXLS_CLS_CODE — 공백 입력
+}
+
+// InquireOvertimeVolume 은 국내주식 시간외거래량순위 호출.
+//
+// 한투 docs: docs/api/국내주식/국내주식_시간외거래량순위.md
+// path: /uapi/domestic-stock/v1/ranking/overtime-volume (FHPST02350000)
+//
+// output1: 거래소/코스닥 합계. output2: 최대 30건 종목별 시간외 거래량 순위.
+func (c *Client) InquireOvertimeVolume(ctx context.Context, params InquireOvertimeVolumeParams) (*OvertimeVolume, error) {
+	market := params.MarketCode
+	if market == "" {
+		market = "J"
+	}
+	sort := params.RankSortCode
+	if sort == "" {
+		sort = "2"
+	}
+
+	resp, err := c.http.Do(ctx, &httpclient.Request{
+		Method: http.MethodGet,
+		Path:   "/uapi/domestic-stock/v1/ranking/overtime-volume",
+		TrID:   "FHPST02350000",
+		Query: map[string]string{
+			"FID_COND_MRKT_DIV_CODE": market,
+			"FID_COND_SCR_DIV_CODE":  "20235",
+			"FID_INPUT_ISCD":         params.InputISCD,
+			"FID_RANK_SORT_CLS_CODE": sort,
+			"FID_INPUT_PRICE_1":      params.InputPrice1,
+			"FID_INPUT_PRICE_2":      params.InputPrice2,
+			"FID_VOL_CNT":            params.VolCount,
+			"FID_TRGT_CLS_CODE":      params.TrgtClsCode,
+			"FID_TRGT_EXLS_CLS_CODE": params.TrgtExlsCode,
+		},
+		CustType: "P",
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	var res OvertimeVolume
+	if err := json.Unmarshal(resp.Raw, &res); err != nil {
+		return nil, fmt.Errorf("kis: parse OvertimeVolume: %w", err)
+	}
+	return &res, nil
+}
