@@ -140,3 +140,42 @@ func TestClient_InquireTradeVol(t *testing.T) {
 	assert.Equal(t, int64(48000000), res.Output2[0].ATvol)
 	assert.Equal(t, int64(1), res.Output2[0].Rank)
 }
+
+func TestClient_InquireTradePbmn(t *testing.T) {
+	httpmock.Activate()
+	defer httpmock.DeactivateAndReset()
+
+	var capturedQuery url.Values
+	httpmock.RegisterResponder(
+		http.MethodGet,
+		`=~/ranking/trade-pbmn`,
+		func(req *http.Request) (*http.Response, error) {
+			capturedQuery = req.URL.Query()
+			return httpmock.NewStringResponse(200, loadFixtureString(t, "trade_pbmn_success.json")), nil
+		},
+	)
+
+	c := newTestClient(t)
+	res, err := c.InquireTradePbmn(context.Background(), overseas.InquireTradePbmnParams{
+		ExcdCode: "NAS",
+		NDay:     "0",
+	})
+	require.NoError(t, err)
+	require.NotNil(t, res)
+
+	assert.Equal(t, "NAS", capturedQuery.Get("EXCD"))
+	assert.Equal(t, "0", capturedQuery.Get("NDAY"))
+	assert.Equal(t, "0", capturedQuery.Get("VOL_RANG"))
+
+	// output1 검증
+	assert.Equal(t, int64(30), res.Output1.Nrec)
+
+	// output2[0] 검증 — MSFT 가 순위 1 (거래대금 기준)
+	require.Len(t, res.Output2, 2)
+	assert.Equal(t, "MSFT", res.Output2[0].Symb)
+	d, _ := decimal.NewFromString("415.20")
+	assert.True(t, d.Equal(res.Output2[0].Last))
+	assert.Equal(t, int64(9134400000), res.Output2[0].Tamt)
+	assert.Equal(t, int64(8500000000), res.Output2[0].ATamt) // a_tamt, not a_tvol
+	assert.Equal(t, int64(1), res.Output2[0].Rank)
+}
