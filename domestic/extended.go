@@ -214,3 +214,137 @@ func (c *Client) InquireOvertimePrice(ctx context.Context, params InquireOvertim
 	}
 	return &res, nil
 }
+
+// OvertimeAskingPrice 는 국내주식 시간외호가 (FHPST02300400) 응답.
+//
+// 한투 docs: docs/api/국내주식/국내주식_시간외호가.md
+// path: /uapi/domestic-stock/v1/quotations/inquire-overtime-asking-price
+//
+// 시간외 단일가 10단계 호가/증감/잔량 + 정규장 총잔량. output1 만 존재.
+type OvertimeAskingPrice struct {
+	Output1 OvertimeAskingPriceOrderbook `json:"output1"`
+}
+
+// OvertimeAskingPriceOrderbook 은 시간외호가 응답 output1 — 10단계 호가+증감+잔량.
+type OvertimeAskingPriceOrderbook struct {
+	OvtmUntpLastHour string `json:"ovtm_untp_last_hour"` // 시간외 단일가 최종 시간 (HHMMSS)
+
+	OvtmUntpAskp1  decimal.Decimal `json:"ovtm_untp_askp1"` // 시간외 단일가 매도호가1
+	OvtmUntpAskp2  decimal.Decimal `json:"ovtm_untp_askp2"`
+	OvtmUntpAskp3  decimal.Decimal `json:"ovtm_untp_askp3"`
+	OvtmUntpAskp4  decimal.Decimal `json:"ovtm_untp_askp4"`
+	OvtmUntpAskp5  decimal.Decimal `json:"ovtm_untp_askp5"`
+	OvtmUntpAskp6  decimal.Decimal `json:"ovtm_untp_askp6"`
+	OvtmUntpAskp7  decimal.Decimal `json:"ovtm_untp_askp7"`
+	OvtmUntpAskp8  decimal.Decimal `json:"ovtm_untp_askp8"`
+	OvtmUntpAskp9  decimal.Decimal `json:"ovtm_untp_askp9"`
+	OvtmUntpAskp10 decimal.Decimal `json:"ovtm_untp_askp10"`
+
+	OvtmUntpBidp1  decimal.Decimal `json:"ovtm_untp_bidp1"` // 시간외 단일가 매수호가1
+	OvtmUntpBidp2  decimal.Decimal `json:"ovtm_untp_bidp2"`
+	OvtmUntpBidp3  decimal.Decimal `json:"ovtm_untp_bidp3"`
+	OvtmUntpBidp4  decimal.Decimal `json:"ovtm_untp_bidp4"`
+	OvtmUntpBidp5  decimal.Decimal `json:"ovtm_untp_bidp5"`
+	OvtmUntpBidp6  decimal.Decimal `json:"ovtm_untp_bidp6"`
+	OvtmUntpBidp7  decimal.Decimal `json:"ovtm_untp_bidp7"`
+	OvtmUntpBidp8  decimal.Decimal `json:"ovtm_untp_bidp8"`
+	OvtmUntpBidp9  decimal.Decimal `json:"ovtm_untp_bidp9"`
+	OvtmUntpBidp10 decimal.Decimal `json:"ovtm_untp_bidp10"`
+
+	OvtmUntpAskpIcdc1  int64 `json:"ovtm_untp_askp_icdc1,string"` // 시간외 단일가 매도호가 증감1
+	OvtmUntpAskpIcdc2  int64 `json:"ovtm_untp_askp_icdc2,string"`
+	OvtmUntpAskpIcdc3  int64 `json:"ovtm_untp_askp_icdc3,string"`
+	OvtmUntpAskpIcdc4  int64 `json:"ovtm_untp_askp_icdc4,string"`
+	OvtmUntpAskpIcdc5  int64 `json:"ovtm_untp_askp_icdc5,string"`
+	OvtmUntpAskpIcdc6  int64 `json:"ovtm_untp_askp_icdc6,string"`
+	OvtmUntpAskpIcdc7  int64 `json:"ovtm_untp_askp_icdc7,string"`
+	OvtmUntpAskpIcdc8  int64 `json:"ovtm_untp_askp_icdc8,string"`
+	OvtmUntpAskpIcdc9  int64 `json:"ovtm_untp_askp_icdc9,string"`
+	OvtmUntpAskpIcdc10 int64 `json:"ovtm_untp_askp_icdc10,string"`
+
+	OvtmUntpBidpIcdc1  int64 `json:"ovtm_untp_bidp_icdc1,string"` // 시간외 단일가 매수호가 증감1
+	OvtmUntpBidpIcdc2  int64 `json:"ovtm_untp_bidp_icdc2,string"`
+	OvtmUntpBidpIcdc3  int64 `json:"ovtm_untp_bidp_icdc3,string"`
+	OvtmUntpBidpIcdc4  int64 `json:"ovtm_untp_bidp_icdc4,string"`
+	OvtmUntpBidpIcdc5  int64 `json:"ovtm_untp_bidp_icdc5,string"`
+	OvtmUntpBidpIcdc6  int64 `json:"ovtm_untp_bidp_icdc6,string"`
+	OvtmUntpBidpIcdc7  int64 `json:"ovtm_untp_bidp_icdc7,string"`
+	OvtmUntpBidpIcdc8  int64 `json:"ovtm_untp_bidp_icdc8,string"`
+	OvtmUntpBidpIcdc9  int64 `json:"ovtm_untp_bidp_icdc9,string"`
+	OvtmUntpBidpIcdc10 int64 `json:"ovtm_untp_bidp_icdc10,string"`
+
+	OvtmUntpAskpRsqn1  int64 `json:"ovtm_untp_askp_rsqn1,string"` // 시간외 단일가 매도호가 잔량1
+	OvtmUntpAskpRsqn2  int64 `json:"ovtm_untp_askp_rsqn2,string"`
+	OvtmUntpAskpRsqn3  int64 `json:"ovtm_untp_askp_rsqn3,string"`
+	OvtmUntpAskpRsqn4  int64 `json:"ovtm_untp_askp_rsqn4,string"`
+	OvtmUntpAskpRsqn5  int64 `json:"ovtm_untp_askp_rsqn5,string"`
+	OvtmUntpAskpRsqn6  int64 `json:"ovtm_untp_askp_rsqn6,string"`
+	OvtmUntpAskpRsqn7  int64 `json:"ovtm_untp_askp_rsqn7,string"`
+	OvtmUntpAskpRsqn8  int64 `json:"ovtm_untp_askp_rsqn8,string"`
+	OvtmUntpAskpRsqn9  int64 `json:"ovtm_untp_askp_rsqn9,string"`
+	OvtmUntpAskpRsqn10 int64 `json:"ovtm_untp_askp_rsqn10,string"`
+
+	OvtmUntpBidpRsqn1  int64 `json:"ovtm_untp_bidp_rsqn1,string"` // 시간외 단일가 매수호가 잔량1
+	OvtmUntpBidpRsqn2  int64 `json:"ovtm_untp_bidp_rsqn2,string"`
+	OvtmUntpBidpRsqn3  int64 `json:"ovtm_untp_bidp_rsqn3,string"`
+	OvtmUntpBidpRsqn4  int64 `json:"ovtm_untp_bidp_rsqn4,string"`
+	OvtmUntpBidpRsqn5  int64 `json:"ovtm_untp_bidp_rsqn5,string"`
+	OvtmUntpBidpRsqn6  int64 `json:"ovtm_untp_bidp_rsqn6,string"`
+	OvtmUntpBidpRsqn7  int64 `json:"ovtm_untp_bidp_rsqn7,string"`
+	OvtmUntpBidpRsqn8  int64 `json:"ovtm_untp_bidp_rsqn8,string"`
+	OvtmUntpBidpRsqn9  int64 `json:"ovtm_untp_bidp_rsqn9,string"`
+	OvtmUntpBidpRsqn10 int64 `json:"ovtm_untp_bidp_rsqn10,string"`
+
+	OvtmUntpTotalAskpRsqn     int64 `json:"ovtm_untp_total_askp_rsqn,string"`      // 시간외 단일가 총 매도호가 잔량
+	OvtmUntpTotalBidpRsqn     int64 `json:"ovtm_untp_total_bidp_rsqn,string"`      // 시간외 단일가 총 매수호가 잔량
+	OvtmUntpTotalAskpRsqnIcdc int64 `json:"ovtm_untp_total_askp_rsqn_icdc,string"` // 시간외 단일가 총 매도호가 잔량 증감
+	OvtmUntpTotalBidpRsqnIcdc int64 `json:"ovtm_untp_total_bidp_rsqn_icdc,string"` // 시간외 단일가 총 매수호가 잔량 증감
+	OvtmUntpNtbyBidpRsqn      int64 `json:"ovtm_untp_ntby_bidp_rsqn,string"`       // 시간외 단일가 순매수 호가 잔량
+	TotalAskpRsqn             int64 `json:"total_askp_rsqn,string"`                // 총 매도호가 잔량 (정규장)
+	TotalBidpRsqn             int64 `json:"total_bidp_rsqn,string"`                // 총 매수호가 잔량 (정규장)
+	TotalAskpRsqnIcdc         int64 `json:"total_askp_rsqn_icdc,string"`           // 총 매도호가 잔량 증감
+	TotalBidpRsqnIcdc         int64 `json:"total_bidp_rsqn_icdc,string"`           // 총 매수호가 잔량 증감
+	OvtmTotalAskpRsqn         int64 `json:"ovtm_total_askp_rsqn,string"`           // 시간외 총 매도호가 잔량
+	OvtmTotalBidpRsqn         int64 `json:"ovtm_total_bidp_rsqn,string"`           // 시간외 총 매수호가 잔량
+	OvtmTotalAskpIcdc         int64 `json:"ovtm_total_askp_icdc,string"`           // 시간외 총 매도호가 증감
+	OvtmTotalBidpIcdc         int64 `json:"ovtm_total_bidp_icdc,string"`           // 시간외 총 매수호가 증감
+}
+
+// InquireOvertimeAskingPriceParams 는 시간외호가 조회 파라미터.
+type InquireOvertimeAskingPriceParams struct {
+	Symbol     string // FID_INPUT_ISCD — 종목코드 (예 "005930")
+	MarketCode string // FID_COND_MRKT_DIV_CODE — "J":KRX. 빈 값=>"J"
+}
+
+// InquireOvertimeAskingPrice 는 국내주식 시간외호가 호출.
+//
+// 한투 docs: docs/api/국내주식/국내주식_시간외호가.md
+// path: /uapi/domestic-stock/v1/quotations/inquire-overtime-asking-price (FHPST02300400)
+//
+// 시간외 단일가 10단계 호가/증감/잔량 (총 60 fields) + 시간외/정규장 총잔량.
+func (c *Client) InquireOvertimeAskingPrice(ctx context.Context, params InquireOvertimeAskingPriceParams) (*OvertimeAskingPrice, error) {
+	market := params.MarketCode
+	if market == "" {
+		market = "J"
+	}
+
+	resp, err := c.http.Do(ctx, &httpclient.Request{
+		Method: http.MethodGet,
+		Path:   "/uapi/domestic-stock/v1/quotations/inquire-overtime-asking-price",
+		TrID:   "FHPST02300400",
+		Query: map[string]string{
+			"FID_INPUT_ISCD":         params.Symbol,
+			"FID_COND_MRKT_DIV_CODE": market,
+		},
+		CustType: "P",
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	var res OvertimeAskingPrice
+	if err := json.Unmarshal(resp.Raw, &res); err != nil {
+		return nil, fmt.Errorf("kis: parse OvertimeAskingPrice: %w", err)
+	}
+	return &res, nil
+}

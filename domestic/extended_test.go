@@ -93,3 +93,43 @@ func TestClient_InquireOvertimePrice(t *testing.T) {
 	d2, _ := decimal.NewFromString("75700")
 	assert.True(t, d2.Equal(res.Output.Bidp))
 }
+
+func TestClient_InquireOvertimeAskingPrice(t *testing.T) {
+	httpmock.Activate()
+	defer httpmock.DeactivateAndReset()
+
+	var capturedQuery url.Values
+	httpmock.RegisterResponder(
+		http.MethodGet,
+		`=~/quotations/inquire-overtime-asking-price`,
+		func(req *http.Request) (*http.Response, error) {
+			capturedQuery = req.URL.Query()
+			return httpmock.NewStringResponse(200, loadFixtureString(t, "overtime_asking_price_success.json")), nil
+		},
+	)
+
+	c := newTestClient(t)
+	res, err := c.InquireOvertimeAskingPrice(context.Background(), domestic.InquireOvertimeAskingPriceParams{
+		Symbol: "005930",
+	})
+	require.NoError(t, err)
+	require.NotNil(t, res)
+
+	assert.Equal(t, "J", capturedQuery.Get("FID_COND_MRKT_DIV_CODE"))
+	assert.Equal(t, "005930", capturedQuery.Get("FID_INPUT_ISCD"))
+
+	// output1 핵심 필드 검증
+	assert.Equal(t, "180542", res.Output1.OvtmUntpLastHour)
+	d, _ := decimal.NewFromString("75750")
+	assert.True(t, d.Equal(res.Output1.OvtmUntpAskp1))
+	d2, _ := decimal.NewFromString("75700")
+	assert.True(t, d2.Equal(res.Output1.OvtmUntpBidp1))
+	assert.Equal(t, int64(100), res.Output1.OvtmUntpAskpIcdc1)
+	assert.Equal(t, int64(200), res.Output1.OvtmUntpBidpIcdc1)
+	assert.Equal(t, int64(1200), res.Output1.OvtmUntpAskpRsqn1)
+	assert.Equal(t, int64(2000), res.Output1.OvtmUntpBidpRsqn1)
+	assert.Equal(t, int64(6150), res.Output1.OvtmUntpTotalAskpRsqn)
+	assert.Equal(t, int64(8100), res.Output1.OvtmUntpTotalBidpRsqn)
+	assert.Equal(t, int64(11100), res.Output1.TotalAskpRsqn)
+	assert.Equal(t, int64(13400), res.Output1.TotalBidpRsqn)
+}
