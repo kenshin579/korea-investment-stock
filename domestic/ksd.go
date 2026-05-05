@@ -547,3 +547,59 @@ func (c *Client) InquireKsdCapDcrs(ctx context.Context, params InquireKsdCapDcrs
 	}
 	return &res, nil
 }
+
+// KsdPurreq 는 예탁원정보(주식매수청구) (HHKDB669103C0) 응답.
+//
+// 한투 docs: docs/api/국내주식/예탁원정보(주식매수청구).md
+// path: /uapi/domestic-stock/v1/ksdinfo/purreq
+type KsdPurreq struct {
+	Output1 []KsdPurreqItem `json:"output1"`
+}
+
+// KsdPurreqItem 은 주식매수청구 한 행. 모든 필드 string (KIS docs).
+type KsdPurreqItem struct {
+	RecordDate     string `json:"record_date"`       // 기준일
+	ShtCd          string `json:"sht_cd"`            // 종목코드
+	IsinName       string `json:"isin_name"`         // 종목명
+	StkKind        string `json:"stk_kind"`          // 주식종류
+	OppOpiRcptTerm string `json:"opp_opi_rcpt_term"` // 반대의사접수시한
+	BuyReqRcptTerm string `json:"buy_req_rcpt_term"` // 매수청구접수시한
+	BuyReqPrice    string `json:"buy_req_price"`     // 매수청구가격
+	BuyAmtPayDt    string `json:"buy_amt_pay_dt"`    // 매수대금지급일
+	GetMeetDt      string `json:"get_meet_dt"`       // 주총일
+}
+
+// InquireKsdPurreqParams 는 주식매수청구 조회 파라미터.
+type InquireKsdPurreqParams struct {
+	Symbol   string // SHT_CD — 종목코드 (공백=전체)
+	ToDate   string // T_DT — 조회종료일 YYYYMMDD
+	FromDate string // F_DT — 조회시작일 YYYYMMDD
+	Cts      string // CTS — 공백 입력 (default "")
+}
+
+// InquireKsdPurreq 호출.
+//
+// 한투 docs: docs/api/국내주식/예탁원정보(주식매수청구).md
+// path: /uapi/domestic-stock/v1/ksdinfo/purreq (HHKDB669103C0)
+func (c *Client) InquireKsdPurreq(ctx context.Context, params InquireKsdPurreqParams) (*KsdPurreq, error) {
+	resp, err := c.http.Do(ctx, &httpclient.Request{
+		Method: http.MethodGet,
+		Path:   "/uapi/domestic-stock/v1/ksdinfo/purreq",
+		TrID:   "HHKDB669103C0",
+		Query: map[string]string{
+			"SHT_CD": params.Symbol,
+			"T_DT":   params.ToDate,
+			"F_DT":   params.FromDate,
+			"CTS":    params.Cts,
+		},
+		CustType: "P",
+	})
+	if err != nil {
+		return nil, err
+	}
+	var res KsdPurreq
+	if err := json.Unmarshal(resp.Raw, &res); err != nil {
+		return nil, fmt.Errorf("kis: parse KsdPurreq: %w", err)
+	}
+	return &res, nil
+}
