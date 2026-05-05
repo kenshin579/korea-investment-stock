@@ -147,3 +147,85 @@ func (c *Client) InquireProgramTradeByStock(ctx context.Context, params InquireP
 	}
 	return &res, nil
 }
+
+// CompProgramTradeToday 는 프로그램매매 종합현황(시간) (FHPPG04600101) 응답.
+//
+// 한투 docs: docs/api/국내주식/프로그램매매_종합현황(시간).md
+// path: /uapi/domestic-stock/v1/quotations/comp-program-trade-today
+//
+// output1 (시간별 Array). 18 fields.
+// 비고: `smtm`(rate 계열)과 `smtn`(금액/수량 계열) 혼용 — KIS API 원문 그대로.
+// `shun` typo 2개 (arbt_smtm_shun_tr_pbmn_rate, nabt_smtm_shun_tr_pbmn_rate) 원문 보존.
+type CompProgramTradeToday struct {
+	Output1 []CompProgramTradeTodayItem `json:"output1"`
+}
+
+// CompProgramTradeTodayItem 은 응답 output1 한 행 (시간대별 종합현황).
+//
+// 필드명 내 typo 주의:
+// - ArbtSmtmShunTrPbmnRate: "shun" (KIS docs typo) — 매수 율이지만 필드명 오기
+// - NabtSmtmShunTrPbmnRate: 동일 패턴
+type CompProgramTradeTodayItem struct {
+	BsopHour               string          `json:"bsop_hour"`                          // 영업 시간
+	ArbtSmtnSelnTrPbmn     int64           `json:"arbt_smtn_seln_tr_pbmn,string"`      // 차익 합산 매도 거래대금
+	ArbtSmtmSelnTrPbmnRate float64         `json:"arbt_smtm_seln_tr_pbmn_rate,string"` // 차익 합산 매도 거래대금 비율
+	ArbtSmtnShnuTrPbmn     int64           `json:"arbt_smtn_shnu_tr_pbmn,string"`      // 차익 합산 매수 거래대금
+	ArbtSmtmShunTrPbmnRate float64         `json:"arbt_smtm_shun_tr_pbmn_rate,string"` // 차익 합산 매수 거래대금 비율 ("shun" typo)
+	NabtSmtnSelnTrPbmn     int64           `json:"nabt_smtn_seln_tr_pbmn,string"`      // 비차익 합산 매도 거래대금
+	NabtSmtmSelnTrPbmnRate float64         `json:"nabt_smtm_seln_tr_pbmn_rate,string"` // 비차익 합산 매도 거래대금 비율
+	NabtSmtnShnuTrPbmn     int64           `json:"nabt_smtn_shnu_tr_pbmn,string"`      // 비차익 합산 매수 거래대금
+	NabtSmtmShunTrPbmnRate float64         `json:"nabt_smtm_shun_tr_pbmn_rate,string"` // 비차익 합산 매수 거래대금 비율 ("shun" typo)
+	ArbtSmtnNtbyTrPbmn     int64           `json:"arbt_smtn_ntby_tr_pbmn,string"`      // 차익 합산 순매수 거래대금
+	ArbtSmtmNtbyTrPbmnRate float64         `json:"arbt_smtm_ntby_tr_pbmn_rate,string"` // 차익 합산 순매수 거래대금 비율
+	NabtSmtnNtbyTrPbmn     int64           `json:"nabt_smtn_ntby_tr_pbmn,string"`      // 비차익 합산 순매수 거래대금
+	NabtSmtmNtbyTrPbmnRate float64         `json:"nabt_smtm_ntby_tr_pbmn_rate,string"` // 비차익 합산 순매수 거래대금 비율
+	WholSmtnNtbyTrPbmn     int64           `json:"whol_smtn_ntby_tr_pbmn,string"`      // 전체 합산 순매수 거래대금
+	WholNtbyTrPbmnRate     float64         `json:"whol_ntby_tr_pbmn_rate,string"`      // 전체 순매수 거래대금 비율
+	BstpNmixPrpr           decimal.Decimal `json:"bstp_nmix_prpr"`                     // 업종 지수 현재가
+	BstpNmixPrdyVrss       decimal.Decimal `json:"bstp_nmix_prdy_vrss"`                // 업종 지수 전일 대비
+	PrdyVrssSign           string          `json:"prdy_vrss_sign"`                     // 전일 대비 부호
+}
+
+// InquireCompProgramTradeTodayParams 는 프로그램매매 종합현황(시간) 조회 파라미터.
+//
+// 6개 query 파라미터 중 첫 2개만 의미있음. 나머지 4개는 빈 문자열 전송.
+// MrktClsCode: "K"=코스피, "Q"=코스닥.
+type InquireCompProgramTradeTodayParams struct {
+	MarketCode  string // FID_COND_MRKT_DIV_CODE — 필수
+	MrktClsCode string // FID_MRKT_CLS_CODE — K:코스피, Q:코스닥
+	// 아래 4개는 항상 "" 전송 (KIS docs 명시)
+	// SctnClsCode FID_SCTN_CLS_CODE
+	// Symbol      FID_INPUT_ISCD
+	// MarketCode1 FID_COND_MRKT_DIV_CODE1
+	// InputHour1  FID_INPUT_HOUR_1
+}
+
+// InquireCompProgramTradeToday 는 프로그램매매 종합현황(시간) 호출.
+//
+// 한투 docs: docs/api/국내주식/프로그램매매_종합현황(시간).md
+// path: /uapi/domestic-stock/v1/quotations/comp-program-trade-today (FHPPG04600101)
+func (c *Client) InquireCompProgramTradeToday(ctx context.Context, params InquireCompProgramTradeTodayParams) (*CompProgramTradeToday, error) {
+	resp, err := c.http.Do(ctx, &httpclient.Request{
+		Method: http.MethodGet,
+		Path:   "/uapi/domestic-stock/v1/quotations/comp-program-trade-today",
+		TrID:   "FHPPG04600101",
+		Query: map[string]string{
+			"FID_COND_MRKT_DIV_CODE":  params.MarketCode,
+			"FID_MRKT_CLS_CODE":       params.MrktClsCode,
+			"FID_SCTN_CLS_CODE":       "",
+			"FID_INPUT_ISCD":          "",
+			"FID_COND_MRKT_DIV_CODE1": "",
+			"FID_INPUT_HOUR_1":        "",
+		},
+		CustType: "P",
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	var res CompProgramTradeToday
+	if err := json.Unmarshal(resp.Raw, &res); err != nil {
+		return nil, fmt.Errorf("kis: parse CompProgramTradeToday: %w", err)
+	}
+	return &res, nil
+}
