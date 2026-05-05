@@ -200,3 +200,33 @@ func TestClient_InquireKsdRevSplit(t *testing.T) {
 	assert.Equal(t, "100", res.Output1[0].InterBfFaceAmt)
 	assert.Equal(t, "500", res.Output1[0].InterAfFaceAmt)
 }
+
+func TestClient_InquireKsdForfeit(t *testing.T) {
+	httpmock.Activate()
+	defer httpmock.DeactivateAndReset()
+
+	var capturedQuery url.Values
+	httpmock.RegisterResponder(
+		http.MethodGet,
+		`=~/ksdinfo/forfeit`,
+		func(req *http.Request) (*http.Response, error) {
+			capturedQuery = req.URL.Query()
+			return httpmock.NewStringResponse(200, loadFixtureString(t, "ksd_forfeit_success.json")), nil
+		},
+	)
+
+	c := newTestClient(t)
+	res, err := c.InquireKsdForfeit(context.Background(), domestic.InquireKsdForfeitParams{
+		FromDate: "20260101",
+		ToDate:   "20260505",
+	})
+	require.NoError(t, err)
+	require.NotNil(t, res)
+
+	assert.Equal(t, "20260505", capturedQuery.Get("T_DT"))
+
+	require.Len(t, res.Output1, 2)
+	assert.Equal(t, "005930", res.Output1[0].ShtCd)
+	assert.Equal(t, "68000", res.Output1[0].SubscrPrice)
+	assert.Equal(t, "한국투자증권", res.Output1[0].LeadMgr)
+}

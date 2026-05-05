@@ -380,3 +380,59 @@ func (c *Client) InquireKsdRevSplit(ctx context.Context, params InquireKsdRevSpl
 	}
 	return &res, nil
 }
+
+// KsdForfeit 는 예탁원정보(실권주청약) (HHKDB669109C0) 응답.
+//
+// 한투 docs: docs/api/국내주식/예탁원정보(실권주청약).md
+// path: /uapi/domestic-stock/v1/ksdinfo/forfeit
+type KsdForfeit struct {
+	Output1 []KsdForfeitItem `json:"output1"`
+}
+
+// KsdForfeitItem 은 실권주청약 한 행. 모든 필드 string (KIS docs).
+type KsdForfeitItem struct {
+	RecordDate   string `json:"record_date"`    // 기준일
+	ShtCd        string `json:"sht_cd"`         // 종목코드
+	IsinName     string `json:"isin_name"`      // 종목명
+	SubscrDt     string `json:"subscr_dt"`      // 청약일
+	SubscrPrice  string `json:"subscr_price"`   // 공모가
+	SubscrStkQty string `json:"subscr_stk_qty"` // 공모주식수
+	RefundDt     string `json:"refund_dt"`      // 환불일
+	ListDt       string `json:"list_dt"`        // 상장/등록일
+	LeadMgr      string `json:"lead_mgr"`       // 주간사
+}
+
+// InquireKsdForfeitParams 는 실권주청약 조회 파라미터.
+type InquireKsdForfeitParams struct {
+	Symbol   string // SHT_CD — 종목코드 (공백=전체)
+	ToDate   string // T_DT — 조회종료일 YYYYMMDD
+	FromDate string // F_DT — 조회시작일 YYYYMMDD
+	Cts      string // CTS — 공백 입력 (default "")
+}
+
+// InquireKsdForfeit 호출.
+//
+// 한투 docs: docs/api/국내주식/예탁원정보(실권주청약).md
+// path: /uapi/domestic-stock/v1/ksdinfo/forfeit (HHKDB669109C0)
+func (c *Client) InquireKsdForfeit(ctx context.Context, params InquireKsdForfeitParams) (*KsdForfeit, error) {
+	resp, err := c.http.Do(ctx, &httpclient.Request{
+		Method: http.MethodGet,
+		Path:   "/uapi/domestic-stock/v1/ksdinfo/forfeit",
+		TrID:   "HHKDB669109C0",
+		Query: map[string]string{
+			"SHT_CD": params.Symbol,
+			"T_DT":   params.ToDate,
+			"F_DT":   params.FromDate,
+			"CTS":    params.Cts,
+		},
+		CustType: "P",
+	})
+	if err != nil {
+		return nil, err
+	}
+	var res KsdForfeit
+	if err := json.Unmarshal(resp.Raw, &res); err != nil {
+		return nil, fmt.Errorf("kis: parse KsdForfeit: %w", err)
+	}
+	return &res, nil
+}
