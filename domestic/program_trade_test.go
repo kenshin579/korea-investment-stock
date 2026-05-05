@@ -5,6 +5,7 @@ import (
 	"context"
 	"net/http"
 	"net/url"
+	"os"
 	"testing"
 
 	"github.com/jarcoal/httpmock"
@@ -114,4 +115,32 @@ func TestClient_InquireCompProgramTradeToday(t *testing.T) {
 	assert.Equal(t, 35.50, res.Output1[0].ArbtSmtmSelnTrPbmnRate)
 	assert.Equal(t, 36.10, res.Output1[0].ArbtSmtmShunTrPbmnRate)
 	assert.True(t, decimal.NewFromFloat(2750.50).Equal(res.Output1[0].BstpNmixPrpr))
+}
+
+func TestClient_InquireCompProgramTradeDaily(t *testing.T) {
+	httpmock.Activate()
+	defer httpmock.DeactivateAndReset()
+
+	raw, err := os.ReadFile("testdata/comp_program_trade_daily_success.json")
+	require.NoError(t, err)
+	httpmock.RegisterResponder("GET",
+		"=~.*comp-program-trade-daily.*",
+		httpmock.NewBytesResponder(200, raw))
+
+	c := newTestClient(t)
+	ctx := context.Background()
+	res, err := c.InquireCompProgramTradeDaily(ctx, domestic.InquireCompProgramTradeDailyParams{
+		MarketCode:  "J",
+		MrktClsCode: "K",
+		StartDate:   "20260101",
+		EndDate:     "20260505",
+	})
+	require.NoError(t, err)
+	require.NotEmpty(t, res.Output)
+
+	item := res.Output[0]
+	assert.NotEmpty(t, item.StckBsopDate)                          // string
+	assert.GreaterOrEqual(t, item.NabtEntmSelnTrPbmn, int64(0))    // int64
+	assert.GreaterOrEqual(t, item.NabtEntmSelnVolRate, float64(0)) // float64
+	assert.GreaterOrEqual(t, item.ArbtSmtmShunVolRate, float64(0)) // float64 (shun typo)
 }
