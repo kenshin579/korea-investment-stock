@@ -256,3 +256,66 @@ func (c *Client) InquireKsdSharehldMeet(ctx context.Context, params InquireKsdSh
 	}
 	return &res, nil
 }
+
+// KsdMergerSplit 는 예탁원정보(합병분할) (HHKDB669104C0) 응답.
+//
+// 한투 docs: docs/api/국내주식/예탁원정보(합병분할).md
+// path: /uapi/domestic-stock/v1/ksdinfo/merger-split
+// ANOMALY: isin_name 없음 — opp_cust_cd/opp_cust_nm (피합병) + cust_cd/cust_nm (합병) 사용.
+type KsdMergerSplit struct {
+	Output1 []KsdMergerSplitItem `json:"output1"`
+}
+
+// KsdMergerSplitItem 은 합병분할 한 행. 모든 필드 string (KIS docs).
+// isin_name 없음 — opp_cust_*/cust_* 쌍으로 양사 정보 표현.
+type KsdMergerSplitItem struct {
+	RecordDate     string `json:"record_date"`       // 기준일
+	ShtCd          string `json:"sht_cd"`            // 종목코드
+	OppCustCd      string `json:"opp_cust_cd"`       // 피합병(피분할)회사코드
+	OppCustNm      string `json:"opp_cust_nm"`       // 피합병(피분할)회사명
+	CustCd         string `json:"cust_cd"`           // 합병(분할)회사코드
+	CustNm         string `json:"cust_nm"`           // 합병(분할)회사명
+	MergeType      string `json:"merge_type"`        // 합병사유
+	MergeRate      string `json:"merge_rate"`        // 비율
+	TdStopDt       string `json:"td_stop_dt"`        // 매매거래정지기간
+	ListDt         string `json:"list_dt"`           // 상장/등록일
+	OddAmtPayDt    string `json:"odd_amt_pay_dt"`    // 단주대금지급일
+	TotIssueStkQty string `json:"tot_issue_stk_qty"` // 발행주식
+	IssueStkQty    string `json:"issue_stk_qty"`     // 발행할주식
+	Seq            string `json:"seq"`               // 연번
+}
+
+// InquireKsdMergerSplitParams 는 합병분할 조회 파라미터.
+type InquireKsdMergerSplitParams struct {
+	Cts      string // CTS — 공백 입력 (default "")
+	FromDate string // F_DT — 조회시작일 YYYYMMDD
+	ToDate   string // T_DT — 조회종료일 YYYYMMDD
+	Symbol   string // SHT_CD — 종목코드 (공백=전체)
+}
+
+// InquireKsdMergerSplit 호출.
+//
+// 한투 docs: docs/api/국내주식/예탁원정보(합병분할).md
+// path: /uapi/domestic-stock/v1/ksdinfo/merger-split (HHKDB669104C0)
+func (c *Client) InquireKsdMergerSplit(ctx context.Context, params InquireKsdMergerSplitParams) (*KsdMergerSplit, error) {
+	resp, err := c.http.Do(ctx, &httpclient.Request{
+		Method: http.MethodGet,
+		Path:   "/uapi/domestic-stock/v1/ksdinfo/merger-split",
+		TrID:   "HHKDB669104C0",
+		Query: map[string]string{
+			"CTS":    params.Cts,
+			"F_DT":   params.FromDate,
+			"T_DT":   params.ToDate,
+			"SHT_CD": params.Symbol,
+		},
+		CustType: "P",
+	})
+	if err != nil {
+		return nil, err
+	}
+	var res KsdMergerSplit
+	if err := json.Unmarshal(resp.Raw, &res); err != nil {
+		return nil, fmt.Errorf("kis: parse KsdMergerSplit: %w", err)
+	}
+	return &res, nil
+}

@@ -138,3 +138,34 @@ func TestClient_InquireKsdSharehldMeet(t *testing.T) {
 	assert.Equal(t, "정기주총", res.Output1[0].GenMeetType)
 	assert.Equal(t, "20260326", res.Output1[0].GenMeetDt)
 }
+
+func TestClient_InquireKsdMergerSplit(t *testing.T) {
+	httpmock.Activate()
+	defer httpmock.DeactivateAndReset()
+
+	var capturedQuery url.Values
+	httpmock.RegisterResponder(
+		http.MethodGet,
+		`=~/ksdinfo/merger-split`,
+		func(req *http.Request) (*http.Response, error) {
+			capturedQuery = req.URL.Query()
+			return httpmock.NewStringResponse(200, loadFixtureString(t, "ksd_merger_split_success.json")), nil
+		},
+	)
+
+	c := newTestClient(t)
+	res, err := c.InquireKsdMergerSplit(context.Background(), domestic.InquireKsdMergerSplitParams{
+		FromDate: "20260101",
+		ToDate:   "20260505",
+	})
+	require.NoError(t, err)
+	require.NotNil(t, res)
+
+	assert.Equal(t, "20260101", capturedQuery.Get("F_DT"))
+
+	require.Len(t, res.Output1, 2)
+	assert.Equal(t, "005930", res.Output1[0].ShtCd)
+	assert.Equal(t, "삼성전자", res.Output1[0].CustNm)       // cust_nm (합병측)
+	assert.Equal(t, "흡수대상회사A", res.Output1[0].OppCustNm) // opp_cust_nm (피합병측)
+	assert.Equal(t, "흡수합병", res.Output1[0].MergeType)
+}
