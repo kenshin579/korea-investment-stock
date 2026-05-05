@@ -444,3 +444,88 @@ func (c *Client) InquireVolumeSurge(ctx context.Context, params InquireVolumeSur
 	}
 	return &res, nil
 }
+
+// VolumePower 는 해외주식_매수체결강도상위 (HHDFS76280000) 응답.
+//
+// 한투 docs: docs/api/해외주식/해외주식_매수체결강도상위.md
+// path: /uapi/overseas-stock/v1/ranking/volume-power
+type VolumePower struct {
+	Output1 OverseasRankingMinSummary `json:"output1"`
+	Output2 []VolumePowerItem         `json:"output2"`
+}
+
+// VolumePowerItem 은 매수체결강도상위 output2 의 한 행 (15 fields).
+//
+// 주의: 종목명 필드가 knam/enam (name/ename 아님). rank 필드 없음.
+type VolumePowerItem struct {
+	Rsym   string          `json:"rsym"`        // 실시간조회심볼
+	Excd   string          `json:"excd"`        // 거래소코드
+	Symb   string          `json:"symb"`        // 종목코드
+	Knam   string          `json:"knam"`        // 종목명 (한글) — name 아님
+	Last   decimal.Decimal `json:"last"`        // 현재가
+	Sign   string          `json:"sign"`        // 기호
+	Diff   decimal.Decimal `json:"diff"`        // 대비
+	Rate   float64         `json:"rate,string"` // 등락율
+	Tvol   int64           `json:"tvol,string"` // 거래량
+	Pask   decimal.Decimal `json:"pask"`        // 매도호가
+	Pbid   decimal.Decimal `json:"pbid"`        // 매수호가
+	Tpow   float64         `json:"tpow,string"` // 당일체결강도
+	Powx   float64         `json:"powx,string"` // 체결강도
+	Enam   string          `json:"enam"`        // 영문종목명 — ename 아님
+	EOrdyn string          `json:"e_ordyn"`     // 매매가능
+}
+
+// InquireVolumePowerParams 는 해외주식_매수체결강도상위 조회 파라미터.
+//
+// 주의: NDAY 파라미터의 설명값이 분(分) 단위 (0=1분전, 1=2분전 … 9=120분전)로
+// InquireVolumeSurge 의 MIXN 과 동일한 척도. KIS docs 파라미터명 오류로 보이나
+// wire name 은 NDAY 를 그대로 사용.
+type InquireVolumePowerParams struct {
+	KeyB     string // KEYB — NEXT KEY BUFF. 빈 값 default
+	Auth     string // AUTH — 사용자권한정보. 빈 값 default
+	ExcdCode string // EXCD — 거래소코드. 필수
+	NDay     string // NDAY — N분전 (wire name): 0(1분전),1(2분전),2(3분전),3(5분전),4(10분전),5(15분전),6(20분전),7(30분전),8(60분전),9(120분전). 빈 값=>"0"
+	VolRang  string // VOL_RANG — 거래량조건. 빈 값=>"0" (전체)
+}
+
+// InquireVolumePower 는 해외주식_매수체결강도상위 호출.
+//
+// 한투 docs: docs/api/해외주식/해외주식_매수체결강도상위.md
+// path: /uapi/overseas-stock/v1/ranking/volume-power (HHDFS76280000)
+func (c *Client) InquireVolumePower(ctx context.Context, params InquireVolumePowerParams) (*VolumePower, error) {
+	excd := params.ExcdCode
+	if excd == "" {
+		return nil, fmt.Errorf("kis: ExcdCode required for InquireVolumePower")
+	}
+	nday := params.NDay
+	if nday == "" {
+		nday = "0"
+	}
+	vol := params.VolRang
+	if vol == "" {
+		vol = "0"
+	}
+
+	resp, err := c.http.Do(ctx, &httpclient.Request{
+		Method: http.MethodGet,
+		Path:   "/uapi/overseas-stock/v1/ranking/volume-power",
+		TrID:   "HHDFS76280000",
+		Query: map[string]string{
+			"KEYB":     params.KeyB,
+			"AUTH":     params.Auth,
+			"EXCD":     excd,
+			"NDAY":     nday,
+			"VOL_RANG": vol,
+		},
+		CustType: "P",
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	var res VolumePower
+	if err := json.Unmarshal(resp.Raw, &res); err != nil {
+		return nil, fmt.Errorf("kis: parse VolumePower: %w", err)
+	}
+	return &res, nil
+}

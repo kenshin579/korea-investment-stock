@@ -223,3 +223,43 @@ func TestClient_InquireVolumeSurge(t *testing.T) {
 	assert.True(t, ndiff.Equal(res.Output2[0].NDiff))
 	assert.InDelta(t, 587.50, res.Output2[0].NRate, 0.01)
 }
+
+func TestClient_InquireVolumePower(t *testing.T) {
+	httpmock.Activate()
+	defer httpmock.DeactivateAndReset()
+
+	var capturedQuery url.Values
+	httpmock.RegisterResponder(
+		http.MethodGet,
+		`=~/ranking/volume-power`,
+		func(req *http.Request) (*http.Response, error) {
+			capturedQuery = req.URL.Query()
+			return httpmock.NewStringResponse(200, loadFixtureString(t, "volume_power_success.json")), nil
+		},
+	)
+
+	c := newTestClient(t)
+	res, err := c.InquireVolumePower(context.Background(), overseas.InquireVolumePowerParams{
+		ExcdCode: "NAS",
+		NDay:     "0",
+	})
+	require.NoError(t, err)
+	require.NotNil(t, res)
+
+	assert.Equal(t, "NAS", capturedQuery.Get("EXCD"))
+	assert.Equal(t, "0", capturedQuery.Get("NDAY")) // wire name NDAY (분 단위)
+	assert.Equal(t, "0", capturedQuery.Get("VOL_RANG"))
+
+	// output1 검증 — 3-field MinSummary
+	assert.Equal(t, int64(30), res.Output1.Nrec)
+
+	// output2[0] 검증 — knam/enam + tpow/powx
+	require.Len(t, res.Output2, 2)
+	assert.Equal(t, "AAPL", res.Output2[0].Symb)
+	assert.Equal(t, "애플", res.Output2[0].Knam)
+	assert.Equal(t, "APPLE INC", res.Output2[0].Enam)
+	d, _ := decimal.NewFromString("189.30")
+	assert.True(t, d.Equal(res.Output2[0].Last))
+	assert.InDelta(t, 143.25, res.Output2[0].Tpow, 0.01)
+	assert.InDelta(t, 138.90, res.Output2[0].Powx, 0.01)
+}
