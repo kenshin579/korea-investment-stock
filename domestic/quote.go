@@ -183,6 +183,87 @@ func (c *Client) InquireCcnl(ctx context.Context, params InquireCcnlParams) (*Cc
 	return &res, nil
 }
 
+// DailyPrice 는 주식현재가 일자별 (FHKST01010400) 응답.
+//
+// 한투 docs: docs/api/국내주식/주식현재가_일자별.md
+// path: /uapi/domestic-stock/v1/quotations/inquire-daily-price
+//
+// 최근 30 거래일 (D) / 30 주 (W) / 30 개월 (M) 일별 시세 + 외국인 순매수 + 락 구분.
+// 단순 일자별 — Phase 1.2 의 InquireDailyItemChartPrice (chart) 와는 다른 endpoint.
+type DailyPrice struct {
+	Output []DailyPriceItem `json:"output"`
+}
+
+// DailyPriceItem 은 한 일자/주/월 봉.
+type DailyPriceItem struct {
+	StckBsopDate    string          `json:"stck_bsop_date"`            // 영업 일자
+	StckOprc        decimal.Decimal `json:"stck_oprc"`                 // 시가
+	StckHgpr        decimal.Decimal `json:"stck_hgpr"`                 // 최고가
+	StckLwpr        decimal.Decimal `json:"stck_lwpr"`                 // 최저가
+	StckClpr        decimal.Decimal `json:"stck_clpr"`                 // 종가
+	AcmlVol         int64           `json:"acml_vol,string"`           // 누적 거래량
+	PrdyVrssVolRate float64         `json:"prdy_vrss_vol_rate,string"` // 전일 대비 거래량 비율
+	PrdyVrss        decimal.Decimal `json:"prdy_vrss"`                 // 전일 대비
+	PrdyVrssSign    string          `json:"prdy_vrss_sign"`            // 전일 대비 부호
+	PrdyCtrt        float64         `json:"prdy_ctrt,string"`          // 전일 대비율
+	HtsFrgnEhrt     float64         `json:"hts_frgn_ehrt,string"`      // HTS 외국인 소진율
+	FrgnNtbyQty     int64           `json:"frgn_ntby_qty,string"`      // 외국인 순매수 수량
+	FlngClsCode     string          `json:"flng_cls_code"`             // 락 구분 (00=일반, 01=권리, 02=배당, ...)
+	AcmlPrttRate    float64         `json:"acml_prtt_rate,string"`     // 누적 분할 비율
+}
+
+// InquireDailyPriceParams 는 일자별 조회 파라미터.
+type InquireDailyPriceParams struct {
+	MarketCode    string // FID_COND_MRKT_DIV_CODE — 빈 값=>"J"
+	Symbol        string // FID_INPUT_ISCD
+	Period        string // FID_PERIOD_DIV_CODE — "D":일/"W":주/"M":월. 빈 값=>"D"
+	OriginalPrice bool   // FID_ORG_ADJ_PRC — false=>"0"(수정주가 미반영, default), true=>"1"(원주가)
+}
+
+// InquireDailyPrice 는 주식현재가 일자별 호출.
+//
+// 한투 docs: docs/api/국내주식/주식현재가_일자별.md
+// path: /uapi/domestic-stock/v1/quotations/inquire-daily-price (FHKST01010400)
+//
+// 최근 30 거래일 (D) / 30 주 (W) / 30 개월 (M). Phase 1.2 의
+// InquireDailyItemChartPrice (chart) 와는 다른 endpoint — 외국인 소진율/락 구분 등 추가.
+func (c *Client) InquireDailyPrice(ctx context.Context, params InquireDailyPriceParams) (*DailyPrice, error) {
+	market := params.MarketCode
+	if market == "" {
+		market = "J"
+	}
+	period := params.Period
+	if period == "" {
+		period = "D"
+	}
+	adjPrc := "0" // 수정주가 미반영 default
+	if params.OriginalPrice {
+		adjPrc = "1"
+	}
+
+	resp, err := c.http.Do(ctx, &httpclient.Request{
+		Method: http.MethodGet,
+		Path:   "/uapi/domestic-stock/v1/quotations/inquire-daily-price",
+		TrID:   "FHKST01010400",
+		Query: map[string]string{
+			"FID_COND_MRKT_DIV_CODE": market,
+			"FID_INPUT_ISCD":         params.Symbol,
+			"FID_PERIOD_DIV_CODE":    period,
+			"FID_ORG_ADJ_PRC":        adjPrc,
+		},
+		CustType: "P",
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	var res DailyPrice
+	if err := json.Unmarshal(resp.Raw, &res); err != nil {
+		return nil, fmt.Errorf("kis: parse DailyPrice: %w", err)
+	}
+	return &res, nil
+}
+
 // InquireAskingPriceExpCcn 은 주식현재가 호가/예상체결 호출.
 //
 // 한투 docs: docs/api/국내주식/주식현재가_호가_예상체결.md
