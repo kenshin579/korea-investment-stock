@@ -144,3 +144,30 @@ func TestClient_InquireCompProgramTradeDaily(t *testing.T) {
 	assert.GreaterOrEqual(t, item.NabtEntmSelnVolRate, float64(0)) // float64
 	assert.GreaterOrEqual(t, item.ArbtSmtmShunVolRate, float64(0)) // float64 (shun typo)
 }
+
+func TestClient_InquireInvestorProgramTradeToday(t *testing.T) {
+	httpmock.Activate()
+	defer httpmock.DeactivateAndReset()
+
+	raw, err := os.ReadFile("testdata/investor_program_trade_today_success.json")
+	require.NoError(t, err)
+	httpmock.RegisterResponder("GET",
+		"=~.*investor-program-trade-today.*",
+		httpmock.NewBytesResponder(200, raw))
+
+	c := newTestClient(t)
+	ctx := context.Background()
+	res, err := c.InquireInvestorProgramTradeToday(ctx, domestic.InquireInvestorProgramTradeTodayParams{
+		ExchDivClsCode: "J",
+		MrktDivClsCode: "1",
+	})
+	require.NoError(t, err)
+	require.NotEmpty(t, res.Output1)
+
+	item := res.Output1[0]
+	assert.NotEmpty(t, item.InvrClsCode)
+	assert.NotEmpty(t, item.InvrClsName)
+	assert.GreaterOrEqual(t, item.AllSelnQty, int64(0))
+	assert.GreaterOrEqual(t, item.ArbtNtbyAmt, int64(0))
+	assert.GreaterOrEqual(t, item.NabtNtbyAmt, int64(0))
+}

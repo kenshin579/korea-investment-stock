@@ -373,3 +373,67 @@ func (c *Client) InquireCompProgramTradeDaily(ctx context.Context, p InquireComp
 	}
 	return &res, nil
 }
+
+// InvestorProgramTradeTodayItem 은 당일 투자자별 프로그램매매 동향 한 행을 나타낸다.
+// HHPPG046600C1 output1 배열 원소. 차익/비차익 breakdown 포함.
+// _amt suffix 사용 (다른 endpoint 의 _tr_pbmn 와 다름).
+type InvestorProgramTradeTodayItem struct {
+	InvrClsCode string `json:"invr_cls_code"`        // 투자자 구분 코드
+	InvrClsName string `json:"invr_cls_name"`        // 투자자 구분 이름
+	AllSelnQty  int64  `json:"all_seln_qty,string"`  // 전체 매도 수량
+	AllSelnAmt  int64  `json:"all_seln_amt,string"`  // 전체 매도 금액
+	AllShnuQty  int64  `json:"all_shnu_qty,string"`  // 전체 매수 수량
+	AllShnuAmt  int64  `json:"all_shnu_amt,string"`  // 전체 매수 금액
+	AllNtbyQty  int64  `json:"all_ntby_qty,string"`  // 전체 순매수 수량
+	AllNtbyAmt  int64  `json:"all_ntby_amt,string"`  // 전체 순매수 금액
+	ArbtSelnQty int64  `json:"arbt_seln_qty,string"` // 차익 매도 수량
+	ArbtSelnAmt int64  `json:"arbt_seln_amt,string"` // 차익 매도 금액
+	ArbtShnuQty int64  `json:"arbt_shnu_qty,string"` // 차익 매수 수량
+	ArbtShnuAmt int64  `json:"arbt_shnu_amt,string"` // 차익 매수 금액
+	ArbtNtbyQty int64  `json:"arbt_ntby_qty,string"` // 차익 순매수 수량
+	ArbtNtbyAmt int64  `json:"arbt_ntby_amt,string"` // 차익 순매수 금액
+	NabtSelnQty int64  `json:"nabt_seln_qty,string"` // 비차익 매도 수량
+	NabtSelnAmt int64  `json:"nabt_seln_amt,string"` // 비차익 매도 금액
+	NabtShnuQty int64  `json:"nabt_shnu_qty,string"` // 비차익 매수 수량
+	NabtShnuAmt int64  `json:"nabt_shnu_amt,string"` // 비차익 매수 금액
+	NabtNtbyQty int64  `json:"nabt_ntby_qty,string"` // 비차익 순매수 수량
+	NabtNtbyAmt int64  `json:"nabt_ntby_amt,string"` // 비차익 순매수 금액
+}
+
+// InvestorProgramTradeToday 는 HHPPG046600C1 전체 응답이다.
+type InvestorProgramTradeToday struct {
+	RTCd    string                          `json:"rt_cd"`
+	MsgCd   string                          `json:"msg_cd"`
+	Msg1    string                          `json:"msg1"`
+	Output1 []InvestorProgramTradeTodayItem `json:"output1"`
+}
+
+// InquireInvestorProgramTradeTodayParams 는 EP7 쿼리 파라미터다.
+// KIS docs 기준 비-FID prefix 사용.
+type InquireInvestorProgramTradeTodayParams struct {
+	ExchDivClsCode string // EXCH_DIV_CLS_CODE  J / NX / UN
+	MrktDivClsCode string // MRKT_DIV_CLS_CODE  1:코스피  4:코스닥
+}
+
+// InquireInvestorProgramTradeToday 는 당일 투자자별 프로그램매매 동향을 조회한다 (HHPPG046600C1).
+func (c *Client) InquireInvestorProgramTradeToday(ctx context.Context, p InquireInvestorProgramTradeTodayParams) (*InvestorProgramTradeToday, error) {
+	resp, err := c.http.Do(ctx, &httpclient.Request{
+		Method: http.MethodGet,
+		Path:   "/uapi/domestic-stock/v1/quotations/investor-program-trade-today",
+		TrID:   "HHPPG046600C1",
+		Query: map[string]string{
+			"EXCH_DIV_CLS_CODE": p.ExchDivClsCode,
+			"MRKT_DIV_CLS_CODE": p.MrktDivClsCode,
+		},
+		CustType: "P",
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	var res InvestorProgramTradeToday
+	if err := json.Unmarshal(resp.Raw, &res); err != nil {
+		return nil, fmt.Errorf("kis: parse InvestorProgramTradeToday: %w", err)
+	}
+	return &res, nil
+}
