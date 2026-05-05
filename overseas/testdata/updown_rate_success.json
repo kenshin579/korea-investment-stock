@@ -1,0 +1,52 @@
+{
+  "rt_cd": "0",
+  "msg_cd": "MCA00000",
+  "msg1": "정상처리 되었습니다.",
+  "output1": {
+    "zdiv": "2",
+    "stat": "정상",
+    "crec": "2",
+    "trec": "100",
+    "nrec": "30"
+  },
+  "output2": [
+    {
+      "rsym": "DNASNVDA",
+      "excd": "NAS",
+      "symb": "NVDA",
+      "name": "엔비디아",
+      "last": "920.45",
+      "sign": "2",
+      "diff": "45.20",
+      "rate": "5.16",
+      "tvol": "120000000",
+      "pask": "920.50",
+      "pbid": "920.40",
+      "n_base": "875.25",
+      "n_diff": "45.20",
+      "n_rate": "5.16",
+      "rank": "1",
+      "ename": "NVIDIA CORP",
+      "e_ordyn": "Y"
+    },
+    {
+      "rsym": "DNASTSLA",
+      "excd": "NAS",
+      "symb": "TSLA",
+      "name": "테슬라",
+      "last": "245.80",
+      "sign": "2",
+      "diff": "10.50",
+      "rate": "4.46",
+      "tvol": "85000000",
+      "pask": "245.85",
+      "pbid": "245.75",
+      "n_base": "235.30",
+      "n_diff": "10.50",
+      "n_rate": "4.46",
+      "rank": "2",
+      "ename": "TESLA INC",
+      "e_ordyn": "Y"
+    }
+  ]
+}

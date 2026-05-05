@@ -1,5 +1,38 @@
 # CHANGELOG
 
+## [1.3.0] - 2026-05-05
+
+### Added — Phase 1.5 (해외주식, Python parity 완성)
+
+- `Overseas.InquirePriceDetail` — 해외주식 현재가상세 (HHDFS76200200)
+- `Overseas.SearchInfo` — 해외주식 상품기본정보 (CTPF1702R)
+- `Overseas.InquireDailyPrice` — 해외주식 기간별시세 (HHDFS76240000) — 11 거래소 단일 종목 일/주/월
+- `Overseas.InquireDailyChartPrice` — 해외주식 종목/지수/환율 기간별시세 (FHKST03030100) — 일/주/월/년 (미국 주식은 다우30/나스닥100/S&P500 한정)
+- `Overseas.InquireUpdownRate` — 해외주식 상승율/하락율 (HHDFS76290000)
+- `Overseas.FetchOverseasSymbols(market)` — 11 거래소 통합 (KIS 공개 마스터)
+- `internal/overseasmaster` 패키지 — 해외 마스터 파일 파싱 (cp949 + TSV, 24 컬럼)
+- examples: `overseas_price`, `overseas_chart`, `overseas_symbols`
+
+### Changed
+
+- `overseas.New(http, master)` 시그니처 — `*mastercache.Cache` 파라미터 추가 (internal API; BC-safe)
+
+### Notes
+
+- NASDAQ/NYSE/AMEX 별 메서드는 `FetchOverseasSymbols(market)` 로 통합 (Python wrapper convenience 미반영 정책 일관)
+- `Overseas.SearchInfo` 의 응답 struct 명은 `OverseasProductInfo` (domestic 의 `ProductInfo` 와 다른 패키지지만 명시적으로 구분)
+- 차트 endpoint 두 개 보완: `dailyprice` 는 단일 종목 (모든 미국 종목 지원), `inquire-daily-chartprice` 는 지수/환율 통합 (미국은 다우30/나스닥100/S&P500 한정)
+- KIS 해외 마스터 파일 형식: cp949 인코딩 + TSV (탭 구분), 24 컬럼, 헤더 없음. 11 거래소 (nas/nys/ams/shs/shi/szs/szi/tse/hks/hnx/hsx) 모두 동일
+
+### Phase 1 완성
+
+이번 release 로 Python 라이브러리의 28 fetch 메서드 도메인 커버리지 완성:
+- Phase 1.2: 7 메서드 (국내 시세/심볼/차트)
+- Phase 1.3: 9 메서드 (국내 순위/재무)
+- Phase 1.4: 6 메서드 (국내 투자자/업종/IPO)
+- Phase 1.5: 6 메서드 (해외주식)
+- 총 28 메서드 (Python 의 fetch 28개 + IPO helpers 9개 omit 의 카테고리 커버리지)
+
 ## [1.2.0] - 2026-05-05
 
 ### Added — Phase 1.4 (국내주식 투자자/업종/IPO)

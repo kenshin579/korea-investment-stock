@@ -61,7 +61,7 @@ func main() {
 }
 ```
 
-## Available Methods (Phase 1.2 + 1.3 + 1.4)
+## Available Methods (Phase 1.2 + 1.3 + 1.4 + 1.5)
 
 | Method | 한투 path | TR_ID |
 |--------|----------|-------|
@@ -87,6 +87,12 @@ func main() {
 | `Domestic.InquireIndexPrice` | `quotations/inquire-index-price` | FHPUP02100000 |
 | `Domestic.InquireIndexCategoryPrice` | `quotations/inquire-index-category-price` | FHPUP02140000 |
 | `Domestic.InquirePubOffer` | `ksdinfo/pub-offer` | HHKDB669108C0 |
+| `Overseas.InquirePriceDetail` | `overseas-price/v1/quotations/price-detail` | HHDFS76200200 |
+| `Overseas.SearchInfo` | `overseas-price/v1/quotations/search-info` | CTPF1702R |
+| `Overseas.InquireDailyPrice` | `overseas-price/v1/quotations/dailyprice` | HHDFS76240000 |
+| `Overseas.InquireDailyChartPrice` | `overseas-price/v1/quotations/inquire-daily-chartprice` | FHKST03030100 |
+| `Overseas.InquireUpdownRate` | `overseas-stock/v1/ranking/updown-rate` | HHDFS76290000 |
+| `Overseas.FetchOverseasSymbols(market)` | (KIS 공개 마스터 — 11 거래소) | — |
 
 ## Design
 
