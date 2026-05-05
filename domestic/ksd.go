@@ -436,3 +436,58 @@ func (c *Client) InquireKsdForfeit(ctx context.Context, params InquireKsdForfeit
 	}
 	return &res, nil
 }
+
+// KsdMandDeposit 는 예탁원정보(의무보호예수) (HHKDB669110C0) 응답.
+//
+// 한투 docs: docs/api/국내주식/예탁원정보(의무보호예수).md
+// path: /uapi/domestic-stock/v1/ksdinfo/mand-deposit
+// ANOMALY: record_date 없음 — depo_date (예치일) 가 날짜 key.
+type KsdMandDeposit struct {
+	Output1 []KsdMandDepositItem `json:"output1"`
+}
+
+// KsdMandDepositItem 은 의무보호예수 한 행. 모든 필드 string (KIS docs).
+// record_date 없음 — depo_date 가 날짜 기준 필드.
+type KsdMandDepositItem struct {
+	ShtCd              string `json:"sht_cd"`                 // 종목코드
+	IsinName           string `json:"isin_name"`              // 종목명
+	StkQty             string `json:"stk_qty"`                // 주식수
+	DepoDate           string `json:"depo_date"`              // 예치일 (날짜 key)
+	DepoReason         string `json:"depo_reason"`            // 사유
+	TotIssueQtyPerRate string `json:"tot_issue_qty_per_rate"` // 총발행주식수대비비율(%)
+}
+
+// InquireKsdMandDepositParams 는 의무보호예수 조회 파라미터.
+type InquireKsdMandDepositParams struct {
+	ToDate   string // T_DT — 조회종료일 YYYYMMDD
+	Symbol   string // SHT_CD — 종목코드 (공백=전체)
+	FromDate string // F_DT — 조회시작일 YYYYMMDD
+	Cts      string // CTS — 공백 입력 (default "")
+}
+
+// InquireKsdMandDeposit 호출.
+//
+// 한투 docs: docs/api/국내주식/예탁원정보(의무보호예수).md
+// path: /uapi/domestic-stock/v1/ksdinfo/mand-deposit (HHKDB669110C0)
+func (c *Client) InquireKsdMandDeposit(ctx context.Context, params InquireKsdMandDepositParams) (*KsdMandDeposit, error) {
+	resp, err := c.http.Do(ctx, &httpclient.Request{
+		Method: http.MethodGet,
+		Path:   "/uapi/domestic-stock/v1/ksdinfo/mand-deposit",
+		TrID:   "HHKDB669110C0",
+		Query: map[string]string{
+			"T_DT":   params.ToDate,
+			"SHT_CD": params.Symbol,
+			"F_DT":   params.FromDate,
+			"CTS":    params.Cts,
+		},
+		CustType: "P",
+	})
+	if err != nil {
+		return nil, err
+	}
+	var res KsdMandDeposit
+	if err := json.Unmarshal(resp.Raw, &res); err != nil {
+		return nil, fmt.Errorf("kis: parse KsdMandDeposit: %w", err)
+	}
+	return &res, nil
+}
