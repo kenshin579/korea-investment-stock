@@ -310,3 +310,29 @@ func TestClient_InquireNewHighlow(t *testing.T) {
 	assert.True(t, ndiff.Equal(res.Output2[0].NDiff))
 	assert.InDelta(t, 18.31, res.Output2[0].NRate, 0.01)
 }
+
+// EXCD required check tests — coverage 보강 (Phase 2.3 6 메서드 공통 가드).
+
+func TestClient_Phase23_ExcdRequired(t *testing.T) {
+	c := newTestClient(t)
+	ctx := context.Background()
+
+	if _, err := c.InquireMarketCap(ctx, overseas.InquireMarketCapParams{}); err == nil {
+		t.Fatal("InquireMarketCap: expected error when ExcdCode empty")
+	}
+	if _, err := c.InquireTradeVol(ctx, overseas.InquireTradeVolParams{}); err == nil {
+		t.Fatal("InquireTradeVol: expected error when ExcdCode empty")
+	}
+	if _, err := c.InquireTradePbmn(ctx, overseas.InquireTradePbmnParams{}); err == nil {
+		t.Fatal("InquireTradePbmn: expected error when ExcdCode empty")
+	}
+	if _, err := c.InquireVolumeSurge(ctx, overseas.InquireVolumeSurgeParams{}); err == nil {
+		t.Fatal("InquireVolumeSurge: expected error when ExcdCode empty")
+	}
+	if _, err := c.InquireVolumePower(ctx, overseas.InquireVolumePowerParams{}); err == nil {
+		t.Fatal("InquireVolumePower: expected error when ExcdCode empty")
+	}
+	if _, err := c.InquireNewHighlow(ctx, overseas.InquireNewHighlowParams{}); err == nil {
+		t.Fatal("InquireNewHighlow: expected error when ExcdCode empty")
+	}
+}
