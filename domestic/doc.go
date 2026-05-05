@@ -37,5 +37,13 @@
 //   - InquireCcnl               — 주식현재가 체결 (FHKST01010300)
 //   - InquireDailyPrice         — 주식현재가 일자별 (FHKST01010400)
 //
+// Phase 2.2 메서드 (5):
+//
+//   - InquireNearNewHighlow      — 국내주식 신고/신저근접종목 상위 (FHPST01870000)
+//   - InquireOvertimePrice       — 국내주식 시간외현재가 (FHPST02300000)
+//   - InquireOvertimeAskingPrice — 국내주식 시간외호가 (FHPST02300400)
+//   - InquireOvertimeVolume      — 국내주식 시간외거래량순위 (FHPST02350000)
+//   - InquireOvertimeFluctuation — 국내주식 시간외등락율순위 (FHPST02340000)
+//
 // 사용자는 root kis.Client 의 Domestic 필드로 접근.
 package domestic

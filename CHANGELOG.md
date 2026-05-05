@@ -1,5 +1,21 @@
 # CHANGELOG
 
+## [1.5.0] - 2026-05-05
+
+### Added — Phase 2.2 (국내 신고저가 / 시간외)
+
+- `Domestic.InquireNearNewHighlow` — 국내주식 신고/신저근접종목 상위 (FHPST01870000) — 신고근접/신저근접 최대 30건
+- `Domestic.InquireOvertimePrice` — 국내주식 시간외현재가 (FHPST02300000) — 시간외 단일가 현재가/예상체결/상하한가/관리구분
+- `Domestic.InquireOvertimeAskingPrice` — 국내주식 시간외호가 (FHPST02300400) — 10단계 호가/증감/잔량 + 정규장 총잔량
+- `Domestic.InquireOvertimeVolume` — 국내주식 시간외거래량순위 (FHPST02350000) — 거래소/코스닥 합계 + 종목별 최대 30건
+- `Domestic.InquireOvertimeFluctuation` — 국내주식 시간외등락율순위 (FHPST02340000) — 상한/상승/보합/하한/하락 통계 + 종목별 최대 30건
+- examples: `domestic_extended`
+
+### Notes
+
+- `InquireOvertimeAskingPrice` 응답 struct 는 74 필드 (10단계 × 6 배열 + 합계). 시간외 단일가 최종 시간 (`ovtm_untp_last_hour`) 포함
+- Phase 2.2 완료 — 누적 36 메서드 (Phase 2.1: 31 → Phase 2.2: 36)
+
 ## [1.4.0] - 2026-05-05
 
 ### Added — Phase 2.1 (국내 호가/체결)
