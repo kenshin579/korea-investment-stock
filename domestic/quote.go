@@ -125,6 +125,64 @@ type InquireAskingPriceExpCcnParams struct {
 	Symbol     string // FID_INPUT_ISCD — 종목코드 (예 "005930")
 }
 
+// Ccnl 은 주식현재가 체결 (FHKST01010300) 응답.
+//
+// 한투 docs: docs/api/국내주식/주식현재가_체결.md
+// path: /uapi/domestic-stock/v1/quotations/inquire-ccnl
+//
+// 최근 체결 list (~30건). 체결강도 (tday_rltv) 포함.
+type Ccnl struct {
+	Output []CcnlItem `json:"output"`
+}
+
+// CcnlItem 은 체결 한 건.
+type CcnlItem struct {
+	StckCntgHour string          `json:"stck_cntg_hour"`   // 체결 시간 (HHMMSS)
+	StckPrpr     decimal.Decimal `json:"stck_prpr"`        // 현재가
+	PrdyVrss     decimal.Decimal `json:"prdy_vrss"`        // 전일 대비
+	PrdyVrssSign string          `json:"prdy_vrss_sign"`   // 전일 대비 부호
+	CntgVol      int64           `json:"cntg_vol,string"`  // 체결 거래량
+	TdayRltv     float64         `json:"tday_rltv,string"` // 당일 체결강도
+	PrdyCtrt     float64         `json:"prdy_ctrt,string"` // 전일 대비율
+}
+
+// InquireCcnlParams 는 체결 조회 파라미터.
+type InquireCcnlParams struct {
+	MarketCode string // FID_COND_MRKT_DIV_CODE — 빈 값=>"J"
+	Symbol     string // FID_INPUT_ISCD
+}
+
+// InquireCcnl 은 주식현재가 체결 호출.
+//
+// 한투 docs: docs/api/국내주식/주식현재가_체결.md
+// path: /uapi/domestic-stock/v1/quotations/inquire-ccnl (FHKST01010300)
+func (c *Client) InquireCcnl(ctx context.Context, params InquireCcnlParams) (*Ccnl, error) {
+	market := params.MarketCode
+	if market == "" {
+		market = "J"
+	}
+
+	resp, err := c.http.Do(ctx, &httpclient.Request{
+		Method: http.MethodGet,
+		Path:   "/uapi/domestic-stock/v1/quotations/inquire-ccnl",
+		TrID:   "FHKST01010300",
+		Query: map[string]string{
+			"FID_COND_MRKT_DIV_CODE": market,
+			"FID_INPUT_ISCD":         params.Symbol,
+		},
+		CustType: "P",
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	var res Ccnl
+	if err := json.Unmarshal(resp.Raw, &res); err != nil {
+		return nil, fmt.Errorf("kis: parse Ccnl: %w", err)
+	}
+	return &res, nil
+}
+
 // InquireAskingPriceExpCcn 은 주식현재가 호가/예상체결 호출.
 //
 // 한투 docs: docs/api/국내주식/주식현재가_호가_예상체결.md

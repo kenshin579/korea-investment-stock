@@ -56,3 +56,35 @@ func TestClient_InquireAskingPriceExpCcn(t *testing.T) {
 	assert.Equal(t, int64(12345678), res.Output2.AntcVol)
 	assert.Equal(t, "005930", res.Output2.StckShrnIscd)
 }
+
+func TestClient_InquireCcnl(t *testing.T) {
+	httpmock.Activate()
+	defer httpmock.DeactivateAndReset()
+
+	var capturedQuery url.Values
+	httpmock.RegisterResponder(
+		http.MethodGet,
+		`=~/quotations/inquire-ccnl`,
+		func(req *http.Request) (*http.Response, error) {
+			capturedQuery = req.URL.Query()
+			return httpmock.NewStringResponse(200, loadFixtureString(t, "ccnl_success.json")), nil
+		},
+	)
+
+	c := newTestClient(t)
+	res, err := c.InquireCcnl(context.Background(), domestic.InquireCcnlParams{
+		Symbol: "005930",
+	})
+	require.NoError(t, err)
+	require.NotNil(t, res)
+
+	assert.Equal(t, "J", capturedQuery.Get("FID_COND_MRKT_DIV_CODE"))
+	assert.Equal(t, "005930", capturedQuery.Get("FID_INPUT_ISCD"))
+
+	require.Len(t, res.Output, 2)
+	assert.Equal(t, "131542", res.Output[0].StckCntgHour)
+	d, _ := decimal.NewFromString("75800")
+	assert.True(t, d.Equal(res.Output[0].StckPrpr))
+	assert.Equal(t, int64(12345), res.Output[0].CntgVol)
+	assert.InDelta(t, 104.32, res.Output[0].TdayRltv, 0.01)
+}
