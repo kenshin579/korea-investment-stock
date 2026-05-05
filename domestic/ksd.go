@@ -319,3 +319,64 @@ func (c *Client) InquireKsdMergerSplit(ctx context.Context, params InquireKsdMer
 	}
 	return &res, nil
 }
+
+// KsdRevSplit 는 예탁원정보(액면변경) (HHKDB669105C0) 응답.
+//
+// 한투 docs: docs/api/국내주식/예탁원정보(액면변경).md
+// path: /uapi/domestic-stock/v1/ksdinfo/rev-split
+// ANOMALY: extra MARKET_GB query param (default "0" = 전체).
+type KsdRevSplit struct {
+	Output1 []KsdRevSplitItem `json:"output1"`
+}
+
+// KsdRevSplitItem 은 액면변경 한 행. 모든 필드 string (KIS docs).
+type KsdRevSplitItem struct {
+	RecordDate     string `json:"record_date"`       // 기준일
+	ShtCd          string `json:"sht_cd"`            // 종목코드
+	IsinName       string `json:"isin_name"`         // 종목명
+	InterBfFaceAmt string `json:"inter_bf_face_amt"` // 변경전액면가
+	InterAfFaceAmt string `json:"inter_af_face_amt"` // 변경후액면가
+	TdStopDt       string `json:"td_stop_dt"`        // 매매거래정지기간
+	ListDt         string `json:"list_dt"`           // 상장/등록일
+}
+
+// InquireKsdRevSplitParams 는 액면변경 조회 파라미터.
+type InquireKsdRevSplitParams struct {
+	Symbol   string // SHT_CD — 종목코드 (공백=전체)
+	Cts      string // CTS — 공백 입력 (default "")
+	FromDate string // F_DT — 조회시작일 YYYYMMDD
+	ToDate   string // T_DT — 조회종료일 YYYYMMDD
+	MarketGb string // MARKET_GB — 0:전체. 빈 값=>"0"
+}
+
+// InquireKsdRevSplit 호출.
+//
+// 한투 docs: docs/api/국내주식/예탁원정보(액면변경).md
+// path: /uapi/domestic-stock/v1/ksdinfo/rev-split (HHKDB669105C0)
+func (c *Client) InquireKsdRevSplit(ctx context.Context, params InquireKsdRevSplitParams) (*KsdRevSplit, error) {
+	marketGb := params.MarketGb
+	if marketGb == "" {
+		marketGb = "0"
+	}
+	resp, err := c.http.Do(ctx, &httpclient.Request{
+		Method: http.MethodGet,
+		Path:   "/uapi/domestic-stock/v1/ksdinfo/rev-split",
+		TrID:   "HHKDB669105C0",
+		Query: map[string]string{
+			"SHT_CD":    params.Symbol,
+			"CTS":       params.Cts,
+			"F_DT":      params.FromDate,
+			"T_DT":      params.ToDate,
+			"MARKET_GB": marketGb,
+		},
+		CustType: "P",
+	})
+	if err != nil {
+		return nil, err
+	}
+	var res KsdRevSplit
+	if err := json.Unmarshal(resp.Raw, &res); err != nil {
+		return nil, fmt.Errorf("kis: parse KsdRevSplit: %w", err)
+	}
+	return &res, nil
+}
