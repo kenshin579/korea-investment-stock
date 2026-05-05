@@ -352,3 +352,95 @@ func (c *Client) InquireTradePbmn(ctx context.Context, params InquireTradePbmnPa
 	}
 	return &res, nil
 }
+
+// OverseasRankingMinSummary 는 output1 3-field tier (거래량급증/매수체결강도/신고신저).
+//
+// 해당 메서드: InquireVolumeSurge, InquireVolumePower, InquireNewHighlow.
+// crec/trec 없음 — OverseasRankingFullSummary 와 혼용 금지.
+type OverseasRankingMinSummary struct {
+	Zdiv string `json:"zdiv"`        // 소수점자리수
+	Stat string `json:"stat"`        // 거래상태정보
+	Nrec int64  `json:"nrec,string"` // RecordCount
+}
+
+// VolumeSurge 는 해외주식_거래량급증 (HHDFS76270000) 응답.
+//
+// 한투 docs: docs/api/해외주식/해외주식_거래량급증.md
+// path: /uapi/overseas-stock/v1/ranking/volume-surge
+type VolumeSurge struct {
+	Output1 OverseasRankingMinSummary `json:"output1"`
+	Output2 []VolumeSurgeItem         `json:"output2"`
+}
+
+// VolumeSurgeItem 은 거래량급증 output2 의 한 행 (16 fields).
+//
+// 주의: 종목명 필드가 knam/enam (name/ename 아님).
+type VolumeSurgeItem struct {
+	Rsym   string          `json:"rsym"`          // 실시간조회심볼
+	Excd   string          `json:"excd"`          // 거래소코드
+	Symb   string          `json:"symb"`          // 종목코드
+	Knam   string          `json:"knam"`          // 종목명 (한글) — name 아님
+	Last   decimal.Decimal `json:"last"`          // 현재가
+	Sign   string          `json:"sign"`          // 기호
+	Diff   decimal.Decimal `json:"diff"`          // 대비
+	Rate   float64         `json:"rate,string"`   // 등락율
+	Tvol   int64           `json:"tvol,string"`   // 거래량
+	Pask   decimal.Decimal `json:"pask"`          // 매도호가
+	Pbid   decimal.Decimal `json:"pbid"`          // 매수호가
+	NTvol  int64           `json:"n_tvol,string"` // 기준거래량
+	NDiff  decimal.Decimal `json:"n_diff"`        // 증가량
+	NRate  float64         `json:"n_rate,string"` // 증가율
+	Enam   string          `json:"enam"`          // 영문종목명 — ename 아님
+	EOrdyn string          `json:"e_ordyn"`       // 매매가능
+}
+
+// InquireVolumeSurgeParams 는 해외주식_거래량급증 조회 파라미터.
+type InquireVolumeSurgeParams struct {
+	KeyB     string // KEYB — NEXT KEY BUFF. 빈 값 default
+	Auth     string // AUTH — 사용자권한정보. 빈 값 default
+	ExcdCode string // EXCD — 거래소코드. 필수
+	MixN     string // MIXN — N분전: 0(1분전),1(2분전),2(3분전),3(5분전),4(10분전),5(15분전),6(20분전),7(30분전),8(60분전),9(120분전). 빈 값=>"0"
+	VolRang  string // VOL_RANG — 거래량조건. 빈 값=>"0" (전체)
+}
+
+// InquireVolumeSurge 는 해외주식_거래량급증 호출.
+//
+// 한투 docs: docs/api/해외주식/해외주식_거래량급증.md
+// path: /uapi/overseas-stock/v1/ranking/volume-surge (HHDFS76270000)
+func (c *Client) InquireVolumeSurge(ctx context.Context, params InquireVolumeSurgeParams) (*VolumeSurge, error) {
+	excd := params.ExcdCode
+	if excd == "" {
+		return nil, fmt.Errorf("kis: ExcdCode required for InquireVolumeSurge")
+	}
+	mixn := params.MixN
+	if mixn == "" {
+		mixn = "0"
+	}
+	vol := params.VolRang
+	if vol == "" {
+		vol = "0"
+	}
+
+	resp, err := c.http.Do(ctx, &httpclient.Request{
+		Method: http.MethodGet,
+		Path:   "/uapi/overseas-stock/v1/ranking/volume-surge",
+		TrID:   "HHDFS76270000",
+		Query: map[string]string{
+			"KEYB":     params.KeyB,
+			"AUTH":     params.Auth,
+			"EXCD":     excd,
+			"MIXN":     mixn,
+			"VOL_RANG": vol,
+		},
+		CustType: "P",
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	var res VolumeSurge
+	if err := json.Unmarshal(resp.Raw, &res); err != nil {
+		return nil, fmt.Errorf("kis: parse VolumeSurge: %w", err)
+	}
+	return &res, nil
+}

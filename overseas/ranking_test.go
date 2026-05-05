@@ -179,3 +179,47 @@ func TestClient_InquireTradePbmn(t *testing.T) {
 	assert.Equal(t, int64(8500000000), res.Output2[0].ATamt) // a_tamt, not a_tvol
 	assert.Equal(t, int64(1), res.Output2[0].Rank)
 }
+
+func TestClient_InquireVolumeSurge(t *testing.T) {
+	httpmock.Activate()
+	defer httpmock.DeactivateAndReset()
+
+	var capturedQuery url.Values
+	httpmock.RegisterResponder(
+		http.MethodGet,
+		`=~/ranking/volume-surge`,
+		func(req *http.Request) (*http.Response, error) {
+			capturedQuery = req.URL.Query()
+			return httpmock.NewStringResponse(200, loadFixtureString(t, "volume_surge_success.json")), nil
+		},
+	)
+
+	c := newTestClient(t)
+	res, err := c.InquireVolumeSurge(context.Background(), overseas.InquireVolumeSurgeParams{
+		ExcdCode: "NAS",
+		MixN:     "0",
+	})
+	require.NoError(t, err)
+	require.NotNil(t, res)
+
+	assert.Equal(t, "NAS", capturedQuery.Get("EXCD"))
+	assert.Equal(t, "0", capturedQuery.Get("MIXN"))
+	assert.Equal(t, "0", capturedQuery.Get("VOL_RANG"))
+
+	// output1 검증 — 3-field MinSummary (crec/trec 없음)
+	assert.Equal(t, "2", res.Output1.Zdiv)
+	assert.Equal(t, int64(30), res.Output1.Nrec)
+
+	// output2[0] 검증 — knam/enam (name/ename 아님)
+	require.Len(t, res.Output2, 2)
+	assert.Equal(t, "AAPL", res.Output2[0].Symb)
+	assert.Equal(t, "애플", res.Output2[0].Knam)
+	assert.Equal(t, "APPLE INC", res.Output2[0].Enam)
+	d, _ := decimal.NewFromString("189.30")
+	assert.True(t, d.Equal(res.Output2[0].Last))
+	assert.Equal(t, int64(55000000), res.Output2[0].Tvol)
+	assert.Equal(t, int64(8000000), res.Output2[0].NTvol)
+	ndiff, _ := decimal.NewFromString("47000000")
+	assert.True(t, ndiff.Equal(res.Output2[0].NDiff))
+	assert.InDelta(t, 587.50, res.Output2[0].NRate, 0.01)
+}
