@@ -491,3 +491,59 @@ func (c *Client) InquireKsdMandDeposit(ctx context.Context, params InquireKsdMan
 	}
 	return &res, nil
 }
+
+// KsdCapDcrs 는 예탁원정보(감자) (HHKDB669106C0) 응답.
+//
+// 한투 docs: docs/api/국내주식/예탁원정보(감자).md
+// path: /uapi/domestic-stock/v1/ksdinfo/cap-dcrs
+type KsdCapDcrs struct {
+	Output1 []KsdCapDcrsItem `json:"output1"`
+}
+
+// KsdCapDcrsItem 은 감자 한 행. 모든 필드 string (KIS docs).
+type KsdCapDcrsItem struct {
+	RecordDate    string `json:"record_date"`     // 기준일
+	ShtCd         string `json:"sht_cd"`          // 종목코드
+	IsinName      string `json:"isin_name"`       // 종목명
+	StkKind       string `json:"stk_kind"`        // 주식종류
+	ReduceCapType string `json:"reduce_cap_type"` // 감자구분
+	ReduceCapRate string `json:"reduce_cap_rate"` // 감자배정율
+	CompWay       string `json:"comp_way"`        // 계산방법
+	TdStopDt      string `json:"td_stop_dt"`      // 매매거래정지기간
+	ListDt        string `json:"list_dt"`         // 상장/등록일
+}
+
+// InquireKsdCapDcrsParams 는 감자 조회 파라미터.
+type InquireKsdCapDcrsParams struct {
+	Cts      string // CTS — 공백 입력 (default "")
+	FromDate string // F_DT — 조회시작일 YYYYMMDD
+	ToDate   string // T_DT — 조회종료일 YYYYMMDD
+	Symbol   string // SHT_CD — 종목코드 (공백=전체)
+}
+
+// InquireKsdCapDcrs 호출.
+//
+// 한투 docs: docs/api/국내주식/예탁원정보(감자).md
+// path: /uapi/domestic-stock/v1/ksdinfo/cap-dcrs (HHKDB669106C0)
+func (c *Client) InquireKsdCapDcrs(ctx context.Context, params InquireKsdCapDcrsParams) (*KsdCapDcrs, error) {
+	resp, err := c.http.Do(ctx, &httpclient.Request{
+		Method: http.MethodGet,
+		Path:   "/uapi/domestic-stock/v1/ksdinfo/cap-dcrs",
+		TrID:   "HHKDB669106C0",
+		Query: map[string]string{
+			"CTS":    params.Cts,
+			"F_DT":   params.FromDate,
+			"T_DT":   params.ToDate,
+			"SHT_CD": params.Symbol,
+		},
+		CustType: "P",
+	})
+	if err != nil {
+		return nil, err
+	}
+	var res KsdCapDcrs
+	if err := json.Unmarshal(resp.Raw, &res); err != nil {
+		return nil, fmt.Errorf("kis: parse KsdCapDcrs: %w", err)
+	}
+	return &res, nil
+}

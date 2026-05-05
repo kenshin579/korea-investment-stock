@@ -261,3 +261,33 @@ func TestClient_InquireKsdMandDeposit(t *testing.T) {
 	assert.Equal(t, "의무보호예수", res.Output1[0].DepoReason)
 	assert.Equal(t, "0.84", res.Output1[0].TotIssueQtyPerRate)
 }
+
+func TestClient_InquireKsdCapDcrs(t *testing.T) {
+	httpmock.Activate()
+	defer httpmock.DeactivateAndReset()
+
+	var capturedQuery url.Values
+	httpmock.RegisterResponder(
+		http.MethodGet,
+		`=~/ksdinfo/cap-dcrs`,
+		func(req *http.Request) (*http.Response, error) {
+			capturedQuery = req.URL.Query()
+			return httpmock.NewStringResponse(200, loadFixtureString(t, "ksd_cap_dcrs_success.json")), nil
+		},
+	)
+
+	c := newTestClient(t)
+	res, err := c.InquireKsdCapDcrs(context.Background(), domestic.InquireKsdCapDcrsParams{
+		FromDate: "20260101",
+		ToDate:   "20260505",
+	})
+	require.NoError(t, err)
+	require.NotNil(t, res)
+
+	assert.Equal(t, "20260101", capturedQuery.Get("F_DT"))
+
+	require.Len(t, res.Output1, 2)
+	assert.Equal(t, "005930", res.Output1[0].ShtCd)
+	assert.Equal(t, "유상감자", res.Output1[0].ReduceCapType)
+	assert.Equal(t, "주식병합", res.Output1[0].CompWay)
+}
