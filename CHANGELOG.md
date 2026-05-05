@@ -1,5 +1,19 @@
 # CHANGELOG
 
+## [1.4.0] - 2026-05-05
+
+### Added — Phase 2.1 (국내 호가/체결)
+
+- `Domestic.InquireAskingPriceExpCcn` — 주식현재가 호가/예상체결 (FHKST01010200) — 10단계 호가/잔량/증감 + 시간외 + 예상체결
+- `Domestic.InquireCcnl` — 주식현재가 체결 (FHKST01010300) — 최근 체결 list + 체결강도
+- `Domestic.InquireDailyPrice` — 주식현재가 일자별 (FHKST01010400) — 최근 30 거래일/주/월 + 외국인 소진율 + 락 구분
+- examples: `domestic_quote`
+
+### Notes
+
+- `InquireDailyPrice` 는 Phase 1.2 의 `InquireDailyItemChartPrice` 와 다른 endpoint — 외국인 소진율, 락 구분 등 추가 필드 포함
+- Phase 2 시작 — Python wrapper 가 cover 하지 않은 KIS read-only API 확장 (Phase 2.1~2.4 sub-phase)
+
 ## [1.3.0] - 2026-05-05
 
 ### Added — Phase 1.5 (해외주식, Python parity 완성)

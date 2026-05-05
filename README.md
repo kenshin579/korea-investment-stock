@@ -61,7 +61,7 @@ func main() {
 }
 ```
 
-## Available Methods (Phase 1.2 + 1.3 + 1.4 + 1.5)
+## Available Methods (Phase 1.2 ~ 2.1)
 
 | Method | 한투 path | TR_ID |
 |--------|----------|-------|
@@ -93,6 +93,9 @@ func main() {
 | `Overseas.InquireDailyChartPrice` | `overseas-price/v1/quotations/inquire-daily-chartprice` | FHKST03030100 |
 | `Overseas.InquireUpdownRate` | `overseas-stock/v1/ranking/updown-rate` | HHDFS76290000 |
 | `Overseas.FetchOverseasSymbols(market)` | (KIS 공개 마스터 — 11 거래소) | — |
+| `Domestic.InquireAskingPriceExpCcn` | `quotations/inquire-asking-price-exp-ccn` | FHKST01010200 |
+| `Domestic.InquireCcnl` | `quotations/inquire-ccnl` | FHKST01010300 |
+| `Domestic.InquireDailyPrice` | `quotations/inquire-daily-price` | FHKST01010400 |
 
 ## Design
 
