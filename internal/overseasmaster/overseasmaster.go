@@ -41,12 +41,12 @@ const (
 	colCurrency     = 9  // 거래통화 (USD/JPY/CNY/HKD/VND)
 	colDecimals     = 10 // 소수점 자리수
 	// col 11: 빈 컬럼
-	colBasePrice   = 12 // 기준가/종가
-	colTradeUnit   = 13 // 매매수량단위
-	colMinUnit     = 14 // 최소거래단위
-	colOpenTime    = 15 // 시장개시시각 (930/900 등)
-	colCloseTime   = 16 // 시장마감시각 (1600/1530 등)
-	colSuspended   = 17 // 거래정지 여부 (N/Y)
+	colBasePrice = 12 // 기준가/종가
+	colTradeUnit = 13 // 매매수량단위
+	colMinUnit   = 14 // 최소거래단위
+	colOpenTime  = 15 // 시장개시시각 (930/900 등)
+	colCloseTime = 16 // 시장마감시각 (1600/1530 등)
+	colSuspended = 17 // 거래정지 여부 (N/Y)
 	// col 18: 빈 컬럼
 	colISINCode = 19 // ISIN 유사코드 (000 = 없음)
 )
