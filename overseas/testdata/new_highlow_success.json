@@ -1,0 +1,48 @@
+{
+  "rt_cd": "0",
+  "msg_cd": "MCA00000",
+  "msg1": "정상처리 되었습니다.",
+  "output1": {
+    "zdiv": "2",
+    "stat": "정상",
+    "nrec": "30"
+  },
+  "output2": [
+    {
+      "rsym": "DNASNAAPL",
+      "excd": "NAS",
+      "symb": "AAPL",
+      "name": "애플",
+      "last": "189.30",
+      "sign": "2",
+      "diff": "2.50",
+      "rate": "1.34",
+      "tvol": "55000000",
+      "pask": "189.35",
+      "pbid": "189.25",
+      "n_base": "160.00",
+      "n_diff": "29.30",
+      "n_rate": "18.31",
+      "ename": "APPLE INC",
+      "e_ordyn": "Y"
+    },
+    {
+      "rsym": "DNASNMSFT",
+      "excd": "NAS",
+      "symb": "MSFT",
+      "name": "마이크로소프트",
+      "last": "415.20",
+      "sign": "2",
+      "diff": "4.10",
+      "rate": "1.00",
+      "tvol": "22000000",
+      "pask": "415.25",
+      "pbid": "415.15",
+      "n_base": "350.00",
+      "n_diff": "65.20",
+      "n_rate": "18.63",
+      "ename": "MICROSOFT CORP",
+      "e_ordyn": "Y"
+    }
+  ]
+}

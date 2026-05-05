@@ -1,5 +1,24 @@
 # CHANGELOG
 
+## [1.6.0] - 2026-05-05
+
+### Added — Phase 2.3 (해외주식 추가 Ranking)
+
+- `Overseas.InquireMarketCap` — 해외주식 시가총액순위 (HHDFS76350100) — output1 5-field + output2 15 fields/item
+- `Overseas.InquireTradeVol` — 해외주식 거래량순위 (HHDFS76310010) — output1 5-field + output2 16 fields/item
+- `Overseas.InquireTradePbmn` — 해외주식 거래대금순위 (HHDFS76320010) — output1 5-field + output2 16 fields/item (a_tamt)
+- `Overseas.InquireVolumeSurge` — 해외주식 거래량급증 (HHDFS76270000) — output1 3-field + output2 16 fields/item (knam/enam)
+- `Overseas.InquireVolumePower` — 해외주식 매수체결강도상위 (HHDFS76280000) — output1 3-field + output2 15 fields/item (knam/enam, tpow/powx)
+- `Overseas.InquireNewHighlow` — 해외주식 신고/신저가 (HHDFS76300000) — output1 3-field + output2 16 fields/item (n_base/n_diff/n_rate)
+- examples: `overseas_ranking`
+
+### Notes
+
+- output1 2 tier: `OverseasRankingFullSummary` (5-field: #1-#3) / `OverseasRankingMinSummary` (3-field: #4-#6, crec/trec 없음)
+- output2 종목명 키 분기: InquireMarketCap/InquireTradeVol/InquireTradePbmn/InquireNewHighlow 는 `name`/`ename`, InquireVolumeSurge/InquireVolumePower 는 `knam`/`enam`
+- `InquireVolumePower` 의 query 파라미터 `NDAY` 는 실제로 분(分) 단위 — KIS docs 명명 이슈. wire name 그대로 사용
+- Phase 2.3 완료 — 누적 42 메서드 (Phase 2.2: 36 → Phase 2.3: 42)
+
 ## [1.5.0] - 2026-05-05
 
 ### Added — Phase 2.2 (국내 신고저가 / 시간외)
