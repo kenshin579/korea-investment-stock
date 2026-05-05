@@ -202,3 +202,57 @@ func (c *Client) InquireKsdPaidinCapin(ctx context.Context, params InquireKsdPai
 	}
 	return &res, nil
 }
+
+// KsdSharehldMeet 는 예탁원정보(주주총회) (HHKDB669111C0) 응답.
+//
+// 한투 docs: docs/api/국내주식/예탁원정보(주주총회).md
+// path: /uapi/domestic-stock/v1/ksdinfo/sharehld-meet
+type KsdSharehldMeet struct {
+	Output1 []KsdSharehldMeetItem `json:"output1"`
+}
+
+// KsdSharehldMeetItem 은 주주총회 한 행. 모든 필드 string (KIS docs).
+type KsdSharehldMeetItem struct {
+	RecordDate  string `json:"record_date"`   // 기준일
+	ShtCd       string `json:"sht_cd"`        // 종목코드
+	IsinName    string `json:"isin_name"`     // 종목명
+	GenMeetDt   string `json:"gen_meet_dt"`   // 주총일자
+	GenMeetType string `json:"gen_meet_type"` // 주총사유
+	Agenda      string `json:"agenda"`        // 주총의안
+	VoteTotQty  string `json:"vote_tot_qty"`  // 의결권주식총수
+}
+
+// InquireKsdSharehldMeetParams 는 주주총회 조회 파라미터.
+type InquireKsdSharehldMeetParams struct {
+	Cts      string // CTS — 공백 입력 (default "")
+	FromDate string // F_DT — 조회시작일 YYYYMMDD
+	ToDate   string // T_DT — 조회종료일 YYYYMMDD
+	Symbol   string // SHT_CD — 종목코드 (공백=전체)
+}
+
+// InquireKsdSharehldMeet 호출.
+//
+// 한투 docs: docs/api/국내주식/예탁원정보(주주총회).md
+// path: /uapi/domestic-stock/v1/ksdinfo/sharehld-meet (HHKDB669111C0)
+func (c *Client) InquireKsdSharehldMeet(ctx context.Context, params InquireKsdSharehldMeetParams) (*KsdSharehldMeet, error) {
+	resp, err := c.http.Do(ctx, &httpclient.Request{
+		Method: http.MethodGet,
+		Path:   "/uapi/domestic-stock/v1/ksdinfo/sharehld-meet",
+		TrID:   "HHKDB669111C0",
+		Query: map[string]string{
+			"CTS":    params.Cts,
+			"F_DT":   params.FromDate,
+			"T_DT":   params.ToDate,
+			"SHT_CD": params.Symbol,
+		},
+		CustType: "P",
+	})
+	if err != nil {
+		return nil, err
+	}
+	var res KsdSharehldMeet
+	if err := json.Unmarshal(resp.Raw, &res); err != nil {
+		return nil, fmt.Errorf("kis: parse KsdSharehldMeet: %w", err)
+	}
+	return &res, nil
+}
