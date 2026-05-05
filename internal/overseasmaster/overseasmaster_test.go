@@ -24,6 +24,15 @@ func TestParse_NAS(t *testing.T) {
 		assert.NotEmpty(t, s.EnglishName, "row %d: EnglishName 비어있음", i)
 		assert.NotNil(t, s.Raw, "row %d: Raw map 비어있지 않음", i)
 	}
+
+	// First row spot-check (catches column-index regression — sample data is committed bytes, won't rotate)
+	first := syms[0]
+	assert.Equal(t, "AACB", first.Symbol)
+	assert.Equal(t, "NAS", first.MarketCode)
+	assert.Equal(t, "USD", first.Currency)
+	assert.Equal(t, "N", first.SuspendedYn)
+	assert.Equal(t, "10.3800", first.BasePrice)
+	assert.Equal(t, "2", first.StockType)
 }
 
 func TestParse_InvalidMarket(t *testing.T) {

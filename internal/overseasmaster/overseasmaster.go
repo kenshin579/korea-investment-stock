@@ -101,7 +101,7 @@ func Parse(market string, zipBytes []byte) ([]Symbol, error) {
 			continue
 		}
 		parts := strings.Split(line, "\t")
-		if len(parts) < colISINCode+1 {
+		if len(parts) < len(columnNames) {
 			// 24 컬럼 미만이면 파싱 불가 — skip
 			continue
 		}
