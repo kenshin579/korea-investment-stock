@@ -31,5 +31,11 @@
 //   - InquireIndexCategoryPrice       — 국내업종 구분별 전체시세 (FHPUP02140000)
 //   - InquirePubOffer                 — 예탁원정보 공모주청약일정 (HHKDB669108C0)
 //
+// Phase 2.1 메서드 (3):
+//
+//   - InquireAskingPriceExpCcn  — 주식현재가 호가/예상체결 (FHKST01010200)
+//   - InquireCcnl               — 주식현재가 체결 (FHKST01010300)
+//   - InquireDailyPrice         — 주식현재가 일자별 (FHKST01010400)
+//
 // 사용자는 root kis.Client 의 Domestic 필드로 접근.
 package domestic
