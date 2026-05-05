@@ -1,0 +1,51 @@
+{
+  "rt_cd": "0",
+  "msg_cd": "MCA00000",
+  "msg1": "정상처리 되었습니다.",
+  "output1": [
+    {
+      "bsop_hour": "090100",
+      "invr_cls_code": "1",
+      "invr_cls_name": "외국인",
+      "arbt_seln_tr_pbmn": "1200000000",
+      "arbt_shnu_tr_pbmn": "1300000000",
+      "arbt_ntby_tr_pbmn": "100000000",
+      "arbt_seln_vol_amt": "15000",
+      "arbt_shnu_vol_amt": "16000",
+      "arbt_ntby_qty_amt": "1000",
+      "nabt_seln_tr_pbmn": "2200000000",
+      "nabt_shnu_tr_pbmn": "2400000000",
+      "nabt_ntby_tr_pbmn": "200000000",
+      "nabt_seln_vol_amt": "28000",
+      "nabt_shnu_vol_amt": "30000",
+      "nabt_ntby_qty_amt": "2000",
+      "whol_seln_tr_pbmn": "3400000000",
+      "whol_shnu_tr_pbmn": "3700000000",
+      "whol_ntby_tr_pbmn": "300000000",
+      "whol_seln_vol_amt": "43000",
+      "whol_shnu_vol_amt": "46000"
+    },
+    {
+      "bsop_hour": "090100",
+      "invr_cls_code": "2",
+      "invr_cls_name": "기관계",
+      "arbt_seln_tr_pbmn": "800000000",
+      "arbt_shnu_tr_pbmn": "750000000",
+      "arbt_ntby_tr_pbmn": "-50000000",
+      "arbt_seln_vol_amt": "10000",
+      "arbt_shnu_vol_amt": "9500",
+      "arbt_ntby_qty_amt": "-500",
+      "nabt_seln_tr_pbmn": "1500000000",
+      "nabt_shnu_tr_pbmn": "1400000000",
+      "nabt_ntby_tr_pbmn": "-100000000",
+      "nabt_seln_vol_amt": "19000",
+      "nabt_shnu_vol_amt": "18000",
+      "nabt_ntby_qty_amt": "-1000",
+      "whol_seln_tr_pbmn": "2300000000",
+      "whol_shnu_tr_pbmn": "2150000000",
+      "whol_ntby_tr_pbmn": "-150000000",
+      "whol_seln_vol_amt": "29000",
+      "whol_shnu_vol_amt": "27500"
+    }
+  ]
+}

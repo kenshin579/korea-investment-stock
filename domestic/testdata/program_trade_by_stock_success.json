@@ -1,0 +1,39 @@
+{
+  "rt_cd": "0",
+  "msg_cd": "MCA00000",
+  "msg1": "정상처리 되었습니다.",
+  "output": [
+    {
+      "bsop_hour": "090100",
+      "stck_prpr": "75800",
+      "prdy_vrss": "800",
+      "prdy_vrss_sign": "2",
+      "prdy_ctrt": "1.07",
+      "acml_vol": "123456",
+      "whol_smtn_seln_vol": "5000",
+      "whol_smtn_shnu_vol": "6500",
+      "whol_smtn_ntby_qty": "1500",
+      "whol_smtn_seln_tr_pbmn": "379000000",
+      "whol_smtn_shnu_tr_pbmn": "492700000",
+      "whol_smtn_ntby_tr_pbmn": "113700000",
+      "whol_ntby_vol_icdc": "200",
+      "whol_ntby_tr_pbmn_icdc": "15160000"
+    },
+    {
+      "bsop_hour": "090200",
+      "stck_prpr": "75900",
+      "prdy_vrss": "900",
+      "prdy_vrss_sign": "2",
+      "prdy_ctrt": "1.20",
+      "acml_vol": "234567",
+      "whol_smtn_seln_vol": "8000",
+      "whol_smtn_shnu_vol": "10000",
+      "whol_smtn_ntby_qty": "2000",
+      "whol_smtn_seln_tr_pbmn": "607200000",
+      "whol_smtn_shnu_tr_pbmn": "759000000",
+      "whol_smtn_ntby_tr_pbmn": "151800000",
+      "whol_ntby_vol_icdc": "500",
+      "whol_ntby_tr_pbmn_icdc": "37950000"
+    }
+  ]
+}
