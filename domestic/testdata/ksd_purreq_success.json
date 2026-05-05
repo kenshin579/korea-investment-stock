@@ -1,0 +1,26 @@
+{
+  "output1": [
+    {
+      "record_date": "20260331",
+      "sht_cd": "005930",
+      "isin_name": "삼성전자",
+      "stk_kind": "보통주",
+      "opp_opi_rcpt_term": "20260310 ~ 20260322",
+      "buy_req_rcpt_term": "20260324 ~ 20260326",
+      "buy_req_price": "69000",
+      "buy_amt_pay_dt": "20260410",
+      "get_meet_dt": "20260326"
+    },
+    {
+      "record_date": "20260331",
+      "sht_cd": "000660",
+      "isin_name": "SK하이닉스",
+      "stk_kind": "보통주",
+      "opp_opi_rcpt_term": "20260310 ~ 20260322",
+      "buy_req_rcpt_term": "20260324 ~ 20260326",
+      "buy_req_price": "120000",
+      "buy_amt_pay_dt": "20260410",
+      "get_meet_dt": "20260327"
+    }
+  ]
+}

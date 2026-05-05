@@ -1,0 +1,34 @@
+{
+  "output": [
+    {
+      "record_date": "20260310",
+      "sht_cd": "005930",
+      "isin_name": "삼성전자",
+      "tot_issue_stk_qty": "5969782550",
+      "issue_stk_qty": "100000000",
+      "fix_rate": "0.10",
+      "disc_rate": "0.00",
+      "fix_price": "68000",
+      "right_dt": "20260309",
+      "sub_term_ft": "20260312",
+      "sub_term": "20260313",
+      "list_date": "20260325",
+      "stk_kind": "보통주"
+    },
+    {
+      "record_date": "20260310",
+      "sht_cd": "000660",
+      "isin_name": "SK하이닉스",
+      "tot_issue_stk_qty": "728002365",
+      "issue_stk_qty": "30000000",
+      "fix_rate": "0.10",
+      "disc_rate": "10.00",
+      "fix_price": "115000",
+      "right_dt": "20260309",
+      "sub_term_ft": "20260312",
+      "sub_term": "20260313",
+      "list_date": "20260325",
+      "stk_kind": "보통주"
+    }
+  ]
+}

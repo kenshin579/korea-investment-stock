@@ -1,0 +1,24 @@
+{
+  "output1": [
+    {
+      "list_dt": "20260102",
+      "sht_cd": "005930",
+      "isin_name": "삼성전자",
+      "stk_kind": "보통주",
+      "issue_type": "유상증자",
+      "issue_stk_qty": "50000000",
+      "tot_issue_stk_qty": "5969782550",
+      "issue_price": "68000"
+    },
+    {
+      "list_dt": "20260102",
+      "sht_cd": "000660",
+      "isin_name": "SK하이닉스",
+      "stk_kind": "보통주",
+      "issue_type": "유상증자",
+      "issue_stk_qty": "30000000",
+      "tot_issue_stk_qty": "728002365",
+      "issue_price": "115000"
+    }
+  ]
+}

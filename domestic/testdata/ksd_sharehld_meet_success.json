@@ -1,0 +1,22 @@
+{
+  "output1": [
+    {
+      "record_date": "20260331",
+      "sht_cd": "005930",
+      "isin_name": "삼성전자",
+      "gen_meet_dt": "20260326",
+      "gen_meet_type": "정기주총",
+      "agenda": "이익배당 승인의 건",
+      "vote_tot_qty": "5969782550"
+    },
+    {
+      "record_date": "20260331",
+      "sht_cd": "000660",
+      "isin_name": "SK하이닉스",
+      "gen_meet_dt": "20260327",
+      "gen_meet_type": "정기주총",
+      "agenda": "재무제표 승인의 건",
+      "vote_tot_qty": "728002365"
+    }
+  ]
+}

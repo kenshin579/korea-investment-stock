@@ -1,0 +1,34 @@
+{
+  "output1": [
+    {
+      "record_date": "20260331",
+      "sht_cd": "005930",
+      "isin_name": "삼성전자",
+      "divi_kind": "결산",
+      "face_val": "100",
+      "per_sto_divi_amt": "361",
+      "divi_rate": "3.61",
+      "stk_divi_rate": "0.00",
+      "divi_pay_dt": "20260430",
+      "stk_div_pay_dt": "",
+      "odd_pay_dt": "",
+      "stk_kind": "보통주",
+      "high_divi_gb": "N"
+    },
+    {
+      "record_date": "20260331",
+      "sht_cd": "000660",
+      "isin_name": "SK하이닉스",
+      "divi_kind": "결산",
+      "face_val": "5000",
+      "per_sto_divi_amt": "1200",
+      "divi_rate": "2.40",
+      "stk_divi_rate": "0.00",
+      "divi_pay_dt": "20260430",
+      "stk_div_pay_dt": "",
+      "odd_pay_dt": "",
+      "stk_kind": "보통주",
+      "high_divi_gb": "N"
+    }
+  ]
+}

@@ -1,0 +1,26 @@
+{
+  "output1": [
+    {
+      "record_date": "20260310",
+      "sht_cd": "005930",
+      "isin_name": "삼성전자",
+      "subscr_dt": "20260312 ~ 20260313",
+      "subscr_price": "68000",
+      "subscr_stk_qty": "100000000",
+      "refund_dt": "20260318",
+      "list_dt": "20260325",
+      "lead_mgr": "한국투자증권"
+    },
+    {
+      "record_date": "20260310",
+      "sht_cd": "000660",
+      "isin_name": "SK하이닉스",
+      "subscr_dt": "20260312 ~ 20260313",
+      "subscr_price": "115000",
+      "subscr_stk_qty": "30000000",
+      "refund_dt": "20260318",
+      "list_dt": "20260325",
+      "lead_mgr": "미래에셋증권"
+    }
+  ]
+}

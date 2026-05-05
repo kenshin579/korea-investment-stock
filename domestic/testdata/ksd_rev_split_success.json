@@ -1,0 +1,22 @@
+{
+  "output1": [
+    {
+      "record_date": "20260415",
+      "sht_cd": "005930",
+      "isin_name": "삼성전자",
+      "inter_bf_face_amt": "100",
+      "inter_af_face_amt": "500",
+      "td_stop_dt": "20260414 ~ 20260416",
+      "list_dt": "20260417"
+    },
+    {
+      "record_date": "20260415",
+      "sht_cd": "000660",
+      "isin_name": "SK하이닉스",
+      "inter_bf_face_amt": "5000",
+      "inter_af_face_amt": "10000",
+      "td_stop_dt": "20260414 ~ 20260416",
+      "list_dt": "20260417"
+    }
+  ]
+}
