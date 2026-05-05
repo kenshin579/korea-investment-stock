@@ -79,7 +79,7 @@ func NewClient(apiKey, apiSecret, accountNo string, opts ...Option) (*Client, er
 		return nil, err
 	}
 	c.Domestic = domestic.New(c.httpClient, c.masterC)
-	c.Overseas = overseas.New(c.httpClient)
+	c.Overseas = overseas.New(c.httpClient, c.masterC)
 	return c, nil
 }
 
