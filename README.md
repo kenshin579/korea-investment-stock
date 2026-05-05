@@ -61,7 +61,7 @@ func main() {
 }
 ```
 
-## Available Methods (Phase 1.2 ~ 2.2)
+## Available Methods (Phase 1.2 ~ 2.3)
 
 | Method | 한투 path | TR_ID |
 |--------|----------|-------|
@@ -101,6 +101,12 @@ func main() {
 | `Domestic.InquireOvertimeAskingPrice` | `quotations/inquire-overtime-asking-price` | FHPST02300400 |
 | `Domestic.InquireOvertimeVolume` | `ranking/overtime-volume` | FHPST02350000 |
 | `Domestic.InquireOvertimeFluctuation` | `ranking/overtime-fluctuation` | FHPST02340000 |
+| `Overseas.InquireMarketCap` | `ranking/market-cap` | HHDFS76350100 |
+| `Overseas.InquireTradeVol` | `ranking/trade-vol` | HHDFS76310010 |
+| `Overseas.InquireTradePbmn` | `ranking/trade-pbmn` | HHDFS76320010 |
+| `Overseas.InquireVolumeSurge` | `ranking/volume-surge` | HHDFS76270000 |
+| `Overseas.InquireVolumePower` | `ranking/volume-power` | HHDFS76280000 |
+| `Overseas.InquireNewHighlow` | `ranking/new-highlow` | HHDFS76300000 |
 
 ## Design
 
