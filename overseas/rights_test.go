@@ -48,3 +48,40 @@ func TestClient_InquireRightsByIce(t *testing.T) {
 	assert.Equal(t, "주식배당", res.Output1[0].CaTitle)
 	assert.Equal(t, "20260430", res.Output1[0].PayDt)
 }
+
+func TestClient_InquirePeriodRights(t *testing.T) {
+	httpmock.Activate()
+	defer httpmock.DeactivateAndReset()
+
+	var capturedQuery url.Values
+	httpmock.RegisterResponder(
+		http.MethodGet,
+		`=~/quotations/period-rights`,
+		func(req *http.Request) (*http.Response, error) {
+			capturedQuery = req.URL.Query()
+			return httpmock.NewStringResponse(200, loadFixtureString(t, "period_rights_success.json")), nil
+		},
+	)
+
+	c := newTestClient(t)
+	res, err := c.InquirePeriodRights(context.Background(), overseas.InquirePeriodRightsParams{
+		InqrStrtDt: "20260401",
+		InqrEndDt:  "20260430",
+		Pdno:       "AAPL",
+	})
+	require.NoError(t, err)
+	require.NotNil(t, res)
+
+	assert.Equal(t, "20260401", capturedQuery.Get("INQR_STRT_DT"))
+	assert.Equal(t, "20260430", capturedQuery.Get("INQR_END_DT"))
+	assert.Equal(t, "AAPL", capturedQuery.Get("PDNO"))
+	// cursor pagination 첫 조회 시 빈 값 전송 확인
+	assert.Equal(t, "", capturedQuery.Get("CTX_AREA_NK50"))
+	assert.Equal(t, "", capturedQuery.Get("CTX_AREA_FK50"))
+
+	require.Len(t, res.Output, 2)
+	assert.Equal(t, "20260401", res.Output[0].BassDt)
+	assert.Equal(t, "AAPL", res.Output[0].Pdno)
+	assert.Equal(t, "Y", res.Output[0].DfntYn)
+	assert.Equal(t, "USD", res.Output[0].CrcyCd)
+}
