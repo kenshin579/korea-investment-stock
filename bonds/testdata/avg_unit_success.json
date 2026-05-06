@@ -1,0 +1,64 @@
+{
+    "rt_cd": "0",
+    "msg_cd": "MCA00000",
+    "msg1": "정상처리 되었습니다.",
+    "output1": {
+        "pdno": "KR103501GCC7",
+        "prdt_type_cd": "300",
+        "prdt_name": "국고채권 03500-5103(21-3)",
+        "bond_prpr": "9823.50",
+        "ernn_rate": "3.62",
+        "bond_hgpr": "9830.00",
+        "bond_lwpr": "9820.00",
+        "kis_unpr": "9820.00",
+        "kbp_unpr": "9821.50",
+        "nice_evlu_unpr": "9822.00",
+        "fnp_unpr": "9823.00",
+        "avg_evlu_unpr": "9821.63",
+        "kis_evlu_erng_rt": "3.65",
+        "kbp_evlu_erng_rt": "3.64",
+        "nice_evlu_erng_rt": "3.63",
+        "fnp_evlu_erng_rt": "3.62",
+        "avg_evlu_erng_rt": "3.64",
+        "evlu_dt": "20260505",
+        "crcy_cd": "KRW",
+        "pdno_cnt": "1",
+        "tot_evlu_amt": "9821630",
+        "acml_vol": "1000",
+        "chng_yn": "Y"
+    },
+    "output2": [
+        {
+            "pdno": "KR103501GCC7",
+            "prdt_type_cd": "300",
+            "prdt_name": "국고채권 03500-5103(21-3)",
+            "hldg_qty": "1000",
+            "avg_unpr": "9810.00",
+            "evlu_pric": "9821.63",
+            "evlu_amt": "9821630",
+            "evlu_pfls_amt": "11630",
+            "crcy_cd": "KRW",
+            "chng_yn": "Y"
+        }
+    ],
+    "output3": [
+        {
+            "pdno": "KR103501GCC7",
+            "prdt_type_cd": "300",
+            "prdt_name": "국고채권 03500-5103(21-3)",
+            "hldg_qty": "1000",
+            "avg_unpr": "9810.00",
+            "kis_rf_unpr": "9820.00",
+            "kbp_rf_unpr": "9821.50",
+            "nice_rf_unpr": "9822.00",
+            "fnp_rf_unpr": "9823.00",
+            "avg_rf_unpr": "9821.63",
+            "kis_evlu_unit_pric": "9820.00",
+            "kbp_evlu_unit_pric": "9821.50",
+            "nice_evlu_unit_pric": "9822.00",
+            "fnp_evlu_unit_pric": "9823.00",
+            "avg_evlu_unit_pric": "9821.63",
+            "evlu_amt": "9821630"
+        }
+    ]
+}
