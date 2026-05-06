@@ -213,3 +213,42 @@ func TestClient_InquireOvertimeFluctuation(t *testing.T) {
 	assert.Equal(t, int64(234567), res.Output2[0].OvtmUntpVol)
 	assert.InDelta(t, 1.90, res.Output2[0].OvtmVrssAcmlVolRlim, 0.01)
 }
+
+func TestClient_InquireVolumePower(t *testing.T) {
+	httpmock.Activate()
+	defer httpmock.DeactivateAndReset()
+
+	var capturedQuery url.Values
+	httpmock.RegisterResponder(
+		http.MethodGet,
+		`=~/ranking/volume-power`,
+		func(req *http.Request) (*http.Response, error) {
+			capturedQuery = req.URL.Query()
+			return httpmock.NewStringResponse(200, loadFixtureString(t, "volume_power_success.json")), nil
+		},
+	)
+
+	c := newTestClient(t)
+	res, err := c.InquireVolumePower(context.Background(), domestic.InquireVolumePowerParams{
+		Symbol:     "0001",
+		DivClsCode: "0",
+	})
+	require.NoError(t, err)
+	require.NotNil(t, res)
+
+	// lowercase wire keys 확인 (UPPERCASE FID_ 아님)
+	assert.Equal(t, "J", capturedQuery.Get("fid_cond_mrkt_div_code"))
+	assert.Equal(t, "20168", capturedQuery.Get("fid_cond_scr_div_code"))
+	assert.Equal(t, "0001", capturedQuery.Get("fid_input_iscd"))
+	assert.Empty(t, capturedQuery.Get("FID_COND_MRKT_DIV_CODE"), "lowercase 사용 확인")
+
+	require.Len(t, res.Output, 2)
+	assert.Equal(t, "005930", res.Output[0].StckShrnIscd)
+	assert.Equal(t, "1", res.Output[0].DataRank)
+
+	wantPrpr, _ := decimal.NewFromString("82500")
+	assert.True(t, wantPrpr.Equal(res.Output[0].StckPrpr))
+	assert.InDelta(t, 125.30, res.Output[0].TdayRltv, 0.001)
+	assert.Equal(t, int64(6800000), res.Output[0].SelnCnqnSmtn)
+	assert.Equal(t, int64(7200000), res.Output[0].ShnuCnqnSmtn)
+}

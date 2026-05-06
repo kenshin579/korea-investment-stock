@@ -551,3 +551,81 @@ func (c *Client) InquireOvertimeFluctuation(ctx context.Context, params InquireO
 	}
 	return &res, nil
 }
+
+// VolumePower 는 체결강도 상위 (FHPST01680000) 응답.
+//
+// 한투 docs: docs/api/국내주식/체결강도상위.md
+// path: /uapi/domestic-stock/v1/ranking/volume-power
+//
+// 주의: 모든 query 파라미터가 lowercase fid_* (대문자 FID_ 아님).
+type VolumePower struct {
+	Output []VolumePowerItem `json:"output"`
+}
+
+// VolumePowerItem 은 응답의 output 한 행 (11 fields).
+type VolumePowerItem struct {
+	StckShrnIscd string          `json:"stck_shrn_iscd"`        // 주식 단축 종목코드
+	DataRank     string          `json:"data_rank"`             // 데이터 순위
+	HtsKorIsnm   string          `json:"hts_kor_isnm"`          // HTS 한글 종목명
+	StckPrpr     decimal.Decimal `json:"stck_prpr"`             // 주식 현재가
+	PrdyVrss     decimal.Decimal `json:"prdy_vrss"`             // 전일 대비
+	PrdyVrssSign string          `json:"prdy_vrss_sign"`        // 전일 대비 부호
+	PrdyCtrt     float64         `json:"prdy_ctrt,string"`      // 전일 대비율
+	AcmlVol      int64           `json:"acml_vol,string"`       // 누적 거래량
+	TdayRltv     float64         `json:"tday_rltv,string"`      // 당일 체결강도
+	SelnCnqnSmtn int64           `json:"seln_cnqn_smtn,string"` // 매도 체결량 합계
+	ShnuCnqnSmtn int64           `json:"shnu_cnqn_smtn,string"` // 매수 체결량 합계
+}
+
+// InquireVolumePowerParams 는 체결강도 상위 조회 파라미터.
+type InquireVolumePowerParams struct {
+	MarketCode     string // fid_cond_mrkt_div_code — 빈 값=>"J" (lowercase wire key)
+	CondScrDivCode string // fid_cond_scr_div_code — 빈 값=>"20168"
+	Symbol         string // fid_input_iscd — 0000:전체/0001:코스피/1001:코스닥
+	DivClsCode     string // fid_div_cls_code
+	Price1         string // fid_input_price_1
+	Price2         string // fid_input_price_2
+	VolCnt         string // fid_vol_cnt
+	TrgtClsCode    string // fid_trgt_cls_code
+	TrgtExlsCode   string // fid_trgt_exls_cls_code
+}
+
+// InquireVolumePower 는 체결강도 상위 호출.
+//
+// 한투 docs: docs/api/국내주식/체결강도상위.md
+// path: /uapi/domestic-stock/v1/ranking/volume-power (FHPST01680000)
+func (c *Client) InquireVolumePower(ctx context.Context, params InquireVolumePowerParams) (*VolumePower, error) {
+	market := params.MarketCode
+	if market == "" {
+		market = "J"
+	}
+	scrDiv := params.CondScrDivCode
+	if scrDiv == "" {
+		scrDiv = "20168"
+	}
+	resp, err := c.http.Do(ctx, &httpclient.Request{
+		Method: http.MethodGet,
+		Path:   "/uapi/domestic-stock/v1/ranking/volume-power",
+		TrID:   "FHPST01680000",
+		Query: map[string]string{
+			"fid_cond_mrkt_div_code": market,
+			"fid_cond_scr_div_code":  scrDiv,
+			"fid_input_iscd":         params.Symbol,
+			"fid_div_cls_code":       params.DivClsCode,
+			"fid_input_price_1":      params.Price1,
+			"fid_input_price_2":      params.Price2,
+			"fid_vol_cnt":            params.VolCnt,
+			"fid_trgt_cls_code":      params.TrgtClsCode,
+			"fid_trgt_exls_cls_code": params.TrgtExlsCode,
+		},
+		CustType: "P",
+	})
+	if err != nil {
+		return nil, err
+	}
+	var res VolumePower
+	if err := json.Unmarshal(resp.Raw, &res); err != nil {
+		return nil, fmt.Errorf("kis: parse VolumePower: %w", err)
+	}
+	return &res, nil
+}
