@@ -61,7 +61,7 @@ func main() {
 }
 ```
 
-## Available Methods (Phase 1.2 ~ 2.5)
+## Available Methods (Phase 1.2 ~ 2.6)
 
 | Method | 한투 path | TR_ID |
 |--------|----------|-------|
@@ -125,6 +125,10 @@ func main() {
 | `Domestic.InquireCompProgramTradeToday` | `quotations/comp-program-trade-today` | FHPPG04600101 |
 | `Domestic.InquireCompProgramTradeDaily` | `quotations/comp-program-trade-daily` | FHPPG04600001 |
 | `Domestic.InquireInvestorProgramTradeToday` | `quotations/investor-program-trade-today` | HHPPG046600C1 |
+| `Overseas.InquireNewsTitle` | `overseas-price/v1/quotations/news-title` | HHPSTH60100C1 |
+| `Overseas.InquireBrknewsTitle` | `overseas-price/v1/quotations/brknews-title` | FHKST01011801 |
+| `Overseas.InquireRightsByIce` | `overseas-price/v1/quotations/rights-by-ice` | HHDFS78330900 |
+| `Overseas.InquirePeriodRights` | `overseas-price/v1/quotations/period-rights` | CTRGT011R |
 
 ## Design
 

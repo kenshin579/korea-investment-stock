@@ -1,0 +1,35 @@
+{
+  "rt_cd": "0",
+  "msg_cd": "MCA00000",
+  "msg1": "정상처리 되었습니다.",
+  "outblock1": [
+    {
+      "info_gb": "1",
+      "news_key": "20260505120001",
+      "data_dt": "20260505",
+      "data_tm": "120001",
+      "class_cd": "001",
+      "class_name": "증시",
+      "source": "연합뉴스",
+      "nation_cd": "US",
+      "exchange_cd": "NAS",
+      "symb": "AAPL",
+      "symb_name": "Apple Inc.",
+      "title": "애플 2분기 실적 서프라이즈 발표"
+    },
+    {
+      "info_gb": "1",
+      "news_key": "20260505120045",
+      "data_dt": "20260505",
+      "data_tm": "120045",
+      "class_cd": "002",
+      "class_name": "경제",
+      "source": "블룸버그",
+      "nation_cd": "US",
+      "exchange_cd": "NAS",
+      "symb": "MSFT",
+      "symb_name": "Microsoft Corp.",
+      "title": "마이크로소프트 AI 투자 확대 계획 발표"
+    }
+  ]
+}

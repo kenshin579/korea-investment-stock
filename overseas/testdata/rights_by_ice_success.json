@@ -1,0 +1,35 @@
+{
+  "rt_cd": "0",
+  "msg_cd": "MCA00000",
+  "msg1": "정상처리 되었습니다.",
+  "output1": [
+    {
+      "anno_dt": "20260401",
+      "ca_title": "주식배당",
+      "div_lock_dt": "20260315",
+      "pay_dt": "20260430",
+      "record_dt": "20260331",
+      "validity_dt": "20260401",
+      "local_end_dt": "20260330",
+      "lock_dt": "20260328",
+      "delist_dt": "",
+      "redempt_dt": "",
+      "early_redempt_dt": "",
+      "effective_dt": "20260401"
+    },
+    {
+      "anno_dt": "20260402",
+      "ca_title": "현금배당",
+      "div_lock_dt": "20260316",
+      "pay_dt": "20260501",
+      "record_dt": "20260401",
+      "validity_dt": "20260402",
+      "local_end_dt": "20260331",
+      "lock_dt": "20260329",
+      "delist_dt": "",
+      "redempt_dt": "",
+      "early_redempt_dt": "",
+      "effective_dt": "20260402"
+    }
+  ]
+}

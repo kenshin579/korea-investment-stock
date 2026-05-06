@@ -18,5 +18,12 @@
 //   - InquireVolumePower — 해외주식 매수체결강도상위 (HHDFS76280000)
 //   - InquireNewHighlow  — 해외주식 신고/신저가 (HHDFS76300000)
 //
+// Phase 2.6 메서드 (4):
+//
+//   - InquireNewsTitle      — 해외뉴스종합(제목) (HHPSTH60100C1) — outblock1 key
+//   - InquireBrknewsTitle   — 해외속보(제목) (FHKST01011801) — FID_ prefix params
+//   - InquireRightsByIce    — 해외주식 권리종합 (HHDFS78330900) — output1 only
+//   - InquirePeriodRights   — 해외주식 기간별권리조회 (CTRGT011R) — CTX cursor
+//
 // 사용자는 root kis.Client 의 Overseas 필드로 접근.
 package overseas
