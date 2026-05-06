@@ -157,3 +157,36 @@ func TestClient_InquireDailyPrice(t *testing.T) {
 	assert.InDelta(t, -0.13, got.PrdyCtrt, 0.001)
 	assert.True(t, dailyHgpr.Equal(got.BondHgpr))
 }
+
+func TestClient_InquireDailyItemchartprice(t *testing.T) {
+	client, transport := newTestClient(t)
+	transport.RegisterResponder(
+		http.MethodGet,
+		"=~/uapi/domestic-bond/v1/quotations/inquire-daily-itemchartprice",
+		httpmock.NewStringResponder(http.StatusOK, loadFixtureString(t, "bond_daily_itemchartprice_success.json")),
+	)
+
+	got, err := client.InquireDailyItemchartprice(context.Background(), bonds.InquireDailyItemchartpriceParams{
+		MarketCode: "B",
+		Symbol:     "KR103501GCC7",
+	})
+	require.NoError(t, err)
+	require.NotNil(t, got)
+
+	require.GreaterOrEqual(t, len(got.Output), 2)
+
+	item0 := got.Output[0]
+	prpr0, _ := decimal.NewFromString("9823.50")
+	oprc0, _ := decimal.NewFromString("9825.00")
+
+	assert.Equal(t, "20260505", item0.StckBsopDate)
+	assert.True(t, prpr0.Equal(item0.BondPrpr))
+	assert.True(t, oprc0.Equal(item0.BondOprc))
+	assert.Equal(t, int64(152000), item0.AcmlVol)
+
+	item1 := got.Output[1]
+	prpr1, _ := decimal.NewFromString("9836.00")
+	assert.Equal(t, "20260502", item1.StckBsopDate)
+	assert.True(t, prpr1.Equal(item1.BondPrpr))
+	assert.Equal(t, int64(98000), item1.AcmlVol)
+}

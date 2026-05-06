@@ -509,3 +509,60 @@ func (c *Client) InquireDailyPrice(ctx context.Context, params InquireDailyPrice
 	}
 	return &res.Output, nil
 }
+
+// ─── EP7: InquireDailyItemchartprice ─────────────────────────────────────────
+
+// InquireDailyItemchartpriceParams 는 장내채권 기간별 시세 요청 파라미터.
+type InquireDailyItemchartpriceParams struct {
+	MarketCode string // FID_COND_MRKT_DIV_CODE: 기본 "B"
+	Symbol     string // FID_INPUT_ISCD: 채권 단축 종목코드 (필수)
+}
+
+// DailyItemchartpriceItem 는 장내채권 기간별 시세 항목. FHKBJ773701C0 — 6 fields typed.
+type DailyItemchartpriceItem struct {
+	StckBsopDate string          `json:"stck_bsop_date"`  // 주식 영업 일자
+	BondOprc     decimal.Decimal `json:"bond_oprc"`       // 채권 시가2
+	BondHgpr     decimal.Decimal `json:"bond_hgpr"`       // 채권 고가
+	BondLwpr     decimal.Decimal `json:"bond_lwpr"`       // 채권 저가
+	BondPrpr     decimal.Decimal `json:"bond_prpr"`       // 채권 현재가
+	AcmlVol      int64           `json:"acml_vol,string"` // 누적 거래량
+}
+
+// DailyItemchartprice 는 InquireDailyItemchartprice 응답 (array output).
+type DailyItemchartprice struct {
+	Output []DailyItemchartpriceItem `json:"output"`
+}
+
+type inquireDailyItemchartpriceResponse struct {
+	RtCd   string                    `json:"rt_cd"`
+	MsgCd  string                    `json:"msg_cd"`
+	Msg1   string                    `json:"msg1"`
+	Output []DailyItemchartpriceItem `json:"output"`
+}
+
+// InquireDailyItemchartprice 는 장내채권 기간별 시세 조회 (FHKBJ773701C0).
+//
+// KIS API: GET /uapi/domestic-bond/v1/quotations/inquire-daily-itemchartprice
+func (c *Client) InquireDailyItemchartprice(ctx context.Context, params InquireDailyItemchartpriceParams) (*DailyItemchartprice, error) {
+	if params.MarketCode == "" {
+		params.MarketCode = "B"
+	}
+	resp, err := c.http.Do(ctx, &httpclient.Request{
+		Method:   http.MethodGet,
+		Path:     "/uapi/domestic-bond/v1/quotations/inquire-daily-itemchartprice",
+		TrID:     "FHKBJ773701C0",
+		CustType: "P",
+		Query: map[string]string{
+			"FID_COND_MRKT_DIV_CODE": params.MarketCode,
+			"FID_INPUT_ISCD":         params.Symbol,
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+	var res inquireDailyItemchartpriceResponse
+	if err := json.Unmarshal(resp.Raw, &res); err != nil {
+		return nil, fmt.Errorf("kis: parse InquireDailyItemchartprice: %w", err)
+	}
+	return &DailyItemchartprice{Output: res.Output}, nil
+}
