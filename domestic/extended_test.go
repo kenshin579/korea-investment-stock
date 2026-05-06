@@ -252,3 +252,41 @@ func TestClient_InquireVolumePower(t *testing.T) {
 	assert.Equal(t, int64(6800000), res.Output[0].SelnCnqnSmtn)
 	assert.Equal(t, int64(7200000), res.Output[0].ShnuCnqnSmtn)
 }
+
+func TestClient_InquireBulkTransNum(t *testing.T) {
+	httpmock.Activate()
+	defer httpmock.DeactivateAndReset()
+
+	var capturedQuery url.Values
+	httpmock.RegisterResponder(
+		http.MethodGet,
+		`=~/ranking/bulk-trans-num`,
+		func(req *http.Request) (*http.Response, error) {
+			capturedQuery = req.URL.Query()
+			return httpmock.NewStringResponse(200, loadFixtureString(t, "bulk_trans_num_success.json")), nil
+		},
+	)
+
+	c := newTestClient(t)
+	res, err := c.InquireBulkTransNum(context.Background(), domestic.InquireBulkTransNumParams{
+		Symbol:       "0000",
+		DivClsCode:   "0",
+		RankSortCode: "0",
+		BlngClsCode:  "0",
+	})
+	require.NoError(t, err)
+	require.NotNil(t, res)
+
+	// lowercase wire keys 확인
+	assert.Equal(t, "J", capturedQuery.Get("fid_cond_mrkt_div_code"))
+	assert.Equal(t, "11909", capturedQuery.Get("fid_cond_scr_div_code"))
+	assert.Equal(t, "0000", capturedQuery.Get("fid_input_iscd"))
+
+	require.Len(t, res.Output, 2)
+	// mksc_shrn_iscd (stck_shrn_iscd 아님) 확인
+	assert.Equal(t, "005930", res.Output[0].MkscShrnIscd)
+	assert.Equal(t, "1", res.Output[0].DataRank)
+	assert.Equal(t, int64(3200), res.Output[0].ShnuCntgCsnu)
+	assert.Equal(t, int64(2800), res.Output[0].SelnCntgCsnu)
+	assert.Equal(t, int64(400000), res.Output[0].NtbyCnqn)
+}

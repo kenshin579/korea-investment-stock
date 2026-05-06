@@ -629,3 +629,88 @@ func (c *Client) InquireVolumePower(ctx context.Context, params InquireVolumePow
 	}
 	return &res, nil
 }
+
+// BulkTransNum 은 대량체결건수 상위 (FHKST190900C0) 응답.
+//
+// 한투 docs: docs/api/국내주식/대량체결건수상위.md
+// path: /uapi/domestic-stock/v1/ranking/bulk-trans-num
+//
+// 주의 1: 모든 query 파라미터가 lowercase fid_* (대문자 FID_ 아님).
+// 주의 2: 종목코드 필드는 mksc_shrn_iscd (시장구분 포함, stck_shrn_iscd 아님).
+type BulkTransNum struct {
+	Output []BulkTransNumItem `json:"output"`
+}
+
+// BulkTransNumItem 은 응답의 output 한 행 (11 fields).
+type BulkTransNumItem struct {
+	MkscShrnIscd string          `json:"mksc_shrn_iscd"`        // 시장구분+단축 종목코드
+	DataRank     string          `json:"data_rank"`             // 데이터 순위
+	HtsKorIsnm   string          `json:"hts_kor_isnm"`          // HTS 한글 종목명
+	StckPrpr     decimal.Decimal `json:"stck_prpr"`             // 주식 현재가
+	PrdyVrssSign string          `json:"prdy_vrss_sign"`        // 전일 대비 부호
+	PrdyVrss     decimal.Decimal `json:"prdy_vrss"`             // 전일 대비
+	PrdyCtrt     float64         `json:"prdy_ctrt,string"`      // 전일 대비율
+	AcmlVol      int64           `json:"acml_vol,string"`       // 누적 거래량
+	ShnuCntgCsnu int64           `json:"shnu_cntg_csnu,string"` // 매수 체결 건수
+	SelnCntgCsnu int64           `json:"seln_cntg_csnu,string"` // 매도 체결 건수
+	NtbyCnqn     int64           `json:"ntby_cnqn,string"`      // 순매수 체결량
+}
+
+// InquireBulkTransNumParams 는 대량체결건수 상위 조회 파라미터.
+type InquireBulkTransNumParams struct {
+	MarketCode     string // fid_cond_mrkt_div_code — 빈 값=>"J"
+	CondScrDivCode string // fid_cond_scr_div_code — 빈 값=>"11909"
+	Symbol         string // fid_input_iscd
+	DivClsCode     string // fid_div_cls_code
+	RankSortCode   string // fid_rank_sort_cls_code
+	BlngClsCode    string // fid_blng_cls_code
+	TrgtClsCode    string // fid_trgt_cls_code
+	TrgtExlsCode   string // fid_trgt_exls_cls_code
+	InputPrice1    string // fid_input_price_1
+	InputPrice2    string // fid_input_price_2
+	VolCnt         string // fid_vol_cnt
+	InputDate1     string // fid_input_date_1
+}
+
+// InquireBulkTransNum 은 대량체결건수 상위 호출.
+//
+// 한투 docs: docs/api/국내주식/대량체결건수상위.md
+// path: /uapi/domestic-stock/v1/ranking/bulk-trans-num (FHKST190900C0)
+func (c *Client) InquireBulkTransNum(ctx context.Context, params InquireBulkTransNumParams) (*BulkTransNum, error) {
+	market := params.MarketCode
+	if market == "" {
+		market = "J"
+	}
+	scrDiv := params.CondScrDivCode
+	if scrDiv == "" {
+		scrDiv = "11909"
+	}
+	resp, err := c.http.Do(ctx, &httpclient.Request{
+		Method: http.MethodGet,
+		Path:   "/uapi/domestic-stock/v1/ranking/bulk-trans-num",
+		TrID:   "FHKST190900C0",
+		Query: map[string]string{
+			"fid_cond_mrkt_div_code": market,
+			"fid_cond_scr_div_code":  scrDiv,
+			"fid_input_iscd":         params.Symbol,
+			"fid_div_cls_code":       params.DivClsCode,
+			"fid_rank_sort_cls_code": params.RankSortCode,
+			"fid_blng_cls_code":      params.BlngClsCode,
+			"fid_trgt_cls_code":      params.TrgtClsCode,
+			"fid_trgt_exls_cls_code": params.TrgtExlsCode,
+			"fid_input_price_1":      params.InputPrice1,
+			"fid_input_price_2":      params.InputPrice2,
+			"fid_vol_cnt":            params.VolCnt,
+			"fid_input_date_1":       params.InputDate1,
+		},
+		CustType: "P",
+	})
+	if err != nil {
+		return nil, err
+	}
+	var res BulkTransNum
+	if err := json.Unmarshal(resp.Raw, &res); err != nil {
+		return nil, fmt.Errorf("kis: parse BulkTransNum: %w", err)
+	}
+	return &res, nil
+}
