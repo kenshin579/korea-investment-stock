@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/jarcoal/httpmock"
+	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -54,4 +55,29 @@ func TestClient_InquireIssueInfo(t *testing.T) {
 	assert.Equal(t, "3.50", got.SrfcInrt)
 	assert.Equal(t, "AAA", got.KisCrdtGradText)
 	assert.Equal(t, "Y", got.ElecSctyYn)
+}
+
+func TestClient_InquirePrice(t *testing.T) {
+	client, transport := newTestClient(t)
+	transport.RegisterResponder(
+		http.MethodGet,
+		"=~/uapi/domestic-bond/v1/quotations/inquire-price",
+		httpmock.NewStringResponder(http.StatusOK, loadFixtureString(t, "bond_price_success.json")),
+	)
+
+	got, err := client.InquirePrice(context.Background(), bonds.InquirePriceParams{
+		MarketCode: "B",
+		Symbol:     "KR103501GCC7",
+	})
+	require.NoError(t, err)
+	require.NotNil(t, got)
+
+	prpr, _ := decimal.NewFromString("9823.50")
+	vrss, _ := decimal.NewFromString("-12.50")
+
+	assert.Equal(t, "KR103501GCC7", got.StndIscd)
+	assert.True(t, prpr.Equal(got.BondPrpr))
+	assert.True(t, vrss.Equal(got.BondPrdyVrss))
+	assert.InDelta(t, -0.13, got.PrdyCtrt, 0.001)
+	assert.Equal(t, int64(152000), got.AcmlVol)
 }

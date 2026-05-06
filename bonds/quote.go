@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/shopspring/decimal"
+
 	"github.com/kenshin579/korea-investment-stock/internal/httpclient"
 )
 
@@ -251,6 +253,69 @@ func (c *Client) SearchBondInfo(ctx context.Context, params SearchBondInfoParams
 	var res searchBondInfoResponse
 	if err := json.Unmarshal(resp.Raw, &res); err != nil {
 		return nil, fmt.Errorf("kis: parse SearchBondInfo: %w", err)
+	}
+	return &res.Output, nil
+}
+
+// ─── EP3: InquirePrice ────────────────────────────────────────────────────────
+
+// InquirePriceParams 는 채권 현재가 시세 요청 파라미터.
+type InquirePriceParams struct {
+	MarketCode string // FID_COND_MRKT_DIV_CODE: 기본 "B"
+	Symbol     string // FID_INPUT_ISCD: 채권 단축 종목코드 (필수)
+}
+
+// BondPrice 는 채권 현재가 시세. FHKBJ773400C0 — 17 fields typed.
+type BondPrice struct {
+	StndIscd     string          `json:"stnd_iscd"`
+	HtsKorIsnm   string          `json:"hts_kor_isnm"`
+	BondPrpr     decimal.Decimal `json:"bond_prpr"`
+	PrdyVrssSign string          `json:"prdy_vrss_sign"`
+	BondPrdyVrss decimal.Decimal `json:"bond_prdy_vrss"`
+	PrdyCtrt     float64         `json:"prdy_ctrt,string"`
+	AcmlVol      int64           `json:"acml_vol,string"`
+	BondPrdyClpr decimal.Decimal `json:"bond_prdy_clpr"`
+	BondOprc     decimal.Decimal `json:"bond_oprc"`
+	BondHgpr     decimal.Decimal `json:"bond_hgpr"`
+	BondLwpr     decimal.Decimal `json:"bond_lwpr"`
+	ErnnRate     float64         `json:"ernn_rate,string"`
+	OprcErt      float64         `json:"oprc_ert,string"`
+	HgprErt      float64         `json:"hgpr_ert,string"`
+	LwprErt      float64         `json:"lwpr_ert,string"`
+	BondMxpr     decimal.Decimal `json:"bond_mxpr"`
+	BondLlam     decimal.Decimal `json:"bond_llam"`
+}
+
+type inquirePriceResponse struct {
+	RtCd   string    `json:"rt_cd"`
+	MsgCd  string    `json:"msg_cd"`
+	Msg1   string    `json:"msg1"`
+	Output BondPrice `json:"output"`
+}
+
+// InquirePrice 는 채권 현재가 시세 (FHKBJ773400C0).
+//
+// KIS API: GET /uapi/domestic-bond/v1/quotations/inquire-price
+func (c *Client) InquirePrice(ctx context.Context, params InquirePriceParams) (*BondPrice, error) {
+	if params.MarketCode == "" {
+		params.MarketCode = "B"
+	}
+	resp, err := c.http.Do(ctx, &httpclient.Request{
+		Method:   http.MethodGet,
+		Path:     "/uapi/domestic-bond/v1/quotations/inquire-price",
+		TrID:     "FHKBJ773400C0",
+		CustType: "P",
+		Query: map[string]string{
+			"FID_COND_MRKT_DIV_CODE": params.MarketCode,
+			"FID_INPUT_ISCD":         params.Symbol,
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+	var res inquirePriceResponse
+	if err := json.Unmarshal(resp.Raw, &res); err != nil {
+		return nil, fmt.Errorf("kis: parse InquirePrice: %w", err)
 	}
 	return &res.Output, nil
 }
