@@ -319,3 +319,56 @@ func (c *Client) InquirePrice(ctx context.Context, params InquirePriceParams) (*
 	}
 	return &res.Output, nil
 }
+
+// ─── EP4: InquireCcnl ─────────────────────────────────────────────────────────
+
+// InquireCcnlParams 는 채권 현재가 체결 요청 파라미터.
+type InquireCcnlParams struct {
+	MarketCode string // FID_COND_MRKT_DIV_CODE: 기본 "B"
+	Symbol     string // FID_INPUT_ISCD: 채권 단축 종목코드 (필수)
+}
+
+// BondCcnl 는 채권 현재가 체결 (single snapshot). FHKBJ773403C0 — 7 fields typed.
+type BondCcnl struct {
+	StckCntgHour string          `json:"stck_cntg_hour"`
+	BondPrpr     decimal.Decimal `json:"bond_prpr"`
+	BondPrdyVrss decimal.Decimal `json:"bond_prdy_vrss"`
+	PrdyVrssSign string          `json:"prdy_vrss_sign"`
+	PrdyCtrt     float64         `json:"prdy_ctrt,string"`
+	CntgVol      int64           `json:"cntg_vol,string"`
+	AcmlVol      int64           `json:"acml_vol,string"`
+}
+
+type inquireCcnlResponse struct {
+	RtCd   string   `json:"rt_cd"`
+	MsgCd  string   `json:"msg_cd"`
+	Msg1   string   `json:"msg1"`
+	Output BondCcnl `json:"output"`
+}
+
+// InquireCcnl 는 채권 현재가 체결 (FHKBJ773403C0).
+//
+// KIS API: GET /uapi/domestic-bond/v1/quotations/inquire-ccnl
+func (c *Client) InquireCcnl(ctx context.Context, params InquireCcnlParams) (*BondCcnl, error) {
+	if params.MarketCode == "" {
+		params.MarketCode = "B"
+	}
+	resp, err := c.http.Do(ctx, &httpclient.Request{
+		Method:   http.MethodGet,
+		Path:     "/uapi/domestic-bond/v1/quotations/inquire-ccnl",
+		TrID:     "FHKBJ773403C0",
+		CustType: "P",
+		Query: map[string]string{
+			"FID_COND_MRKT_DIV_CODE": params.MarketCode,
+			"FID_INPUT_ISCD":         params.Symbol,
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+	var res inquireCcnlResponse
+	if err := json.Unmarshal(resp.Raw, &res); err != nil {
+		return nil, fmt.Errorf("kis: parse InquireCcnl: %w", err)
+	}
+	return &res.Output, nil
+}
