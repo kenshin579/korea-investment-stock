@@ -132,3 +132,28 @@ func TestClient_InquireAskingPrice(t *testing.T) {
 	assert.InDelta(t, 3.61, got.SelnErnnRate1, 0.001)
 	assert.InDelta(t, 3.62, got.ShnuErnnRate1, 0.001)
 }
+
+func TestClient_InquireDailyPrice(t *testing.T) {
+	client, transport := newTestClient(t)
+	transport.RegisterResponder(
+		http.MethodGet,
+		"=~/uapi/domestic-bond/v1/quotations/inquire-daily-price",
+		httpmock.NewStringResponder(http.StatusOK, loadFixtureString(t, "bond_daily_price_success.json")),
+	)
+
+	got, err := client.InquireDailyPrice(context.Background(), bonds.InquireDailyPriceParams{
+		MarketCode: "B",
+		Symbol:     "KR103501GCC7",
+	})
+	require.NoError(t, err)
+	require.NotNil(t, got)
+
+	dailyPrpr, _ := decimal.NewFromString("9823.50")
+	dailyHgpr, _ := decimal.NewFromString("9830.00")
+
+	assert.Equal(t, "20260505", got.StckBsopDate)
+	assert.True(t, dailyPrpr.Equal(got.BondPrpr))
+	assert.Equal(t, int64(152000), got.AcmlVol)
+	assert.InDelta(t, -0.13, got.PrdyCtrt, 0.001)
+	assert.True(t, dailyHgpr.Equal(got.BondHgpr))
+}

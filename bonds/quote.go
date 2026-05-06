@@ -452,3 +452,60 @@ func (c *Client) InquireAskingPrice(ctx context.Context, params InquireAskingPri
 	}
 	return &res.Output, nil
 }
+
+// ─── EP6: InquireDailyPrice ───────────────────────────────────────────────────
+
+// InquireDailyPriceParams 는 채권 현재가 일별 요청 파라미터.
+type InquireDailyPriceParams struct {
+	MarketCode string // FID_COND_MRKT_DIV_CODE: 기본 "B"
+	Symbol     string // FID_INPUT_ISCD: 채권 단축 종목코드 (필수)
+}
+
+// BondDailyPrice 는 채권 현재가 일별 시세. FHKBJ773404C0 — 9 fields typed.
+//
+// Note: KIS docs 는 output{} (object) 로 명시. 실제 API 가 array 를 반환하면 patch 에서 수정.
+type BondDailyPrice struct {
+	StckBsopDate string          `json:"stck_bsop_date"`
+	BondPrpr     decimal.Decimal `json:"bond_prpr"`
+	BondPrdyVrss decimal.Decimal `json:"bond_prdy_vrss"`
+	PrdyVrssSign string          `json:"prdy_vrss_sign"`
+	PrdyCtrt     float64         `json:"prdy_ctrt,string"`
+	AcmlVol      int64           `json:"acml_vol,string"`
+	BondOprc     decimal.Decimal `json:"bond_oprc"`
+	BondHgpr     decimal.Decimal `json:"bond_hgpr"`
+	BondLwpr     decimal.Decimal `json:"bond_lwpr"`
+}
+
+type inquireDailyPriceResponse struct {
+	RtCd   string         `json:"rt_cd"`
+	MsgCd  string         `json:"msg_cd"`
+	Msg1   string         `json:"msg1"`
+	Output BondDailyPrice `json:"output"`
+}
+
+// InquireDailyPrice 는 채권 현재가 일별 시세 (FHKBJ773404C0).
+//
+// KIS API: GET /uapi/domestic-bond/v1/quotations/inquire-daily-price
+func (c *Client) InquireDailyPrice(ctx context.Context, params InquireDailyPriceParams) (*BondDailyPrice, error) {
+	if params.MarketCode == "" {
+		params.MarketCode = "B"
+	}
+	resp, err := c.http.Do(ctx, &httpclient.Request{
+		Method:   http.MethodGet,
+		Path:     "/uapi/domestic-bond/v1/quotations/inquire-daily-price",
+		TrID:     "FHKBJ773404C0",
+		CustType: "P",
+		Query: map[string]string{
+			"FID_COND_MRKT_DIV_CODE": params.MarketCode,
+			"FID_INPUT_ISCD":         params.Symbol,
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+	var res inquireDailyPriceResponse
+	if err := json.Unmarshal(resp.Raw, &res); err != nil {
+		return nil, fmt.Errorf("kis: parse InquireDailyPrice: %w", err)
+	}
+	return &res.Output, nil
+}
