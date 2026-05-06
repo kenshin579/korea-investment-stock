@@ -123,3 +123,36 @@ func TestClient_InquireIndexDailyPrice(t *testing.T) {
 	assert.True(t, d2.Equal(res.Output2[0].BstpNmixPrpr))
 	assert.InDelta(t, 100.00, res.Output2[0].AcmlVolRlim, 0.01)
 }
+
+func TestClient_InquireIndexTimeprice(t *testing.T) {
+	httpmock.Activate()
+	defer httpmock.DeactivateAndReset()
+
+	var capturedQuery url.Values
+	httpmock.RegisterResponder(
+		http.MethodGet,
+		`=~/quotations/inquire-index-timeprice`,
+		func(req *http.Request) (*http.Response, error) {
+			capturedQuery = req.URL.Query()
+			return httpmock.NewStringResponse(200, loadFixtureString(t, "index_timeprice_success.json")), nil
+		},
+	)
+
+	c := newTestClient(t)
+	res, err := c.InquireIndexTimeprice(context.Background(), domestic.InquireIndexTimepriceParams{
+		InputHour1: "60",
+		Symbol:     "0001",
+	})
+	require.NoError(t, err)
+	require.NotNil(t, res)
+
+	assert.Equal(t, "60", capturedQuery.Get("FID_INPUT_HOUR_1"))
+	assert.Equal(t, "0001", capturedQuery.Get("FID_INPUT_ISCD"))
+	assert.Equal(t, "U", capturedQuery.Get("FID_COND_MRKT_DIV_CODE"))
+
+	require.Len(t, res.Output, 2)
+	assert.Equal(t, "100000", res.Output[0].BsopHour)
+	d, _ := decimal.NewFromString("2652.10")
+	assert.True(t, d.Equal(res.Output[0].BstpNmixPrpr))
+	assert.Equal(t, int64(800000), res.Output[0].CntgVol)
+}

@@ -269,6 +269,65 @@ func (c *Client) InquireIndexDailyPrice(ctx context.Context, params InquireIndex
 	return &res, nil
 }
 
+// IndexTimeprice 는 국내업종 시간별 지수 (FHPUP02110200) 응답.
+//
+// 한투 docs: docs/api/국내주식/국내업종_시간별지수.md
+// path: /uapi/domestic-stock/v1/quotations/inquire-index-timeprice
+//
+// BsopHour 는 HHMMSS 형식 타임스탬프. FID_INPUT_HOUR_1 파라미터로 집계 단위 설정 (60/300/600초).
+type IndexTimeprice struct {
+	Output []IndexTimepriceItem `json:"output"`
+}
+
+// IndexTimepriceItem 은 응답의 output 한 행 (시간별, 8 fields).
+type IndexTimepriceItem struct {
+	BsopHour         string          `json:"bsop_hour"`                  // 영업 시간 HHMMSS
+	BstpNmixPrpr     decimal.Decimal `json:"bstp_nmix_prpr"`             // 업종 지수 현재가
+	BstpNmixPrdyVrss decimal.Decimal `json:"bstp_nmix_prdy_vrss"`        // 업종 지수 전일 대비
+	PrdyVrssSign     string          `json:"prdy_vrss_sign"`             // 전일 대비 부호
+	BstpNmixPrdyCtrt float64         `json:"bstp_nmix_prdy_ctrt,string"` // 업종 지수 전일 대비율
+	AcmlTrPbmn       int64           `json:"acml_tr_pbmn,string"`        // 누적 거래 대금
+	AcmlVol          int64           `json:"acml_vol,string"`            // 누적 거래량
+	CntgVol          int64           `json:"cntg_vol,string"`            // 체결 거래량
+}
+
+// InquireIndexTimepriceParams 는 국내업종 시간별 지수 조회 파라미터.
+type InquireIndexTimepriceParams struct {
+	InputHour1 string // FID_INPUT_HOUR_1 — 집계 단위: "60"(1분)/"300"(5분)/"600"(10분)
+	Symbol     string // FID_INPUT_ISCD — 필수, 업종 코드
+	MarketCode string // FID_COND_MRKT_DIV_CODE — 빈 값=>"U" (업종)
+}
+
+// InquireIndexTimeprice 는 국내업종 시간별 지수 호출.
+//
+// 한투 docs: docs/api/국내주식/국내업종_시간별지수.md
+// path: /uapi/domestic-stock/v1/quotations/inquire-index-timeprice (FHPUP02110200)
+func (c *Client) InquireIndexTimeprice(ctx context.Context, params InquireIndexTimepriceParams) (*IndexTimeprice, error) {
+	market := params.MarketCode
+	if market == "" {
+		market = "U"
+	}
+	resp, err := c.http.Do(ctx, &httpclient.Request{
+		Method: http.MethodGet,
+		Path:   "/uapi/domestic-stock/v1/quotations/inquire-index-timeprice",
+		TrID:   "FHPUP02110200",
+		Query: map[string]string{
+			"FID_INPUT_HOUR_1":       params.InputHour1,
+			"FID_INPUT_ISCD":         params.Symbol,
+			"FID_COND_MRKT_DIV_CODE": market,
+		},
+		CustType: "P",
+	})
+	if err != nil {
+		return nil, err
+	}
+	var res IndexTimeprice
+	if err := json.Unmarshal(resp.Raw, &res); err != nil {
+		return nil, fmt.Errorf("kis: parse IndexTimeprice: %w", err)
+	}
+	return &res, nil
+}
+
 // InquireIndexPrice 는 국내업종 현재지수 호출.
 //
 // 한투 docs: docs/api/국내주식/국내업종_현재지수.md
