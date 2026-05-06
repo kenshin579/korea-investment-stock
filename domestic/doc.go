@@ -69,5 +69,22 @@
 //	InquireCompProgramTradeDaily       FHPPG04600001  프로그램매매 종합현황(일별)
 //	InquireInvestorProgramTradeToday   HHPPG046600C1  당일 투자자별 프로그램매매 동향
 //
+// Phase 2.7 — 업종/지수 (v1.10.0)  [Phase 2.5+ 마지막 sub-phase]
+//
+//	EP3  InquireIndexDailyPrice      — 국내업종 일자별지수       FHPUP02120000
+//	EP4  InquireIndexTimeprice       — 국내업종 시간별지수 분    FHPUP02110200
+//	EP5  InquireIndexTickprice       — 국내업종 시간별지수 초    FHPUP02110100
+//	EP6  InquireDailyIndexchartprice — 국내주식업종기간별시세    FHKUP03500100
+//	EP7  InquireTimeIndexchartprice  — 업종 분봉조회             FHKUP03500200
+//	EP8  ExpTotalIndex               — 예상체결 전체지수         FHKUP11750000
+//	EP9  ExpIndexTrend               — 예상체결지수 추이         FHPST01840000
+//
+// Anomalies:
+//
+//	EP1+EP2 already in Phase 1.4 → Phase 2.7 = 7 NEW (not 9)
+//	EP8 lowercase fid_* query params (KIS 유일 예외)
+//	EP8/EP9 prdy_ctrt short form (NOT bstp_nmix_prdy_ctrt)
+//	EP9 KIS docs Korean labels scrambled — field names are correct
+//
 // 사용자는 root kis.Client 의 Domestic 필드로 접근.
 package domestic

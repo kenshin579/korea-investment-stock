@@ -1,5 +1,27 @@
 # CHANGELOG
 
+## [1.10.0] - 2026-05-05
+
+### Added — Phase 2.7 (업종/지수)
+
+- `Domestic.InquireIndexDailyPrice` — 국내업종 일자별지수 (FHPUP02120000) — output1 20 + output2 13 fields
+- `Domestic.InquireIndexTimeprice` — 국내업종 시간별지수 분 (FHPUP02110200) — output 8 fields, bsop_hour timestamp
+- `Domestic.InquireIndexTickprice` — 국내업종 시간별지수 초 (FHPUP02110100) — output 8 fields, stck_cntg_hour timestamp
+- `Domestic.InquireDailyIndexchartprice` — 국내주식업종기간별시세 (FHKUP03500100) — output1 15 + output2 8, futs_prdy_* embedded
+- `Domestic.InquireTimeIndexchartprice` — 업종 분봉조회 (FHKUP03500200) — output1 16 + output2 8
+- `Domestic.ExpTotalIndex` — 예상체결 전체지수 (FHKUP11750000) — output1 9 + output2 10, LOWERCASE fid_* query params
+- `Domestic.ExpIndexTrend` — 예상체결지수 추이 (FHPST01840000) — output 7 fields
+- examples: `domestic_industry`
+
+### Notes
+
+- Phase 2.5+ design spec §Phase 2.7 listed 9 methods. EP1 (`InquireIndexPrice`) + EP2 (`InquireIndexCategoryPrice`) 는 Phase 1.4 에서 이미 구현됨 — Phase 2.7 = 7 NEW methods.
+- EP8 (`ExpTotalIndex`) 의 query param wire keys 는 lowercase (`fid_*`) — 다른 endpoint 의 `FID_*` 와 다름. 코드에서 lowercase 그대로 보존.
+- EP8/EP9 응답 struct 는 `prdy_ctrt` (short form, NOT `bstp_nmix_prdy_ctrt`) 사용.
+- EP9 (`ExpIndexTrend`) KIS docs 의 Korean field labels 가 scrambled 되어있음 (e.g., `stck_cntg_hour` 가 "주식 단축 종목코드" 로 잘못 라벨링). Field 명은 정확 — 라벨만 무시.
+- **Phase 2.5+ 완료** (2.5 + 2.6 + 2.7 = 18 NEW methods 누적). Phase 2 + Phase 2.5+ = 43 read-only 확장.
+- 누적 71 메서드 (Phase 1: 28 + Phase 2: 25 + Phase 2.5+: 18).
+
 ## [1.9.0] - 2026-05-06
 
 ### Added

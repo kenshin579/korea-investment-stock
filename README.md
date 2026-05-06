@@ -61,7 +61,7 @@ func main() {
 }
 ```
 
-## Available Methods (Phase 1.2 ~ 2.6)
+## Available Methods (Phase 1.2 ~ 2.7)
 
 | Method | 한투 path | TR_ID |
 |--------|----------|-------|
@@ -129,6 +129,13 @@ func main() {
 | `Overseas.InquireBrknewsTitle` | `overseas-price/v1/quotations/brknews-title` | FHKST01011801 |
 | `Overseas.InquireRightsByIce` | `overseas-price/v1/quotations/rights-by-ice` | HHDFS78330900 |
 | `Overseas.InquirePeriodRights` | `overseas-price/v1/quotations/period-rights` | CTRGT011R |
+| `Domestic.InquireIndexDailyPrice` | `quotations/inquire-index-daily-price` | FHPUP02120000 |
+| `Domestic.InquireIndexTimeprice` | `quotations/inquire-index-timeprice` | FHPUP02110200 |
+| `Domestic.InquireIndexTickprice` | `quotations/inquire-index-tickprice` | FHPUP02110100 |
+| `Domestic.InquireDailyIndexchartprice` | `quotations/inquire-daily-indexchartprice` | FHKUP03500100 |
+| `Domestic.InquireTimeIndexchartprice` | `quotations/inquire-time-indexchartprice` | FHKUP03500200 |
+| `Domestic.ExpTotalIndex` | `quotations/exp-total-index` | FHKUP11750000 |
+| `Domestic.ExpIndexTrend` | `quotations/exp-index-trend` | FHPST01840000 |
 
 ## Design
 
