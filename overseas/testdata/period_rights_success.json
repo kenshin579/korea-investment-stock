@@ -1,0 +1,51 @@
+{
+  "rt_cd": "0",
+  "msg_cd": "MCA00000",
+  "msg1": "정상처리 되었습니다.",
+  "output": [
+    {
+      "bass_dt": "20260401",
+      "rght_type_cd": "D",
+      "pdno": "AAPL",
+      "prdt_name": "Apple Inc.",
+      "prdt_type_cd": "512",
+      "std_pdno": "US0378331005",
+      "acpl_bass_dt": "20260315",
+      "sbsc_strt_dt": "20260316",
+      "sbsc_end_dt": "20260322",
+      "cash_alct_rt": "0.05",
+      "stck_alct_rt": "0.00",
+      "crcy_cd": "USD",
+      "crcy_cd2": "",
+      "crcy_cd3": "",
+      "crcy_cd4": "",
+      "alct_frcr_unpr": "1.50",
+      "stkp_dvdn_frcr_amt2": "0",
+      "stkp_dvdn_frcr_amt3": "0",
+      "stkp_dvdn_frcr_amt4": "0",
+      "dfnt_yn": "Y"
+    },
+    {
+      "bass_dt": "20260402",
+      "rght_type_cd": "R",
+      "pdno": "MSFT",
+      "prdt_name": "Microsoft Corp.",
+      "prdt_type_cd": "512",
+      "std_pdno": "US5949181045",
+      "acpl_bass_dt": "20260316",
+      "sbsc_strt_dt": "20260317",
+      "sbsc_end_dt": "20260323",
+      "cash_alct_rt": "0.00",
+      "stck_alct_rt": "0.10",
+      "crcy_cd": "USD",
+      "crcy_cd2": "",
+      "crcy_cd3": "",
+      "crcy_cd4": "",
+      "alct_frcr_unpr": "0",
+      "stkp_dvdn_frcr_amt2": "0",
+      "stkp_dvdn_frcr_amt3": "0",
+      "stkp_dvdn_frcr_amt4": "0",
+      "dfnt_yn": "N"
+    }
+  ]
+}
