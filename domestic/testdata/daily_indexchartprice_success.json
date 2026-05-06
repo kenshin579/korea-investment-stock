@@ -1,0 +1,44 @@
+{
+  "rt_cd": "0",
+  "msg_cd": "MCA00000",
+  "msg1": "정상처리 되었습니다.",
+  "output1": {
+    "prdy_vrss_sign": "5",
+    "bstp_nmix_prdy_ctrt": "-0.46",
+    "prdy_nmix": "2662.75",
+    "acml_vol": "350000000",
+    "acml_tr_pbmn": "9500000",
+    "hts_kor_isnm": "코스피",
+    "bstp_nmix_prpr": "2650.45",
+    "bstp_cls_code": "0001",
+    "prdy_vol": "330000000",
+    "bstp_nmix_oprc": "2660.00",
+    "bstp_nmix_hgpr": "2665.20",
+    "bstp_nmix_lwpr": "2645.10",
+    "futs_prdy_oprc": "355.50",
+    "futs_prdy_hgpr": "358.00",
+    "futs_prdy_lwpr": "353.20"
+  },
+  "output2": [
+    {
+      "stck_bsop_date": "20260505",
+      "bstp_nmix_prpr": "2650.45",
+      "bstp_nmix_oprc": "2660.00",
+      "bstp_nmix_hgpr": "2665.20",
+      "bstp_nmix_lwpr": "2645.10",
+      "acml_vol": "350000000",
+      "acml_tr_pbmn": "9500000",
+      "mod_yn": "N"
+    },
+    {
+      "stck_bsop_date": "20260504",
+      "bstp_nmix_prpr": "2662.75",
+      "bstp_nmix_oprc": "2658.00",
+      "bstp_nmix_hgpr": "2668.40",
+      "bstp_nmix_lwpr": "2655.30",
+      "acml_vol": "345000000",
+      "acml_tr_pbmn": "9200000",
+      "mod_yn": "N"
+    }
+  ]
+}
