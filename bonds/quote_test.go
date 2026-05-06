@@ -235,3 +235,69 @@ func TestClient_InquireDailyItemchartprice(t *testing.T) {
 	assert.True(t, prpr1.Equal(item1.BondPrpr))
 	assert.Equal(t, int64(98000), item1.AcmlVol)
 }
+
+// Coverage 보강 — JSON unmarshal error path 검증 (8 메서드).
+
+func TestClient_SearchBondInfo_InvalidJSON(t *testing.T) {
+	client, transport := newTestClient(t)
+	transport.RegisterResponder(http.MethodGet, "=~/uapi/domestic-bond/v1/quotations/search-bond-info",
+		httpmock.NewStringResponder(http.StatusOK, `{"rt_cd":"0","msg_cd":"X","msg1":"x","output":"not-object"}`))
+	_, err := client.SearchBondInfo(context.Background(), bonds.SearchBondInfoParams{Pdno: "X", PrdtTypeCd: "300"})
+	require.Error(t, err)
+}
+
+func TestClient_InquireIssueInfo_InvalidJSON(t *testing.T) {
+	client, transport := newTestClient(t)
+	transport.RegisterResponder(http.MethodGet, "=~/uapi/domestic-bond/v1/quotations/issue-info",
+		httpmock.NewStringResponder(http.StatusOK, `{"rt_cd":"0","msg_cd":"X","msg1":"x","output":"not-object"}`))
+	_, err := client.InquireIssueInfo(context.Background(), bonds.InquireIssueInfoParams{Pdno: "X", PrdtTypeCd: "300"})
+	require.Error(t, err)
+}
+
+func TestClient_InquirePrice_InvalidJSON(t *testing.T) {
+	client, transport := newTestClient(t)
+	transport.RegisterResponder(http.MethodGet, "=~/uapi/domestic-bond/v1/quotations/inquire-price",
+		httpmock.NewStringResponder(http.StatusOK, `{"rt_cd":"0","msg_cd":"X","msg1":"x","output":"not-object"}`))
+	_, err := client.InquirePrice(context.Background(), bonds.InquirePriceParams{Symbol: "X"})
+	require.Error(t, err)
+}
+
+func TestClient_InquireCcnl_InvalidJSON(t *testing.T) {
+	client, transport := newTestClient(t)
+	transport.RegisterResponder(http.MethodGet, "=~/uapi/domestic-bond/v1/quotations/inquire-ccnl",
+		httpmock.NewStringResponder(http.StatusOK, `{"rt_cd":"0","msg_cd":"X","msg1":"x","output":"not-object"}`))
+	_, err := client.InquireCcnl(context.Background(), bonds.InquireCcnlParams{Symbol: "X"})
+	require.Error(t, err)
+}
+
+func TestClient_InquireAskingPrice_InvalidJSON(t *testing.T) {
+	client, transport := newTestClient(t)
+	transport.RegisterResponder(http.MethodGet, "=~/uapi/domestic-bond/v1/quotations/inquire-asking-price",
+		httpmock.NewStringResponder(http.StatusOK, `{"rt_cd":"0","msg_cd":"X","msg1":"x","output":"not-object"}`))
+	_, err := client.InquireAskingPrice(context.Background(), bonds.InquireAskingPriceParams{Symbol: "X"})
+	require.Error(t, err)
+}
+
+func TestClient_InquireDailyPrice_InvalidJSON(t *testing.T) {
+	client, transport := newTestClient(t)
+	transport.RegisterResponder(http.MethodGet, "=~/uapi/domestic-bond/v1/quotations/inquire-daily-price",
+		httpmock.NewStringResponder(http.StatusOK, `{"rt_cd":"0","msg_cd":"X","msg1":"x","output":"not-object"}`))
+	_, err := client.InquireDailyPrice(context.Background(), bonds.InquireDailyPriceParams{Symbol: "X"})
+	require.Error(t, err)
+}
+
+func TestClient_InquireDailyItemchartprice_InvalidJSON(t *testing.T) {
+	client, transport := newTestClient(t)
+	transport.RegisterResponder(http.MethodGet, "=~/uapi/domestic-bond/v1/quotations/inquire-daily-itemchartprice",
+		httpmock.NewStringResponder(http.StatusOK, `{"rt_cd":"0","msg_cd":"X","msg1":"x","output":"not-array"}`))
+	_, err := client.InquireDailyItemchartprice(context.Background(), bonds.InquireDailyItemchartpriceParams{Symbol: "X"})
+	require.Error(t, err)
+}
+
+func TestClient_InquireAvgUnit_InvalidJSON(t *testing.T) {
+	client, transport := newTestClient(t)
+	transport.RegisterResponder(http.MethodGet, "=~/uapi/domestic-bond/v1/quotations/avg-unit",
+		httpmock.NewStringResponder(http.StatusOK, `{"rt_cd":"0","msg_cd":"X","msg1":"x","output1":"not-array"}`))
+	_, err := client.InquireAvgUnit(context.Background(), bonds.InquireAvgUnitParams{Pdno: "X", PrdtTypeCd: "300"})
+	require.Error(t, err)
+}
