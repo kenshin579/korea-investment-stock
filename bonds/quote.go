@@ -95,6 +95,135 @@ type SearchBondInfoData struct {
 	KsdTotIssuAmt          string `json:"ksd_tot_issu_amt"`
 }
 
+// ─── EP2: InquireIssueInfo ────────────────────────────────────────────────────
+
+// InquireIssueInfoParams 는 발행정보 조회 요청 파라미터.
+type InquireIssueInfoParams struct {
+	Pdno       string // PDNO: 채권 종목 번호 (필수)
+	PrdtTypeCd string // PRDT_TYPE_CD: 상품유형코드 (필수)
+}
+
+// IssueInfo 는 채권 발행정보. CTPF1101R — all-string 69 fields.
+type IssueInfo struct {
+	Pdno                  string `json:"pdno"`
+	PrdtTypeCd            string `json:"prdt_type_cd"`
+	PrdtName              string `json:"prdt_name"`
+	PrdtEngName           string `json:"prdt_eng_name"`
+	IvstHeedPrdtYn        string `json:"ivst_heed_prdt_yn"`
+	ExtsYn                string `json:"exts_yn"`
+	BondClsfCd            string `json:"bond_clsf_cd"`
+	BondClsfKorName       string `json:"bond_clsf_kor_name"`
+	Papr                  string `json:"papr"`
+	IntMnedDvsnCd         string `json:"int_mned_dvsn_cd"`
+	RvnuShapCd            string `json:"rvnu_shap_cd"`
+	IssuAmt               string `json:"issu_amt"`
+	LstgRmnd              string `json:"lstg_rmnd"`
+	IntDfrmMcnt           string `json:"int_dfrm_mcnt"`
+	BondIntDfrmMthdCd     string `json:"bond_int_dfrm_mthd_cd"`
+	SpltRdptRcnt          string `json:"splt_rdpt_rcnt"`
+	PrcaDfmtTermMcnt      string `json:"prca_dfmt_term_mcnt"`
+	IntAnapDvsnCd         string `json:"int_anap_dvsn_cd"`
+	BondRghtDvsnCd        string `json:"bond_rght_dvsn_cd"`
+	PrdtPclcText          string `json:"prdt_pclc_text"`
+	PrdtAbrvName          string `json:"prdt_abrv_name"`
+	PrdtEngAbrvName       string `json:"prdt_eng_abrv_name"`
+	SprxPsblYn            string `json:"sprx_psbl_yn"`
+	PbffPplcOfrgMthdCd    string `json:"pbff_pplc_ofrg_mthd_cd"`
+	CmcoCd                string `json:"cmco_cd"`
+	IssuIsttCd            string `json:"issu_istt_cd"`
+	IssuIsttName          string `json:"issu_istt_name"`
+	PniaDfrmAgcyIsttCd    string `json:"pnia_dfrm_agcy_istt_cd"`
+	DsctEcRt              string `json:"dsct_ec_rt"`
+	SrfcInrt              string `json:"srfc_inrt"`
+	ExpdRdptRt            string `json:"expd_rdpt_rt"`
+	ExpdAsrcErngRt        string `json:"expd_asrc_erng_rt"`
+	BondGrteIsttName      string `json:"bond_grte_istt_name"`
+	IntDfrmDayTypeCd      string `json:"int_dfrm_day_type_cd"`
+	KsdIntCalcUnitCd      string `json:"ksd_int_calc_unit_cd"`
+	IntWuntUderPrcsDvsnCd string `json:"int_wunt_uder_prcs_dvsn_cd"`
+	RvnuDt                string `json:"rvnu_dt"`
+	IssuDt                string `json:"issu_dt"`
+	LstgDt                string `json:"lstg_dt"`
+	ExpdDt                string `json:"expd_dt"`
+	RdptDt                string `json:"rdpt_dt"`
+	SbstPric              string `json:"sbst_pric"`
+	RgbfIntDfrmDt         string `json:"rgbf_int_dfrm_dt"`
+	NxtmIntDfrmDt         string `json:"nxtm_int_dfrm_dt"`
+	FrstIntDfrmDt         string `json:"frst_int_dfrm_dt"`
+	EcisPric              string `json:"ecis_pric"`
+	RghtStckStdPdno       string `json:"rght_stck_std_pdno"`
+	EcisOpngDt            string `json:"ecis_opng_dt"`
+	EcisEndDt             string `json:"ecis_end_dt"`
+	BondRvnuMthdCd        string `json:"bond_rvnu_mthd_cd"`
+	OprtStfno             string `json:"oprt_stfno"`
+	OprtStffName          string `json:"oprt_stff_name"`
+	RgbfIntDfrmWday       string `json:"rgbf_int_dfrm_wday"`
+	NxtmIntDfrmWday       string `json:"nxtm_int_dfrm_wday"`
+	KisCrdtGradText       string `json:"kis_crdt_grad_text"`
+	KbpCrdtGradText       string `json:"kbp_crdt_grad_text"`
+	NiceCrdtGradText      string `json:"nice_crdt_grad_text"`
+	FnpCrdtGradText       string `json:"fnp_crdt_grad_text"`
+	DpsiPsblYn            string `json:"dpsi_psbl_yn"`
+	PniaIntCalcUnpr       string `json:"pnia_int_calc_unpr"`
+	PrcmIdxBondYn         string `json:"prcm_idx_bond_yn"`
+	ExpdExtsSrdpRcnt      string `json:"expd_exts_srdp_rcnt"`
+	ExpdExtsSrdpRt        string `json:"expd_exts_srdp_rt"`
+	LoanPsblYn            string `json:"loan_psbl_yn"`
+	GrteDvsnCd            string `json:"grte_dvsn_cd"`
+	FnrrRankDvsnCd        string `json:"fnrr_rank_dvsn_cd"`
+	KrxLstgAbolDvsnCd     string `json:"krx_lstg_abol_dvsn_cd"`
+	AsstRqdiDvsnCd        string `json:"asst_rqdi_dvsn_cd"`
+	OpcbDvsnCd            string `json:"opcb_dvsn_cd"`
+	CrfdItemYn            string `json:"crfd_item_yn"`
+	CrfdItemRstcCclcDt    string `json:"crfd_item_rstc_cclc_dt"`
+	BondNmprUnitPric      string `json:"bond_nmpr_unit_pric"`
+	IvstHeedBondDvsnName  string `json:"ivst_heed_bond_dvsn_name"`
+	AddErngRt             string `json:"add_erng_rt"`
+	AddErngRtAplyDt       string `json:"add_erng_rt_aply_dt"`
+	BondTrStopDvsnCd      string `json:"bond_tr_stop_dvsn_cd"`
+	IvstHeedBondDvsnCd    string `json:"ivst_heed_bond_dvsn_cd"`
+	PclrCndtText          string `json:"pclr_cndt_text"`
+	HbbdYn                string `json:"hbbd_yn"`
+	CdtlCptlSctyTypeCd    string `json:"cdtl_cptl_scty_type_cd"`
+	ElecSctyYn            string `json:"elec_scty_yn"`
+	Sq1ClopEcisOpngDt     string `json:"sq1_clop_ecis_opng_dt"`
+	FrstErlmStfno         string `json:"frst_erlm_stfno"`
+	FrstErlmDt            string `json:"frst_erlm_dt"`
+	FrstErlmTmd           string `json:"frst_erlm_tmd"`
+	TlgRcvgDtlDtime       string `json:"tlg_rcvg_dtl_dtime"`
+}
+
+type inquireIssueInfoResponse struct {
+	RtCd   string    `json:"rt_cd"`
+	MsgCd  string    `json:"msg_cd"`
+	Msg1   string    `json:"msg1"`
+	Output IssueInfo `json:"output"`
+}
+
+// InquireIssueInfo 는 채권 발행정보 조회 (CTPF1101R).
+//
+// KIS API: GET /uapi/domestic-bond/v1/quotations/issue-info
+func (c *Client) InquireIssueInfo(ctx context.Context, params InquireIssueInfoParams) (*IssueInfo, error) {
+	resp, err := c.http.Do(ctx, &httpclient.Request{
+		Method:   http.MethodGet,
+		Path:     "/uapi/domestic-bond/v1/quotations/issue-info",
+		TrID:     "CTPF1101R",
+		CustType: "P",
+		Query: map[string]string{
+			"PDNO":         params.Pdno,
+			"PRDT_TYPE_CD": params.PrdtTypeCd,
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+	var res inquireIssueInfoResponse
+	if err := json.Unmarshal(resp.Raw, &res); err != nil {
+		return nil, fmt.Errorf("kis: parse InquireIssueInfo: %w", err)
+	}
+	return &res.Output, nil
+}
+
 type searchBondInfoResponse struct {
 	RtCd   string             `json:"rt_cd"`
 	MsgCd  string             `json:"msg_cd"`
