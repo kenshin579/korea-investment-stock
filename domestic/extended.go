@@ -714,3 +714,70 @@ func (c *Client) InquireBulkTransNum(ctx context.Context, params InquireBulkTran
 	}
 	return &res, nil
 }
+
+// TradprtByamt 는 체결금액별 매매비중 (FHKST111900C0) 응답.
+//
+// 한투 docs: docs/api/국내주식/체결금액별매매비중.md
+// path: /uapi/domestic-stock/v1/quotations/tradprt-byamt
+//
+// 주의: whol_shun_vol_rate 필드명은 KIS wire format typo (shun ≠ shnu).
+// 실제 의미는 전체 매수 거래량 비율이나 KIS wire key 그대로 보존.
+type TradprtByamt struct {
+	Output []TradprtByamtItem `json:"output"`
+}
+
+// TradprtByamtItem 은 응답의 output 한 행 (11 fields).
+type TradprtByamtItem struct {
+	PrprName        string          `json:"prpr_name"`                 // 체결금액 구간명
+	SmtnAvrgPrpr    decimal.Decimal `json:"smtn_avrg_prpr"`            // 합산 평균 가격
+	AcmlVol         int64           `json:"acml_vol,string"`           // 누적 거래량
+	WholNtbyQtyRate float64         `json:"whol_ntby_qty_rate,string"` // 전체 순매수 수량 비율
+	NtbyCntgCsnu    int64           `json:"ntby_cntg_csnu,string"`     // 순매수 체결 건수
+	SelnCnqnSmtn    int64           `json:"seln_cnqn_smtn,string"`     // 매도 체결량 합계
+	WholSelnVolRate float64         `json:"whol_seln_vol_rate,string"` // 전체 매도 거래량 비율
+	SelnCntgCsnu    int64           `json:"seln_cntg_csnu,string"`     // 매도 체결 건수
+	ShnuCnqnSmtn    int64           `json:"shnu_cnqn_smtn,string"`     // 매수 체결량 합계
+	WholShunVolRate float64         `json:"whol_shun_vol_rate,string"` // 전체 매수 거래량 비율 (KIS typo 보존)
+	ShnuCntgCsnu    int64           `json:"shnu_cntg_csnu,string"`     // 매수 체결 건수
+}
+
+// InquireTradprtByamtParams 는 체결금액별 매매비중 조회 파라미터.
+type InquireTradprtByamtParams struct {
+	MarketCode     string // FID_COND_MRKT_DIV_CODE — 빈 값=>"J"
+	CondScrDivCode string // FID_COND_SCR_DIV_CODE — 빈 값=>"11119"
+	Symbol         string // FID_INPUT_ISCD — 필수, 단축 종목코드
+}
+
+// InquireTradprtByamt 는 체결금액별 매매비중 호출.
+//
+// 한투 docs: docs/api/국내주식/체결금액별매매비중.md
+// path: /uapi/domestic-stock/v1/quotations/tradprt-byamt (FHKST111900C0)
+func (c *Client) InquireTradprtByamt(ctx context.Context, params InquireTradprtByamtParams) (*TradprtByamt, error) {
+	market := params.MarketCode
+	if market == "" {
+		market = "J"
+	}
+	scrDiv := params.CondScrDivCode
+	if scrDiv == "" {
+		scrDiv = "11119"
+	}
+	resp, err := c.http.Do(ctx, &httpclient.Request{
+		Method: http.MethodGet,
+		Path:   "/uapi/domestic-stock/v1/quotations/tradprt-byamt",
+		TrID:   "FHKST111900C0",
+		Query: map[string]string{
+			"FID_COND_MRKT_DIV_CODE": market,
+			"FID_COND_SCR_DIV_CODE":  scrDiv,
+			"FID_INPUT_ISCD":         params.Symbol,
+		},
+		CustType: "P",
+	})
+	if err != nil {
+		return nil, err
+	}
+	var res TradprtByamt
+	if err := json.Unmarshal(resp.Raw, &res); err != nil {
+		return nil, fmt.Errorf("kis: parse TradprtByamt: %w", err)
+	}
+	return &res, nil
+}
