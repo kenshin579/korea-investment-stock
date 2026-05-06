@@ -1,0 +1,25 @@
+{
+  "rt_cd": "0",
+  "msg_cd": "OPSP0000",
+  "msg1": "정상처리 되었습니다.",
+  "output": [
+    {
+      "stck_cntg_hour": "090000",
+      "bstp_nmix_prpr": "2550.25",
+      "prdy_vrss_sign": "2",
+      "bstp_nmix_prdy_vrss": "12.50",
+      "prdy_ctrt": "0.49",
+      "acml_vol": "123456789",
+      "acml_tr_pbmn": "987654321000"
+    },
+    {
+      "stck_cntg_hour": "090010",
+      "bstp_nmix_prpr": "2551.00",
+      "prdy_vrss_sign": "2",
+      "bstp_nmix_prdy_vrss": "13.25",
+      "prdy_ctrt": "0.52",
+      "acml_vol": "234567890",
+      "acml_tr_pbmn": "1098765432000"
+    }
+  ]
+}

@@ -1,0 +1,27 @@
+{
+  "rt_cd": "0",
+  "msg_cd": "MCA00000",
+  "msg1": "정상처리 되었습니다.",
+  "output": [
+    {
+      "stck_cntg_hour": "100015",
+      "bstp_nmix_prpr": "2651.35",
+      "bstp_nmix_prdy_vrss": "-11.40",
+      "prdy_vrss_sign": "5",
+      "bstp_nmix_prdy_ctrt": "-0.43",
+      "acml_tr_pbmn": "3350000",
+      "acml_vol": "123000000",
+      "cntg_vol": "50000"
+    },
+    {
+      "stck_cntg_hour": "100014",
+      "bstp_nmix_prpr": "2651.80",
+      "bstp_nmix_prdy_vrss": "-10.95",
+      "prdy_vrss_sign": "5",
+      "bstp_nmix_prdy_ctrt": "-0.41",
+      "acml_tr_pbmn": "3300000",
+      "acml_vol": "122500000",
+      "cntg_vol": "45000"
+    }
+  ]
+}
