@@ -2,7 +2,7 @@
 
 Go client library for the Korea Investment Securities OpenAPI.
 
-> **Phase 2.4 — 예탁원 정보 확장 11 메서드 (v1.7.0).** Phase 2.5+ 는 추후 sub-plan 으로.
+> **Phase 2.5 — 투자자/매매 동향 7 메서드 (v1.8.0).** Phase 2.5+ design spec 및 plan 참고.
 
 - Design spec: [`docs/superpowers/specs/2026-05-03-korea-investment-go-migration-design.md`](docs/superpowers/specs/2026-05-03-korea-investment-go-migration-design.md)
 - Phase 0 implementation plan: [`docs/superpowers/specs/2026-05-03-phase0-step1-implementation-plan.md`](docs/superpowers/specs/2026-05-03-phase0-step1-implementation-plan.md)
@@ -15,6 +15,8 @@ Go client library for the Korea Investment Securities OpenAPI.
 - Phase 2.2 implementation plan: [`docs/superpowers/specs/2026-05-05-phase2-2-extended-implementation-plan.md`](docs/superpowers/specs/2026-05-05-phase2-2-extended-implementation-plan.md)
 - Phase 2.3 implementation plan: [`docs/superpowers/specs/2026-05-05-phase2-3-overseas-ranking-implementation-plan.md`](docs/superpowers/specs/2026-05-05-phase2-3-overseas-ranking-implementation-plan.md)
 - Phase 2.4 implementation plan: [`docs/superpowers/specs/2026-05-05-phase2-4-ksd-implementation-plan.md`](docs/superpowers/specs/2026-05-05-phase2-4-ksd-implementation-plan.md)
+- Phase 2.5+ design spec: [`docs/superpowers/specs/2026-05-05-phase2-5plus-extension-design.md`](docs/superpowers/specs/2026-05-05-phase2-5plus-extension-design.md)
+- Phase 2.5 implementation plan: [`docs/superpowers/specs/2026-05-05-phase2-5-investor-flow-implementation-plan.md`](docs/superpowers/specs/2026-05-05-phase2-5-investor-flow-implementation-plan.md)
 - Legacy Python: see `python-final` tag (commit `e3fc52f`); PyPI `korea-investment-stock` v0.19.0 deprecated.
 
 ## Stack

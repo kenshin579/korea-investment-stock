@@ -120,3 +120,71 @@ func TestClient_InquireInvestorDailyByMarket(t *testing.T) {
 	assert.Equal(t, int64(-123456), res.Output[0].FrgnNtbyQty)
 	assert.Equal(t, int64(234567), res.Output[0].PrsnNtbyQty)
 }
+
+func TestClient_InquireInvestorTrendEstimate(t *testing.T) {
+	httpmock.Activate()
+	defer httpmock.DeactivateAndReset()
+
+	var capturedQuery url.Values
+	httpmock.RegisterResponder(
+		http.MethodGet,
+		`=~/quotations/investor-trend-estimate`,
+		func(req *http.Request) (*http.Response, error) {
+			capturedQuery = req.URL.Query()
+			return httpmock.NewStringResponse(200, loadFixtureString(t, "investor_trend_estimate_success.json")), nil
+		},
+	)
+
+	c := newTestClient(t)
+	res, err := c.InquireInvestorTrendEstimate(context.Background(), domestic.InquireInvestorTrendEstimateParams{
+		Symbol: "005930",
+	})
+	require.NoError(t, err)
+	require.NotNil(t, res)
+
+	assert.Equal(t, "005930", capturedQuery.Get("MKSC_SHRN_ISCD"))
+
+	require.Len(t, res.Output2, 2)
+	assert.Equal(t, "1", res.Output2[0].BsopHourGb)
+	assert.Equal(t, int64(123456), res.Output2[0].FrgnFakeNtbyQty)
+	assert.Equal(t, int64(-45678), res.Output2[0].OrgnFakeNtbyQty)
+	assert.Equal(t, int64(77778), res.Output2[0].SumFakeNtbyQty)
+}
+
+func TestClient_InquireForeignInstitutionTotal(t *testing.T) {
+	httpmock.Activate()
+	defer httpmock.DeactivateAndReset()
+
+	var capturedQuery url.Values
+	httpmock.RegisterResponder(
+		http.MethodGet,
+		`=~/quotations/foreign-institution-total`,
+		func(req *http.Request) (*http.Response, error) {
+			capturedQuery = req.URL.Query()
+			return httpmock.NewStringResponse(200, loadFixtureString(t, "foreign_institution_total_success.json")), nil
+		},
+	)
+
+	c := newTestClient(t)
+	res, err := c.InquireForeignInstitutionTotal(context.Background(), domestic.InquireForeignInstitutionTotalParams{
+		Symbol:       "0001",
+		DivClsCode:   "0",
+		RankSortCode: "0",
+		EtcClsCode:   "0",
+	})
+	require.NoError(t, err)
+	require.NotNil(t, res)
+
+	assert.Equal(t, "V", capturedQuery.Get("FID_COND_MRKT_DIV_CODE"))
+	assert.Equal(t, "16449", capturedQuery.Get("FID_COND_SCR_DIV_CODE"))
+	assert.Equal(t, "0001", capturedQuery.Get("FID_INPUT_ISCD"))
+	assert.Equal(t, "0", capturedQuery.Get("FID_DIV_CLS_CODE"))
+
+	require.Len(t, res.Output, 2)
+	assert.Equal(t, "005930", res.Output[0].MkscShrnIscd)
+	assert.Equal(t, "삼성전자", res.Output[0].HtsKorIsnm)
+	assert.Equal(t, decimal.NewFromInt(75800), res.Output[0].StckPrpr)
+	assert.Equal(t, int64(123456), res.Output[0].NtbyQty)
+	assert.Equal(t, int64(100000), res.Output[0].FrgnNtbyQty)
+	assert.Equal(t, int64(-50000), res.Output[0].OrgnNtbyQty)
+}

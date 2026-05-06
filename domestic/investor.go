@@ -450,3 +450,150 @@ func (c *Client) InquireInvestorTimeByMarket(ctx context.Context, params Inquire
 	}
 	return &res, nil
 }
+
+// InvestorTrendEstimate 는 주식현재가 투자자 가집계 (HHPTJ04160200) 응답.
+//
+// 한투 docs: docs/api/국내주식/주식현재가_투자자.md
+// path: /uapi/domestic-stock/v1/quotations/investor-trend-estimate
+//
+// output2 (시간대별 가집계 Array). output1 없음. query 키가 FID_ prefix 없는 MKSC_SHRN_ISCD.
+type InvestorTrendEstimate struct {
+	Output2 []InvestorTrendEstimateItem `json:"output2"`
+}
+
+// InvestorTrendEstimateItem 은 응답 output2 한 행 (시간대 가집계).
+//
+// bsop_hour_gb: 1=09:30, 2=10:00, 3=11:20, 4=13:20, 5=14:30
+type InvestorTrendEstimateItem struct {
+	BsopHourGb      string `json:"bsop_hour_gb"`              // 입력구분 (1~5)
+	FrgnFakeNtbyQty int64  `json:"frgn_fake_ntby_qty,string"` // 외국인 순매수 수량(가집계)
+	OrgnFakeNtbyQty int64  `json:"orgn_fake_ntby_qty,string"` // 기관 순매수 수량(가집계)
+	SumFakeNtbyQty  int64  `json:"sum_fake_ntby_qty,string"`  // 합산 순매수 수량(가집계)
+}
+
+// InquireInvestorTrendEstimateParams 는 주식현재가 투자자 가집계 조회 파라미터.
+//
+// query 키 MKSC_SHRN_ISCD — FID_ prefix 없음 (KIS docs 그대로).
+type InquireInvestorTrendEstimateParams struct {
+	Symbol string // MKSC_SHRN_ISCD — 필수, 종목코드 (6자리)
+}
+
+// InquireInvestorTrendEstimate 는 주식현재가 투자자 가집계 호출.
+//
+// 한투 docs: docs/api/국내주식/주식현재가_투자자.md
+// path: /uapi/domestic-stock/v1/quotations/investor-trend-estimate (HHPTJ04160200)
+func (c *Client) InquireInvestorTrendEstimate(ctx context.Context, params InquireInvestorTrendEstimateParams) (*InvestorTrendEstimate, error) {
+	resp, err := c.http.Do(ctx, &httpclient.Request{
+		Method: http.MethodGet,
+		Path:   "/uapi/domestic-stock/v1/quotations/investor-trend-estimate",
+		TrID:   "HHPTJ04160200",
+		Query: map[string]string{
+			"MKSC_SHRN_ISCD": params.Symbol,
+		},
+		CustType: "P",
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	var res InvestorTrendEstimate
+	if err := json.Unmarshal(resp.Raw, &res); err != nil {
+		return nil, fmt.Errorf("kis: parse InvestorTrendEstimate: %w", err)
+	}
+	return &res, nil
+}
+
+// ForeignInstitutionTotal 는 국내기관 외국인 매매종목 가집계 (FHPTJ04400000) 응답.
+//
+// 한투 docs: docs/api/국내주식/국내기관_외국인_매매종목가집계.md
+// path: /uapi/domestic-stock/v1/quotations/foreign-institution-total
+//
+// Output (capital O) — KIS API 의 json key 가 "Output" (대문자). 26 fields.
+type ForeignInstitutionTotal struct {
+	Output []ForeignInstitutionTotalItem `json:"Output"`
+}
+
+// ForeignInstitutionTotalItem 은 응답 Output 한 행 (종목별 외국인/기관 집계).
+type ForeignInstitutionTotalItem struct {
+	HtsKorIsnm        string          `json:"hts_kor_isnm"`                 // HTS 한글 종목명
+	MkscShrnIscd      string          `json:"mksc_shrn_iscd"`               // 유가증권 단축 종목코드
+	NtbyQty           int64           `json:"ntby_qty,string"`              // 순매수 수량
+	StckPrpr          decimal.Decimal `json:"stck_prpr"`                    // 주식 현재가
+	PrdyVrssSign      string          `json:"prdy_vrss_sign"`               // 전일 대비 부호
+	PrdyVrss          decimal.Decimal `json:"prdy_vrss"`                    // 전일 대비
+	PrdyCtrt          float64         `json:"prdy_ctrt,string"`             // 전일 대비율
+	AcmlVol           int64           `json:"acml_vol,string"`              // 누적 거래량
+	FrgnNtbyQty       int64           `json:"frgn_ntby_qty,string"`         // 외국인 순매수 수량
+	OrgnNtbyQty       int64           `json:"orgn_ntby_qty,string"`         // 기관계 순매수 수량
+	IvtrNtbyQty       int64           `json:"ivtr_ntby_qty,string"`         // 투자신탁 순매수 수량
+	BankNtbyQty       int64           `json:"bank_ntby_qty,string"`         // 은행 순매수 수량
+	InsuNtbyQty       int64           `json:"insu_ntby_qty,string"`         // 보험 순매수 수량
+	MrbnNtbyQty       int64           `json:"mrbn_ntby_qty,string"`         // 종금 순매수 수량
+	FundNtbyQty       int64           `json:"fund_ntby_qty,string"`         // 기금 순매수 수량
+	EtcOrgtNtbyVol    int64           `json:"etc_orgt_ntby_vol,string"`     // 기타단체 순매수 거래량
+	EtcCorpNtbyVol    int64           `json:"etc_corp_ntby_vol,string"`     // 기타법인 순매수 거래량
+	FrgnNtbyTrPbmn    int64           `json:"frgn_ntby_tr_pbmn,string"`     // 외국인 순매수 거래대금
+	OrgnNtbyTrPbmn    int64           `json:"orgn_ntby_tr_pbmn,string"`     // 기관계 순매수 거래대금
+	IvtrNtbyTrPbmn    int64           `json:"ivtr_ntby_tr_pbmn,string"`     // 투자신탁 순매수 거래대금
+	BankNtbyTrPbmn    int64           `json:"bank_ntby_tr_pbmn,string"`     // 은행 순매수 거래대금
+	InsuNtbyTrPbmn    int64           `json:"insu_ntby_tr_pbmn,string"`     // 보험 순매수 거래대금
+	MrbnNtbyTrPbmn    int64           `json:"mrbn_ntby_tr_pbmn,string"`     // 종금 순매수 거래대금
+	FundNtbyTrPbmn    int64           `json:"fund_ntby_tr_pbmn,string"`     // 기금 순매수 거래대금
+	EtcOrgtNtbyTrPbmn int64           `json:"etc_orgt_ntby_tr_pbmn,string"` // 기타단체 순매수 거래대금
+	EtcCorpNtbyTrPbmn int64           `json:"etc_corp_ntby_tr_pbmn,string"` // 기타법인 순매수 거래대금
+}
+
+// InquireForeignInstitutionTotalParams 는 국내기관 외국인 매매종목 가집계 조회 파라미터.
+//
+// MarketCode 기본값 "V", ScrDivCode 기본값 "16449".
+// Symbol: "0000"=전체, "0001"=KOSPI, "1001"=KOSDAQ.
+// DivClsCode: 0=수량정렬, 1=금액정렬.
+// RankSortCode: 0=순매수상위, 1=순매도상위.
+// EtcClsCode: 0=전체, 1=외국인, 2=기관계, 3=기타.
+type InquireForeignInstitutionTotalParams struct {
+	MarketCode   string // FID_COND_MRKT_DIV_CODE — 빈 값=>"V"
+	ScrDivCode   string // FID_COND_SCR_DIV_CODE — 빈 값=>"16449"
+	Symbol       string // FID_INPUT_ISCD — 필수
+	DivClsCode   string // FID_DIV_CLS_CODE — 0:수량, 1:금액
+	RankSortCode string // FID_RANK_SORT_CLS_CODE — 0:순매수, 1:순매도
+	EtcClsCode   string // FID_ETC_CLS_CODE — 0:전체, 1:외국인, 2:기관계, 3:기타
+}
+
+// InquireForeignInstitutionTotal 는 국내기관 외국인 매매종목 가집계 호출.
+//
+// 한투 docs: docs/api/국내주식/국내기관_외국인_매매종목가집계.md
+// path: /uapi/domestic-stock/v1/quotations/foreign-institution-total (FHPTJ04400000)
+func (c *Client) InquireForeignInstitutionTotal(ctx context.Context, params InquireForeignInstitutionTotalParams) (*ForeignInstitutionTotal, error) {
+	mkt := params.MarketCode
+	if mkt == "" {
+		mkt = "V"
+	}
+	scr := params.ScrDivCode
+	if scr == "" {
+		scr = "16449"
+	}
+
+	resp, err := c.http.Do(ctx, &httpclient.Request{
+		Method: http.MethodGet,
+		Path:   "/uapi/domestic-stock/v1/quotations/foreign-institution-total",
+		TrID:   "FHPTJ04400000",
+		Query: map[string]string{
+			"FID_COND_MRKT_DIV_CODE": mkt,
+			"FID_COND_SCR_DIV_CODE":  scr,
+			"FID_INPUT_ISCD":         params.Symbol,
+			"FID_DIV_CLS_CODE":       params.DivClsCode,
+			"FID_RANK_SORT_CLS_CODE": params.RankSortCode,
+			"FID_ETC_CLS_CODE":       params.EtcClsCode,
+		},
+		CustType: "P",
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	var res ForeignInstitutionTotal
+	if err := json.Unmarshal(resp.Raw, &res); err != nil {
+		return nil, fmt.Errorf("kis: parse ForeignInstitutionTotal: %w", err)
+	}
+	return &res, nil
+}
