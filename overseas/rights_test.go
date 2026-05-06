@@ -85,3 +85,29 @@ func TestClient_InquirePeriodRights(t *testing.T) {
 	assert.Equal(t, "Y", res.Output[0].DfntYn)
 	assert.Equal(t, "USD", res.Output[0].CrcyCd)
 }
+
+// Coverage 보강 — JSON unmarshal error path 검증.
+
+func TestClient_InquireRightsByIce_InvalidJSON(t *testing.T) {
+	httpmock.Activate()
+	defer httpmock.DeactivateAndReset()
+
+	httpmock.RegisterResponder(http.MethodGet, `=~/quotations/rights-by-ice`,
+		httpmock.NewStringResponder(200, `{"rt_cd":"0","msg_cd":"X","msg1":"x","output1": "not-array"}`))
+
+	c := newTestClient(t)
+	_, err := c.InquireRightsByIce(context.Background(), overseas.InquireRightsByIceParams{})
+	require.Error(t, err)
+}
+
+func TestClient_InquirePeriodRights_InvalidJSON(t *testing.T) {
+	httpmock.Activate()
+	defer httpmock.DeactivateAndReset()
+
+	httpmock.RegisterResponder(http.MethodGet, `=~/quotations/period-rights`,
+		httpmock.NewStringResponder(200, `{"rt_cd":"0","msg_cd":"X","msg1":"x","output": "not-array"}`))
+
+	c := newTestClient(t)
+	_, err := c.InquirePeriodRights(context.Background(), overseas.InquirePeriodRightsParams{})
+	require.Error(t, err)
+}

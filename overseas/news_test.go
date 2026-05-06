@@ -82,3 +82,29 @@ func TestClient_InquireBrknewsTitle(t *testing.T) {
 	assert.Equal(t, "", res.Output[0].Iscd3)
 	assert.Equal(t, "", res.Output[0].KorIsnm3)
 }
+
+// Coverage 보강 — JSON unmarshal error path 검증.
+
+func TestClient_InquireNewsTitle_InvalidJSON(t *testing.T) {
+	httpmock.Activate()
+	defer httpmock.DeactivateAndReset()
+
+	httpmock.RegisterResponder(http.MethodGet, `=~/quotations/news-title`,
+		httpmock.NewStringResponder(200, `{"rt_cd":"0","msg_cd":"X","msg1":"x","outblock1": "not-array"}`))
+
+	c := newTestClient(t)
+	_, err := c.InquireNewsTitle(context.Background(), overseas.InquireNewsTitleParams{})
+	require.Error(t, err)
+}
+
+func TestClient_InquireBrknewsTitle_InvalidJSON(t *testing.T) {
+	httpmock.Activate()
+	defer httpmock.DeactivateAndReset()
+
+	httpmock.RegisterResponder(http.MethodGet, `=~/quotations/brknews-title`,
+		httpmock.NewStringResponder(200, `{"rt_cd":"0","msg_cd":"X","msg1":"x","output": "not-array"}`))
+
+	c := newTestClient(t)
+	_, err := c.InquireBrknewsTitle(context.Background(), overseas.InquireBrknewsTitleParams{})
+	require.Error(t, err)
+}
