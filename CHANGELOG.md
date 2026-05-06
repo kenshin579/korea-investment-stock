@@ -1,5 +1,31 @@
 # CHANGELOG
 
+## [1.11.0] - 2026-05-05
+
+### Added — Phase 3.1 (장내채권 시세) — 신규 도메인
+
+- 신규 sub-package `bonds/` 도입 (`client.Bonds.*`)
+- `Bonds.SearchBondInfo` — 채권 기본조회 (CTPF1114R) — 70 fields all-string
+- `Bonds.InquireIssueInfo` — 발행정보 (CTPF1101R) — 69 fields all-string
+- `Bonds.InquirePrice` — 현재가 시세 (FHKBJ773400C0) — 17 fields typed
+- `Bonds.InquireCcnl` — 현재가 체결 (FHKBJ773403C0) — 7 fields typed (single snapshot)
+- `Bonds.InquireAskingPrice` — 현재가 호가 (FHKBJ773401C0) — 34 fields typed (5단계 호가)
+- `Bonds.InquireDailyPrice` — 현재가 일별 (FHKBJ773404C0) — 9 fields typed
+- `Bonds.InquireDailyItemchartprice` — 기간별 시세 (FHKBJ773701C0) — 6 fields/item array
+- `Bonds.InquireAvgUnit` — 평균단가조회 (CTPF2005R) — output1/output2/output3 (23+10+16 fields)
+- examples: `bonds_quote`
+
+### Notes
+
+- Phase 3 신규 도메인 시작 — 장내채권 (Korean bond) sub-package.
+- EP1 (`SearchBondInfo`) 는 path "search-bond-info" 에 동사 포함 — `Inquire` prefix 강제 안 함 (Style A 변형).
+- EP1+EP2 의 70/69 fields 는 KSD-style all-string mapping (KIS docs 가 모두 String 타입 명시).
+- EP3-EP8 은 Phase 2 standard typed mapping (decimal/int64/float64/string).
+- 채권 현재가/호가에서 `bond_oprc` (시가2 — KIS naming artifact), `stck_cntg_hour`/`stck_bsop_date` (cross-domain stock prefix) 등 KIS 명명 그대로 보존.
+- EP8 `CTX_AREA_NK30`/`CTX_AREA_FK100` cursor pagination params 노출.
+- Phase 3.2 (잔고/주문조회 4 메서드, 계좌 인증 필요) 는 Trading 도메인과 함께 추후 결정.
+- 누적 71 → 79 메서드.
+
 ## [1.10.0] - 2026-05-05
 
 ### Added — Phase 2.7 (업종/지수)
