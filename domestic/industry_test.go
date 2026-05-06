@@ -270,3 +270,47 @@ func TestClient_InquireTimeIndexchartprice(t *testing.T) {
 	assert.Equal(t, "100000", res.Output2[0].StckCntgHour)
 	assert.Equal(t, int64(800000), res.Output2[0].CntgVol)
 }
+
+func TestClient_ExpTotalIndex(t *testing.T) {
+	httpmock.Activate()
+	defer httpmock.DeactivateAndReset()
+
+	var capturedQuery url.Values
+	httpmock.RegisterResponder(
+		http.MethodGet,
+		`=~/quotations/exp-total-index`,
+		func(req *http.Request) (*http.Response, error) {
+			capturedQuery = req.URL.Query()
+			return httpmock.NewStringResponse(200, loadFixtureString(t, "exp_total_index_success.json")), nil
+		},
+	)
+
+	c := newTestClient(t)
+	res, err := c.ExpTotalIndex(context.Background(), domestic.ExpTotalIndexParams{
+		MrktClsCode: "K",
+		Symbol:      "0001",
+		MkopClsCode: "1",
+	})
+	require.NoError(t, err)
+	require.NotNil(t, res)
+
+	// ANOMALY: lowercase query param keys
+	assert.Equal(t, "K", capturedQuery.Get("fid_mrkt_cls_code"))
+	assert.Equal(t, "U", capturedQuery.Get("fid_cond_mrkt_div_code"))
+	assert.Equal(t, "11175", capturedQuery.Get("fid_cond_scr_div_code"))
+	assert.Equal(t, "0001", capturedQuery.Get("fid_input_iscd"))
+	assert.Equal(t, "1", capturedQuery.Get("fid_mkop_cls_code"))
+
+	d, _ := decimal.NewFromString("2650.45")
+	assert.True(t, d.Equal(res.Output1.BstpNmixPrpr))
+	// prdy_ctrt (short form) — bstp_nmix_prdy_ctrt 아님
+	assert.InDelta(t, -0.46, res.Output1.PrdyCtrt, 0.001)
+	assert.Equal(t, "315", res.Output1.AscnIssuCnt)
+	assert.Equal(t, "0001", res.Output1.BstpClsCode)
+
+	require.Len(t, res.Output2, 2)
+	assert.Equal(t, "코스피", res.Output2[0].HtsKorIsnm)
+	sdpr, _ := decimal.NewFromString("2662.75")
+	assert.True(t, sdpr.Equal(res.Output2[0].NmixSdpr))
+	assert.InDelta(t, -0.46, res.Output2[0].BstpNmixPrdyCtrt, 0.001)
+}

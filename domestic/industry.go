@@ -583,3 +583,90 @@ func (c *Client) InquireIndexPrice(ctx context.Context, params InquireIndexPrice
 	}
 	return &res, nil
 }
+
+// ExpTotalIndex 는 예상 전체 지수 (FHKUP11750000) 응답.
+//
+// 한투 docs: docs/api/국내주식/예상전체지수.md
+// path: /uapi/domestic-stock/v1/quotations/exp-total-index
+//
+// ANOMALY: 쿼리 파라미터 키가 모두 소문자 fid_* (다른 엔드포인트는 FID_* 대문자).
+// ANOMALY: output1 의 비율 필드명이 prdy_ctrt (short form) — bstp_nmix_prdy_ctrt 아님.
+// fid_cond_scr_div_code="11175" 는 Query map 에 하드코딩 (Params 미노출).
+type ExpTotalIndex struct {
+	Output1 ExpTotalIndexSummary `json:"output1"`
+	Output2 []ExpTotalIndexItem  `json:"output2"`
+}
+
+// ExpTotalIndexSummary 는 응답의 output1 (9 fields).
+//
+// PrdyCtrt 는 prdy_ctrt (short form) — bstp_nmix_prdy_ctrt 와 다른 필드명 주의.
+type ExpTotalIndexSummary struct {
+	BstpNmixPrpr     decimal.Decimal `json:"bstp_nmix_prpr"`      // 업종 지수 현재가
+	BstpNmixPrdyVrss decimal.Decimal `json:"bstp_nmix_prdy_vrss"` // 업종 지수 전일 대비
+	PrdyVrssSign     string          `json:"prdy_vrss_sign"`      // 전일 대비 부호
+	PrdyCtrt         float64         `json:"prdy_ctrt,string"`    // 전일 대비율 (short form)
+	AcmlVol          int64           `json:"acml_vol,string"`     // 누적 거래량
+	AscnIssuCnt      string          `json:"ascn_issu_cnt"`       // 상승 종목 수
+	DownIssuCnt      string          `json:"down_issu_cnt"`       // 하락 종목 수
+	StnrIssuCnt      string          `json:"stnr_issu_cnt"`       // 보합 종목 수
+	BstpClsCode      string          `json:"bstp_cls_code"`       // 업종 구분 코드
+}
+
+// ExpTotalIndexItem 은 응답의 output2 한 행 (10 fields).
+type ExpTotalIndexItem struct {
+	HtsKorIsnm       string          `json:"hts_kor_isnm"`               // HTS 한글 종목명
+	BstpNmixPrpr     decimal.Decimal `json:"bstp_nmix_prpr"`             // 업종 지수 현재가
+	BstpNmixPrdyVrss decimal.Decimal `json:"bstp_nmix_prdy_vrss"`        // 업종 지수 전일 대비
+	PrdyVrssSign     string          `json:"prdy_vrss_sign"`             // 전일 대비 부호
+	BstpNmixPrdyCtrt float64         `json:"bstp_nmix_prdy_ctrt,string"` // 업종 지수 전일 대비율
+	AcmlVol          int64           `json:"acml_vol,string"`            // 누적 거래량
+	NmixSdpr         decimal.Decimal `json:"nmix_sdpr"`                  // 지수 기준가
+	AscnIssuCnt      string          `json:"ascn_issu_cnt"`              // 상승 종목 수
+	StnrIssuCnt      string          `json:"stnr_issu_cnt"`              // 보합 종목 수
+	DownIssuCnt      string          `json:"down_issu_cnt"`              // 하락 종목 수
+}
+
+// ExpTotalIndexParams 는 예상 전체 지수 조회 파라미터.
+//
+// 주의: wire key 가 모두 소문자 fid_* (KIS anomaly).
+// fid_cond_scr_div_code="11175" 는 내부 hardcoded (노출 안함).
+type ExpTotalIndexParams struct {
+	MrktClsCode string // fid_mrkt_cls_code — 시장 구분 코드
+	MarketCode  string // fid_cond_mrkt_div_code — 빈 값=>"U" (업종)
+	Symbol      string // fid_input_iscd — 필수, 업종 코드
+	MkopClsCode string // fid_mkop_cls_code — 1:매수 2:매도
+}
+
+// ExpTotalIndex 는 예상 전체 지수 호출.
+//
+// 한투 docs: docs/api/국내주식/예상전체지수.md
+// path: /uapi/domestic-stock/v1/quotations/exp-total-index (FHKUP11750000)
+//
+// ANOMALY: 쿼리 파라미터 키 소문자 fid_* 사용. fid_cond_scr_div_code="11175" hardcoded.
+func (c *Client) ExpTotalIndex(ctx context.Context, params ExpTotalIndexParams) (*ExpTotalIndex, error) {
+	market := params.MarketCode
+	if market == "" {
+		market = "U"
+	}
+	resp, err := c.http.Do(ctx, &httpclient.Request{
+		Method: http.MethodGet,
+		Path:   "/uapi/domestic-stock/v1/quotations/exp-total-index",
+		TrID:   "FHKUP11750000",
+		Query: map[string]string{
+			"fid_mrkt_cls_code":      params.MrktClsCode,
+			"fid_cond_mrkt_div_code": market,
+			"fid_cond_scr_div_code":  "11175",
+			"fid_input_iscd":         params.Symbol,
+			"fid_mkop_cls_code":      params.MkopClsCode,
+		},
+		CustType: "P",
+	})
+	if err != nil {
+		return nil, err
+	}
+	var res ExpTotalIndex
+	if err := json.Unmarshal(resp.Raw, &res); err != nil {
+		return nil, fmt.Errorf("kis: parse ExpTotalIndex: %w", err)
+	}
+	return &res, nil
+}
