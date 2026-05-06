@@ -566,3 +566,126 @@ func (c *Client) InquireDailyItemchartprice(ctx context.Context, params InquireD
 	}
 	return &DailyItemchartprice{Output: res.Output}, nil
 }
+
+// ─── EP8: InquireAvgUnit ──────────────────────────────────────────────────────
+
+// InquireAvgUnitParams 는 장내채권 평균단가 조회 요청 파라미터.
+type InquireAvgUnitParams struct {
+	InqrStrtDt   string // INQR_STRT_DT: 조회 시작일 (YYYYMMDD)
+	InqrEndDt    string // INQR_END_DT: 조회 종료일 (YYYYMMDD)
+	Pdno         string // PDNO: 채권 종목코드
+	PrdtTypeCd   string // PRDT_TYPE_CD: 상품유형코드
+	VrfcKindCd   string // VRFC_KIND_CD: 검증종류코드
+	CtxAreaNk30  string // CTX_AREA_NK30: 연속조회검색조건 (blank 허용)
+	CtxAreaFk100 string // CTX_AREA_FK100: 연속조회키 (blank 허용)
+}
+
+// AvgUnitEvalUnit 는 평균단가조회 output1 항목. CTPF2005R — 23 fields typed.
+type AvgUnitEvalUnit struct {
+	EvluDt           string          `json:"evlu_dt"`                  // 평가 일자
+	Pdno             string          `json:"pdno"`                     // 상품번호
+	PrdtTypeCd       string          `json:"prdt_type_cd"`             // 상품유형코드
+	PrdtName         string          `json:"prdt_name"`                // 상품명
+	KisUnpr          decimal.Decimal `json:"kis_unpr"`                 // KIS 단가
+	KbpUnpr          decimal.Decimal `json:"kbp_unpr"`                 // KBP 단가
+	NiceEvluUnpr     decimal.Decimal `json:"nice_evlu_unpr"`           // NICE 평가단가
+	FnpUnpr          decimal.Decimal `json:"fnp_unpr"`                 // FnP 단가
+	AvgEvluUnpr      decimal.Decimal `json:"avg_evlu_unpr"`            // 평균 평가단가
+	KisCrdtGradText  string          `json:"kis_crdt_grad_text"`       // KIS 신용등급
+	KbpCrdtGradText  string          `json:"kbp_crdt_grad_text"`       // KBP 신용등급
+	NiceCrdtGradText string          `json:"nice_crdt_grad_text"`      // NICE 신용등급
+	FnpCrdtGradText  string          `json:"fnp_crdt_grad_text"`       // FnP 신용등급
+	ChngYn           string          `json:"chng_yn"`                  // 변경여부
+	KisErngRt        float64         `json:"kis_erng_rt,string"`       // KIS 수익률
+	KbpErngRt        float64         `json:"kbp_erng_rt,string"`       // KBP 수익률
+	NiceEvluErngRt   float64         `json:"nice_evlu_erng_rt,string"` // NICE 평가수익률
+	FnpErngRt        float64         `json:"fnp_erng_rt,string"`       // FnP 수익률
+	AvgEvluErngRt    float64         `json:"avg_evlu_erng_rt,string"`  // 평균 평가수익률
+	KisRfUnpr        decimal.Decimal `json:"kis_rf_unpr"`              // KIS 기준단가
+	KbpRfUnpr        decimal.Decimal `json:"kbp_rf_unpr"`              // KBP 기준단가
+	NiceEvluRfUnpr   decimal.Decimal `json:"nice_evlu_rf_unpr"`        // NICE 평가기준단가
+	AvgEvluRfUnpr    decimal.Decimal `json:"avg_evlu_rf_unpr"`         // 평균 평가기준단가
+}
+
+// AvgUnitEvalAmt 는 평균단가조회 output2 항목. CTPF2005R — 10 fields typed.
+type AvgUnitEvalAmt struct {
+	EvluDt      string `json:"evlu_dt"`              // 평가 일자
+	Pdno        string `json:"pdno"`                 // 상품번호
+	PrdtTypeCd  string `json:"prdt_type_cd"`         // 상품유형코드
+	PrdtName    string `json:"prdt_name"`            // 상품명
+	KisEvluAmt  int64  `json:"kis_evlu_amt,string"`  // KIS 평가금액
+	KbpEvluAmt  int64  `json:"kbp_evlu_amt,string"`  // KBP 평가금액
+	NiceEvluAmt int64  `json:"nice_evlu_amt,string"` // NICE 평가금액
+	FnpEvluAmt  int64  `json:"fnp_evlu_amt,string"`  // FnP 평가금액
+	AvgEvluAmt  int64  `json:"avg_evlu_amt,string"`  // 평균 평가금액
+	ChngYn      string `json:"chng_yn"`              // 변경여부
+}
+
+// AvgUnitPrice 는 평균단가조회 output3 항목. CTPF2005R — 16 fields typed.
+type AvgUnitPrice struct {
+	EvluDt           string          `json:"evlu_dt"`             // 평가 일자
+	Pdno             string          `json:"pdno"`                // 상품번호
+	PrdtTypeCd       string          `json:"prdt_type_cd"`        // 상품유형코드
+	PrdtName         string          `json:"prdt_name"`           // 상품명
+	KisCrcyCd        string          `json:"kis_crcy_cd"`         // KIS 통화코드
+	KisEvluUnitPric  decimal.Decimal `json:"kis_evlu_unit_pric"`  // KIS 평가단위가격
+	KisEvluPric      decimal.Decimal `json:"kis_evlu_pric"`       // KIS 평가가격
+	KbpCrcyCd        string          `json:"kbp_crcy_cd"`         // KBP 통화코드
+	KbpEvluUnitPric  decimal.Decimal `json:"kbp_evlu_unit_pric"`  // KBP 평가단위가격
+	KbpEvluPric      decimal.Decimal `json:"kbp_evlu_pric"`       // KBP 평가가격
+	NiceCrcyCd       string          `json:"nice_crcy_cd"`        // NICE 통화코드
+	NiceEvluUnitPric decimal.Decimal `json:"nice_evlu_unit_pric"` // NICE 평가단위가격
+	NiceEvluPric     decimal.Decimal `json:"nice_evlu_pric"`      // NICE 평가가격
+	AvgEvluUnitPric  decimal.Decimal `json:"avg_evlu_unit_pric"`  // 평균 평가단위가격
+	AvgEvluPric      decimal.Decimal `json:"avg_evlu_pric"`       // 평균 평가가격
+	ChngYn           string          `json:"chng_yn"`             // 변경여부
+}
+
+// AvgUnit 는 InquireAvgUnit 응답 (output1 + output2 + output3).
+type AvgUnit struct {
+	Output1 []AvgUnitEvalUnit `json:"output1"`
+	Output2 []AvgUnitEvalAmt  `json:"output2"`
+	Output3 []AvgUnitPrice    `json:"output3"`
+}
+
+type inquireAvgUnitResponse struct {
+	RtCd    string            `json:"rt_cd"`
+	MsgCd   string            `json:"msg_cd"`
+	Msg1    string            `json:"msg1"`
+	Output1 []AvgUnitEvalUnit `json:"output1"`
+	Output2 []AvgUnitEvalAmt  `json:"output2"`
+	Output3 []AvgUnitPrice    `json:"output3"`
+}
+
+// InquireAvgUnit 는 장내채권 평균단가 조회 (CTPF2005R).
+//
+// KIS API: GET /uapi/domestic-bond/v1/quotations/avg-unit
+func (c *Client) InquireAvgUnit(ctx context.Context, params InquireAvgUnitParams) (*AvgUnit, error) {
+	resp, err := c.http.Do(ctx, &httpclient.Request{
+		Method:   http.MethodGet,
+		Path:     "/uapi/domestic-bond/v1/quotations/avg-unit",
+		TrID:     "CTPF2005R",
+		CustType: "P",
+		Query: map[string]string{
+			"INQR_STRT_DT":   params.InqrStrtDt,
+			"INQR_END_DT":    params.InqrEndDt,
+			"PDNO":           params.Pdno,
+			"PRDT_TYPE_CD":   params.PrdtTypeCd,
+			"VRFC_KIND_CD":   params.VrfcKindCd,
+			"CTX_AREA_NK30":  params.CtxAreaNk30,
+			"CTX_AREA_FK100": params.CtxAreaFk100,
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+	var res inquireAvgUnitResponse
+	if err := json.Unmarshal(resp.Raw, &res); err != nil {
+		return nil, fmt.Errorf("kis: parse InquireAvgUnit: %w", err)
+	}
+	return &AvgUnit{
+		Output1: res.Output1,
+		Output2: res.Output2,
+		Output3: res.Output3,
+	}, nil
+}

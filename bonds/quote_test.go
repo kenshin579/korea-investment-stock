@@ -158,6 +158,51 @@ func TestClient_InquireDailyPrice(t *testing.T) {
 	assert.True(t, dailyHgpr.Equal(got.BondHgpr))
 }
 
+func TestClient_InquireAvgUnit(t *testing.T) {
+	client, transport := newTestClient(t)
+	transport.RegisterResponder(
+		http.MethodGet,
+		"=~/uapi/domestic-bond/v1/quotations/avg-unit",
+		httpmock.NewStringResponder(http.StatusOK, loadFixtureString(t, "avg_unit_success.json")),
+	)
+
+	got, err := client.InquireAvgUnit(context.Background(), bonds.InquireAvgUnitParams{
+		InqrStrtDt:   "20260401",
+		InqrEndDt:    "20260505",
+		Pdno:         "KR1010012345",
+		PrdtTypeCd:   "301",
+		VrfcKindCd:   "01",
+		CtxAreaNk30:  "",
+		CtxAreaFk100: "",
+	})
+	require.NoError(t, err)
+	require.NotNil(t, got)
+
+	// output1 array assertions
+	require.GreaterOrEqual(t, len(got.Output1), 1)
+	u := got.Output1[0]
+	assert.Equal(t, "20260505", u.EvluDt)
+	assert.Equal(t, "KR1010012345", u.Pdno)
+	avgEvluUnpr, _ := decimal.NewFromString("9851.25")
+	assert.True(t, avgEvluUnpr.Equal(u.AvgEvluUnpr))
+	assert.Equal(t, "AAA", u.KisCrdtGradText)
+	assert.InDelta(t, 3.500, u.KisErngRt, 0.001)
+
+	// output2 array assertions
+	require.GreaterOrEqual(t, len(got.Output2), 1)
+	a := got.Output2[0]
+	assert.Equal(t, "20260505", a.EvluDt)
+	assert.Equal(t, int64(9851250), a.AvgEvluAmt)
+
+	// output3 array assertions
+	require.GreaterOrEqual(t, len(got.Output3), 1)
+	p := got.Output3[0]
+	assert.Equal(t, "20260505", p.EvluDt)
+	avgEvluUnitPric, _ := decimal.NewFromString("9851.25")
+	assert.True(t, avgEvluUnitPric.Equal(p.AvgEvluUnitPric))
+	assert.Equal(t, "KRW", p.KisCrcyCd)
+}
+
 func TestClient_InquireDailyItemchartprice(t *testing.T) {
 	client, transport := newTestClient(t)
 	transport.RegisterResponder(
