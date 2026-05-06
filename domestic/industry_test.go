@@ -83,3 +83,43 @@ func TestClient_InquireIndexCategoryPrice(t *testing.T) {
 	assert.Equal(t, "코스피", res.Output2[0].HtsKorIsnm)
 	assert.InDelta(t, 100.0, res.Output2[0].AcmlVolRlim, 0.01)
 }
+
+func TestClient_InquireIndexDailyPrice(t *testing.T) {
+	httpmock.Activate()
+	defer httpmock.DeactivateAndReset()
+
+	var capturedQuery url.Values
+	httpmock.RegisterResponder(
+		http.MethodGet,
+		`=~/quotations/inquire-index-daily-price`,
+		func(req *http.Request) (*http.Response, error) {
+			capturedQuery = req.URL.Query()
+			return httpmock.NewStringResponse(200, loadFixtureString(t, "index_daily_price_success.json")), nil
+		},
+	)
+
+	c := newTestClient(t)
+	res, err := c.InquireIndexDailyPrice(context.Background(), domestic.InquireIndexDailyPriceParams{
+		Symbol:        "0001",
+		PeriodDivCode: "D",
+		InputDate1:    "20260505",
+	})
+	require.NoError(t, err)
+	require.NotNil(t, res)
+
+	assert.Equal(t, "U", capturedQuery.Get("FID_COND_MRKT_DIV_CODE"))
+	assert.Equal(t, "0001", capturedQuery.Get("FID_INPUT_ISCD"))
+	assert.Equal(t, "D", capturedQuery.Get("FID_PERIOD_DIV_CODE"))
+	assert.Equal(t, "20260505", capturedQuery.Get("FID_INPUT_DATE_1"))
+
+	d, _ := decimal.NewFromString("2650.45")
+	assert.True(t, d.Equal(res.Output1.BstpNmixPrpr))
+	assert.Equal(t, "315", res.Output1.AscnIssuCnt)
+	assert.InDelta(t, -0.46, res.Output1.BstpNmixPrdyCtrt, 0.001)
+
+	require.Len(t, res.Output2, 2)
+	assert.Equal(t, "20260505", res.Output2[0].StckBsopDate)
+	d2, _ := decimal.NewFromString("2650.45")
+	assert.True(t, d2.Equal(res.Output2[0].BstpNmixPrpr))
+	assert.InDelta(t, 100.00, res.Output2[0].AcmlVolRlim, 0.01)
+}

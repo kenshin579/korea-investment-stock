@@ -180,6 +180,95 @@ func (c *Client) InquireIndexCategoryPrice(ctx context.Context, params InquireIn
 	return &res, nil
 }
 
+// IndexDailyPrice 는 국내업종 일별지수 (FHPUP02120000) 응답.
+//
+// 한투 docs: docs/api/국내주식/국내업종_일별지수.md
+// path: /uapi/domestic-stock/v1/quotations/inquire-index-daily-price
+type IndexDailyPrice struct {
+	Output1 IndexDailyPriceSummary `json:"output1"`
+	Output2 []IndexDailyPriceItem  `json:"output2"`
+}
+
+// IndexDailyPriceSummary 는 응답의 output1 (대표 스냅샷, 20 fields).
+type IndexDailyPriceSummary struct {
+	BstpNmixPrpr         decimal.Decimal `json:"bstp_nmix_prpr"`             // 업종 지수 현재가
+	BstpNmixPrdyVrss     decimal.Decimal `json:"bstp_nmix_prdy_vrss"`        // 업종 지수 전일 대비
+	PrdyVrssSign         string          `json:"prdy_vrss_sign"`             // 전일 대비 부호
+	BstpNmixPrdyCtrt     float64         `json:"bstp_nmix_prdy_ctrt,string"` // 업종 지수 전일 대비율
+	AcmlVol              int64           `json:"acml_vol,string"`            // 누적 거래량
+	AcmlTrPbmn           int64           `json:"acml_tr_pbmn,string"`        // 누적 거래 대금
+	BstpNmixOprc         decimal.Decimal `json:"bstp_nmix_oprc"`             // 업종 지수 시가
+	BstpNmixHgpr         decimal.Decimal `json:"bstp_nmix_hgpr"`             // 업종 지수 최고가
+	BstpNmixLwpr         decimal.Decimal `json:"bstp_nmix_lwpr"`             // 업종 지수 최저가
+	PrdyVol              int64           `json:"prdy_vol,string"`            // 전일 거래량
+	AscnIssuCnt          string          `json:"ascn_issu_cnt"`              // 상승 종목 수
+	DownIssuCnt          string          `json:"down_issu_cnt"`              // 하락 종목 수
+	StnrIssuCnt          string          `json:"stnr_issu_cnt"`              // 보합 종목 수
+	UplmIssuCnt          string          `json:"uplm_issu_cnt"`              // 상한 종목 수
+	LslmIssuCnt          string          `json:"lslm_issu_cnt"`              // 하한 종목 수
+	PrdyTrPbmn           int64           `json:"prdy_tr_pbmn,string"`        // 전일 거래 대금
+	DryyBstpNmixHgprDate string          `json:"dryy_bstp_nmix_hgpr_date"`   // 연중 최고가 일자
+	DryyBstpNmixHgpr     decimal.Decimal `json:"dryy_bstp_nmix_hgpr"`        // 연중 업종 지수 최고가
+	DryyBstpNmixLwpr     decimal.Decimal `json:"dryy_bstp_nmix_lwpr"`        // 연중 업종 지수 최저가
+	DryyBstpNmixLwprDate string          `json:"dryy_bstp_nmix_lwpr_date"`   // 연중 최저가 일자
+}
+
+// IndexDailyPriceItem 은 응답의 output2 한 행 (일별, 13 fields).
+type IndexDailyPriceItem struct {
+	StckBsopDate     string          `json:"stck_bsop_date"`             // 영업 일자
+	BstpNmixPrpr     decimal.Decimal `json:"bstp_nmix_prpr"`             // 업종 지수 현재가
+	PrdyVrssSign     string          `json:"prdy_vrss_sign"`             // 전일 대비 부호
+	BstpNmixPrdyVrss decimal.Decimal `json:"bstp_nmix_prdy_vrss"`        // 업종 지수 전일 대비
+	BstpNmixPrdyCtrt float64         `json:"bstp_nmix_prdy_ctrt,string"` // 업종 지수 전일 대비율
+	BstpNmixOprc     decimal.Decimal `json:"bstp_nmix_oprc"`             // 업종 지수 시가
+	BstpNmixHgpr     decimal.Decimal `json:"bstp_nmix_hgpr"`             // 업종 지수 최고가
+	BstpNmixLwpr     decimal.Decimal `json:"bstp_nmix_lwpr"`             // 업종 지수 최저가
+	AcmlVolRlim      float64         `json:"acml_vol_rlim,string"`       // 누적 거래량 비중
+	AcmlVol          int64           `json:"acml_vol,string"`            // 누적 거래량
+	AcmlTrPbmn       int64           `json:"acml_tr_pbmn,string"`        // 누적 거래 대금
+	InvtNewPsdg      decimal.Decimal `json:"invt_new_psdg"`              // 투자자 순매수 주도
+	D20Dsrt          decimal.Decimal `json:"d20_dsrt"`                   // 20일 이격도
+}
+
+// InquireIndexDailyPriceParams 는 국내업종 일별지수 조회 파라미터.
+type InquireIndexDailyPriceParams struct {
+	MarketCode    string // FID_COND_MRKT_DIV_CODE — 빈 값=>"U" (업종)
+	Symbol        string // FID_INPUT_ISCD — 필수, 업종 코드 (예 "0001":코스피)
+	PeriodDivCode string // FID_PERIOD_DIV_CODE — D:일 W:주 M:월 Y:년
+	InputDate1    string // FID_INPUT_DATE_1 — 조회 시작일 YYYYMMDD
+}
+
+// InquireIndexDailyPrice 는 국내업종 일별지수 호출.
+//
+// 한투 docs: docs/api/국내주식/국내업종_일별지수.md
+// path: /uapi/domestic-stock/v1/quotations/inquire-index-daily-price (FHPUP02120000)
+func (c *Client) InquireIndexDailyPrice(ctx context.Context, params InquireIndexDailyPriceParams) (*IndexDailyPrice, error) {
+	market := params.MarketCode
+	if market == "" {
+		market = "U"
+	}
+	resp, err := c.http.Do(ctx, &httpclient.Request{
+		Method: http.MethodGet,
+		Path:   "/uapi/domestic-stock/v1/quotations/inquire-index-daily-price",
+		TrID:   "FHPUP02120000",
+		Query: map[string]string{
+			"FID_COND_MRKT_DIV_CODE": market,
+			"FID_INPUT_ISCD":         params.Symbol,
+			"FID_PERIOD_DIV_CODE":    params.PeriodDivCode,
+			"FID_INPUT_DATE_1":       params.InputDate1,
+		},
+		CustType: "P",
+	})
+	if err != nil {
+		return nil, err
+	}
+	var res IndexDailyPrice
+	if err := json.Unmarshal(resp.Raw, &res); err != nil {
+		return nil, fmt.Errorf("kis: parse IndexDailyPrice: %w", err)
+	}
+	return &res, nil
+}
+
 // InquireIndexPrice 는 국내업종 현재지수 호출.
 //
 // 한투 docs: docs/api/국내주식/국내업종_현재지수.md
