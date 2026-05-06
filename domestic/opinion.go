@@ -78,3 +78,80 @@ func (c *Client) InquireInvestOpinion(ctx context.Context, params InquireInvestO
 	}
 	return &res, nil
 }
+
+// InvestOpbysec 은 증권사별 투자의견 (FHKST663400C0) 응답.
+//
+// 한투 docs: docs/api/국내주식/증권사별투자의견.md
+// path: /uapi/domestic-stock/v1/quotations/invest-opbysec
+type InvestOpbysec struct {
+	Output []InvestOpbysecItem `json:"output"`
+}
+
+// InvestOpbysecItem 은 응답의 output 한 행 (16 fields).
+type InvestOpbysecItem struct {
+	StckBsopDate        string          `json:"stck_bsop_date"`          // 영업 일자
+	StckShrnIscd        string          `json:"stck_shrn_iscd"`          // 주식 단축 종목코드
+	HtsKorIsnm          string          `json:"hts_kor_isnm"`            // HTS 한글 종목명
+	InvtOpnn            string          `json:"invt_opnn"`               // 투자의견
+	InvtOpnnClsCode     string          `json:"invt_opnn_cls_code"`      // 투자의견 구분 코드
+	RgbfInvtOpnn        string          `json:"rgbf_invt_opnn"`          // 직전 투자의견
+	RgbfInvtOpnnClsCode string          `json:"rgbf_invt_opnn_cls_code"` // 직전 투자의견 구분 코드
+	MbcrName            string          `json:"mbcr_name"`               // 회원사명
+	StckPrpr            decimal.Decimal `json:"stck_prpr"`               // 주식 현재가
+	PrdyVrss            decimal.Decimal `json:"prdy_vrss"`               // 전일 대비
+	PrdyVrssSign        string          `json:"prdy_vrss_sign"`          // 전일 대비 부호
+	PrdyCtrt            float64         `json:"prdy_ctrt,string"`        // 전일 대비율
+	HtsGoalPrc          decimal.Decimal `json:"hts_goal_prc"`            // HTS 목표 가격
+	StckPrdyClpr        decimal.Decimal `json:"stck_prdy_clpr"`          // 주식 전일 종가
+	StftEsdg            decimal.Decimal `json:"stft_esdg"`               // 직전 추정 단가
+	Dprt                float64         `json:"dprt,string"`             // 이격도
+}
+
+// InquireInvestOpbysecParams 는 증권사별 투자의견 조회 파라미터.
+type InquireInvestOpbysecParams struct {
+	MarketCode     string // FID_COND_MRKT_DIV_CODE — 빈 값=>"J"
+	CondScrDivCode string // FID_COND_SCR_DIV_CODE — 빈 값=>"16634"
+	SecBrokerCode  string // FID_INPUT_ISCD — 필수, 증권사코드 (종목코드 아님!)
+	DivClsCode     string // FID_DIV_CLS_CODE — 0=전체
+	StartDate      string // FID_INPUT_DATE_1 — 조회 시작일 YYYYMMDD
+	EndDate        string // FID_INPUT_DATE_2 — 조회 종료일 YYYYMMDD
+}
+
+// InquireInvestOpbysec 은 증권사별 투자의견 호출.
+//
+// 한투 docs: docs/api/국내주식/증권사별투자의견.md
+// path: /uapi/domestic-stock/v1/quotations/invest-opbysec (FHKST663400C0)
+//
+// 주의: FID_INPUT_ISCD 는 종목코드가 아닌 증권사코드를 입력한다.
+func (c *Client) InquireInvestOpbysec(ctx context.Context, params InquireInvestOpbysecParams) (*InvestOpbysec, error) {
+	market := params.MarketCode
+	if market == "" {
+		market = "J"
+	}
+	scrDiv := params.CondScrDivCode
+	if scrDiv == "" {
+		scrDiv = "16634"
+	}
+	resp, err := c.http.Do(ctx, &httpclient.Request{
+		Method: http.MethodGet,
+		Path:   "/uapi/domestic-stock/v1/quotations/invest-opbysec",
+		TrID:   "FHKST663400C0",
+		Query: map[string]string{
+			"FID_COND_MRKT_DIV_CODE": market,
+			"FID_COND_SCR_DIV_CODE":  scrDiv,
+			"FID_INPUT_ISCD":         params.SecBrokerCode,
+			"FID_DIV_CLS_CODE":       params.DivClsCode,
+			"FID_INPUT_DATE_1":       params.StartDate,
+			"FID_INPUT_DATE_2":       params.EndDate,
+		},
+		CustType: "P",
+	})
+	if err != nil {
+		return nil, err
+	}
+	var res InvestOpbysec
+	if err := json.Unmarshal(resp.Raw, &res); err != nil {
+		return nil, fmt.Errorf("kis: parse InvestOpbysec: %w", err)
+	}
+	return &res, nil
+}
