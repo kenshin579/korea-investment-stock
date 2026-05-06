@@ -155,3 +155,84 @@ func (c *Client) InquireInvestOpbysec(ctx context.Context, params InquireInvestO
 	}
 	return &res, nil
 }
+
+// EstimatePerform 은 종목 추정실적 (HHKST668300C0) 응답.
+//
+// 한투 docs: docs/api/국내주식/종목추정실적.md
+// path: /uapi/domestic-stock/v1/quotations/estimate-perform
+//
+// QUAD OUTPUT: output1(요약) + output2(추정손익계산서 6행) + output3(투자지표 8행) + output4(결산년월 5행).
+// output1 KIS docs body labels 오표기 — Python dataclass field names 사용.
+type EstimatePerform struct {
+	Output1 EstimatePerformSummary           `json:"output1"`
+	Output2 []EstimatePerformIncomeStatement `json:"output2"`
+	Output3 []EstimatePerformInvestIndicator `json:"output3"`
+	Output4 []EstimatePerformPeriod          `json:"output4"`
+}
+
+// EstimatePerformSummary 는 응답의 output1 (종목 요약, 8 fields).
+// KIS docs body table 오표기 — Python dataclass 기준 field names 사용.
+type EstimatePerformSummary struct {
+	ShtCd         string `json:"sht_cd"`          // 단축 종목코드
+	ItemKorNm     string `json:"item_kor_nm"`     // 한글 종목명
+	Name1         string `json:"name1"`           // 현재가 (opaque)
+	Name2         string `json:"name2"`           // 전일 대비 (opaque)
+	Estdate       string `json:"estdate"`         // 결산 일자
+	RcmdName      string `json:"rcmd_name"`       // 투자의견명
+	Capital       string `json:"capital"`         // 자본금/거래량 (opaque)
+	FornItemLmtrt string `json:"forn_item_lmtrt"` // 외국인 한도 비율 (opaque)
+}
+
+// EstimatePerformIncomeStatement 는 output2(추정손익계산서) 한 행 (5 fields).
+type EstimatePerformIncomeStatement struct {
+	Data1 string `json:"data1"` // 항목명
+	Data2 string `json:"data2"` // 기간1 값
+	Data3 string `json:"data3"` // 기간2 값
+	Data4 string `json:"data4"` // 기간3 값
+	Data5 string `json:"data5"` // 기간4 값
+}
+
+// EstimatePerformInvestIndicator 는 output3(투자지표) 한 행 (5 fields).
+type EstimatePerformInvestIndicator struct {
+	Data1 string `json:"data1"` // 항목명
+	Data2 string `json:"data2"` // 기간1 값
+	Data3 string `json:"data3"` // 기간2 값
+	Data4 string `json:"data4"` // 기간3 값
+	Data5 string `json:"data5"` // 기간4 값
+}
+
+// EstimatePerformPeriod 는 output4 한 행 (결산년월, 1 field).
+type EstimatePerformPeriod struct {
+	Dt string `json:"dt"` // 결산 년월 (예 "202412", "202612E")
+}
+
+// InquireEstimatePerformParams 는 종목 추정실적 조회 파라미터.
+type InquireEstimatePerformParams struct {
+	Symbol string // SHT_CD — 필수, 6자리 단축 종목코드 (비표준 param명, FID_ 접두어 없음)
+}
+
+// InquireEstimatePerform 은 종목 추정실적 호출.
+//
+// 한투 docs: docs/api/국내주식/종목추정실적.md
+// path: /uapi/domestic-stock/v1/quotations/estimate-perform (HHKST668300C0)
+//
+// 주의: query param 이름이 SHT_CD (FID_ 접두어 없음).
+func (c *Client) InquireEstimatePerform(ctx context.Context, params InquireEstimatePerformParams) (*EstimatePerform, error) {
+	resp, err := c.http.Do(ctx, &httpclient.Request{
+		Method: http.MethodGet,
+		Path:   "/uapi/domestic-stock/v1/quotations/estimate-perform",
+		TrID:   "HHKST668300C0",
+		Query: map[string]string{
+			"SHT_CD": params.Symbol,
+		},
+		CustType: "P",
+	})
+	if err != nil {
+		return nil, err
+	}
+	var res EstimatePerform
+	if err := json.Unmarshal(resp.Raw, &res); err != nil {
+		return nil, fmt.Errorf("kis: parse EstimatePerform: %w", err)
+	}
+	return &res, nil
+}

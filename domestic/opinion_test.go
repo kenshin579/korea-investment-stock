@@ -93,3 +93,48 @@ func TestClient_InquireInvestOpbysec(t *testing.T) {
 	assert.InDelta(t, 0.61, res.Output[0].PrdyCtrt, 0.001)
 	assert.InDelta(t, 9.76, res.Output[0].Dprt, 0.001)
 }
+
+func TestClient_InquireEstimatePerform(t *testing.T) {
+	httpmock.Activate()
+	defer httpmock.DeactivateAndReset()
+
+	var capturedQuery url.Values
+	httpmock.RegisterResponder(
+		http.MethodGet,
+		`=~/quotations/estimate-perform`,
+		func(req *http.Request) (*http.Response, error) {
+			capturedQuery = req.URL.Query()
+			return httpmock.NewStringResponse(200, loadFixtureString(t, "estimate_perform_success.json")), nil
+		},
+	)
+
+	c := newTestClient(t)
+	res, err := c.InquireEstimatePerform(context.Background(), domestic.InquireEstimatePerformParams{
+		Symbol: "005930",
+	})
+	require.NoError(t, err)
+	require.NotNil(t, res)
+
+	// non-FID param 이름 확인
+	assert.Equal(t, "005930", capturedQuery.Get("SHT_CD"))
+	assert.Empty(t, capturedQuery.Get("FID_INPUT_ISCD"), "SHT_CD 파라미터만 사용해야 함")
+
+	// output1 확인
+	assert.Equal(t, "005930", res.Output1.ShtCd)
+	assert.Equal(t, "삼성전자", res.Output1.ItemKorNm)
+	assert.Equal(t, "매수", res.Output1.RcmdName)
+
+	// output2 (추정손익계산서 6행) 확인
+	require.Len(t, res.Output2, 6)
+	assert.Equal(t, "매출액", res.Output2[0].Data1)
+	assert.Equal(t, "305000", res.Output2[0].Data2)
+
+	// output3 (투자지표 8행) 확인
+	require.Len(t, res.Output3, 8)
+	assert.Equal(t, "EBITDA", res.Output3[0].Data1)
+
+	// output4 (결산년월 5행) 확인
+	require.Len(t, res.Output4, 5)
+	assert.Equal(t, "202412", res.Output4[0].Dt)
+	assert.Equal(t, "202612E", res.Output4[2].Dt)
+}
