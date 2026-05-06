@@ -61,7 +61,7 @@ func main() {
 }
 ```
 
-## Available Methods (Phase 1.2 ~ 2.7)
+## Available Methods (Phase 1.2 ~ 3.1)
 
 | Method | 한투 path | TR_ID |
 |--------|----------|-------|
@@ -137,6 +137,19 @@ func main() {
 | `Domestic.ExpTotalIndex` | `quotations/exp-total-index` | FHKUP11750000 |
 | `Domestic.ExpIndexTrend` | `quotations/exp-index-trend` | FHPST01840000 |
 
+### Bonds (장내채권) — Phase 3.1
+
+| Go 메서드 | path | TR_ID |
+|---|---|---|
+| `Bonds.SearchBondInfo` | `quotations/search-bond-info` | CTPF1114R |
+| `Bonds.InquireIssueInfo` | `quotations/issue-info` | CTPF1101R |
+| `Bonds.InquirePrice` | `quotations/inquire-price` | FHKBJ773400C0 |
+| `Bonds.InquireCcnl` | `quotations/inquire-ccnl` | FHKBJ773403C0 |
+| `Bonds.InquireAskingPrice` | `quotations/inquire-asking-price` | FHKBJ773401C0 |
+| `Bonds.InquireDailyPrice` | `quotations/inquire-daily-price` | FHKBJ773404C0 |
+| `Bonds.InquireDailyItemchartprice` | `quotations/inquire-daily-itemchartprice` | FHKBJ773701C0 |
+| `Bonds.InquireAvgUnit` | `quotations/avg-unit` | CTPF2005R |
+
 ## Design
 
 - **호출 스타일**: `client.Domestic.<Method>(ctx, ...)` 1단계 그룹화 (go-github / stripe-go 패턴)
@@ -152,8 +165,8 @@ func main() {
 
 - ✅ 국내주식 (시세, 차트, 순위, 재무, 투자자 동향, IPO/예탁원, 심볼)
 - ✅ 해외주식 (시세, 차트, 순위)
+- ✅ 장내채권 (시세, 발행정보, 호가, 기간별, 평균단가 — Phase 3.1)
 - ❌ 선물옵션 — 영구 제외
-- ❌ 장내채권 — 영구 제외
 - ❌ 실시간 WebSocket — 추후 별도 spec
 - ❌ 주식 주문/잔고/예약주문 — 본 spec 에서 다루지 않음
 

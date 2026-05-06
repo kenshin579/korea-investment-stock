@@ -14,6 +14,7 @@ import (
 
 	"github.com/redis/go-redis/v9"
 
+	"github.com/kenshin579/korea-investment-stock/bonds"
 	"github.com/kenshin579/korea-investment-stock/domestic"
 	"github.com/kenshin579/korea-investment-stock/internal/httpclient"
 	"github.com/kenshin579/korea-investment-stock/internal/mastercache"
@@ -41,6 +42,7 @@ type Client struct {
 
 	Domestic *domestic.Client
 	Overseas *overseas.Client
+	Bonds    *bonds.Client
 }
 
 // Option 은 functional option.
@@ -80,6 +82,7 @@ func NewClient(apiKey, apiSecret, accountNo string, opts ...Option) (*Client, er
 	}
 	c.Domestic = domestic.New(c.httpClient, c.masterC)
 	c.Overseas = overseas.New(c.httpClient, c.masterC)
+	c.Bonds = bonds.New(c.httpClient)
 	return c, nil
 }
 

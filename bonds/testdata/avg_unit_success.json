@@ -1,0 +1,66 @@
+{
+    "rt_cd": "0",
+    "msg_cd": "MCA00000",
+    "msg1": "정상처리 되었습니다.",
+    "output1": [
+        {
+            "evlu_dt": "20260505",
+            "pdno": "KR1010012345",
+            "prdt_type_cd": "301",
+            "prdt_name": "국고채권",
+            "kis_unpr": "9850.00",
+            "kbp_unpr": "9855.00",
+            "nice_evlu_unpr": "9848.00",
+            "fnp_unpr": "9852.00",
+            "avg_evlu_unpr": "9851.25",
+            "kis_crdt_grad_text": "AAA",
+            "kbp_crdt_grad_text": "AAA",
+            "nice_crdt_grad_text": "AAA",
+            "fnp_crdt_grad_text": "AAA",
+            "chng_yn": "N",
+            "kis_erng_rt": "3.500",
+            "kbp_erng_rt": "3.495",
+            "nice_evlu_erng_rt": "3.505",
+            "fnp_erng_rt": "3.498",
+            "avg_evlu_erng_rt": "3.4995",
+            "kis_rf_unpr": "9840.00",
+            "kbp_rf_unpr": "9842.00",
+            "nice_evlu_rf_unpr": "9838.00",
+            "avg_evlu_rf_unpr": "9840.00"
+        }
+    ],
+    "output2": [
+        {
+            "evlu_dt": "20260505",
+            "pdno": "KR1010012345",
+            "prdt_type_cd": "301",
+            "prdt_name": "국고채권",
+            "kis_evlu_amt": "9850000",
+            "kbp_evlu_amt": "9855000",
+            "nice_evlu_amt": "9848000",
+            "fnp_evlu_amt": "9852000",
+            "avg_evlu_amt": "9851250",
+            "chng_yn": "N"
+        }
+    ],
+    "output3": [
+        {
+            "evlu_dt": "20260505",
+            "pdno": "KR1010012345",
+            "prdt_type_cd": "301",
+            "prdt_name": "국고채권",
+            "kis_crcy_cd": "KRW",
+            "kis_evlu_unit_pric": "9850.00",
+            "kis_evlu_pric": "9850000.00",
+            "kbp_crcy_cd": "KRW",
+            "kbp_evlu_unit_pric": "9855.00",
+            "kbp_evlu_pric": "9855000.00",
+            "nice_crcy_cd": "KRW",
+            "nice_evlu_unit_pric": "9848.00",
+            "nice_evlu_pric": "9848000.00",
+            "avg_evlu_unit_pric": "9851.25",
+            "avg_evlu_pric": "9851250.00",
+            "chng_yn": "N"
+        }
+    ]
+}

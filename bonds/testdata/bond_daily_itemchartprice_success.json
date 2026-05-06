@@ -1,0 +1,23 @@
+{
+    "rt_cd": "0",
+    "msg_cd": "MCA00000",
+    "msg1": "정상처리 되었습니다.",
+    "output": [
+        {
+            "stck_bsop_date": "20260505",
+            "bond_oprc": "9825.00",
+            "bond_hgpr": "9830.00",
+            "bond_lwpr": "9820.00",
+            "bond_prpr": "9823.50",
+            "acml_vol": "152000"
+        },
+        {
+            "stck_bsop_date": "20260502",
+            "bond_oprc": "9830.00",
+            "bond_hgpr": "9840.00",
+            "bond_lwpr": "9825.00",
+            "bond_prpr": "9836.00",
+            "acml_vol": "98000"
+        }
+    ]
+}

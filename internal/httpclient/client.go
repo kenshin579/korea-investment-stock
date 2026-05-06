@@ -44,6 +44,30 @@ type Client struct {
 	resty *resty.Client
 }
 
+// NewForTest 는 테스트용 Client 생성. transport 는 httpmock.NewMockTransport() 등으로 전달.
+// stubTokenManager + high rate limit 을 자동 주입하므로 테스트 코드가 간결해짐.
+func NewForTest(transport http.RoundTripper) *Client {
+	type stubTM struct{}
+	stub := stubTokenManager{}
+	return New(Config{
+		BaseURL:    "https://openapi.koreainvestment.com:9443",
+		AppKey:     "test-key",
+		AppSecret:  "test-secret",
+		AccountNo:  "00000000-00",
+		Limiter:    ratelimit.New(1000),
+		TokenMgr:   stub,
+		Retries:    0,
+		Timeout:    5 * time.Second,
+		HTTPClient: &http.Client{Transport: transport},
+	})
+}
+
+// stubTokenManager 는 NewForTest 전용 stub — 항상 "Bearer test" 반환.
+type stubTokenManager struct{}
+
+func (stubTokenManager) Get(_ context.Context) (string, error)     { return "Bearer test", nil }
+func (stubTokenManager) Refresh(_ context.Context) (string, error) { return "Bearer test", nil }
+
 // New 는 Config 로 Client 생성.
 func New(cfg Config) *Client {
 	if cfg.Retries < 0 {
