@@ -468,6 +468,91 @@ func (c *Client) InquireDailyIndexchartprice(ctx context.Context, params Inquire
 	return &res, nil
 }
 
+// TimeIndexchartprice 는 국내업종 분봉 차트 (FHKUP03500200) 응답.
+//
+// 한투 docs: docs/api/국내주식/국내업종_분봉차트.md
+// path: /uapi/domestic-stock/v1/quotations/inquire-time-indexchartprice
+//
+// EP6(DailyIndexchartprice) 유사 구조 — output1 에 bstp_nmix_prdy_vrss 추가(16 fields).
+// output2 에 stck_cntg_hour 타임스탬프 포함.
+type TimeIndexchartprice struct {
+	Output1 TimeIndexchartpriceSummary `json:"output1"`
+	Output2 []TimeIndexchartpriceItem  `json:"output2"`
+}
+
+// TimeIndexchartpriceSummary 는 응답의 output1 (현재 스냅샷 + 선물 전일 OHLC, 16 fields).
+type TimeIndexchartpriceSummary struct {
+	BstpNmixPrdyVrss decimal.Decimal `json:"bstp_nmix_prdy_vrss"`        // 업종 지수 전일 대비
+	PrdyVrssSign     string          `json:"prdy_vrss_sign"`             // 전일 대비 부호
+	BstpNmixPrdyCtrt float64         `json:"bstp_nmix_prdy_ctrt,string"` // 업종 지수 전일 대비율
+	PrdyNmix         decimal.Decimal `json:"prdy_nmix"`                  // 전일 지수
+	AcmlVol          int64           `json:"acml_vol,string"`            // 누적 거래량
+	AcmlTrPbmn       int64           `json:"acml_tr_pbmn,string"`        // 누적 거래 대금
+	HtsKorIsnm       string          `json:"hts_kor_isnm"`               // HTS 한글 종목명
+	BstpNmixPrpr     decimal.Decimal `json:"bstp_nmix_prpr"`             // 업종 지수 현재가
+	BstpClsCode      string          `json:"bstp_cls_code"`              // 업종 구분 코드
+	PrdyVol          int64           `json:"prdy_vol,string"`            // 전일 거래량
+	BstpNmixOprc     decimal.Decimal `json:"bstp_nmix_oprc"`             // 업종 지수 시가
+	BstpNmixHgpr     decimal.Decimal `json:"bstp_nmix_hgpr"`             // 업종 지수 최고가
+	BstpNmixLwpr     decimal.Decimal `json:"bstp_nmix_lwpr"`             // 업종 지수 최저가
+	FutsPrdyOprc     decimal.Decimal `json:"futs_prdy_oprc"`             // 선물 전일 시가
+	FutsPrdyHgpr     decimal.Decimal `json:"futs_prdy_hgpr"`             // 선물 전일 고가
+	FutsPrdyLwpr     decimal.Decimal `json:"futs_prdy_lwpr"`             // 선물 전일 저가
+}
+
+// TimeIndexchartpriceItem 은 응답의 output2 한 행 (분봉, 8 fields).
+type TimeIndexchartpriceItem struct {
+	StckBsopDate string          `json:"stck_bsop_date"`      // 영업 일자
+	StckCntgHour string          `json:"stck_cntg_hour"`      // 주식 체결 시간 HHMMSS
+	BstpNmixPrpr decimal.Decimal `json:"bstp_nmix_prpr"`      // 업종 지수 현재가
+	BstpNmixOprc decimal.Decimal `json:"bstp_nmix_oprc"`      // 업종 지수 시가
+	BstpNmixHgpr decimal.Decimal `json:"bstp_nmix_hgpr"`      // 업종 지수 최고가
+	BstpNmixLwpr decimal.Decimal `json:"bstp_nmix_lwpr"`      // 업종 지수 최저가
+	CntgVol      int64           `json:"cntg_vol,string"`     // 체결 거래량
+	AcmlTrPbmn   int64           `json:"acml_tr_pbmn,string"` // 누적 거래 대금
+}
+
+// InquireTimeIndexchartpriceParams 는 국내업종 분봉 차트 조회 파라미터.
+type InquireTimeIndexchartpriceParams struct {
+	MarketCode   string // FID_COND_MRKT_DIV_CODE — 빈 값=>"U" (업종)
+	EtcClsCode   string // FID_ETC_CLS_CODE — 0:현물 1:선물
+	Symbol       string // FID_INPUT_ISCD — 필수, 업종 코드
+	InputHour1   string // FID_INPUT_HOUR_1 — 집계 단위: "30"/"60"/"600"/"3600"
+	PwDataIncuYn string // FID_PW_DATA_INCU_YN — Y:과거데이터포함 N:미포함
+}
+
+// InquireTimeIndexchartprice 는 국내업종 분봉 차트 호출.
+//
+// 한투 docs: docs/api/국내주식/국내업종_분봉차트.md
+// path: /uapi/domestic-stock/v1/quotations/inquire-time-indexchartprice (FHKUP03500200)
+func (c *Client) InquireTimeIndexchartprice(ctx context.Context, params InquireTimeIndexchartpriceParams) (*TimeIndexchartprice, error) {
+	market := params.MarketCode
+	if market == "" {
+		market = "U"
+	}
+	resp, err := c.http.Do(ctx, &httpclient.Request{
+		Method: http.MethodGet,
+		Path:   "/uapi/domestic-stock/v1/quotations/inquire-time-indexchartprice",
+		TrID:   "FHKUP03500200",
+		Query: map[string]string{
+			"FID_COND_MRKT_DIV_CODE": market,
+			"FID_ETC_CLS_CODE":       params.EtcClsCode,
+			"FID_INPUT_ISCD":         params.Symbol,
+			"FID_INPUT_HOUR_1":       params.InputHour1,
+			"FID_PW_DATA_INCU_YN":    params.PwDataIncuYn,
+		},
+		CustType: "P",
+	})
+	if err != nil {
+		return nil, err
+	}
+	var res TimeIndexchartprice
+	if err := json.Unmarshal(resp.Raw, &res); err != nil {
+		return nil, fmt.Errorf("kis: parse TimeIndexchartprice: %w", err)
+	}
+	return &res, nil
+}
+
 // InquireIndexPrice 는 국내업종 현재지수 호출.
 //
 // 한투 docs: docs/api/국내주식/국내업종_현재지수.md
