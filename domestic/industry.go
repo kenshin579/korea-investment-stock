@@ -670,3 +670,72 @@ func (c *Client) ExpTotalIndex(ctx context.Context, params ExpTotalIndexParams) 
 	}
 	return &res, nil
 }
+
+// ExpIndexTrend 는 예상 체결 지수 추이 (FHPST01840000) 응답.
+//
+// 한투 docs: docs/api/국내주식/예상체결지수추이.md
+// path: /uapi/domestic-stock/v1/quotations/exp-index-trend
+//
+// ANOMALY: KIS 문서의 Korean field 라벨이 scrambled 되어 있음.
+//
+//	e.g., stck_cntg_hour → "주식 단축 종목코드" (잘못된 라벨)
+//	      bstp_nmix_prpr → "HTS 한글 종목명" (잘못된 라벨)
+//
+// Field name(영문)은 정확하므로 field name 기준으로 구현.
+type ExpIndexTrend struct {
+	Output []ExpIndexTrendItem `json:"output"`
+}
+
+// ExpIndexTrendItem 은 응답의 output 한 행 (7 fields).
+//
+// PrdyCtrt 는 prdy_ctrt (short form) — bstp_nmix_prdy_ctrt 아님.
+type ExpIndexTrendItem struct {
+	StckCntgHour     string          `json:"stck_cntg_hour"`      // 체결 시간 HHMMSS
+	BstpNmixPrpr     decimal.Decimal `json:"bstp_nmix_prpr"`      // 업종 지수 현재가
+	PrdyVrssSign     string          `json:"prdy_vrss_sign"`      // 전일 대비 부호
+	BstpNmixPrdyVrss decimal.Decimal `json:"bstp_nmix_prdy_vrss"` // 업종 지수 전일 대비
+	PrdyCtrt         float64         `json:"prdy_ctrt,string"`    // 전일 대비율 (short form)
+	AcmlVol          int64           `json:"acml_vol,string"`     // 누적 거래량
+	AcmlTrPbmn       int64           `json:"acml_tr_pbmn,string"` // 누적 거래 대금
+}
+
+// ExpIndexTrendParams 는 예상 체결 지수 추이 조회 파라미터.
+type ExpIndexTrendParams struct {
+	MkopClsCode string // FID_MKOP_CLS_CODE — 1:매수 2:매도
+	InputHour1  string // FID_INPUT_HOUR_1 — 10/30/60/600
+	Symbol      string // FID_INPUT_ISCD — 필수, 업종 코드
+	MarketCode  string // FID_COND_MRKT_DIV_CODE — 빈 값=>"U" (업종)
+}
+
+// ExpIndexTrend 는 예상 체결 지수 추이 호출.
+//
+// 한투 docs: docs/api/국내주식/예상체결지수추이.md
+// path: /uapi/domestic-stock/v1/quotations/exp-index-trend (FHPST01840000)
+//
+// ANOMALY: KIS 문서 Korean field 라벨 scrambled — field name(영문) 기준으로 구현.
+func (c *Client) ExpIndexTrend(ctx context.Context, params ExpIndexTrendParams) (*ExpIndexTrend, error) {
+	market := params.MarketCode
+	if market == "" {
+		market = "U"
+	}
+	resp, err := c.http.Do(ctx, &httpclient.Request{
+		Method: http.MethodGet,
+		Path:   "/uapi/domestic-stock/v1/quotations/exp-index-trend",
+		TrID:   "FHPST01840000",
+		Query: map[string]string{
+			"FID_MKOP_CLS_CODE":      params.MkopClsCode,
+			"FID_INPUT_HOUR_1":       params.InputHour1,
+			"FID_INPUT_ISCD":         params.Symbol,
+			"FID_COND_MRKT_DIV_CODE": market,
+		},
+		CustType: "P",
+	})
+	if err != nil {
+		return nil, err
+	}
+	var res ExpIndexTrend
+	if err := json.Unmarshal(resp.Raw, &res); err != nil {
+		return nil, fmt.Errorf("kis: parse ExpIndexTrend: %w", err)
+	}
+	return &res, nil
+}

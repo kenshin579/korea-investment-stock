@@ -314,3 +314,41 @@ func TestClient_ExpTotalIndex(t *testing.T) {
 	assert.True(t, sdpr.Equal(res.Output2[0].NmixSdpr))
 	assert.InDelta(t, -0.46, res.Output2[0].BstpNmixPrdyCtrt, 0.001)
 }
+
+func TestClient_ExpIndexTrend(t *testing.T) {
+	httpmock.Activate()
+	defer httpmock.DeactivateAndReset()
+
+	var capturedQuery url.Values
+	httpmock.RegisterResponder(
+		http.MethodGet,
+		`=~/quotations/exp-index-trend`,
+		func(req *http.Request) (*http.Response, error) {
+			capturedQuery = req.URL.Query()
+			return httpmock.NewStringResponse(200, loadFixtureString(t, "exp_index_trend_success.json")), nil
+		},
+	)
+
+	c := newTestClient(t)
+	res, err := c.ExpIndexTrend(context.Background(), domestic.ExpIndexTrendParams{
+		MkopClsCode: "1",
+		InputHour1:  "10",
+		Symbol:      "0001",
+	})
+	require.NoError(t, err)
+	require.NotNil(t, res)
+
+	assert.Equal(t, "1", capturedQuery.Get("FID_MKOP_CLS_CODE"))
+	assert.Equal(t, "10", capturedQuery.Get("FID_INPUT_HOUR_1"))
+	assert.Equal(t, "0001", capturedQuery.Get("FID_INPUT_ISCD"))
+	assert.Equal(t, "U", capturedQuery.Get("FID_COND_MRKT_DIV_CODE"))
+
+	require.Len(t, res.Output, 2)
+	assert.Equal(t, "090000", res.Output[0].StckCntgHour)
+	prpr, _ := decimal.NewFromString("2550.25")
+	assert.True(t, prpr.Equal(res.Output[0].BstpNmixPrpr))
+	assert.Equal(t, "2", res.Output[0].PrdyVrssSign)
+	assert.InDelta(t, 0.49, res.Output[0].PrdyCtrt, 0.001)
+	assert.Equal(t, int64(123456789), res.Output[0].AcmlVol)
+	assert.Equal(t, int64(987654321000), res.Output[0].AcmlTrPbmn)
+}
