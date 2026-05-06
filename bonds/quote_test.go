@@ -105,3 +105,30 @@ func TestClient_InquireCcnl(t *testing.T) {
 	assert.Equal(t, int64(152000), got.AcmlVol)
 	assert.InDelta(t, -0.13, got.PrdyCtrt, 0.001)
 }
+
+func TestClient_InquireAskingPrice(t *testing.T) {
+	client, transport := newTestClient(t)
+	transport.RegisterResponder(
+		http.MethodGet,
+		"=~/uapi/domestic-bond/v1/quotations/inquire-asking-price",
+		httpmock.NewStringResponder(http.StatusOK, loadFixtureString(t, "bond_asking_price_success.json")),
+	)
+
+	got, err := client.InquireAskingPrice(context.Background(), bonds.InquireAskingPriceParams{
+		MarketCode: "B",
+		Symbol:     "KR103501GCC7",
+	})
+	require.NoError(t, err)
+	require.NotNil(t, got)
+
+	askp1, _ := decimal.NewFromString("9824.00")
+	bidp1, _ := decimal.NewFromString("9823.00")
+
+	assert.Equal(t, "141600", got.AsprAcptHour)
+	assert.True(t, askp1.Equal(got.BondAskp1))
+	assert.True(t, bidp1.Equal(got.BondBidp1))
+	assert.Equal(t, int64(10000), got.AskpRsqn1)
+	assert.Equal(t, int64(28000), got.TotalAskpRsqn)
+	assert.InDelta(t, 3.61, got.SelnErnnRate1, 0.001)
+	assert.InDelta(t, 3.62, got.ShnuErnnRate1, 0.001)
+}

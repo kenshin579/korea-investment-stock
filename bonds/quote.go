@@ -372,3 +372,83 @@ func (c *Client) InquireCcnl(ctx context.Context, params InquireCcnlParams) (*Bo
 	}
 	return &res.Output, nil
 }
+
+// ─── EP5: InquireAskingPrice ──────────────────────────────────────────────────
+
+// InquireAskingPriceParams 는 채권 현재가 호가 요청 파라미터.
+type InquireAskingPriceParams struct {
+	MarketCode string // FID_COND_MRKT_DIV_CODE: 기본 "B"
+	Symbol     string // FID_INPUT_ISCD: 채권 단축 종목코드 (필수)
+}
+
+// BondAskingPrice 는 채권 현재가 호가 (5단계). FHKBJ773401C0 — 34 fields typed.
+type BondAskingPrice struct {
+	AsprAcptHour  string          `json:"aspr_acpt_hour"`
+	BondAskp1     decimal.Decimal `json:"bond_askp1"`
+	BondAskp2     decimal.Decimal `json:"bond_askp2"`
+	BondAskp3     decimal.Decimal `json:"bond_askp3"`
+	BondAskp4     decimal.Decimal `json:"bond_askp4"`
+	BondAskp5     decimal.Decimal `json:"bond_askp5"`
+	BondBidp1     decimal.Decimal `json:"bond_bidp1"`
+	BondBidp2     decimal.Decimal `json:"bond_bidp2"`
+	BondBidp3     decimal.Decimal `json:"bond_bidp3"`
+	BondBidp4     decimal.Decimal `json:"bond_bidp4"`
+	BondBidp5     decimal.Decimal `json:"bond_bidp5"`
+	AskpRsqn1     int64           `json:"askp_rsqn1,string"`
+	AskpRsqn2     int64           `json:"askp_rsqn2,string"`
+	AskpRsqn3     int64           `json:"askp_rsqn3,string"`
+	AskpRsqn4     int64           `json:"askp_rsqn4,string"`
+	AskpRsqn5     int64           `json:"askp_rsqn5,string"`
+	BidpRsqn1     int64           `json:"bidp_rsqn1,string"`
+	BidpRsqn2     int64           `json:"bidp_rsqn2,string"`
+	BidpRsqn3     int64           `json:"bidp_rsqn3,string"`
+	BidpRsqn4     int64           `json:"bidp_rsqn4,string"`
+	BidpRsqn5     int64           `json:"bidp_rsqn5,string"`
+	TotalAskpRsqn int64           `json:"total_askp_rsqn,string"`
+	TotalBidpRsqn int64           `json:"total_bidp_rsqn,string"`
+	NtbyAsprRsqn  int64           `json:"ntby_aspr_rsqn,string"`
+	SelnErnnRate1 float64         `json:"seln_ernn_rate1,string"`
+	SelnErnnRate2 float64         `json:"seln_ernn_rate2,string"`
+	SelnErnnRate3 float64         `json:"seln_ernn_rate3,string"`
+	SelnErnnRate4 float64         `json:"seln_ernn_rate4,string"`
+	SelnErnnRate5 float64         `json:"seln_ernn_rate5,string"`
+	ShnuErnnRate1 float64         `json:"shnu_ernn_rate1,string"`
+	ShnuErnnRate2 float64         `json:"shnu_ernn_rate2,string"`
+	ShnuErnnRate3 float64         `json:"shnu_ernn_rate3,string"`
+	ShnuErnnRate4 float64         `json:"shnu_ernn_rate4,string"`
+	ShnuErnnRate5 float64         `json:"shnu_ernn_rate5,string"`
+}
+
+type inquireAskingPriceResponse struct {
+	RtCd   string          `json:"rt_cd"`
+	MsgCd  string          `json:"msg_cd"`
+	Msg1   string          `json:"msg1"`
+	Output BondAskingPrice `json:"output"`
+}
+
+// InquireAskingPrice 는 채권 현재가 호가 5단계 (FHKBJ773401C0).
+//
+// KIS API: GET /uapi/domestic-bond/v1/quotations/inquire-asking-price
+func (c *Client) InquireAskingPrice(ctx context.Context, params InquireAskingPriceParams) (*BondAskingPrice, error) {
+	if params.MarketCode == "" {
+		params.MarketCode = "B"
+	}
+	resp, err := c.http.Do(ctx, &httpclient.Request{
+		Method:   http.MethodGet,
+		Path:     "/uapi/domestic-bond/v1/quotations/inquire-asking-price",
+		TrID:     "FHKBJ773401C0",
+		CustType: "P",
+		Query: map[string]string{
+			"FID_COND_MRKT_DIV_CODE": params.MarketCode,
+			"FID_INPUT_ISCD":         params.Symbol,
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+	var res inquireAskingPriceResponse
+	if err := json.Unmarshal(resp.Raw, &res); err != nil {
+		return nil, fmt.Errorf("kis: parse InquireAskingPrice: %w", err)
+	}
+	return &res.Output, nil
+}
