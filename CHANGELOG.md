@@ -1,5 +1,21 @@
 # CHANGELOG
 
+## [1.9.0] - 2026-05-06
+
+### Added
+- `Overseas.InquireNewsTitle` — 해외뉴스종합(제목) (HHPSTH60100C1)
+  - ANOMALY: 응답 key `outblock1` (output/output1 아님), CTS pagination cursor
+- `Overseas.InquireBrknewsTitle` — 해외속보(제목) (FHKST01011801)
+  - ANOMALY: FID_ prefix 파라미터명, iscd1-10/kor_isnm1-10 flat 20 fields, FID_COND_SCR_DIV_CODE="11801" hardcoded
+- `Overseas.InquireRightsByIce` — 해외주식 권리종합 (HHDFS78330900)
+  - ANOMALY: output1 only (output2 없음)
+- `Overseas.InquirePeriodRights` — 해외주식 기간별권리조회 (CTRGT011R)
+  - ANOMALY: TR_ID C prefix, CTX_AREA_NK50/FK50 cursor pagination, numeric-content-as-String
+
+### Notes
+- 누적 메서드: 60 → 64
+- 신규 파일: `overseas/news.go`, `overseas/rights.go`
+
 ## [1.8.0] - 2026-05-05
 
 ### Added — Phase 2.5 (투자자/매매 동향)
