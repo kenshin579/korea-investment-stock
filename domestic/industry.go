@@ -328,6 +328,63 @@ func (c *Client) InquireIndexTimeprice(ctx context.Context, params InquireIndexT
 	return &res, nil
 }
 
+// IndexTickprice 는 국내업종 틱별 지수 (FHPUP02110100) 응답.
+//
+// 한투 docs: docs/api/국내주식/국내업종_틱별지수.md
+// path: /uapi/domestic-stock/v1/quotations/inquire-index-tickprice
+//
+// StckCntgHour 는 HHMMSS 형식 틱 타임스탬프.
+type IndexTickprice struct {
+	Output []IndexTickpriceItem `json:"output"`
+}
+
+// IndexTickpriceItem 은 응답의 output 한 행 (틱별, 8 fields).
+type IndexTickpriceItem struct {
+	StckCntgHour     string          `json:"stck_cntg_hour"`             // 주식 체결 시간 HHMMSS
+	BstpNmixPrpr     decimal.Decimal `json:"bstp_nmix_prpr"`             // 업종 지수 현재가
+	BstpNmixPrdyVrss decimal.Decimal `json:"bstp_nmix_prdy_vrss"`        // 업종 지수 전일 대비
+	PrdyVrssSign     string          `json:"prdy_vrss_sign"`             // 전일 대비 부호
+	BstpNmixPrdyCtrt float64         `json:"bstp_nmix_prdy_ctrt,string"` // 업종 지수 전일 대비율
+	AcmlTrPbmn       int64           `json:"acml_tr_pbmn,string"`        // 누적 거래 대금
+	AcmlVol          int64           `json:"acml_vol,string"`            // 누적 거래량
+	CntgVol          int64           `json:"cntg_vol,string"`            // 체결 거래량
+}
+
+// InquireIndexTickpriceParams 는 국내업종 틱별 지수 조회 파라미터.
+type InquireIndexTickpriceParams struct {
+	Symbol     string // FID_INPUT_ISCD — 필수, 업종 코드
+	MarketCode string // FID_COND_MRKT_DIV_CODE — 빈 값=>"U" (업종)
+}
+
+// InquireIndexTickprice 는 국내업종 틱별 지수 호출.
+//
+// 한투 docs: docs/api/국내주식/국내업종_틱별지수.md
+// path: /uapi/domestic-stock/v1/quotations/inquire-index-tickprice (FHPUP02110100)
+func (c *Client) InquireIndexTickprice(ctx context.Context, params InquireIndexTickpriceParams) (*IndexTickprice, error) {
+	market := params.MarketCode
+	if market == "" {
+		market = "U"
+	}
+	resp, err := c.http.Do(ctx, &httpclient.Request{
+		Method: http.MethodGet,
+		Path:   "/uapi/domestic-stock/v1/quotations/inquire-index-tickprice",
+		TrID:   "FHPUP02110100",
+		Query: map[string]string{
+			"FID_INPUT_ISCD":         params.Symbol,
+			"FID_COND_MRKT_DIV_CODE": market,
+		},
+		CustType: "P",
+	})
+	if err != nil {
+		return nil, err
+	}
+	var res IndexTickprice
+	if err := json.Unmarshal(resp.Raw, &res); err != nil {
+		return nil, fmt.Errorf("kis: parse IndexTickprice: %w", err)
+	}
+	return &res, nil
+}
+
 // InquireIndexPrice 는 국내업종 현재지수 호출.
 //
 // 한투 docs: docs/api/국내주식/국내업종_현재지수.md
