@@ -1,0 +1,34 @@
+{
+  "rt_cd": "0",
+  "msg_cd": "MCA00000",
+  "msg1": "정상처리 되었습니다.",
+  "output1": {
+    "antc_cnpr": "82700",
+    "antc_cntg_vrss": "200",
+    "antc_cntg_vrss_sign": "2",
+    "antc_cntg_prdy_ctrt": "0.24",
+    "antc_vol": "850000",
+    "antc_tr_pbmn": "70297500000",
+    "rprs_mrkt_kor_name": "코스피"
+  },
+  "output2": [
+    {
+      "stck_cntg_hour": "153000",
+      "antc_cnpr": "82700",
+      "antc_cntg_vrss": "200",
+      "antc_cntg_vrss_sign": "2",
+      "antc_cntg_prdy_ctrt": "0.24",
+      "antc_vol": "850000",
+      "acml_vol_rlim": "6.80"
+    },
+    {
+      "stck_cntg_hour": "152900",
+      "antc_cnpr": "82600",
+      "antc_cntg_vrss": "100",
+      "antc_cntg_vrss_sign": "2",
+      "antc_cntg_prdy_ctrt": "0.12",
+      "antc_vol": "820000",
+      "acml_vol_rlim": "6.56"
+    }
+  ]
+}
