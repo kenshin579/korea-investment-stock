@@ -1,0 +1,37 @@
+{
+  "rt_cd": "0",
+  "msg_cd": "MCA00000",
+  "msg1": "정상처리 되었습니다.",
+  "output": [
+    {
+      "mrkt_div_cls_name": "코스피",
+      "mksc_shrn_iscd": "005930",
+      "hts_kor_isnm": "삼성전자",
+      "stck_prpr": "57800",
+      "prdy_vrss": "-300",
+      "prdy_vrss_sign": "5",
+      "prdy_ctrt": "-0.52",
+      "acml_vol": "18234567",
+      "acml_tr_pbmn": "1054321098765",
+      "askp": "57800",
+      "bidp": "57750",
+      "data_rank": "1",
+      "inter_issu_reg_csnu": "234567"
+    },
+    {
+      "mrkt_div_cls_name": "코스피",
+      "mksc_shrn_iscd": "000660",
+      "hts_kor_isnm": "SK하이닉스",
+      "stck_prpr": "198500",
+      "prdy_vrss": "2000",
+      "prdy_vrss_sign": "2",
+      "prdy_ctrt": "1.02",
+      "acml_vol": "3456789",
+      "acml_tr_pbmn": "686543210000",
+      "askp": "198600",
+      "bidp": "198400",
+      "data_rank": "2",
+      "inter_issu_reg_csnu": "123456"
+    }
+  ]
+}
