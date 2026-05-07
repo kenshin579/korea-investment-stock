@@ -53,3 +53,39 @@ func TestInquireExpClosingPrice(t *testing.T) {
 	assert.InDelta(t, 1.23, item.SdprVrssPrprRate, 0.001)
 	assert.Equal(t, int64(125000), item.CntgVol)
 }
+
+func TestInquireChkHoliday(t *testing.T) {
+	httpmock.Activate()
+	defer httpmock.DeactivateAndReset()
+
+	var capturedQuery url.Values
+	httpmock.RegisterResponder(
+		http.MethodGet,
+		`=~/quotations/chk-holiday`,
+		func(req *http.Request) (*http.Response, error) {
+			capturedQuery = req.URL.Query()
+			return httpmock.NewStringResponse(200, loadFixtureString(t, "chk_holiday_success.json")), nil
+		},
+	)
+
+	c := newTestClient(t)
+	res, err := c.InquireChkHoliday(context.Background(), domestic.InquireChkHolidayParams{
+		BassDt:    "20260507",
+		CtxAreaNk: "",
+		CtxAreaFk: "",
+	})
+	require.NoError(t, err)
+	require.NotNil(t, res.Output)
+
+	// non-FID UPPERCASE wire param keys 검증
+	assert.Equal(t, "20260507", capturedQuery.Get("BASS_DT"))
+	assert.Empty(t, capturedQuery.Get("FID_INPUT_DATE_1"), "BASS_DT 파라미터만 사용해야 함 (FID_ 아님)")
+
+	out := res.Output
+	assert.Equal(t, "20260507", out.Bassdt)
+	assert.Equal(t, "04", out.WdayDvsnCd)
+	assert.Equal(t, "Y", out.BzdyYn)
+	assert.Equal(t, "Y", out.TrDayYn)
+	assert.Equal(t, "Y", out.OpndYn)
+	assert.Equal(t, "Y", out.SttlDayYn)
+}

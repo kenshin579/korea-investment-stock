@@ -85,3 +85,59 @@ func (c *Client) InquireExpClosingPrice(ctx context.Context, params InquireExpCl
 	}
 	return &res, nil
 }
+
+// ─── EP5: InquireChkHoliday ──────────────────────────────────────────────────
+
+// InquireChkHolidayParams 는 휴장일 조회 파라미터.
+// 주의: 파라미터명이 FID_ 접두어 없는 비표준 UPPERCASE 형식 (BASS_DT / CTX_AREA_NK / CTX_AREA_FK).
+// 주의: 단시간 다수 호출 자제 (KIS docs 권장 1일 1회).
+type InquireChkHolidayParams struct {
+	BassDt    string // BASS_DT (Y): 조회기준일 YYYYMMDD
+	CtxAreaNk string // CTX_AREA_NK (Y): 연속조회검색조건 (공란 가능)
+	CtxAreaFk string // CTX_AREA_FK (Y): 연속조회키 (공란 가능)
+}
+
+// ChkHolidayItem 은 휴장일 조회 단일 응답 객체.
+// wire key "bass_dt" → Go 필드 Bassdt.
+type ChkHolidayItem struct {
+	Bassdt     string `json:"bass_dt"`      // 기준일자 YYYYMMDD
+	WdayDvsnCd string `json:"wday_dvsn_cd"` // 요일구분코드 01(일)~07(토)
+	BzdyYn     string `json:"bzdy_yn"`      // 영업일여부 Y/N
+	TrDayYn    string `json:"tr_day_yn"`    // 거래일여부 Y/N
+	OpndYn     string `json:"opnd_yn"`      // 개장일여부 Y/N
+	SttlDayYn  string `json:"sttl_day_yn"`  // 결제일여부 Y/N
+}
+
+// InquireChkHolidayResponse 는 휴장일 조회 응답.
+type InquireChkHolidayResponse struct {
+	RtCd   string          `json:"rt_cd"`
+	MsgCd  string          `json:"msg_cd"`
+	Msg1   string          `json:"msg1"`
+	Output *ChkHolidayItem `json:"output"`
+}
+
+// InquireChkHoliday 는 휴장일을 조회한다 (CTCA0903R).
+//
+// 주의: 단시간 다수 호출 자제 (KIS docs 권장 1일 1회).
+// 파라미터명이 FID_ 접두어 없는 비표준 UPPERCASE 형식임에 유의 (BASS_DT/CTX_AREA_NK/CTX_AREA_FK).
+func (c *Client) InquireChkHoliday(ctx context.Context, params InquireChkHolidayParams) (*InquireChkHolidayResponse, error) {
+	resp, err := c.http.Do(ctx, &httpclient.Request{
+		Method: http.MethodGet,
+		Path:   "/uapi/domestic-stock/v1/quotations/chk-holiday",
+		TrID:   "CTCA0903R",
+		Query: map[string]string{
+			"BASS_DT":     params.BassDt,
+			"CTX_AREA_NK": params.CtxAreaNk,
+			"CTX_AREA_FK": params.CtxAreaFk,
+		},
+		CustType: "P",
+	})
+	if err != nil {
+		return nil, err
+	}
+	var res InquireChkHolidayResponse
+	if err := json.Unmarshal(resp.Raw, &res); err != nil {
+		return nil, fmt.Errorf("kis: parse InquireChkHolidayResponse: %w", err)
+	}
+	return &res, nil
+}
