@@ -66,3 +66,49 @@ func TestClient_InquireEtfPrice(t *testing.T) {
 	assert.InDelta(t, 0.58, res.Output.LpHldnRate, 0.001)
 	assert.Equal(t, int64(290000), res.Output.LpHldnVol)
 }
+
+func TestClient_InquireComponentStockPrice(t *testing.T) {
+	httpmock.Activate()
+	defer httpmock.DeactivateAndReset()
+
+	var capturedQuery url.Values
+	httpmock.RegisterResponder(
+		http.MethodGet,
+		`=~/etfetn/v1/quotations/inquire-component-stock-price`,
+		func(req *http.Request) (*http.Response, error) {
+			capturedQuery = req.URL.Query()
+			return httpmock.NewStringResponse(200, loadFixtureString(t, "component_stock_price_success.json")), nil
+		},
+	)
+
+	c := newTestClient(t)
+	res, err := c.InquireComponentStockPrice(context.Background(), domestic.InquireComponentStockPriceParams{
+		Symbol: "069500",
+	})
+	require.NoError(t, err)
+	require.NotNil(t, res)
+
+	// query param 검증
+	assert.Equal(t, "J", capturedQuery.Get("FID_COND_MRKT_DIV_CODE"))
+	assert.Equal(t, "069500", capturedQuery.Get("FID_INPUT_ISCD"))
+	assert.Equal(t, "11216", capturedQuery.Get("FID_COND_SCR_DIV_CODE"))
+
+	// output1 필드 검증
+	d1, _ := decimal.NewFromString("28350")
+	assert.True(t, d1.Equal(res.Output1.StckPrpr))
+	dNav, _ := decimal.NewFromString("28342")
+	assert.True(t, dNav.Equal(res.Output1.Nav))
+	assert.Equal(t, int64(1417100000000), res.Output1.EtfNtasTtam)
+	assert.Equal(t, int64(93), res.Output1.EtfCnfgIssuCnt)
+	assert.Equal(t, int64(50000), res.Output1.EtfCuUnitScrtCnt)
+
+	// output2 배열 검증
+	require.Len(t, res.Output2, 2)
+	assert.Equal(t, "005930", res.Output2[0].StckShrnIscd)
+	assert.Equal(t, "삼성전자", res.Output2[0].HtsKorIsnm)
+	d2, _ := decimal.NewFromString("57800")
+	assert.True(t, d2.Equal(res.Output2[0].StckPrpr))
+	assert.Equal(t, int64(18234567), res.Output2[0].AcmlVol)
+	assert.InDelta(t, 19.99, res.Output2[0].EtfCnfgIssuRlim, 0.001)
+	assert.Equal(t, "000660", res.Output2[1].StckShrnIscd)
+}

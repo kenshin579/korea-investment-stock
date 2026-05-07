@@ -120,3 +120,96 @@ func (c *Client) InquireEtfPrice(ctx context.Context, params InquireEtfPricePara
 	}
 	return &res, nil
 }
+
+// ComponentStockPrice 는 ETF 구성종목 시세 (FHKST121600C0) 응답.
+//
+// 한투 docs: docs/api/국내주식/ETF_구성종목시세.md
+// path: /uapi/etfetn/v1/quotations/inquire-component-stock-price
+type ComponentStockPrice struct {
+	Output1 ComponentStockPriceSummary `json:"output1"`
+	Output2 []ComponentStockPriceItem  `json:"output2"`
+}
+
+// ComponentStockPriceSummary 는 ETF 구성종목 시세 응답 output1 (단일 객체 16 fields).
+type ComponentStockPriceSummary struct {
+	StckPrpr         decimal.Decimal `json:"stck_prpr"`                   // 주식 현재가
+	PrdyVrss         decimal.Decimal `json:"prdy_vrss"`                   // 전일 대비
+	PrdyVrssSign     string          `json:"prdy_vrss_sign"`              // 전일 대비 부호
+	PrdyCtrt         float64         `json:"prdy_ctrt,string"`            // 전일 대비율
+	EtfCnfgIssuAvls  int64           `json:"etf_cnfg_issu_avls,string"`   // ETF 구성 발행 시가총액
+	Nav              decimal.Decimal `json:"nav"`                         // NAV
+	NavPrdyVrssSign  string          `json:"nav_prdy_vrss_sign"`          // NAV 전일 대비 부호
+	NavPrdyVrss      decimal.Decimal `json:"nav_prdy_vrss"`               // NAV 전일 대비
+	NavPrdyCtrt      float64         `json:"nav_prdy_ctrt,string"`        // NAV 전일 대비율
+	EtfNtasTtam      int64           `json:"etf_ntas_ttam,string"`        // ETF 순자산 총액
+	PrdyClprNav      decimal.Decimal `json:"prdy_clpr_nav"`               // 전일 종가 NAV
+	OprcNav          decimal.Decimal `json:"oprc_nav"`                    // 시가 NAV
+	HprcNav          decimal.Decimal `json:"hprc_nav"`                    // 최고가 NAV
+	LprcNav          decimal.Decimal `json:"lprc_nav"`                    // 최저가 NAV
+	EtfCuUnitScrtCnt int64           `json:"etf_cu_unit_scrt_cnt,string"` // ETF CU 단위 증권 수
+	EtfCnfgIssuCnt   int64           `json:"etf_cnfg_issu_cnt,string"`    // ETF 구성 발행 수
+}
+
+// ComponentStockPriceItem 은 ETF 구성종목 시세 응답 output2 의 한 행 (15 fields/item).
+type ComponentStockPriceItem struct {
+	StckShrnIscd    string          `json:"stck_shrn_iscd"`            // 주식 단축 종목코드
+	HtsKorIsnm      string          `json:"hts_kor_isnm"`              // HTS 한글 종목명
+	StckPrpr        decimal.Decimal `json:"stck_prpr"`                 // 주식 현재가
+	PrdyVrss        decimal.Decimal `json:"prdy_vrss"`                 // 전일 대비
+	PrdyVrssSign    string          `json:"prdy_vrss_sign"`            // 전일 대비 부호
+	PrdyCtrt        float64         `json:"prdy_ctrt,string"`          // 전일 대비율
+	AcmlVol         int64           `json:"acml_vol,string"`           // 누적 거래량
+	AcmlTrPbmn      int64           `json:"acml_tr_pbmn,string"`       // 누적 거래 대금
+	TdayRsflRate    float64         `json:"tday_rsfl_rate,string"`     // 당일 등락률
+	PrdyVrssVol     int64           `json:"prdy_vrss_vol,string"`      // 전일 대비 거래량
+	TrPbmnTnrt      float64         `json:"tr_pbmn_tnrt,string"`       // 거래 대금 회전율
+	HtsAvls         int64           `json:"hts_avls,string"`           // HTS 시가총액
+	EtfCnfgIssuAvls int64           `json:"etf_cnfg_issu_avls,string"` // ETF 구성 발행 시가총액
+	EtfCnfgIssuRlim float64         `json:"etf_cnfg_issu_rlim,string"` // ETF 구성 발행 비율
+	EtfVltnAmt      int64           `json:"etf_vltn_amt,string"`       // ETF 평가 금액
+}
+
+// InquireComponentStockPriceParams 는 ETF 구성종목 시세 조회 파라미터.
+//
+// FID_COND_SCR_DIV_CODE = "11216" 고정 (사용자 변경 불가).
+type InquireComponentStockPriceParams struct {
+	MarketCode     string // FID_COND_MRKT_DIV_CODE — "J":KRX. 빈 값=>"J"
+	Symbol         string // FID_INPUT_ISCD — 종목코드 (예 "069500") Y
+	CondScrDivCode string // FID_COND_SCR_DIV_CODE — "11216" 고정. 빈 값=>"11216"
+}
+
+// InquireComponentStockPrice 는 ETF 구성종목 시세 호출.
+//
+// 한투 docs: docs/api/국내주식/ETF_구성종목시세.md
+// path: /uapi/etfetn/v1/quotations/inquire-component-stock-price (FHKST121600C0)
+func (c *Client) InquireComponentStockPrice(ctx context.Context, params InquireComponentStockPriceParams) (*ComponentStockPrice, error) {
+	market := params.MarketCode
+	if market == "" {
+		market = "J"
+	}
+	scrDiv := params.CondScrDivCode
+	if scrDiv == "" {
+		scrDiv = "11216"
+	}
+
+	resp, err := c.http.Do(ctx, &httpclient.Request{
+		Method: http.MethodGet,
+		Path:   "/uapi/etfetn/v1/quotations/inquire-component-stock-price",
+		TrID:   "FHKST121600C0",
+		Query: map[string]string{
+			"FID_COND_MRKT_DIV_CODE": market,
+			"FID_INPUT_ISCD":         params.Symbol,
+			"FID_COND_SCR_DIV_CODE":  scrDiv,
+		},
+		CustType: "P",
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	var res ComponentStockPrice
+	if err := json.Unmarshal(resp.Raw, &res); err != nil {
+		return nil, fmt.Errorf("kis: parse ComponentStockPrice: %w", err)
+	}
+	return &res, nil
+}
