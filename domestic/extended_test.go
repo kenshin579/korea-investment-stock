@@ -327,3 +327,19 @@ func TestClient_InquireTradprtByamt(t *testing.T) {
 	wantAvrgPrpr, _ := decimal.NewFromString("150000000")
 	assert.True(t, wantAvrgPrpr.Equal(res.Output[0].SmtnAvrgPrpr))
 }
+
+func TestClient_InquireHtsTopView(t *testing.T) {
+	httpmock.Activate()
+	defer httpmock.DeactivateAndReset()
+
+	httpmock.RegisterResponder(http.MethodGet, `=~/ranking/hts-top-view`,
+		httpmock.NewStringResponder(http.StatusOK, loadFixtureString(t, "hts_top_view_success.json")))
+
+	c := newTestClient(t)
+	res, err := c.InquireHtsTopView(context.Background(), domestic.InquireHtsTopViewParams{})
+	require.NoError(t, err)
+	require.NotNil(t, res)
+
+	assert.Equal(t, "J", res.Output1.MrktDivClsCode)
+	assert.Equal(t, "005930", res.Output1.MkscShrnIscd)
+}

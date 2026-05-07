@@ -781,3 +781,48 @@ func (c *Client) InquireTradprtByamt(ctx context.Context, params InquireTradprtB
 	}
 	return &res, nil
 }
+
+// HtsTopView 는 HTS조회상위20종목 (HHMCM000100C0) 응답.
+//
+// 한투 docs: docs/api/국내주식/HTS조회상위20종목.md
+// path: /uapi/domestic-stock/v1/ranking/hts-top-view
+//
+// 특이사항: 쿼리 파라미터 없음 (zero params), 응답 키가 output1 (not output).
+type HtsTopView struct {
+	Output1 HtsTopViewItem `json:"output1"`
+}
+
+// HtsTopViewItem 은 HTS조회상위20종목 응답의 단일 객체.
+type HtsTopViewItem struct {
+	MrktDivClsCode string `json:"mrkt_div_cls_code"` // 시장구분 (J:코스피, Q:코스닥)
+	MkscShrnIscd   string `json:"mksc_shrn_iscd"`    // 종목코드
+}
+
+// InquireHtsTopViewParams 는 HTS조회상위20종목 조회 파라미터.
+//
+// 이 endpoint 는 쿼리 파라미터가 없음 (zero params).
+type InquireHtsTopViewParams struct {
+	// 의도적으로 비어있음 — KIS API 가 query params 받지 않음
+}
+
+// InquireHtsTopView 는 HTS조회상위20종목 호출.
+//
+// 한투 docs: docs/api/국내주식/HTS조회상위20종목.md
+// path: /uapi/domestic-stock/v1/ranking/hts-top-view (HHMCM000100C0)
+func (c *Client) InquireHtsTopView(ctx context.Context, _ InquireHtsTopViewParams) (*HtsTopView, error) {
+	resp, err := c.http.Do(ctx, &httpclient.Request{
+		Method:   http.MethodGet,
+		Path:     "/uapi/domestic-stock/v1/ranking/hts-top-view",
+		TrID:     "HHMCM000100C0",
+		Query:    map[string]string{},
+		CustType: "P",
+	})
+	if err != nil {
+		return nil, err
+	}
+	var res HtsTopView
+	if err := json.Unmarshal(resp.Raw, &res); err != nil {
+		return nil, fmt.Errorf("kis: parse HtsTopView: %w", err)
+	}
+	return &res, nil
+}

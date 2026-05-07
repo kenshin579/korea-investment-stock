@@ -3,7 +3,7 @@
   "msg_cd": "MCA00000",
   "msg1": "정상처리 되었습니다.",
   "output1": {
-    "stck_shrn_iscd": "005930",
-    "hts_kor_isnm": "삼성전자"
+    "mrkt_div_cls_code": "J",
+    "mksc_shrn_iscd": "005930"
   }
 }
