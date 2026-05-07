@@ -169,3 +169,82 @@ func TestClient_InquireGrowthRatio(t *testing.T) {
 	assert.InDelta(t, 8.50, res.Output[0].EqutInrt, 0.001)
 	assert.InDelta(t, 10.20, res.Output[0].TotlAsetInrt, 0.001)
 }
+
+func TestClient_InquireOtherMajorRatios(t *testing.T) {
+	httpmock.Activate()
+	defer httpmock.DeactivateAndReset()
+
+	var capturedQuery url.Values
+	httpmock.RegisterResponder(
+		http.MethodGet,
+		`=~/finance/other-major-ratios`,
+		func(req *http.Request) (*http.Response, error) {
+			capturedQuery = req.URL.Query()
+			return httpmock.NewStringResponse(200, loadFixtureString(t, "other_major_ratios_success.json")), nil
+		},
+	)
+
+	c := newTestClient(t)
+	res, err := c.InquireOtherMajorRatios(context.Background(), domestic.InquireOtherMajorRatiosParams{
+		Symbol: "005930",
+	})
+	require.NoError(t, err)
+	require.NotNil(t, res)
+
+	// fid_div_cls_code 가 소문자임을 검증 (FID_DIV_CLS_CODE 가 아님)
+	assert.Equal(t, "0", capturedQuery.Get("fid_div_cls_code"))
+	assert.Equal(t, "", capturedQuery.Get("FID_DIV_CLS_CODE"))
+	assert.Equal(t, "J", capturedQuery.Get("fid_cond_mrkt_div_code"))
+	assert.Equal(t, "005930", capturedQuery.Get("fid_input_iscd"))
+
+	require.Len(t, res.Output, 2)
+	assert.Equal(t, "202412", res.Output[0].StacYymm)
+	assert.Equal(t, "99.99", res.Output[0].PayoutRate) // string 보존 (KIS 비정상 출력)
+	expectedEva, _ := decimal.NewFromString("1234567890")
+	assert.True(t, expectedEva.Equal(res.Output[0].Eva))
+	expectedEbitda, _ := decimal.NewFromString("9876543210")
+	assert.True(t, expectedEbitda.Equal(res.Output[0].Ebitda))
+	assert.InDelta(t, 8.45, res.Output[0].EvEbitda, 0.001)
+}
+
+func TestClient_InquireOtherMajorRatios_Quarter(t *testing.T) {
+	httpmock.Activate()
+	defer httpmock.DeactivateAndReset()
+
+	var capturedQuery url.Values
+	httpmock.RegisterResponder(
+		http.MethodGet,
+		`=~/finance/other-major-ratios`,
+		func(req *http.Request) (*http.Response, error) {
+			capturedQuery = req.URL.Query()
+			return httpmock.NewStringResponse(200, loadFixtureString(t, "other_major_ratios_success.json")), nil
+		},
+	)
+
+	c := newTestClient(t)
+	_, err := c.InquireOtherMajorRatios(context.Background(), domestic.InquireOtherMajorRatiosParams{
+		Symbol:  "005930",
+		Quarter: true,
+	})
+	require.NoError(t, err)
+	assert.Equal(t, "1", capturedQuery.Get("fid_div_cls_code")) // 1=분기
+}
+
+func TestClient_InquireOtherMajorRatios_InvalidJSON(t *testing.T) {
+	httpmock.Activate()
+	defer httpmock.DeactivateAndReset()
+
+	// envelope 은 valid 하지만 output 이 array 가 아닌 string → unmarshal 실패
+	httpmock.RegisterResponder(
+		http.MethodGet,
+		`=~/finance/other-major-ratios`,
+		httpmock.NewStringResponder(200, `{"rt_cd":"0","msg_cd":"X","msg1":"x","output":"not-array"}`),
+	)
+
+	c := newTestClient(t)
+	_, err := c.InquireOtherMajorRatios(context.Background(), domestic.InquireOtherMajorRatiosParams{
+		Symbol: "005930",
+	})
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "OtherMajorRatios")
+}

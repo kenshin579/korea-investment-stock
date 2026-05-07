@@ -196,3 +196,112 @@ func TestClient_InquireFluctuation(t *testing.T) {
 	assert.Equal(t, decimal.NewFromInt(75500), res.Output[0].StckLwpr)
 	assert.Equal(t, "131542", res.Output[0].HgprHour)
 }
+
+func TestClient_InquireFinanceRatioRanking(t *testing.T) {
+	httpmock.Activate()
+	defer httpmock.DeactivateAndReset()
+
+	var capturedQuery url.Values
+	httpmock.RegisterResponder(
+		http.MethodGet,
+		`=~/ranking/finance-ratio`,
+		func(req *http.Request) (*http.Response, error) {
+			capturedQuery = req.URL.Query()
+			return httpmock.NewStringResponse(200, loadFixtureString(t, "finance_ratio_ranking_success.json")), nil
+		},
+	)
+
+	c := newTestClient(t)
+	res, err := c.InquireFinanceRatioRanking(context.Background(), domestic.InquireFinanceRatioRankingParams{
+		Year:     "2024",
+		Period:   "3",  // 결산
+		RankSort: "11", // 안정성
+	})
+	require.NoError(t, err)
+	require.NotNil(t, res)
+
+	// 5 개 hardcoded params 검증
+	assert.Equal(t, "0", capturedQuery.Get("fid_trgt_cls_code"))
+	assert.Equal(t, "20175", capturedQuery.Get("fid_cond_scr_div_code"))
+	assert.Equal(t, "0", capturedQuery.Get("fid_div_cls_code"))
+	assert.Equal(t, "0", capturedQuery.Get("fid_blng_cls_code"))
+	assert.Equal(t, "0", capturedQuery.Get("fid_trgt_exls_cls_code"))
+	// default 값 검증
+	assert.Equal(t, "J", capturedQuery.Get("fid_cond_mrkt_div_code"))
+	assert.Equal(t, "0000", capturedQuery.Get("fid_input_iscd"))
+	// 사용자 입력 검증
+	assert.Equal(t, "2024", capturedQuery.Get("fid_input_option_1"))
+	assert.Equal(t, "3", capturedQuery.Get("fid_input_option_2"))
+	assert.Equal(t, "11", capturedQuery.Get("fid_rank_sort_cls_code"))
+
+	// 응답 검증
+	require.Len(t, res.Output, 2)
+	assert.Equal(t, int64(1), res.Output[0].DataRank)
+	assert.Equal(t, "삼성전자", res.Output[0].HtsKorIsnm)
+	assert.Equal(t, "005930", res.Output[0].MkscShrnIscd)
+	assert.Equal(t, decimal.NewFromInt(75800), res.Output[0].StckPrpr)
+	assert.Equal(t, decimal.NewFromInt(-200), res.Output[0].PrdyVrss)
+	assert.Equal(t, "5", res.Output[0].PrdyVrssSign)
+	assert.InDelta(t, -0.26, res.Output[0].PrdyCtrt, 0.001)
+	assert.Equal(t, int64(12345678), res.Output[0].AcmlVol)
+	assert.InDelta(t, 65.30, res.Output[0].Bis, 0.001)
+	assert.InDelta(t, 53.75, res.Output[0].LbltRate, 0.001)
+	assert.InDelta(t, 5.42, res.Output[0].Grs, 0.001)
+	assert.Equal(t, "12", res.Output[0].StacMonth)
+	assert.Equal(t, "0", res.Output[0].StacMonthClsCode)
+	assert.Equal(t, int64(30), res.Output[0].IqryCsnu)
+}
+
+func TestClient_InquireFinanceRatioRanking_Overrides(t *testing.T) {
+	httpmock.Activate()
+	defer httpmock.DeactivateAndReset()
+
+	var capturedQuery url.Values
+	httpmock.RegisterResponder(
+		http.MethodGet,
+		`=~/ranking/finance-ratio`,
+		func(req *http.Request) (*http.Response, error) {
+			capturedQuery = req.URL.Query()
+			return httpmock.NewStringResponse(200, loadFixtureString(t, "finance_ratio_ranking_success.json")), nil
+		},
+	)
+
+	c := newTestClient(t)
+	_, err := c.InquireFinanceRatioRanking(context.Background(), domestic.InquireFinanceRatioRankingParams{
+		MarketCode: "NX",
+		InputISCD:  "1001",
+		PriceFrom:  "10000",
+		PriceTo:    "100000",
+		VolFrom:    "100000",
+		Year:       "2024",
+		Period:     "0",  // 1Q
+		RankSort:   "20", // 활동성
+	})
+	require.NoError(t, err)
+	assert.Equal(t, "NX", capturedQuery.Get("fid_cond_mrkt_div_code"))
+	assert.Equal(t, "1001", capturedQuery.Get("fid_input_iscd"))
+	assert.Equal(t, "10000", capturedQuery.Get("fid_input_price_1"))
+	assert.Equal(t, "100000", capturedQuery.Get("fid_input_price_2"))
+	assert.Equal(t, "100000", capturedQuery.Get("fid_vol_cnt"))
+}
+
+func TestClient_InquireFinanceRatioRanking_InvalidJSON(t *testing.T) {
+	httpmock.Activate()
+	defer httpmock.DeactivateAndReset()
+
+	// envelope 은 valid 하지만 output 이 array 가 아닌 string → unmarshal 실패
+	httpmock.RegisterResponder(
+		http.MethodGet,
+		`=~/ranking/finance-ratio`,
+		httpmock.NewStringResponder(200, `{"rt_cd":"0","msg_cd":"X","msg1":"x","output":"not-array"}`),
+	)
+
+	c := newTestClient(t)
+	_, err := c.InquireFinanceRatioRanking(context.Background(), domestic.InquireFinanceRatioRankingParams{
+		Year:     "2024",
+		Period:   "3",
+		RankSort: "11",
+	})
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "FinanceRatioRanking")
+}

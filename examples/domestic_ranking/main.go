@@ -1,4 +1,4 @@
-// domestic_ranking example: InquireVolumeRank + InquireFluctuation + InquireMarketCap.
+// domestic_ranking example: InquireVolumeRank + InquireFluctuation + InquireMarketCap + InquireFinanceRatioRanking.
 //
 // Run: KIS credentials env vars 후 go run ./examples/domestic_ranking
 package main
@@ -72,5 +72,25 @@ func main() {
 		fmt.Printf("  %s. %s (%s) 시총=%d백만원 비중=%v%%\n",
 			item.DataRank, item.HtsKorIsnm, item.MkscShrnIscd,
 			item.StckAvls, item.MrktWholAvlsRlim)
+	}
+
+	// 4. 재무비율 순위 (Phase 6) — 안정성 (BIS, 부채비율 등) 기준 상위 30
+	finRank, err := client.Domestic.InquireFinanceRatioRanking(ctx, domestic.InquireFinanceRatioRankingParams{
+		Year:     "2024",
+		Period:   "3",  // 결산
+		RankSort: "11", // 안정성
+	})
+	if err != nil {
+		log.Fatalf("InquireFinanceRatioRanking: %v", err)
+	}
+	fmt.Printf("\n재무비율 순위 (안정성) %d 개\n", len(finRank.Output))
+	for i, item := range finRank.Output {
+		if i >= 5 {
+			fmt.Println("  ... (이하 생략)")
+			break
+		}
+		fmt.Printf("  %d. %s (%s) BIS=%v%% 부채비율=%v%% ROE=%v%%\n",
+			item.DataRank, item.HtsKorIsnm, item.MkscShrnIscd,
+			item.Bis, item.LbltRate, item.CptlNtinRate)
 	}
 }

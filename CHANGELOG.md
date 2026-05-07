@@ -1,5 +1,22 @@
 # CHANGELOG
 
+## [1.16.0] - 2026-05-08
+
+### Added — Phase 6 (재무 추가 2 메서드)
+
+- `Domestic.InquireOtherMajorRatios` — 기타주요비율 (FHKST66430500) — output 배열 5 fields/item (EVA / EBITDA / EV/EBITDA / payout_rate)
+- `Domestic.InquireFinanceRatioRanking` — 재무비율 순위 (FHPST01750000) — output 배열 27 fields/item, 최대 30 건, 다음 조회 불가
+- examples: `domestic_financial` 에 `InquireOtherMajorRatios` 추가, `domestic_ranking` 에 `InquireFinanceRatioRanking` 추가
+
+### Notes
+
+- **EP1 (대차대조표) 제외** — 원래 Group C 는 3 메서드 후보였으나, `국내주식_대차대조표` (`/finance/balance-sheet`, FHKST66430100) 는 Phase 1.3 에서 이미 `Domestic.InquireBalanceSheet` 로 출시됨. 동일 path/TR_ID 라 중복 구현 방지.
+- **EP1 (`InquireOtherMajorRatios`) FID 소문자** — `fid_div_cls_code` (소문자) 사용. Phase 1.3 의 `InquireGrowthRatio` (FHKST66430800) 와 동일 패턴, `inquireFinanceQuery` helper 사용 불가.
+- **`payout_rate` 비정상 출력** — KIS docs 명시: "비정상 출력으로 무시" — `string` 보존, 코멘트 명시.
+- **EP2 (`InquireFinanceRatioRanking`) hardcoded params** — 13 query params 중 5 개 (`fid_trgt_cls_code`/`fid_cond_scr_div_code`/`fid_div_cls_code`/`fid_blng_cls_code`/`fid_trgt_exls_cls_code`) 는 고정값으로 내부 처리, Params struct 에 노출하지 않음.
+- **EP2 페이지네이션 없음** — "최대 30 건, 다음 조회 불가" — `tr_cont` 미사용.
+- 누적 115 → 117 메서드.
+
 ## [1.15.0] - 2026-05-07
 
 ### Added — Phase 5 (ETF/NAV/관심종목 9 메서드)
