@@ -1,0 +1,42 @@
+{
+  "rt_cd": "0",
+  "msg_cd": "MCA00000",
+  "msg1": "정상처리 되었습니다.",
+  "output1": [
+    {
+      "pdno": "005930",
+      "prdt_name": "삼성전자",
+      "papr": "75800",
+      "bfdy_clpr": "76000",
+      "sbst_prvs": "75800",
+      "tr_stop_dvsn_name": "정상",
+      "psbl_yn_name": "가능",
+      "lmt_qty1": "500000",
+      "use_qty1": "123456",
+      "trad_psbl_qty2": "376544",
+      "rght_type_cd": "01",
+      "bass_dt": "20260507",
+      "psbl_yn": "Y"
+    },
+    {
+      "pdno": "000660",
+      "prdt_name": "SK하이닉스",
+      "papr": "188500",
+      "bfdy_clpr": "187000",
+      "sbst_prvs": "188500",
+      "tr_stop_dvsn_name": "정상",
+      "psbl_yn_name": "가능",
+      "lmt_qty1": "300000",
+      "use_qty1": "87654",
+      "trad_psbl_qty2": "212346",
+      "rght_type_cd": "01",
+      "bass_dt": "20260507",
+      "psbl_yn": "Y"
+    }
+  ],
+  "output2": {
+    "tot_stup_lmt_qty": "800000",
+    "brch_lmt_qty": "600000",
+    "rqst_psbl_qty": "588890"
+  }
+}
