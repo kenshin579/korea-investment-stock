@@ -258,3 +258,100 @@ func (c *Client) InquireIntstockGrouplist(ctx context.Context, params InquireInt
 	}
 	return &res, nil
 }
+
+// TopInterestStock 는 관심종목등록 상위 (FHPST01800000) 응답.
+//
+// 한투 docs: docs/api/국내주식/관심종목등록상위.md
+// path: /uapi/domestic-stock/v1/ranking/top-interest-stock
+type TopInterestStock struct {
+	Output []TopInterestStockItem `json:"output"`
+}
+
+// TopInterestStockItem 은 관심종목등록 상위 응답의 한 행 (13 fields).
+type TopInterestStockItem struct {
+	MrktDivClsName   string          `json:"mrkt_div_cls_name"`          // 시장 구분 명
+	MkscShrnIscd     string          `json:"mksc_shrn_iscd"`             // 유가증권 단축 종목코드
+	HtsKorIsnm       string          `json:"hts_kor_isnm"`               // HTS 한글 종목명
+	StckPrpr         decimal.Decimal `json:"stck_prpr"`                  // 주식 현재가
+	PrdyVrss         decimal.Decimal `json:"prdy_vrss"`                  // 전일 대비
+	PrdyVrssSign     string          `json:"prdy_vrss_sign"`             // 전일 대비 부호
+	PrdyCtrt         float64         `json:"prdy_ctrt,string"`           // 전일 대비율
+	AcmlVol          int64           `json:"acml_vol,string"`            // 누적 거래량
+	AcmlTrPbmn       int64           `json:"acml_tr_pbmn,string"`        // 누적 거래 대금
+	Askp             decimal.Decimal `json:"askp"`                       // 매도호가
+	Bidp             decimal.Decimal `json:"bidp"`                       // 매수호가
+	DataRank         string          `json:"data_rank"`                  // 데이터 순위
+	InterIssuRegCsnu int64           `json:"inter_issu_reg_csnu,string"` // 관심 종목 등록 고객수
+}
+
+// InquireTopInterestStockParams 는 관심종목등록 상위 조회 파라미터.
+//
+// fid_cond_scr_div_code 는 "20180" 고정 (사용자 변경 불가).
+// 파라미터 키는 모두 lowercase fid_* 형식.
+type InquireTopInterestStockParams struct {
+	InputIscd2   string // fid_input_iscd_2 — 빈 값=>"000000"
+	MarketCode   string // fid_cond_mrkt_div_code — 빈 값=>"J"
+	Symbol       string // fid_input_iscd — 종목코드 Y
+	TrgtClsCode  string // fid_trgt_cls_code — 빈 값=>"0"
+	TrgtExlsCode string // fid_trgt_exls_cls_code — 빈 값=>"0"
+	InputPrice1  string // fid_input_price_1 — 빈 값 OK
+	InputPrice2  string // fid_input_price_2 — 빈 값 OK
+	VolCnt       string // fid_vol_cnt — 빈 값 OK
+	DivClsCode   string // fid_div_cls_code — Y
+	InputCnt1    string // fid_input_cnt_1 — 순위 시작값 Y
+}
+
+// InquireTopInterestStock 는 관심종목등록 상위 호출.
+//
+// 한투 docs: docs/api/국내주식/관심종목등록상위.md
+// path: /uapi/domestic-stock/v1/ranking/top-interest-stock (FHPST01800000)
+//
+// NOTE: 파라미터 키는 모두 lowercase fid_* 형식.
+// fid_cond_scr_div_code 는 "20180" 고정.
+func (c *Client) InquireTopInterestStock(ctx context.Context, params InquireTopInterestStockParams) (*TopInterestStock, error) {
+	iscd2 := params.InputIscd2
+	if iscd2 == "" {
+		iscd2 = "000000"
+	}
+	market := params.MarketCode
+	if market == "" {
+		market = "J"
+	}
+	trgt := params.TrgtClsCode
+	if trgt == "" {
+		trgt = "0"
+	}
+	trgtExls := params.TrgtExlsCode
+	if trgtExls == "" {
+		trgtExls = "0"
+	}
+
+	resp, err := c.http.Do(ctx, &httpclient.Request{
+		Method: http.MethodGet,
+		Path:   "/uapi/domestic-stock/v1/ranking/top-interest-stock",
+		TrID:   "FHPST01800000",
+		Query: map[string]string{
+			"fid_input_iscd_2":       iscd2,
+			"fid_cond_mrkt_div_code": market,
+			"fid_cond_scr_div_code":  "20180",
+			"fid_input_iscd":         params.Symbol,
+			"fid_trgt_cls_code":      trgt,
+			"fid_trgt_exls_cls_code": trgtExls,
+			"fid_input_price_1":      params.InputPrice1,
+			"fid_input_price_2":      params.InputPrice2,
+			"fid_vol_cnt":            params.VolCnt,
+			"fid_div_cls_code":       params.DivClsCode,
+			"fid_input_cnt_1":        params.InputCnt1,
+		},
+		CustType: "P",
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	var res TopInterestStock
+	if err := json.Unmarshal(resp.Raw, &res); err != nil {
+		return nil, fmt.Errorf("kis: parse TopInterestStock: %w", err)
+	}
+	return &res, nil
+}

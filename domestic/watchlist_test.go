@@ -161,3 +161,65 @@ func TestClient_InquireIntstockGrouplist(t *testing.T) {
 	assert.Equal(t, "반도체", res.Output2.InterGrpName)
 	assert.Equal(t, "12", res.Output2.AskCnt)
 }
+
+func TestClient_InquireTopInterestStock(t *testing.T) {
+	httpmock.Activate()
+	defer httpmock.DeactivateAndReset()
+
+	var capturedQuery url.Values
+	httpmock.RegisterResponder(
+		http.MethodGet,
+		`=~/ranking/top-interest-stock`,
+		func(req *http.Request) (*http.Response, error) {
+			capturedQuery = req.URL.Query()
+			return httpmock.NewStringResponse(200, loadFixtureString(t, "top_interest_stock_success.json")), nil
+		},
+	)
+
+	c := newTestClient(t)
+	res, err := c.InquireTopInterestStock(context.Background(), domestic.InquireTopInterestStockParams{
+		Symbol:     "005930",
+		DivClsCode: "0",
+		InputCnt1:  "1",
+	})
+	require.NoError(t, err)
+	require.NotNil(t, res)
+
+	// query param 검증 — lowercase fid_* 키
+	assert.Equal(t, "000000", capturedQuery.Get("fid_input_iscd_2"))
+	assert.Equal(t, "J", capturedQuery.Get("fid_cond_mrkt_div_code"))
+	assert.Equal(t, "20180", capturedQuery.Get("fid_cond_scr_div_code"))
+	assert.Equal(t, "005930", capturedQuery.Get("fid_input_iscd"))
+	assert.Equal(t, "0", capturedQuery.Get("fid_trgt_cls_code"))
+	assert.Equal(t, "0", capturedQuery.Get("fid_trgt_exls_cls_code"))
+	assert.Equal(t, "0", capturedQuery.Get("fid_div_cls_code"))
+	assert.Equal(t, "1", capturedQuery.Get("fid_input_cnt_1"))
+
+	// output 검증
+	require.Len(t, res.Output, 2)
+
+	prpr, _ := decimal.NewFromString("57800")
+	assert.True(t, prpr.Equal(res.Output[0].StckPrpr))
+
+	vrss, _ := decimal.NewFromString("-300")
+	assert.True(t, vrss.Equal(res.Output[0].PrdyVrss))
+
+	assert.Equal(t, "5", res.Output[0].PrdyVrssSign)
+	assert.InDelta(t, -0.52, res.Output[0].PrdyCtrt, 0.001)
+	assert.Equal(t, int64(18234567), res.Output[0].AcmlVol)
+	assert.Equal(t, int64(1054321098765), res.Output[0].AcmlTrPbmn)
+	assert.Equal(t, "삼성전자", res.Output[0].HtsKorIsnm)
+	assert.Equal(t, "005930", res.Output[0].MkscShrnIscd)
+	assert.Equal(t, "1", res.Output[0].DataRank)
+	assert.Equal(t, int64(234567), res.Output[0].InterIssuRegCsnu)
+
+	askp, _ := decimal.NewFromString("57800")
+	assert.True(t, askp.Equal(res.Output[0].Askp))
+	bidp, _ := decimal.NewFromString("57750")
+	assert.True(t, bidp.Equal(res.Output[0].Bidp))
+
+	// 두 번째 아이템
+	assert.Equal(t, "000660", res.Output[1].MkscShrnIscd)
+	assert.Equal(t, "SK하이닉스", res.Output[1].HtsKorIsnm)
+	assert.Equal(t, "2", res.Output[1].DataRank)
+}
