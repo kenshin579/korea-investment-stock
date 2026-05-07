@@ -572,3 +572,61 @@ func TestClient_InquireDailyShortSale(t *testing.T) {
 	dAvrg, _ := decimal.NewFromString("75800")
 	assert.True(t, dAvrg.Equal(res.Output2[0].AvrgPrc))
 }
+
+func TestClient_InquireCreditBalance(t *testing.T) {
+	httpmock.Activate()
+	defer httpmock.DeactivateAndReset()
+
+	var capturedQuery url.Values
+	httpmock.RegisterResponder(
+		http.MethodGet,
+		`=~/ranking/credit-balance`,
+		func(req *http.Request) (*http.Response, error) {
+			capturedQuery = req.URL.Query()
+			return httpmock.NewStringResponse(http.StatusOK, loadFixtureString(t, "credit_balance_success.json")), nil
+		},
+	)
+
+	c := newTestClient(t)
+	res, err := c.InquireCreditBalance(context.Background(), domestic.InquireCreditBalanceParams{
+		Symbol:       "005930",
+		Option:       "5",
+		RankSortCode: "0",
+	})
+	require.NoError(t, err)
+	require.NotNil(t, res)
+
+	// UPPERCASE FID_ 키 검증
+	assert.Equal(t, "J", capturedQuery.Get("FID_COND_MRKT_DIV_CODE"))
+	assert.Equal(t, "11701", capturedQuery.Get("FID_COND_SCR_DIV_CODE"))
+	assert.Equal(t, "005930", capturedQuery.Get("FID_INPUT_ISCD"))
+	assert.Equal(t, "5", capturedQuery.Get("FID_OPTION"))
+	assert.Equal(t, "0", capturedQuery.Get("FID_RANK_SORT_CLS_CODE"))
+
+	// output1 (header array) 검증
+	require.Len(t, res.Output1, 2)
+	assert.Equal(t, "0001", res.Output1[0].BstpClsCode)
+	assert.Equal(t, "코스피", res.Output1[0].HtsKorIsnm)
+	assert.Equal(t, "20260501", res.Output1[0].StndDate1)
+	assert.Equal(t, "20260507", res.Output1[0].StndDate2)
+
+	// output2 (balance array) 검증
+	require.Len(t, res.Output2, 2)
+	assert.Equal(t, "005930", res.Output2[0].MkscShrnIscd)
+	assert.Equal(t, "삼성전자", res.Output2[0].HtsKorIsnm)
+	dPrpr, _ := decimal.NewFromString("75800")
+	assert.True(t, dPrpr.Equal(res.Output2[0].StckPrpr))
+	dVrss, _ := decimal.NewFromString("-200")
+	assert.True(t, dVrss.Equal(res.Output2[0].PrdyVrss))
+	assert.Equal(t, "5", res.Output2[0].PrdyVrssSign)
+	assert.InDelta(t, -0.26, res.Output2[0].PrdyCtrt, 0.001)
+	assert.Equal(t, int64(12345678), res.Output2[0].AcmlVol)
+	assert.Equal(t, int64(9876543), res.Output2[0].WholLoanRmndStcn)
+	assert.Equal(t, int64(748681660), res.Output2[0].WholLoanRmndAmt)
+	assert.InDelta(t, 0.08, res.Output2[0].WholLoanRmndRate, 0.001)
+	assert.Equal(t, int64(1234567), res.Output2[0].WholStlnRmndStcn)
+	assert.Equal(t, int64(93623580), res.Output2[0].WholStlnRmndAmt)
+	assert.InDelta(t, 0.01, res.Output2[0].WholStlnRmndRate, 0.001)
+	assert.InDelta(t, 0.12, res.Output2[0].NdayVrssLoanRmndInrt, 0.001)
+	assert.InDelta(t, -0.05, res.Output2[0].NdayVrssStlnRmndInrt, 0.001)
+}

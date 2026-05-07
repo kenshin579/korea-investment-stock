@@ -1242,3 +1242,87 @@ func (c *Client) InquireDailyShortSale(ctx context.Context, params InquireDailyS
 	}
 	return &res, nil
 }
+
+// CreditBalance 는 국내주식 신용잔고 상위 (FHKST17010000) 응답.
+//
+// 한투 docs: docs/api/국내주식/국내주식_신용잔고_상위.md
+// path: /uapi/domestic-stock/v1/ranking/credit-balance
+//
+// output1: 날짜 헤더 배열, output2: 신용잔고 상위 종목 배열.
+type CreditBalance struct {
+	Output1 []CreditBalanceHeader `json:"output1"`
+	Output2 []CreditBalanceItem   `json:"output2"`
+}
+
+// CreditBalanceHeader 는 신용잔고 상위 날짜 헤더 (output1 한 행).
+type CreditBalanceHeader struct {
+	BstpClsCode string `json:"bstp_cls_code"` // 업종 구분 코드
+	HtsKorIsnm  string `json:"hts_kor_isnm"`  // HTS 한글 종목명
+	StndDate1   string `json:"stnd_date1"`    // 기준 일자1
+	StndDate2   string `json:"stnd_date2"`    // 기준 일자2
+}
+
+// CreditBalanceItem 은 신용잔고 상위 응답의 한 행 (output2).
+type CreditBalanceItem struct {
+	MkscShrnIscd         string          `json:"mksc_shrn_iscd"`                  // 유가증권 단축 종목코드
+	HtsKorIsnm           string          `json:"hts_kor_isnm"`                    // HTS 한글 종목명
+	StckPrpr             decimal.Decimal `json:"stck_prpr"`                       // 주식 현재가
+	PrdyVrss             decimal.Decimal `json:"prdy_vrss"`                       // 전일 대비
+	PrdyVrssSign         string          `json:"prdy_vrss_sign"`                  // 전일 대비 부호
+	PrdyCtrt             float64         `json:"prdy_ctrt,string"`                // 전일 대비율
+	AcmlVol              int64           `json:"acml_vol,string"`                 // 누적 거래량
+	WholLoanRmndStcn     int64           `json:"whol_loan_rmnd_stcn,string"`      // 전체 융자 잔고 수량
+	WholLoanRmndAmt      int64           `json:"whol_loan_rmnd_amt,string"`       // 전체 융자 잔고 금액
+	WholLoanRmndRate     float64         `json:"whol_loan_rmnd_rate,string"`      // 전체 융자 잔고 비율
+	WholStlnRmndStcn     int64           `json:"whol_stln_rmnd_stcn,string"`      // 전체 대주 잔고 수량
+	WholStlnRmndAmt      int64           `json:"whol_stln_rmnd_amt,string"`       // 전체 대주 잔고 금액
+	WholStlnRmndRate     float64         `json:"whol_stln_rmnd_rate,string"`      // 전체 대주 잔고 비율
+	NdayVrssLoanRmndInrt float64         `json:"nday_vrss_loan_rmnd_inrt,string"` // N일 대비 융자 잔고 증가율
+	NdayVrssStlnRmndInrt float64         `json:"nday_vrss_stln_rmnd_inrt,string"` // N일 대비 대주 잔고 증가율
+}
+
+// InquireCreditBalanceParams 는 신용잔고 상위 조회 파라미터.
+type InquireCreditBalanceParams struct {
+	CondScrDivCode string // FID_COND_SCR_DIV_CODE — 고정 "11701". 빈 값=>"11701"
+	Symbol         string // FID_INPUT_ISCD — 종목코드 또는 시장코드
+	Option         string // FID_OPTION — N일 윈도우 (2-999)
+	MarketCode     string // FID_COND_MRKT_DIV_CODE — "J":KRX. 빈 값=>"J"
+	RankSortCode   string // FID_RANK_SORT_CLS_CODE — 정렬 구분 코드
+}
+
+// InquireCreditBalance 는 국내주식 신용잔고 상위 호출.
+//
+// 한투 docs: docs/api/국내주식/국내주식_신용잔고_상위.md
+// path: /uapi/domestic-stock/v1/ranking/credit-balance (FHKST17010000)
+func (c *Client) InquireCreditBalance(ctx context.Context, params InquireCreditBalanceParams) (*CreditBalance, error) {
+	market := params.MarketCode
+	if market == "" {
+		market = "J"
+	}
+	scrDiv := params.CondScrDivCode
+	if scrDiv == "" {
+		scrDiv = "11701"
+	}
+
+	resp, err := c.http.Do(ctx, &httpclient.Request{
+		Method: http.MethodGet,
+		Path:   "/uapi/domestic-stock/v1/ranking/credit-balance",
+		TrID:   "FHKST17010000",
+		Query: map[string]string{
+			"FID_COND_SCR_DIV_CODE":  scrDiv,
+			"FID_INPUT_ISCD":         params.Symbol,
+			"FID_OPTION":             params.Option,
+			"FID_COND_MRKT_DIV_CODE": market,
+			"FID_RANK_SORT_CLS_CODE": params.RankSortCode,
+		},
+		CustType: "P",
+	})
+	if err != nil {
+		return nil, err
+	}
+	var res CreditBalance
+	if err := json.Unmarshal(resp.Raw, &res); err != nil {
+		return nil, fmt.Errorf("kis: parse CreditBalance: %w", err)
+	}
+	return &res, nil
+}
