@@ -129,5 +129,29 @@
 //	EP7 FID_COND_SCR_DIV_CODE="11300" hardcoded
 //	WebSocket 제외: H0STMKO0/H0NXMKO0/H0UNMKO0 (장운영정보 KRX/NXT/통합) → Phase 5 이연
 //
+// Phase 4.3 — ranking/흐름 (v1.14.0)  [Phase 4 완료]
+//
+//	EP1   InquireShortSale              — 공매도 상위          FHPST04820000
+//	EP2   InquireDailyShortSale         — 공매도 일별추이       FHPST04830000
+//	EP3   InquireCreditBalance          — 신용잔고 상위         FHKST17010000
+//	EP4   InquireDailyCreditBalance     — 신용잔고 일별추이     FHPST04760000
+//	EP5   InquireLendableByCompany      — 당사 대주가능         CTSC2702R
+//	EP6   InquireQuoteBalance           — 호가잔량 순위         FHPST01720000
+//	EP7   InquireAfterHourBalance       — 시간외잔량 순위       FHPST01760000
+//	EP8   InquireOvertimeExpTransFluct  — 시간외 예상체결 등락률 FHKST11860000
+//	EP9   InquireMarketValue            — 시장가치 순위         FHPST01790000
+//	EP10  InquireDisparity              — 이격도 순위           FHPST01780000
+//	EP11  InquirePreferDisparateRatio   — 우선주 괴리율         FHPST01770000
+//	EP12  InquireProfitAssetIndex       — 수익자산지표 순위     FHPST01730000
+//	EP13  InquireMktfunds               — 증시자금 종합         FHKST649100C0
+//
+// Anomalies (Phase 4.3):
+//
+//	EP2/EP3 이중 output (output1 단일+output2 배열)
+//	EP5 비표준 UPPERCASE 파라미터 (FID_ 접두어 없음: EXCG_DVSN_CD/PDNO 등), CTSC prefix TR_ID
+//	EP6/EP7/EP9/EP10/EP11/EP12 lowercase fid_* query params
+//	EP8 output 단일 객체 (배열 아님), UPPERCASE FID_ params
+//	EP13 KOFIA 데이터: 고객예탁금/신용융자/미수금/펀드/담보대출 (단위: 억원/백만원)
+//
 // 사용자는 root kis.Client 의 Domestic 필드로 접근.
 package domestic

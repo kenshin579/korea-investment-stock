@@ -61,7 +61,7 @@ func main() {
 }
 ```
 
-## Available Methods (Phase 1.2 ~ 4.2)
+## Available Methods (Phase 1.2 ~ 4.3)
 
 | Method | 한투 path | TR_ID |
 |--------|----------|-------|
@@ -146,6 +146,24 @@ func main() {
 | `Domestic.InquirePbarTraRatio` | `quotations/pbar-tratio` | FHPST01130000 |
 | `Domestic.InquireExpPriceTrend` | `quotations/exp-price-trend` | FHPST01810000 |
 | `Domestic.InquireExpTransUpdown` | `ranking/exp-trans-updown` | FHPST01820000 |
+
+### Domestic ranking/흐름 — Phase 4.3 (v1.14.0)
+
+| Method | 한투 path | TR_ID |
+|--------|----------|-------|
+| `Domestic.InquireShortSale` | `ranking/short-sale` | FHPST04820000 |
+| `Domestic.InquireDailyShortSale` | `quotations/daily-short-sale` | FHPST04830000 |
+| `Domestic.InquireCreditBalance` | `ranking/credit-balance` | FHKST17010000 |
+| `Domestic.InquireDailyCreditBalance` | `quotations/daily-credit-balance` | FHPST04760000 |
+| `Domestic.InquireLendableByCompany` | `quotations/lendable-by-company` | CTSC2702R |
+| `Domestic.InquireQuoteBalance` | `ranking/quote-balance` | FHPST01720000 |
+| `Domestic.InquireAfterHourBalance` | `ranking/after-hour-balance` | FHPST01760000 |
+| `Domestic.InquireOvertimeExpTransFluct` | `ranking/overtime-exp-trans-fluct` | FHKST11860000 |
+| `Domestic.InquireMarketValue` | `ranking/market-value` | FHPST01790000 |
+| `Domestic.InquireDisparity` | `ranking/disparity` | FHPST01780000 |
+| `Domestic.InquirePreferDisparateRatio` | `ranking/prefer-disparate-ratio` | FHPST01770000 |
+| `Domestic.InquireProfitAssetIndex` | `ranking/profit-asset-index` | FHPST01730000 |
+| `Domestic.InquireMktfunds` | `quotations/mktfunds` | FHKST649100C0 |
 
 ### Domestic 시장운영/특수상태 — Phase 4.2 (v1.13.0)
 
