@@ -1,5 +1,24 @@
 # CHANGELOG
 
+## [1.13.0] - 2026-05-07
+
+### Added — Phase 4.2 (국내주식 시장운영/특수상태)
+
+- `Domestic.InquireExpClosingPrice` — 장마감 예상체결가 (FHKST117300C0) — output1 array 9 fields; FID_INPUT_ISCD=시장구분코드 (종목코드 아님)
+- `Domestic.InquireChkHoliday` — 휴장일 조회 (CTCA0903R) — output single object 6 string fields; 1일 1회 호출 권장
+- `Domestic.InquireViStatus` — 변동성완화장치(VI) 현황 (FHPST01390000) — output single object 13 fields (runtime 배열 가능성 있음)
+- `Domestic.InquireCaptureUplowprice` — 상하한가 포착 (FHKST130000C0) — output array 17 fields/item
+- examples: `domestic_market_op`
+
+### Notes
+
+- Phase 4 design spec §Phase 4.2 는 7 메서드를 나열했으나, 3개 (장운영정보 KRX/NXT/통합 — TR_ID: H0STMKO0/H0NXMKO0/H0UNMKO0) 는 WebSocket push API 로 확인되어 Phase 4.2 범위에서 제외. 잠재적 Phase 5 (WebSocket) 로 이연.
+- Phase 4 전체 메서드 수: 30 → 27 (WebSocket 3개 제외).
+- EP5 (`InquireChkHoliday`) 파라미터명: FID_ 접두어 없는 비표준 UPPERCASE (BASS_DT/CTX_AREA_NK/CTX_AREA_FK). CTCA prefix TR_ID.
+- EP4 `FID_COND_SCR_DIV_CODE="11173"`, EP6 `FID_COND_SCR_DIV_CODE="20139"`, EP7 `FID_COND_SCR_DIV_CODE="11300"` hardcoded.
+- EP6 (`InquireViStatus`) KIS 문서 output 단일 Object 선언 — 실 API 배열 반환 시 struct 변경 필요 (ViStatusOutput 주석 참조).
+- 누적 89 → 93 메서드.
+
 ## [1.12.0] - 2026-05-07
 
 ### Added — Phase 4.1 (국내주식 종목정보/분석)

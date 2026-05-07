@@ -61,7 +61,7 @@ func main() {
 }
 ```
 
-## Available Methods (Phase 1.2 ~ 4.1)
+## Available Methods (Phase 1.2 ~ 4.2)
 
 | Method | 한투 path | TR_ID |
 |--------|----------|-------|
@@ -146,6 +146,15 @@ func main() {
 | `Domestic.InquirePbarTraRatio` | `quotations/pbar-tratio` | FHPST01130000 |
 | `Domestic.InquireExpPriceTrend` | `quotations/exp-price-trend` | FHPST01810000 |
 | `Domestic.InquireExpTransUpdown` | `ranking/exp-trans-updown` | FHPST01820000 |
+
+### Domestic 시장운영/특수상태 — Phase 4.2 (v1.13.0)
+
+| Method | 한투 path | TR_ID |
+|--------|----------|-------|
+| `Domestic.InquireExpClosingPrice` | `quotations/exp-closing-price` | FHKST117300C0 |
+| `Domestic.InquireChkHoliday` | `quotations/chk-holiday` | CTCA0903R |
+| `Domestic.InquireViStatus` | `quotations/inquire-vi-status` | FHPST01390000 |
+| `Domestic.InquireCaptureUplowprice` | `quotations/capture-uplowprice` | FHKST130000C0 |
 
 ### Bonds (장내채권) — Phase 3.1
 
