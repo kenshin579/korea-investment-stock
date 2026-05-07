@@ -907,3 +907,68 @@ func TestClient_InquireOvertimeExpTransFluct(t *testing.T) {
 	dPrpr, _ := decimal.NewFromString("75800")
 	assert.True(t, dPrpr.Equal(res.Output.StckPrpr))
 }
+
+func TestClient_InquireMarketValue(t *testing.T) {
+	httpmock.Activate()
+	defer httpmock.DeactivateAndReset()
+
+	var capturedQuery url.Values
+	httpmock.RegisterResponder(
+		http.MethodGet,
+		`=~/ranking/market-value`,
+		func(req *http.Request) (*http.Response, error) {
+			capturedQuery = req.URL.Query()
+			return httpmock.NewStringResponse(http.StatusOK, loadFixtureString(t, "market_value_success.json")), nil
+		},
+	)
+
+	c := newTestClient(t)
+	res, err := c.InquireMarketValue(context.Background(), domestic.InquireMarketValueParams{
+		Symbol:       "0000",
+		RankSortCode: "0",
+		DivClsCode:   "0",
+		TrgtClsCode:  "111111111",
+		TrgtExlsCode: "000000000",
+		BlngClsCode:  "0",
+		InputOption1: "2025",
+		InputOption2: "1",
+	})
+	require.NoError(t, err)
+	require.NotNil(t, res)
+
+	// lowercase fid_* 키 검증 (UPPERCASE 아님)
+	assert.Equal(t, "J", capturedQuery.Get("fid_cond_mrkt_div_code"))
+	assert.Equal(t, "20179", capturedQuery.Get("fid_cond_scr_div_code"))
+	assert.Equal(t, "0000", capturedQuery.Get("fid_input_iscd"))
+	assert.Equal(t, "0", capturedQuery.Get("fid_rank_sort_cls_code"))
+	assert.Equal(t, "0", capturedQuery.Get("fid_div_cls_code"))
+	assert.Equal(t, "2025", capturedQuery.Get("fid_input_option_1"))
+	assert.Equal(t, "1", capturedQuery.Get("fid_input_option_2"))
+	assert.Empty(t, capturedQuery.Get("FID_INPUT_ISCD"), "uppercase 키는 비어야 함")
+
+	require.Len(t, res.Output, 2)
+
+	// output[0] 핵심 필드 검증 (20 fields)
+	assert.Equal(t, "1", res.Output[0].DataRank)
+	assert.Equal(t, "삼성전자", res.Output[0].HtsKorIsnm)
+	assert.Equal(t, "005930", res.Output[0].MkscShrnIscd)
+	dPrpr, _ := decimal.NewFromString("75800")
+	assert.True(t, dPrpr.Equal(res.Output[0].StckPrpr))
+	dVrss, _ := decimal.NewFromString("-200")
+	assert.True(t, dVrss.Equal(res.Output[0].PrdyVrss))
+	assert.Equal(t, "5", res.Output[0].PrdyVrssSign)
+	assert.InDelta(t, -0.26, res.Output[0].PrdyCtrt, 0.001)
+	assert.Equal(t, int64(12345678), res.Output[0].AcmlVol)
+	assert.InDelta(t, 12.34, res.Output[0].Per, 0.001)
+	assert.InDelta(t, 1.23, res.Output[0].Pbr, 0.001)
+	assert.InDelta(t, 8.90, res.Output[0].Pcr, 0.001)
+	assert.InDelta(t, 1.45, res.Output[0].Psr, 0.001)
+	assert.InDelta(t, 6143.0, res.Output[0].Eps, 0.001)
+	assert.InDelta(t, 1234567.0, res.Output[0].Eva, 0.001)
+	assert.InDelta(t, 98765432.0, res.Output[0].Ebitda, 0.001)
+	assert.InDelta(t, 7.65, res.Output[0].PvDivEbitda, 0.001)
+	assert.InDelta(t, 23.45, res.Output[0].EbitdaDivFnncExpn, 0.001)
+	assert.Equal(t, "12", res.Output[0].StacMonth)
+	assert.Equal(t, "01", res.Output[0].StacMonthClsCode)
+	assert.Equal(t, "1", res.Output[0].IqryCsnu)
+}

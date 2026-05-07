@@ -1750,3 +1750,104 @@ func (c *Client) InquireOvertimeExpTransFluct(ctx context.Context, params Inquir
 	}
 	return &res, nil
 }
+
+// MarketValue 는 국내주식 시장가치 순위 (FHPST01790000) 응답.
+//
+// 한투 docs: docs/api/국내주식/국내주식_시장가치_순위.md
+// path: /uapi/domestic-stock/v1/ranking/market-value
+//
+// PER/PBR/PCR/PSR/EPS/EVA/EBITDA 등 가치지표 기반 순위.
+// 쿼리 파라미터는 lowercase fid_* 형식 사용.
+type MarketValue struct {
+	Output []MarketValueItem `json:"output"`
+}
+
+// MarketValueItem 은 시장가치 순위 응답의 한 행.
+type MarketValueItem struct {
+	DataRank          string          `json:"data_rank"`                   // 데이터 순위
+	HtsKorIsnm        string          `json:"hts_kor_isnm"`                // HTS 한글 종목명
+	MkscShrnIscd      string          `json:"mksc_shrn_iscd"`              // 유가증권 단축 종목코드
+	StckPrpr          decimal.Decimal `json:"stck_prpr"`                   // 주식 현재가
+	PrdyVrss          decimal.Decimal `json:"prdy_vrss"`                   // 전일 대비
+	PrdyVrssSign      string          `json:"prdy_vrss_sign"`              // 전일 대비 부호
+	PrdyCtrt          float64         `json:"prdy_ctrt,string"`            // 전일 대비율
+	AcmlVol           int64           `json:"acml_vol,string"`             // 누적 거래량
+	Per               float64         `json:"per,string"`                  // PER
+	Pbr               float64         `json:"pbr,string"`                  // PBR
+	Pcr               float64         `json:"pcr,string"`                  // PCR
+	Psr               float64         `json:"psr,string"`                  // PSR
+	Eps               float64         `json:"eps,string"`                  // EPS
+	Eva               float64         `json:"eva,string"`                  // EVA
+	Ebitda            float64         `json:"ebitda,string"`               // EBITDA
+	PvDivEbitda       float64         `json:"pv_div_ebitda,string"`        // EV/EBITDA
+	EbitdaDivFnncExpn float64         `json:"ebitda_div_fnnc_expn,string"` // EBITDA/금융비용
+	StacMonth         string          `json:"stac_month"`                  // 결산 월
+	StacMonthClsCode  string          `json:"stac_month_cls_code"`         // 결산 월 구분 코드
+	IqryCsnu          string          `json:"iqry_csnu"`                   // 조회 건수
+}
+
+// InquireMarketValueParams 는 시장가치 순위 조회 파라미터.
+//
+// 쿼리 파라미터는 lowercase fid_* 형식으로 전송.
+type InquireMarketValueParams struct {
+	TrgtClsCode    string // fid_trgt_cls_code — 대상 구분 코드
+	MarketCode     string // fid_cond_mrkt_div_code — "J":KRX. 빈 값=>"J"
+	CondScrDivCode string // fid_cond_scr_div_code — 고정 "20179". 빈 값=>"20179"
+	Symbol         string // fid_input_iscd — 종목코드 또는 시장코드
+	DivClsCode     string // fid_div_cls_code — 구분 코드
+	InputPrice1    string // fid_input_price_1 — 입력 가격1
+	InputPrice2    string // fid_input_price_2 — 입력 가격2
+	VolCnt         string // fid_vol_cnt — 조회 건수
+	InputOption1   string // fid_input_option_1 — 회계연도
+	InputOption2   string // fid_input_option_2 — 분기구분
+	RankSortCode   string // fid_rank_sort_cls_code — 정렬 구분 코드
+	BlngClsCode    string // fid_blng_cls_code — 소속 구분 코드
+	TrgtExlsCode   string // fid_trgt_exls_cls_code — 대상 제외 구분 코드
+}
+
+// InquireMarketValue 는 국내주식 시장가치 순위 호출.
+//
+// 한투 docs: docs/api/국내주식/국내주식_시장가치_순위.md
+// path: /uapi/domestic-stock/v1/ranking/market-value (FHPST01790000)
+//
+// 쿼리 파라미터는 lowercase fid_* 형식 사용.
+func (c *Client) InquireMarketValue(ctx context.Context, params InquireMarketValueParams) (*MarketValue, error) {
+	market := params.MarketCode
+	if market == "" {
+		market = "J"
+	}
+	scrDiv := params.CondScrDivCode
+	if scrDiv == "" {
+		scrDiv = "20179"
+	}
+
+	resp, err := c.http.Do(ctx, &httpclient.Request{
+		Method: http.MethodGet,
+		Path:   "/uapi/domestic-stock/v1/ranking/market-value",
+		TrID:   "FHPST01790000",
+		Query: map[string]string{
+			"fid_trgt_cls_code":      params.TrgtClsCode,
+			"fid_cond_mrkt_div_code": market,
+			"fid_cond_scr_div_code":  scrDiv,
+			"fid_input_iscd":         params.Symbol,
+			"fid_div_cls_code":       params.DivClsCode,
+			"fid_input_price_1":      params.InputPrice1,
+			"fid_input_price_2":      params.InputPrice2,
+			"fid_vol_cnt":            params.VolCnt,
+			"fid_input_option_1":     params.InputOption1,
+			"fid_input_option_2":     params.InputOption2,
+			"fid_rank_sort_cls_code": params.RankSortCode,
+			"fid_blng_cls_code":      params.BlngClsCode,
+			"fid_trgt_exls_cls_code": params.TrgtExlsCode,
+		},
+		CustType: "P",
+	})
+	if err != nil {
+		return nil, err
+	}
+	var res MarketValue
+	if err := json.Unmarshal(resp.Raw, &res); err != nil {
+		return nil, fmt.Errorf("kis: parse MarketValue: %w", err)
+	}
+	return &res, nil
+}
