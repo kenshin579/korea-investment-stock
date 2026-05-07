@@ -1,4 +1,4 @@
-// domestic_financial example: InquireFinancialRatio + InquireIncomeStatement + InquireBalanceSheet.
+// domestic_financial example: InquireFinancialRatio + InquireIncomeStatement + InquireBalanceSheet + InquireOtherMajorRatios.
 //
 // Run: KIS credentials env vars 후 go run ./examples/domestic_financial
 package main
@@ -70,5 +70,23 @@ func main() {
 		}
 		fmt.Printf("  %s: 자산=%d 부채=%d 자본=%d (백만원)\n",
 			item.StacYymm, item.TotalAset, item.TotalLblt, item.TotalCptl)
+	}
+
+	// 4. 기타주요비율 (Phase 6) — EVA / EBITDA / EV/EBITDA
+	other, err := client.Domestic.InquireOtherMajorRatios(ctx, domestic.InquireOtherMajorRatiosParams{
+		Symbol: symbol,
+	})
+	if err != nil {
+		log.Fatalf("InquireOtherMajorRatios: %v", err)
+	}
+	fmt.Printf("\n[%s] 기타주요비율 %d 기간\n", symbol, len(other.Output))
+	for i, item := range other.Output {
+		if i >= 3 {
+			fmt.Println("  ... (이하 생략)")
+			break
+		}
+		// payout_rate 는 비정상 출력으로 무시
+		fmt.Printf("  %s: EVA=%s EBITDA=%s EV/EBITDA=%v배\n",
+			item.StacYymm, item.Eva, item.Ebitda, item.EvEbitda)
 	}
 }

@@ -188,6 +188,13 @@ func main() {
 | `Domestic.InquireIntstockGrouplist` | `quotations/intstock-grouplist` | HHKCM113004C7 |
 | `Domestic.InquireTopInterestStock` | `ranking/top-interest-stock` | FHPST01800000 |
 
+### 재무 추가 — Phase 6 (v1.16.0)
+
+| Method | 한투 path | TR_ID |
+|--------|----------|-------|
+| `Domestic.InquireOtherMajorRatios` | `finance/other-major-ratios` | FHKST66430500 |
+| `Domestic.InquireFinanceRatioRanking` | `ranking/finance-ratio` | FHPST01750000 |
+
 ### Bonds (장내채권) — Phase 3.1
 
 | Go 메서드 | path | TR_ID |

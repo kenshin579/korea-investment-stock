@@ -419,3 +419,110 @@ func (c *Client) InquireDividendRate(ctx context.Context, params InquireDividend
 	}
 	return &res, nil
 }
+
+// FinanceRatioRanking 은 재무비율 순위 (FHPST01750000) 응답.
+//
+// 한투 docs: docs/api/국내주식/국내주식_재무비율_순위.md
+// path: /uapi/domestic-stock/v1/ranking/finance-ratio
+//
+// 최대 30 건. 다음 조회 불가 (tr_cont 미사용).
+type FinanceRatioRanking struct {
+	Output []FinanceRatioRankingItem `json:"output"`
+}
+
+// FinanceRatioRankingItem 은 재무비율 순위 응답의 한 행.
+type FinanceRatioRankingItem struct {
+	DataRank         int64           `json:"data_rank,string"`      // 데이터 순위
+	HtsKorIsnm       string          `json:"hts_kor_isnm"`          // HTS 한글 종목명
+	MkscShrnIscd     string          `json:"mksc_shrn_iscd"`        // 단축 종목코드
+	StckPrpr         decimal.Decimal `json:"stck_prpr"`             // 주식 현재가
+	PrdyVrss         decimal.Decimal `json:"prdy_vrss"`             // 전일 대비
+	PrdyVrssSign     string          `json:"prdy_vrss_sign"`        // 전일 대비 부호
+	PrdyCtrt         float64         `json:"prdy_ctrt,string"`      // 전일 대비율
+	AcmlVol          int64           `json:"acml_vol,string"`       // 누적 거래량
+	CptlOpPrfi       float64         `json:"cptl_op_prfi,string"`   // 총자본 경상이익율
+	CptlNtinRate     float64         `json:"cptl_ntin_rate,string"` // 총자본 순이익율
+	SaleTotlRate     float64         `json:"sale_totl_rate,string"` // 매출액 총이익율
+	SaleNtinRate     float64         `json:"sale_ntin_rate,string"` // 매출액 순이익율
+	Bis              float64         `json:"bis,string"`            // 자기자본비율
+	LbltRate         float64         `json:"lblt_rate,string"`      // 부채 비율
+	BramDepn         float64         `json:"bram_depn,string"`      // 차입금 의존도
+	RsrvRate         float64         `json:"rsrv_rate,string"`      // 유보 비율
+	Grs              float64         `json:"grs,string"`            // 매출액 증가율
+	OpPrfiInrt       float64         `json:"op_prfi_inrt,string"`   // 경상 이익 증가율
+	BsopPrfiInrt     float64         `json:"bsop_prfi_inrt,string"` // 영업 이익 증가율
+	NtinInrt         float64         `json:"ntin_inrt,string"`      // 순이익 증가율
+	EqutInrt         float64         `json:"equt_inrt,string"`      // 자기자본 증가율
+	CptlTnrt         float64         `json:"cptl_tnrt,string"`      // 총자본 회전율
+	SaleBondTnrt     float64         `json:"sale_bond_tnrt,string"` // 매출 채권 회전율
+	TotlAsetInrt     float64         `json:"totl_aset_inrt,string"` // 총자산 증가율
+	StacMonth        string          `json:"stac_month"`            // 결산 월
+	StacMonthClsCode string          `json:"stac_month_cls_code"`   // 결산 월 구분 코드
+	IqryCsnu         int64           `json:"iqry_csnu,string"`      // 조회 건수
+}
+
+// InquireFinanceRatioRankingParams 는 재무비율 순위 조회 파라미터.
+//
+// 13 query 중 5 개는 hardcoded (사용자에게 노출 X):
+//   - fid_trgt_cls_code = "0"
+//   - fid_cond_scr_div_code = "20175"
+//   - fid_div_cls_code = "0"
+//   - fid_blng_cls_code = "0"
+//   - fid_trgt_exls_cls_code = "0"
+type InquireFinanceRatioRankingParams struct {
+	MarketCode string // fid_cond_mrkt_div_code: "J"=KRX (default), "NX"=NXT
+	InputISCD  string // fid_input_iscd: "0000"=전체(default), "0001"=거래소, "1001"=코스닥, "2001"=코스피200
+	PriceFrom  string // fid_input_price_1: 가격 하한 (빈 문자열 = 전체)
+	PriceTo    string // fid_input_price_2: 가격 상한 (빈 문자열 = 전체)
+	VolFrom    string // fid_vol_cnt: 거래량 하한 (빈 문자열 = 전체)
+	Year       string // fid_input_option_1: 회계년도 "YYYY" (필수)
+	Period     string // fid_input_option_2: "0"=1Q, "1"=반기, "2"=3Q, "3"=결산 (필수)
+	RankSort   string // fid_rank_sort_cls_code: "7"=수익성, "11"=안정성, "15"=성장성, "20"=활동성 (필수)
+}
+
+// InquireFinanceRatioRanking 은 재무비율 순위 호출.
+//
+// 한투 docs: docs/api/국내주식/국내주식_재무비율_순위.md
+// path: /uapi/domestic-stock/v1/ranking/finance-ratio (FHPST01750000)
+//
+// 최대 30 건. 다음 조회 불가.
+func (c *Client) InquireFinanceRatioRanking(ctx context.Context, params InquireFinanceRatioRankingParams) (*FinanceRatioRanking, error) {
+	market := params.MarketCode
+	if market == "" {
+		market = "J"
+	}
+	iscd := params.InputISCD
+	if iscd == "" {
+		iscd = "0000"
+	}
+	resp, err := c.http.Do(ctx, &httpclient.Request{
+		Method: http.MethodGet,
+		Path:   "/uapi/domestic-stock/v1/ranking/finance-ratio",
+		TrID:   "FHPST01750000",
+		Query: map[string]string{
+			"fid_trgt_cls_code":      "0",
+			"fid_cond_mrkt_div_code": market,
+			"fid_cond_scr_div_code":  "20175",
+			"fid_input_iscd":         iscd,
+			"fid_div_cls_code":       "0",
+			"fid_input_price_1":      params.PriceFrom,
+			"fid_input_price_2":      params.PriceTo,
+			"fid_vol_cnt":            params.VolFrom,
+			"fid_input_option_1":     params.Year,
+			"fid_input_option_2":     params.Period,
+			"fid_rank_sort_cls_code": params.RankSort,
+			"fid_blng_cls_code":      "0",
+			"fid_trgt_exls_cls_code": "0",
+		},
+		CustType: "P",
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	var res FinanceRatioRanking
+	if err := json.Unmarshal(resp.Raw, &res); err != nil {
+		return nil, fmt.Errorf("kis: parse FinanceRatioRanking: %w", err)
+	}
+	return &res, nil
+}

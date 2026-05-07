@@ -2,7 +2,7 @@
 
 Go client library for the Korea Investment Securities OpenAPI.
 
-> **Phase 5 — ETF/NAV/관심종목 9 메서드 (v1.15.0). 누적 115 메서드.**
+> **Phase 6 — 재무 추가 2 메서드 (v1.16.0). 누적 117 메서드.**
 
 - Design spec: [`docs/superpowers/specs/2026-05-03-korea-investment-go-migration-design.md`](docs/superpowers/specs/2026-05-03-korea-investment-go-migration-design.md)
 - Phase 0 implementation plan: [`docs/superpowers/specs/2026-05-03-phase0-step1-implementation-plan.md`](docs/superpowers/specs/2026-05-03-phase0-step1-implementation-plan.md)
@@ -26,6 +26,7 @@ Go client library for the Korea Investment Securities OpenAPI.
 - Phase 4.2 implementation plan: [`docs/superpowers/specs/2026-05-07-phase4-2-market-op-implementation-plan.md`](docs/superpowers/specs/2026-05-07-phase4-2-market-op-implementation-plan.md)
 - Phase 4.3: implementation plan skipped — direct from docs analyzer (13 ranking/flow 메서드, EP1-EP13)
 - Phase 5 design spec: [`docs/superpowers/specs/2026-05-07-phase5-etf-watchlist-design.md`](docs/superpowers/specs/2026-05-07-phase5-etf-watchlist-design.md)
+- Phase 6 design spec: [`docs/superpowers/specs/2026-05-08-phase6-financial-extension-design.md`](docs/superpowers/specs/2026-05-08-phase6-financial-extension-design.md)
 - Legacy Python: see `python-final` tag (commit `e3fc52f`); PyPI `korea-investment-stock` v0.19.0 deprecated.
 
 ## Stack

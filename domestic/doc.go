@@ -182,5 +182,18 @@
 //	EP8 output2-only: output1 없이 output2 단일 객체만 반환
 //	EP9 fid_cond_scr_div_code="20180" 고정
 //
+// Phase 6 — 재무 추가 (v1.16.0)
+//
+//	EP1  InquireOtherMajorRatios        — 기타주요비율 (EVA/EBITDA/EV-EBITDA)  FHKST66430500
+//	EP2  InquireFinanceRatioRanking     — 재무비율 순위 (수익성/안정성/성장성/활동성) FHPST01750000
+//
+// Anomalies (Phase 6):
+//
+//	대차대조표 (FHKST66430100) 는 Phase 1.3 에서 이미 출시 — 중복 제외
+//	EP1 fid_div_cls_code 소문자 (InquireGrowthRatio 와 동일 패턴, inquireFinanceQuery helper 사용 불가)
+//	EP1 payout_rate 비정상 출력 — KIS 권고대로 string 보존 (parsing 시도 X)
+//	EP2 13 query 중 5 개 hardcoded (fid_trgt_cls_code/fid_cond_scr_div_code/fid_div_cls_code/fid_blng_cls_code/fid_trgt_exls_cls_code)
+//	EP2 페이지네이션 없음 (최대 30 건, tr_cont 미사용)
+//
 // 사용자는 root kis.Client 의 Domestic 필드로 접근.
 package domestic

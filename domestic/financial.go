@@ -294,3 +294,60 @@ func (c *Client) InquireGrowthRatio(ctx context.Context, params InquireGrowthRat
 	}
 	return &res, nil
 }
+
+// OtherMajorRatios 는 기타주요비율 (FHKST66430500) 응답.
+//
+// 한투 docs: docs/api/국내주식/국내주식_기타주요비율.md
+// path: /uapi/domestic-stock/v1/finance/other-major-ratios
+type OtherMajorRatios struct {
+	Output []OtherMajorRatiosItem `json:"output"`
+}
+
+// OtherMajorRatiosItem 은 기타주요비율 응답의 한 행.
+type OtherMajorRatiosItem struct {
+	StacYymm   string          `json:"stac_yymm"`        // 결산 년월
+	PayoutRate string          `json:"payout_rate"`      // 배당 성향 — KIS 측 비정상 출력으로 무시 권고. string 보존.
+	Eva        decimal.Decimal `json:"eva"`              // EVA (경제적 부가가치)
+	Ebitda     decimal.Decimal `json:"ebitda"`           // EBITDA
+	EvEbitda   float64         `json:"ev_ebitda,string"` // EV/EBITDA (배수)
+}
+
+// InquireOtherMajorRatiosParams 는 기타주요비율 조회 파라미터.
+type InquireOtherMajorRatiosParams struct {
+	Symbol  string // fid_input_iscd (필수)
+	Quarter bool   // fid_div_cls_code (소문자 — InquireGrowthRatio 와 동일 패턴). false=>"0"(년), true=>"1"(분기)
+}
+
+// InquireOtherMajorRatios 는 기타주요비율 호출.
+//
+// 한투 docs: docs/api/국내주식/국내주식_기타주요비율.md
+// path: /uapi/domestic-stock/v1/finance/other-major-ratios (FHKST66430500)
+//
+// fid_div_cls_code 가 소문자 — InquireGrowthRatio 와 동일 패턴.
+// inquireFinanceQuery helper 사용 불가 (helper 는 FID_DIV_CLS_CODE 대문자).
+func (c *Client) InquireOtherMajorRatios(ctx context.Context, params InquireOtherMajorRatiosParams) (*OtherMajorRatios, error) {
+	div := "0"
+	if params.Quarter {
+		div = "1"
+	}
+	resp, err := c.http.Do(ctx, &httpclient.Request{
+		Method: http.MethodGet,
+		Path:   "/uapi/domestic-stock/v1/finance/other-major-ratios",
+		TrID:   "FHKST66430500",
+		Query: map[string]string{
+			"fid_input_iscd":         params.Symbol,
+			"fid_div_cls_code":       div,
+			"fid_cond_mrkt_div_code": "J",
+		},
+		CustType: "P",
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	var res OtherMajorRatios
+	if err := json.Unmarshal(resp.Raw, &res); err != nil {
+		return nil, fmt.Errorf("kis: parse OtherMajorRatios: %w", err)
+	}
+	return &res, nil
+}
