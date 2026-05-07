@@ -153,3 +153,45 @@ func TestClient_InquireNavComparisonTimeTrend(t *testing.T) {
 	assert.Equal(t, int64(1234), res.Output[0].CntgVol)
 	assert.Equal(t, "131500", res.Output[1].BsopHour)
 }
+
+func TestClient_InquireNavComparisonDailyTrend(t *testing.T) {
+	httpmock.Activate()
+	defer httpmock.DeactivateAndReset()
+
+	var capturedQuery url.Values
+	httpmock.RegisterResponder(
+		http.MethodGet,
+		`=~/etfetn/v1/quotations/nav-comparison-daily-trend`,
+		func(req *http.Request) (*http.Response, error) {
+			capturedQuery = req.URL.Query()
+			return httpmock.NewStringResponse(200, loadFixtureString(t, "nav_comparison_daily_trend_success.json")), nil
+		},
+	)
+
+	c := newTestClient(t)
+	res, err := c.InquireNavComparisonDailyTrend(context.Background(), domestic.InquireNavComparisonDailyTrendParams{
+		Symbol:     "069500",
+		InputDate1: "20250401",
+		InputDate2: "20250506",
+	})
+	require.NoError(t, err)
+	require.NotNil(t, res)
+
+	// query param 검증
+	assert.Equal(t, "J", capturedQuery.Get("fid_cond_mrkt_div_code"))
+	assert.Equal(t, "069500", capturedQuery.Get("fid_input_iscd"))
+	assert.Equal(t, "20250401", capturedQuery.Get("fid_input_date_1"))
+	assert.Equal(t, "20250506", capturedQuery.Get("fid_input_date_2"))
+
+	// output 배열 검증
+	require.Len(t, res.Output, 2)
+	assert.Equal(t, "20250506", res.Output[0].StckBsopDate)
+	dClpr, _ := decimal.NewFromString("28350")
+	assert.True(t, dClpr.Equal(res.Output[0].StckClpr))
+	assert.Equal(t, int64(12345678), res.Output[0].AcmlVol)
+	assert.InDelta(t, -0.03, res.Output[0].Dprt, 0.001)
+	dNav, _ := decimal.NewFromString("28342")
+	assert.True(t, dNav.Equal(res.Output[0].Nav))
+	assert.InDelta(t, -0.48, res.Output[0].NavPrdyCtrt, 0.001)
+	assert.Equal(t, "20250502", res.Output[1].StckBsopDate)
+}

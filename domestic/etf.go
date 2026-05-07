@@ -277,3 +277,69 @@ func (c *Client) InquireNavComparisonTimeTrend(ctx context.Context, params Inqui
 	}
 	return &res, nil
 }
+
+// NavComparisonDailyTrend 는 NAV 비교 일별 추이 (FHPST02440200) 응답.
+//
+// 한투 docs: docs/api/국내주식/NAV비교일별추이.md
+// path: /uapi/etfetn/v1/quotations/nav-comparison-daily-trend
+type NavComparisonDailyTrend struct {
+	Output []NavComparisonDailyTrendItem `json:"output"`
+}
+
+// NavComparisonDailyTrendItem 은 NAV 비교 일별 추이 응답의 한 행 (13 fields/item).
+type NavComparisonDailyTrendItem struct {
+	StckBsopDate    string          `json:"stck_bsop_date"`       // 주식 영업 일자
+	StckClpr        decimal.Decimal `json:"stck_clpr"`            // 주식 종가
+	PrdyVrss        decimal.Decimal `json:"prdy_vrss"`            // 전일 대비
+	PrdyVrssSign    string          `json:"prdy_vrss_sign"`       // 전일 대비 부호
+	PrdyCtrt        float64         `json:"prdy_ctrt,string"`     // 전일 대비율
+	AcmlVol         int64           `json:"acml_vol,string"`      // 누적 거래량
+	CntgVol         int64           `json:"cntg_vol,string"`      // 체결 거래량
+	Dprt            float64         `json:"dprt,string"`          // 괴리율
+	NavVrssPrpr     decimal.Decimal `json:"nav_vrss_prpr"`        // NAV 대비 현재가
+	Nav             decimal.Decimal `json:"nav"`                  // NAV
+	NavPrdyVrssSign string          `json:"nav_prdy_vrss_sign"`   // NAV 전일 대비 부호
+	NavPrdyVrss     decimal.Decimal `json:"nav_prdy_vrss"`        // NAV 전일 대비
+	NavPrdyCtrt     float64         `json:"nav_prdy_ctrt,string"` // NAV 전일 대비율
+}
+
+// InquireNavComparisonDailyTrendParams 는 NAV 비교 일별 추이 조회 파라미터.
+type InquireNavComparisonDailyTrendParams struct {
+	MarketCode string // fid_cond_mrkt_div_code — "J":KRX. 빈 값=>"J"
+	Symbol     string // fid_input_iscd — 종목코드 (예 "069500") Y
+	InputDate1 string // fid_input_date_1 — 조회 시작일자 (YYYYMMDD)
+	InputDate2 string // fid_input_date_2 — 조회 종료일자 (YYYYMMDD)
+}
+
+// InquireNavComparisonDailyTrend 는 NAV 비교 일별 추이 호출.
+//
+// 한투 docs: docs/api/국내주식/NAV비교일별추이.md
+// path: /uapi/etfetn/v1/quotations/nav-comparison-daily-trend (FHPST02440200)
+func (c *Client) InquireNavComparisonDailyTrend(ctx context.Context, params InquireNavComparisonDailyTrendParams) (*NavComparisonDailyTrend, error) {
+	market := params.MarketCode
+	if market == "" {
+		market = "J"
+	}
+
+	resp, err := c.http.Do(ctx, &httpclient.Request{
+		Method: http.MethodGet,
+		Path:   "/uapi/etfetn/v1/quotations/nav-comparison-daily-trend",
+		TrID:   "FHPST02440200",
+		Query: map[string]string{
+			"fid_cond_mrkt_div_code": market,
+			"fid_input_iscd":         params.Symbol,
+			"fid_input_date_1":       params.InputDate1,
+			"fid_input_date_2":       params.InputDate2,
+		},
+		CustType: "P",
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	var res NavComparisonDailyTrend
+	if err := json.Unmarshal(resp.Raw, &res); err != nil {
+		return nil, fmt.Errorf("kis: parse NavComparisonDailyTrend: %w", err)
+	}
+	return &res, nil
+}
