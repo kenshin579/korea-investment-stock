@@ -2,7 +2,7 @@
 
 Go client library for the Korea Investment Securities OpenAPI.
 
-> **Phase 3.1 — 장내채권 시세 8 메서드 (v1.11.0). Phase 3 design spec 및 plan 참고.**
+> **Phase 4.1 — 국내주식 종목정보/분석 10 메서드 (v1.12.0). Phase 4 design spec 및 plan 참고.**
 
 - Design spec: [`docs/superpowers/specs/2026-05-03-korea-investment-go-migration-design.md`](docs/superpowers/specs/2026-05-03-korea-investment-go-migration-design.md)
 - Phase 0 implementation plan: [`docs/superpowers/specs/2026-05-03-phase0-step1-implementation-plan.md`](docs/superpowers/specs/2026-05-03-phase0-step1-implementation-plan.md)
@@ -21,6 +21,8 @@ Go client library for the Korea Investment Securities OpenAPI.
 - Phase 2.7 implementation plan: [`docs/superpowers/specs/2026-05-05-phase2-7-industry-implementation-plan.md`](docs/superpowers/specs/2026-05-05-phase2-7-industry-implementation-plan.md)
 - Phase 3 design spec: [`docs/superpowers/specs/2026-05-05-phase3-bonds-design.md`](docs/superpowers/specs/2026-05-05-phase3-bonds-design.md)
 - Phase 3.1 implementation plan: [`docs/superpowers/specs/2026-05-05-phase3-1-bonds-quote-implementation-plan.md`](docs/superpowers/specs/2026-05-05-phase3-1-bonds-quote-implementation-plan.md)
+- Phase 4 design spec: [`docs/superpowers/specs/2026-05-07-phase4-stock-info-design.md`](docs/superpowers/specs/2026-05-07-phase4-stock-info-design.md)
+- Phase 4.1 implementation plan: [`docs/superpowers/specs/2026-05-07-phase4-1-stock-info-implementation-plan.md`](docs/superpowers/specs/2026-05-07-phase4-1-stock-info-implementation-plan.md)
 - Legacy Python: see `python-final` tag (commit `e3fc52f`); PyPI `korea-investment-stock` v0.19.0 deprecated.
 
 ## Stack

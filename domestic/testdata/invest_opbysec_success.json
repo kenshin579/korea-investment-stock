@@ -1,0 +1,43 @@
+{
+  "rt_cd": "0",
+  "msg_cd": "MCA00000",
+  "msg1": "정상처리 되었습니다.",
+  "output": [
+    {
+      "stck_bsop_date": "20260506",
+      "stck_shrn_iscd": "005930",
+      "hts_kor_isnm": "삼성전자",
+      "invt_opnn": "매수",
+      "invt_opnn_cls_code": "1",
+      "rgbf_invt_opnn": "매수",
+      "rgbf_invt_opnn_cls_code": "1",
+      "mbcr_name": "삼성증권",
+      "stck_prpr": "82500",
+      "prdy_vrss": "500",
+      "prdy_vrss_sign": "2",
+      "prdy_ctrt": "0.61",
+      "hts_goal_prc": "95000",
+      "stck_prdy_clpr": "82000",
+      "stft_esdg": "90000",
+      "dprt": "9.76"
+    },
+    {
+      "stck_bsop_date": "20260505",
+      "stck_shrn_iscd": "000660",
+      "hts_kor_isnm": "SK하이닉스",
+      "invt_opnn": "매수",
+      "invt_opnn_cls_code": "1",
+      "rgbf_invt_opnn": "매수",
+      "rgbf_invt_opnn_cls_code": "1",
+      "mbcr_name": "삼성증권",
+      "stck_prpr": "185000",
+      "prdy_vrss": "2000",
+      "prdy_vrss_sign": "2",
+      "prdy_ctrt": "1.09",
+      "hts_goal_prc": "220000",
+      "stck_prdy_clpr": "183000",
+      "stft_esdg": "210000",
+      "dprt": "14.75"
+    }
+  ]
+}

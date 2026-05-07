@@ -61,7 +61,7 @@ func main() {
 }
 ```
 
-## Available Methods (Phase 1.2 ~ 3.1)
+## Available Methods (Phase 1.2 ~ 4.1)
 
 | Method | 한투 path | TR_ID |
 |--------|----------|-------|
@@ -136,6 +136,16 @@ func main() {
 | `Domestic.InquireTimeIndexchartprice` | `quotations/inquire-time-indexchartprice` | FHKUP03500200 |
 | `Domestic.ExpTotalIndex` | `quotations/exp-total-index` | FHKUP11750000 |
 | `Domestic.ExpIndexTrend` | `quotations/exp-index-trend` | FHPST01840000 |
+| `Domestic.InquireInvestOpinion` | `quotations/invest-opinion` | FHKST663300C0 |
+| `Domestic.InquireInvestOpbysec` | `quotations/invest-opbysec` | FHKST663400C0 |
+| `Domestic.InquireEstimatePerform` | `quotations/estimate-perform` | HHKST668300C0 |
+| `Domestic.InquireVolumePower` | `ranking/volume-power` | FHPST01680000 |
+| `Domestic.InquireBulkTransNum` | `ranking/bulk-trans-num` | FHKST190900C0 |
+| `Domestic.InquireTradprtByamt` | `quotations/tradprt-byamt` | FHKST111900C0 |
+| `Domestic.InquireHtsTopView` | `ranking/hts-top-view` | HHMCM000100C0 |
+| `Domestic.InquirePbarTraRatio` | `quotations/pbar-tratio` | FHPST01130000 |
+| `Domestic.InquireExpPriceTrend` | `quotations/exp-price-trend` | FHPST01810000 |
+| `Domestic.InquireExpTransUpdown` | `ranking/exp-trans-updown` | FHPST01820000 |
 
 ### Bonds (장내채권) — Phase 3.1
 

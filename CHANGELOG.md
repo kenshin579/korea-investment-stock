@@ -1,5 +1,32 @@
 # CHANGELOG
 
+## [1.12.0] - 2026-05-07
+
+### Added — Phase 4.1 (국내주식 종목정보/분석)
+
+- `Domestic.InquireInvestOpinion` — 종목투자의견 (FHKST663300C0) — 12 fields/item array
+- `Domestic.InquireInvestOpbysec` — 증권사별투자의견 (FHKST663400C0) — 16 fields/item array
+- `Domestic.InquireEstimatePerform` — 종목추정실적 (HHKST668300C0) — quad-output (output1+output2+output3+output4)
+- `Domestic.InquireVolumePower` — 체결강도상위 (FHPST01680000) — 11 fields/item array
+- `Domestic.InquireBulkTransNum` — 대량체결건수상위 (FHKST190900C0) — 11 fields/item array
+- `Domestic.InquireTradprtByamt` — 체결금액별매매비중 (FHKST111900C0) — 11 fields/item array
+- `Domestic.InquireHtsTopView` — HTS조회상위20종목 (HHMCM000100C0) — output1 단일 객체 (2 fields)
+- `Domestic.InquirePbarTraRatio` — 매물대거래비중 (FHPST01130000) — dual-output (output1 11 + output2 4 fields/item)
+- `Domestic.InquireExpPriceTrend` — 예상체결가추이 (FHPST01810000) — dual-output (output1 7 + output2 7 fields/item)
+- `Domestic.InquireExpTransUpdown` — 예상체결상승/하락상위 (FHPST01820000) — 15 fields/item array
+- examples: `domestic_stock_info`
+
+### Notes
+
+- EP3 (`InquireEstimatePerform`) 은 quad-output (output1/2/3/4) — Phase 에서 가장 복잡한 응답 구조.
+- EP3 `SHT_CD` param name: FID_ 접두어 없는 비표준 param명.
+- EP3 KIS docs body table 오표기 — Python dataclass field names 기준으로 수정.
+- EP4/EP5/EP9/EP10 은 query param wire keys 가 lowercase `fid_*` (대문자 `FID_*` 아님).
+- EP5 종목코드 필드: `mksc_shrn_iscd` (시장구분 포함) — 다른 endpoint 의 `stck_shrn_iscd` 와 다름.
+- EP6 (`InquireTradprtByamt`) 필드 `whol_shun_vol_rate`: KIS wire format typo (shun ≠ shnu) — 그대로 보존.
+- EP7 (`InquireHtsTopView`) 는 query params 없음 (zero params endpoint).
+- 누적 79 → 89 메서드.
+
 ## [1.11.0] - 2026-05-05
 
 ### Added — Phase 3.1 (장내채권 시세) — 신규 도메인

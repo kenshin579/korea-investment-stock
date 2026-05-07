@@ -213,3 +213,251 @@ func TestClient_InquireOvertimeFluctuation(t *testing.T) {
 	assert.Equal(t, int64(234567), res.Output2[0].OvtmUntpVol)
 	assert.InDelta(t, 1.90, res.Output2[0].OvtmVrssAcmlVolRlim, 0.01)
 }
+
+func TestClient_InquireVolumePower(t *testing.T) {
+	httpmock.Activate()
+	defer httpmock.DeactivateAndReset()
+
+	var capturedQuery url.Values
+	httpmock.RegisterResponder(
+		http.MethodGet,
+		`=~/ranking/volume-power`,
+		func(req *http.Request) (*http.Response, error) {
+			capturedQuery = req.URL.Query()
+			return httpmock.NewStringResponse(200, loadFixtureString(t, "volume_power_success.json")), nil
+		},
+	)
+
+	c := newTestClient(t)
+	res, err := c.InquireVolumePower(context.Background(), domestic.InquireVolumePowerParams{
+		Symbol:     "0001",
+		DivClsCode: "0",
+	})
+	require.NoError(t, err)
+	require.NotNil(t, res)
+
+	// lowercase wire keys 확인 (UPPERCASE FID_ 아님)
+	assert.Equal(t, "J", capturedQuery.Get("fid_cond_mrkt_div_code"))
+	assert.Equal(t, "20168", capturedQuery.Get("fid_cond_scr_div_code"))
+	assert.Equal(t, "0001", capturedQuery.Get("fid_input_iscd"))
+	assert.Empty(t, capturedQuery.Get("FID_COND_MRKT_DIV_CODE"), "lowercase 사용 확인")
+
+	require.Len(t, res.Output, 2)
+	assert.Equal(t, "005930", res.Output[0].StckShrnIscd)
+	assert.Equal(t, "1", res.Output[0].DataRank)
+
+	wantPrpr, _ := decimal.NewFromString("82500")
+	assert.True(t, wantPrpr.Equal(res.Output[0].StckPrpr))
+	assert.InDelta(t, 125.30, res.Output[0].TdayRltv, 0.001)
+	assert.Equal(t, int64(6800000), res.Output[0].SelnCnqnSmtn)
+	assert.Equal(t, int64(7200000), res.Output[0].ShnuCnqnSmtn)
+}
+
+func TestClient_InquireBulkTransNum(t *testing.T) {
+	httpmock.Activate()
+	defer httpmock.DeactivateAndReset()
+
+	var capturedQuery url.Values
+	httpmock.RegisterResponder(
+		http.MethodGet,
+		`=~/ranking/bulk-trans-num`,
+		func(req *http.Request) (*http.Response, error) {
+			capturedQuery = req.URL.Query()
+			return httpmock.NewStringResponse(200, loadFixtureString(t, "bulk_trans_num_success.json")), nil
+		},
+	)
+
+	c := newTestClient(t)
+	res, err := c.InquireBulkTransNum(context.Background(), domestic.InquireBulkTransNumParams{
+		Symbol:       "0000",
+		DivClsCode:   "0",
+		RankSortCode: "0",
+		BlngClsCode:  "0",
+	})
+	require.NoError(t, err)
+	require.NotNil(t, res)
+
+	// lowercase wire keys 확인
+	assert.Equal(t, "J", capturedQuery.Get("fid_cond_mrkt_div_code"))
+	assert.Equal(t, "11909", capturedQuery.Get("fid_cond_scr_div_code"))
+	assert.Equal(t, "0000", capturedQuery.Get("fid_input_iscd"))
+
+	require.Len(t, res.Output, 2)
+	// mksc_shrn_iscd (stck_shrn_iscd 아님) 확인
+	assert.Equal(t, "005930", res.Output[0].MkscShrnIscd)
+	assert.Equal(t, "1", res.Output[0].DataRank)
+	assert.Equal(t, int64(3200), res.Output[0].ShnuCntgCsnu)
+	assert.Equal(t, int64(2800), res.Output[0].SelnCntgCsnu)
+	assert.Equal(t, int64(400000), res.Output[0].NtbyCnqn)
+}
+
+func TestClient_InquireTradprtByamt(t *testing.T) {
+	httpmock.Activate()
+	defer httpmock.DeactivateAndReset()
+
+	var capturedQuery url.Values
+	httpmock.RegisterResponder(
+		http.MethodGet,
+		`=~/quotations/tradprt-byamt`,
+		func(req *http.Request) (*http.Response, error) {
+			capturedQuery = req.URL.Query()
+			return httpmock.NewStringResponse(200, loadFixtureString(t, "tradprt_byamt_success.json")), nil
+		},
+	)
+
+	c := newTestClient(t)
+	res, err := c.InquireTradprtByamt(context.Background(), domestic.InquireTradprtByamtParams{
+		Symbol: "005930",
+	})
+	require.NoError(t, err)
+	require.NotNil(t, res)
+
+	assert.Equal(t, "J", capturedQuery.Get("FID_COND_MRKT_DIV_CODE"))
+	assert.Equal(t, "11119", capturedQuery.Get("FID_COND_SCR_DIV_CODE"))
+	assert.Equal(t, "005930", capturedQuery.Get("FID_INPUT_ISCD"))
+
+	require.Len(t, res.Output, 2)
+	assert.Equal(t, "1억원 이상", res.Output[0].PrprName)
+	assert.Equal(t, int64(8500), res.Output[0].AcmlVol)
+	assert.InDelta(t, 12.50, res.Output[0].WholNtbyQtyRate, 0.001)
+	// whol_shun_vol_rate typo 필드 확인
+	assert.InDelta(t, 45.20, res.Output[0].WholShunVolRate, 0.001)
+	assert.InDelta(t, 42.30, res.Output[0].WholSelnVolRate, 0.001)
+
+	wantAvrgPrpr, _ := decimal.NewFromString("150000000")
+	assert.True(t, wantAvrgPrpr.Equal(res.Output[0].SmtnAvrgPrpr))
+}
+
+func TestClient_InquireHtsTopView(t *testing.T) {
+	httpmock.Activate()
+	defer httpmock.DeactivateAndReset()
+
+	httpmock.RegisterResponder(http.MethodGet, `=~/ranking/hts-top-view`,
+		httpmock.NewStringResponder(http.StatusOK, loadFixtureString(t, "hts_top_view_success.json")))
+
+	c := newTestClient(t)
+	res, err := c.InquireHtsTopView(context.Background(), domestic.InquireHtsTopViewParams{})
+	require.NoError(t, err)
+	require.NotNil(t, res)
+
+	assert.Equal(t, "J", res.Output1.MrktDivClsCode)
+	assert.Equal(t, "005930", res.Output1.MkscShrnIscd)
+}
+
+func TestClient_InquirePbarTraRatio(t *testing.T) {
+	httpmock.Activate()
+	defer httpmock.DeactivateAndReset()
+
+	var capturedQuery url.Values
+	httpmock.RegisterResponder(http.MethodGet, `=~/quotations/pbar-tratio`,
+		func(req *http.Request) (*http.Response, error) {
+			capturedQuery = req.URL.Query()
+			return httpmock.NewStringResponse(http.StatusOK, loadFixtureString(t, "pbar_tratio_success.json")), nil
+		})
+
+	c := newTestClient(t)
+	res, err := c.InquirePbarTraRatio(context.Background(), domestic.InquirePbarTraRatioParams{
+		Symbol:     "005930",
+		InputHour1: "153000",
+	})
+	require.NoError(t, err)
+	require.NotNil(t, res)
+
+	assert.Equal(t, "J", capturedQuery.Get("FID_COND_MRKT_DIV_CODE"))
+	assert.Equal(t, "11130", capturedQuery.Get("FID_COND_SCR_DIV_CODE"))
+	assert.Equal(t, "005930", capturedQuery.Get("FID_INPUT_ISCD"))
+	assert.Equal(t, "153000", capturedQuery.Get("FID_INPUT_HOUR_1"))
+
+	assert.Equal(t, "KOSPI", res.Output1.RprsMrktKorName)
+	assert.Equal(t, "005930", res.Output1.StckShrnIscd)
+	assert.Equal(t, "삼성전자", res.Output1.HtsKorIsnm)
+	wantPrpr, _ := decimal.NewFromString("82500")
+	assert.True(t, wantPrpr.Equal(res.Output1.StckPrpr))
+	assert.Equal(t, int64(12500000), res.Output1.AcmlVol)
+	assert.Equal(t, int64(11000000), res.Output1.PrdyVol)
+	assert.Equal(t, int64(5969782550), res.Output1.LstnStcn)
+	wantWavg, _ := decimal.NewFromString("82350")
+	assert.True(t, wantWavg.Equal(res.Output1.WghnAvrgStckPrc))
+
+	require.Len(t, res.Output2, 2)
+	assert.Equal(t, "1", res.Output2[0].DataRank)
+	wantItemPrpr, _ := decimal.NewFromString("82500")
+	assert.True(t, wantItemPrpr.Equal(res.Output2[0].StckPrpr))
+	assert.Equal(t, int64(1500000), res.Output2[0].CntgVol)
+	assert.InDelta(t, 12.00, res.Output2[0].AcmlVolRlim, 0.001)
+}
+
+func TestClient_InquireExpPriceTrend(t *testing.T) {
+	httpmock.Activate()
+	defer httpmock.DeactivateAndReset()
+
+	var capturedQuery url.Values
+	httpmock.RegisterResponder(http.MethodGet, `=~/quotations/exp-price-trend`,
+		func(req *http.Request) (*http.Response, error) {
+			capturedQuery = req.URL.Query()
+			return httpmock.NewStringResponse(http.StatusOK, loadFixtureString(t, "exp_price_trend_success.json")), nil
+		})
+
+	c := newTestClient(t)
+	res, err := c.InquireExpPriceTrend(context.Background(), domestic.InquireExpPriceTrendParams{
+		Symbol: "005930",
+	})
+	require.NoError(t, err)
+	require.NotNil(t, res)
+
+	// lowercase fid_* 검증
+	assert.Equal(t, "J", capturedQuery.Get("fid_cond_mrkt_div_code"))
+	assert.Equal(t, "11810", capturedQuery.Get("fid_cond_scr_div_code"))
+	assert.Equal(t, "005930", capturedQuery.Get("fid_input_iscd"))
+	// UPPERCASE 는 비어 있음을 확인
+	assert.Empty(t, capturedQuery.Get("FID_INPUT_ISCD"))
+
+	// output1 검증
+	assert.Equal(t, "코스피", res.Output1.RprsMrktKorName)
+	wantCnpr, _ := decimal.NewFromString("82700")
+	assert.True(t, wantCnpr.Equal(res.Output1.AntcCnpr))
+	assert.Equal(t, int64(850000), res.Output1.AntcVol)
+	assert.Equal(t, int64(70297500000), res.Output1.AntcTrPbmn)
+	assert.InDelta(t, 0.24, res.Output1.AntcCntgPrdyCtrt, 0.001)
+
+	// output2 검증
+	require.Len(t, res.Output2, 2)
+	assert.Equal(t, "20260507", res.Output2[0].StckBsopDate)
+	assert.Equal(t, "153000", res.Output2[0].StckCntgHour)
+	wantPrpr, _ := decimal.NewFromString("82500")
+	assert.True(t, wantPrpr.Equal(res.Output2[0].StckPrpr))
+	assert.Equal(t, int64(12500000), res.Output2[0].AcmlVol)
+}
+
+func TestClient_InquireExpTransUpdown(t *testing.T) {
+	httpmock.Activate()
+	defer httpmock.DeactivateAndReset()
+
+	var capturedQuery url.Values
+	httpmock.RegisterResponder(http.MethodGet, `=~/ranking/exp-trans-updown`,
+		func(req *http.Request) (*http.Response, error) {
+			capturedQuery = req.URL.Query()
+			return httpmock.NewStringResponse(http.StatusOK, loadFixtureString(t, "exp_trans_updown_success.json")), nil
+		})
+
+	c := newTestClient(t)
+	res, err := c.InquireExpTransUpdown(context.Background(), domestic.InquireExpTransUpdownParams{
+		Symbol: "0000",
+	})
+	require.NoError(t, err)
+	require.NotNil(t, res)
+
+	// lowercase fid_* 검증
+	assert.Equal(t, "J", capturedQuery.Get("fid_cond_mrkt_div_code"))
+	assert.Equal(t, "11820", capturedQuery.Get("fid_cond_scr_div_code"))
+	assert.Equal(t, "0000", capturedQuery.Get("fid_input_iscd"))
+	assert.Empty(t, capturedQuery.Get("FID_INPUT_ISCD"))
+
+	require.Len(t, res.Output, 2)
+	assert.Equal(t, "005930", res.Output[0].StckShrnIscd)
+	assert.Equal(t, "삼성전자", res.Output[0].HtsKorIsnm)
+	wantPrpr, _ := decimal.NewFromString("82500")
+	assert.True(t, wantPrpr.Equal(res.Output[0].StckPrpr))
+	assert.InDelta(t, 0.61, res.Output[0].PrdyCtrt, 0.001)
+	assert.Equal(t, int64(70297500000), res.Output[0].AntcTrPbmn)
+}
