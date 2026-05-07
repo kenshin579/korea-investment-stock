@@ -104,3 +104,90 @@ func (c *Client) InquireIntstockMultprice(ctx context.Context, params InquireInt
 	}
 	return &res, nil
 }
+
+// IntstockStocklistByGroup 는 관심종목 그룹별 종목조회 (HHKCM113004C6) 응답.
+//
+// 한투 docs: docs/api/국내주식/관심종목그룹별종목조회.md
+// path: /uapi/domestic-stock/v1/quotations/intstock-stocklist-by-group
+type IntstockStocklistByGroup struct {
+	Output1 IntstockGroupSummary    `json:"output1"`
+	Output2 []IntstockStocklistItem `json:"output2"`
+}
+
+// IntstockGroupSummary 는 관심종목 그룹별 종목조회 output1 (단일 객체 2 fields).
+type IntstockGroupSummary struct {
+	DataRank     string `json:"data_rank"`      // 데이터 순위
+	InterGrpName string `json:"inter_grp_name"` // 관심 그룹명
+}
+
+// IntstockStocklistItem 은 관심종목 그룹별 종목조회 output2 의 한 행 (10 fields).
+type IntstockStocklistItem struct {
+	FidMrktClsCode string          `json:"fid_mrkt_cls_code"`    // FID 시장 구분 코드
+	DataRank       string          `json:"data_rank"`            // 데이터 순위
+	ExchCode       string          `json:"exch_code"`            // 거래소 코드
+	JongCode       string          `json:"jong_code"`            // 종목 코드
+	ColorCode      string          `json:"color_code"`           // 색상 코드
+	Memo           string          `json:"memo"`                 // 메모
+	HtsKorIsnm     string          `json:"hts_kor_isnm"`         // HTS 한글 종목명
+	FxdtNtbyQty    int64           `json:"fxdt_ntby_qty,string"` // 확정 순매수 수량
+	CntgUnpr       decimal.Decimal `json:"cntg_unpr"`            // 체결 단가
+	CntgClsCode    string          `json:"cntg_cls_code"`        // 체결 구분 코드
+}
+
+// InquireIntstockStocklistByGroupParams 는 관심종목 그룹별 종목조회 파라미터.
+//
+// CRITICAL: UserID 는 HTS 로그인 ID (HTS_ID). 반드시 제공 필요.
+// FID_ETC_CLS_CODE 기본값 "4".
+type InquireIntstockStocklistByGroupParams struct {
+	Type          string // TYPE — "1" 기본값
+	UserID        string // USER_ID — HTS 로그인 ID (HTS_ID). 필수
+	DataRank      string // DATA_RANK — 데이터 순위. 빈 값 OK
+	InterGrpCode  string // INTER_GRP_CODE — 관심 그룹 코드. Y
+	InterGrpName  string // INTER_GRP_NAME — 관심 그룹명. 빈 값 OK
+	HtsKorIsnm    string // HTS_KOR_ISNM — HTS 한글 종목명. 빈 값 OK
+	CntgClsCode   string // CNTG_CLS_CODE — 체결 구분 코드. 빈 값 OK
+	FidEtcClsCode string // FID_ETC_CLS_CODE — 기타 구분 코드. 빈 값=>"4"
+}
+
+// InquireIntstockStocklistByGroup 는 관심종목 그룹별 종목조회 호출.
+//
+// 한투 docs: docs/api/국내주식/관심종목그룹별종목조회.md
+// path: /uapi/domestic-stock/v1/quotations/intstock-stocklist-by-group (HHKCM113004C6)
+//
+// NOTE: USER_ID 파라미터에 사용자의 HTS 로그인 ID 를 반드시 입력해야 합니다.
+func (c *Client) InquireIntstockStocklistByGroup(ctx context.Context, params InquireIntstockStocklistByGroupParams) (*IntstockStocklistByGroup, error) {
+	typ := params.Type
+	if typ == "" {
+		typ = "1"
+	}
+	etcCls := params.FidEtcClsCode
+	if etcCls == "" {
+		etcCls = "4"
+	}
+
+	resp, err := c.http.Do(ctx, &httpclient.Request{
+		Method: http.MethodGet,
+		Path:   "/uapi/domestic-stock/v1/quotations/intstock-stocklist-by-group",
+		TrID:   "HHKCM113004C6",
+		Query: map[string]string{
+			"TYPE":             typ,
+			"USER_ID":          params.UserID,
+			"DATA_RANK":        params.DataRank,
+			"INTER_GRP_CODE":   params.InterGrpCode,
+			"INTER_GRP_NAME":   params.InterGrpName,
+			"HTS_KOR_ISNM":     params.HtsKorIsnm,
+			"CNTG_CLS_CODE":    params.CntgClsCode,
+			"FID_ETC_CLS_CODE": etcCls,
+		},
+		CustType: "P",
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	var res IntstockStocklistByGroup
+	if err := json.Unmarshal(resp.Raw, &res); err != nil {
+		return nil, fmt.Errorf("kis: parse IntstockStocklistByGroup: %w", err)
+	}
+	return &res, nil
+}
