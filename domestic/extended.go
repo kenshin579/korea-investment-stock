@@ -904,3 +904,82 @@ func (c *Client) InquirePbarTraRatio(ctx context.Context, params InquirePbarTraR
 	}
 	return &res, nil
 }
+
+// ExpPriceTrend 는 국내주식 예상체결가 추이 (FHPST01810000) 응답.
+//
+// 한투 docs: docs/api/국내주식/국내주식_예상체결가_추이.md
+// path: /uapi/domestic-stock/v1/quotations/exp-price-trend
+//
+// dual output: output1 (예상체결가 종합) + output2 (시간별 체결 추이 array).
+// 특이사항: query param wire keys 가 lowercase (fid_*).
+type ExpPriceTrend struct {
+	Output1 ExpPriceTrendSummary `json:"output1"`
+	Output2 []ExpPriceTrendItem  `json:"output2"`
+}
+
+// ExpPriceTrendSummary 는 예상체결가 추이 응답 종합 (output1) — 7 필드.
+type ExpPriceTrendSummary struct {
+	RprsMrktKorName  string          `json:"rprs_mrkt_kor_name"`         // 대표시장한글명
+	AntcCnpr         decimal.Decimal `json:"antc_cnpr"`                  // 예상 체결가
+	AntcCntgVrssSign string          `json:"antc_cntg_vrss_sign"`        // 예상 체결 대비 부호
+	AntcCntgVrss     decimal.Decimal `json:"antc_cntg_vrss"`             // 예상 체결 대비
+	AntcCntgPrdyCtrt float64         `json:"antc_cntg_prdy_ctrt,string"` // 예상 체결 전일 대비율
+	AntcVol          int64           `json:"antc_vol,string"`            // 예상 거래량
+	AntcTrPbmn       int64           `json:"antc_tr_pbmn,string"`        // 예상 거래대금
+}
+
+// ExpPriceTrendItem 은 예상체결가 추이 output2 의 한 행 — 7 필드.
+type ExpPriceTrendItem struct {
+	StckBsopDate string          `json:"stck_bsop_date"`   // 주식 영업 일자
+	StckCntgHour string          `json:"stck_cntg_hour"`   // 주식 체결 시간
+	StckPrpr     decimal.Decimal `json:"stck_prpr"`        // 주식 현재가
+	PrdyVrssSign string          `json:"prdy_vrss_sign"`   // 전일 대비 부호
+	PrdyVrss     decimal.Decimal `json:"prdy_vrss"`        // 전일 대비
+	PrdyCtrt     float64         `json:"prdy_ctrt,string"` // 전일 대비율
+	AcmlVol      int64           `json:"acml_vol,string"`  // 누적 거래량
+}
+
+// InquireExpPriceTrendParams 는 예상체결가 추이 조회 파라미터.
+//
+// 특이사항: KIS API 가 query param wire keys 를 lowercase 로 받음 (fid_*).
+type InquireExpPriceTrendParams struct {
+	MarketCode     string // fid_cond_mrkt_div_code — default "J"
+	CondScrDivCode string // fid_cond_scr_div_code — default "11810"
+	Symbol         string // fid_input_iscd — 종목코드
+}
+
+// InquireExpPriceTrend 는 국내주식 예상체결가 추이 호출.
+//
+// 한투 docs: docs/api/국내주식/국내주식_예상체결가_추이.md
+// path: /uapi/domestic-stock/v1/quotations/exp-price-trend (FHPST01810000)
+// 특이사항: query param wire keys 가 lowercase (fid_*).
+func (c *Client) InquireExpPriceTrend(ctx context.Context, params InquireExpPriceTrendParams) (*ExpPriceTrend, error) {
+	market := params.MarketCode
+	if market == "" {
+		market = "J"
+	}
+	scrDiv := params.CondScrDivCode
+	if scrDiv == "" {
+		scrDiv = "11810"
+	}
+
+	resp, err := c.http.Do(ctx, &httpclient.Request{
+		Method: http.MethodGet,
+		Path:   "/uapi/domestic-stock/v1/quotations/exp-price-trend",
+		TrID:   "FHPST01810000",
+		Query: map[string]string{
+			"fid_cond_mrkt_div_code": market,
+			"fid_cond_scr_div_code":  scrDiv,
+			"fid_input_iscd":         params.Symbol,
+		},
+		CustType: "P",
+	})
+	if err != nil {
+		return nil, err
+	}
+	var res ExpPriceTrend
+	if err := json.Unmarshal(resp.Raw, &res); err != nil {
+		return nil, fmt.Errorf("kis: parse ExpPriceTrend: %w", err)
+	}
+	return &res, nil
+}

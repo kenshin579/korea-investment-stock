@@ -386,3 +386,45 @@ func TestClient_InquirePbarTraRatio(t *testing.T) {
 	assert.Equal(t, int64(1500000), res.Output2[0].CntgVol)
 	assert.InDelta(t, 12.00, res.Output2[0].AcmlVolRlim, 0.001)
 }
+
+func TestClient_InquireExpPriceTrend(t *testing.T) {
+	httpmock.Activate()
+	defer httpmock.DeactivateAndReset()
+
+	var capturedQuery url.Values
+	httpmock.RegisterResponder(http.MethodGet, `=~/quotations/exp-price-trend`,
+		func(req *http.Request) (*http.Response, error) {
+			capturedQuery = req.URL.Query()
+			return httpmock.NewStringResponse(http.StatusOK, loadFixtureString(t, "exp_price_trend_success.json")), nil
+		})
+
+	c := newTestClient(t)
+	res, err := c.InquireExpPriceTrend(context.Background(), domestic.InquireExpPriceTrendParams{
+		Symbol: "005930",
+	})
+	require.NoError(t, err)
+	require.NotNil(t, res)
+
+	// lowercase fid_* 검증
+	assert.Equal(t, "J", capturedQuery.Get("fid_cond_mrkt_div_code"))
+	assert.Equal(t, "11810", capturedQuery.Get("fid_cond_scr_div_code"))
+	assert.Equal(t, "005930", capturedQuery.Get("fid_input_iscd"))
+	// UPPERCASE 는 비어 있음을 확인
+	assert.Empty(t, capturedQuery.Get("FID_INPUT_ISCD"))
+
+	// output1 검증
+	assert.Equal(t, "코스피", res.Output1.RprsMrktKorName)
+	wantCnpr, _ := decimal.NewFromString("82700")
+	assert.True(t, wantCnpr.Equal(res.Output1.AntcCnpr))
+	assert.Equal(t, int64(850000), res.Output1.AntcVol)
+	assert.Equal(t, int64(70297500000), res.Output1.AntcTrPbmn)
+	assert.InDelta(t, 0.24, res.Output1.AntcCntgPrdyCtrt, 0.001)
+
+	// output2 검증
+	require.Len(t, res.Output2, 2)
+	assert.Equal(t, "20260507", res.Output2[0].StckBsopDate)
+	assert.Equal(t, "153000", res.Output2[0].StckCntgHour)
+	wantPrpr, _ := decimal.NewFromString("82500")
+	assert.True(t, wantPrpr.Equal(res.Output2[0].StckPrpr))
+	assert.Equal(t, int64(12500000), res.Output2[0].AcmlVol)
+}
