@@ -752,3 +752,58 @@ func TestClient_InquireLendableByCompany(t *testing.T) {
 	assert.Equal(t, int64(600000), res.Output2.BrchLmtQty)
 	assert.Equal(t, int64(588890), res.Output2.RqstPsblQty)
 }
+
+func TestClient_InquireQuoteBalance(t *testing.T) {
+	httpmock.Activate()
+	defer httpmock.DeactivateAndReset()
+
+	var capturedQuery url.Values
+	httpmock.RegisterResponder(
+		http.MethodGet,
+		`=~/ranking/quote-balance`,
+		func(req *http.Request) (*http.Response, error) {
+			capturedQuery = req.URL.Query()
+			return httpmock.NewStringResponse(http.StatusOK, loadFixtureString(t, "quote_balance_success.json")), nil
+		},
+	)
+
+	c := newTestClient(t)
+	res, err := c.InquireQuoteBalance(context.Background(), domestic.InquireQuoteBalanceParams{
+		VolCnt:       "30",
+		Symbol:       "0000",
+		RankSortCode: "0",
+		DivClsCode:   "0",
+		TrgtClsCode:  "111111111",
+		TrgtExlsCode: "000000000",
+	})
+	require.NoError(t, err)
+	require.NotNil(t, res)
+
+	// lowercase fid_* 키 검증 (UPPERCASE 아님)
+	assert.Equal(t, "J", capturedQuery.Get("fid_cond_mrkt_div_code"))
+	assert.Equal(t, "20172", capturedQuery.Get("fid_cond_scr_div_code"))
+	assert.Equal(t, "0000", capturedQuery.Get("fid_input_iscd"))
+	assert.Equal(t, "30", capturedQuery.Get("fid_vol_cnt"))
+	assert.Equal(t, "0", capturedQuery.Get("fid_rank_sort_cls_code"))
+	assert.Equal(t, "0", capturedQuery.Get("fid_div_cls_code"))
+	assert.Empty(t, capturedQuery.Get("FID_INPUT_ISCD"), "uppercase 키는 비어야 함")
+
+	require.Len(t, res.Output, 2)
+
+	// output[0] 핵심 필드 검증
+	assert.Equal(t, "005930", res.Output[0].MkscShrnIscd)
+	assert.Equal(t, "1", res.Output[0].DataRank)
+	assert.Equal(t, "삼성전자", res.Output[0].HtsKorIsnm)
+	dPrpr, _ := decimal.NewFromString("75800")
+	assert.True(t, dPrpr.Equal(res.Output[0].StckPrpr))
+	dVrss, _ := decimal.NewFromString("-200")
+	assert.True(t, dVrss.Equal(res.Output[0].PrdyVrss))
+	assert.Equal(t, "5", res.Output[0].PrdyVrssSign)
+	assert.InDelta(t, -0.26, res.Output[0].PrdyCtrt, 0.001)
+	assert.Equal(t, int64(12345678), res.Output[0].AcmlVol)
+	assert.Equal(t, int64(2345678), res.Output[0].TotalAskpRsqn)
+	assert.Equal(t, int64(3456789), res.Output[0].TotalBidpRsqn)
+	assert.Equal(t, int64(1111111), res.Output[0].TotalNtslBidpRsqn)
+	assert.InDelta(t, 59.60, res.Output[0].ShnuRsqnRate, 0.001)
+	assert.InDelta(t, 40.40, res.Output[0].SelnRsqnRate, 0.001)
+}

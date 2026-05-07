@@ -1492,3 +1492,90 @@ func (c *Client) InquireLendableByCompany(ctx context.Context, params InquireLen
 	}
 	return &res, nil
 }
+
+// QuoteBalance 는 국내주식 호가잔량 순위 (FHPST01720000) 응답.
+//
+// 한투 docs: docs/api/국내주식/국내주식_호가잔량_순위.md
+// path: /uapi/domestic-stock/v1/ranking/quote-balance
+//
+// 매도/매수 호가잔량 상위 종목 순위.
+type QuoteBalance struct {
+	Output []QuoteBalanceItem `json:"output"`
+}
+
+// QuoteBalanceItem 은 호가잔량 순위 응답의 한 행.
+type QuoteBalanceItem struct {
+	MkscShrnIscd      string          `json:"mksc_shrn_iscd"`              // 유가증권 단축 종목코드
+	DataRank          string          `json:"data_rank"`                   // 데이터 순위
+	HtsKorIsnm        string          `json:"hts_kor_isnm"`                // HTS 한글 종목명
+	StckPrpr          decimal.Decimal `json:"stck_prpr"`                   // 주식 현재가
+	PrdyVrss          decimal.Decimal `json:"prdy_vrss"`                   // 전일 대비
+	PrdyVrssSign      string          `json:"prdy_vrss_sign"`              // 전일 대비 부호
+	PrdyCtrt          float64         `json:"prdy_ctrt,string"`            // 전일 대비율
+	AcmlVol           int64           `json:"acml_vol,string"`             // 누적 거래량
+	TotalAskpRsqn     int64           `json:"total_askp_rsqn,string"`      // 총 매도호가 잔량
+	TotalBidpRsqn     int64           `json:"total_bidp_rsqn,string"`      // 총 매수호가 잔량
+	TotalNtslBidpRsqn int64           `json:"total_ntsl_bidp_rsqn,string"` // 총 순매수 매수호가 잔량
+	ShnuRsqnRate      float64         `json:"shnu_rsqn_rate,string"`       // 매수 잔량 비율
+	SelnRsqnRate      float64         `json:"seln_rsqn_rate,string"`       // 매도 잔량 비율
+}
+
+// InquireQuoteBalanceParams 는 호가잔량 순위 조회 파라미터.
+//
+// 쿼리 파라미터는 lowercase fid_* 형식으로 전송.
+type InquireQuoteBalanceParams struct {
+	VolCnt         string // fid_vol_cnt — 조회 건수
+	MarketCode     string // fid_cond_mrkt_div_code — "J":KRX. 빈 값=>"J"
+	CondScrDivCode string // fid_cond_scr_div_code — 고정 "20172". 빈 값=>"20172"
+	Symbol         string // fid_input_iscd — 종목코드 또는 시장코드
+	RankSortCode   string // fid_rank_sort_cls_code — 정렬 구분 코드
+	DivClsCode     string // fid_div_cls_code — 구분 코드
+	TrgtClsCode    string // fid_trgt_cls_code — 대상 구분 코드
+	TrgtExlsCode   string // fid_trgt_exls_cls_code — 대상 제외 구분 코드
+	InputPrice1    string // fid_input_price_1 — 입력 가격1
+	InputPrice2    string // fid_input_price_2 — 입력 가격2
+}
+
+// InquireQuoteBalance 는 국내주식 호가잔량 순위 호출.
+//
+// 한투 docs: docs/api/국내주식/국내주식_호가잔량_순위.md
+// path: /uapi/domestic-stock/v1/ranking/quote-balance (FHPST01720000)
+//
+// 쿼리 파라미터는 lowercase fid_* 형식 사용.
+func (c *Client) InquireQuoteBalance(ctx context.Context, params InquireQuoteBalanceParams) (*QuoteBalance, error) {
+	market := params.MarketCode
+	if market == "" {
+		market = "J"
+	}
+	scrDiv := params.CondScrDivCode
+	if scrDiv == "" {
+		scrDiv = "20172"
+	}
+
+	resp, err := c.http.Do(ctx, &httpclient.Request{
+		Method: http.MethodGet,
+		Path:   "/uapi/domestic-stock/v1/ranking/quote-balance",
+		TrID:   "FHPST01720000",
+		Query: map[string]string{
+			"fid_vol_cnt":            params.VolCnt,
+			"fid_cond_mrkt_div_code": market,
+			"fid_cond_scr_div_code":  scrDiv,
+			"fid_input_iscd":         params.Symbol,
+			"fid_rank_sort_cls_code": params.RankSortCode,
+			"fid_div_cls_code":       params.DivClsCode,
+			"fid_trgt_cls_code":      params.TrgtClsCode,
+			"fid_trgt_exls_cls_code": params.TrgtExlsCode,
+			"fid_input_price_1":      params.InputPrice1,
+			"fid_input_price_2":      params.InputPrice2,
+		},
+		CustType: "P",
+	})
+	if err != nil {
+		return nil, err
+	}
+	var res QuoteBalance
+	if err := json.Unmarshal(resp.Raw, &res); err != nil {
+		return nil, fmt.Errorf("kis: parse QuoteBalance: %w", err)
+	}
+	return &res, nil
+}
