@@ -1,0 +1,33 @@
+{
+  "rt_cd": "0",
+  "msg_cd": "MCA00000",
+  "msg1": "정상처리 되었습니다.",
+  "output": [
+    {
+      "stck_shrn_iscd": "005930",
+      "data_rank": "1",
+      "hts_kor_isnm": "삼성전자",
+      "stck_prpr": "75800",
+      "prdy_vrss": "-200",
+      "prdy_vrss_sign": "5",
+      "prdy_ctrt": "-0.26",
+      "ovtm_total_askp_rsqn": "345678",
+      "ovtm_total_bidp_rsqn": "456789",
+      "mkob_otcp_vol": "234567",
+      "mkfa_otcp_vol": "222222"
+    },
+    {
+      "stck_shrn_iscd": "000660",
+      "data_rank": "2",
+      "hts_kor_isnm": "SK하이닉스",
+      "stck_prpr": "188500",
+      "prdy_vrss": "1500",
+      "prdy_vrss_sign": "2",
+      "prdy_ctrt": "0.80",
+      "ovtm_total_askp_rsqn": "123456",
+      "ovtm_total_bidp_rsqn": "198765",
+      "mkob_otcp_vol": "87654",
+      "mkfa_otcp_vol": "111111"
+    }
+  ]
+}

@@ -461,3 +461,737 @@ func TestClient_InquireExpTransUpdown(t *testing.T) {
 	assert.InDelta(t, 0.61, res.Output[0].PrdyCtrt, 0.001)
 	assert.Equal(t, int64(70297500000), res.Output[0].AntcTrPbmn)
 }
+
+func TestClient_InquireShortSale(t *testing.T) {
+	httpmock.Activate()
+	defer httpmock.DeactivateAndReset()
+
+	var capturedQuery url.Values
+	httpmock.RegisterResponder(
+		http.MethodGet,
+		`=~/ranking/short-sale`,
+		func(req *http.Request) (*http.Response, error) {
+			capturedQuery = req.URL.Query()
+			return httpmock.NewStringResponse(http.StatusOK, loadFixtureString(t, "short_sale_success.json")), nil
+		},
+	)
+
+	c := newTestClient(t)
+	res, err := c.InquireShortSale(context.Background(), domestic.InquireShortSaleParams{
+		Symbol:        "005930",
+		PeriodDivCode: "D",
+	})
+	require.NoError(t, err)
+	require.NotNil(t, res)
+
+	// UPPERCASE FID_ 키 검증
+	assert.Equal(t, "J", capturedQuery.Get("FID_COND_MRKT_DIV_CODE"))
+	assert.Equal(t, "20482", capturedQuery.Get("FID_COND_SCR_DIV_CODE"))
+	assert.Equal(t, "005930", capturedQuery.Get("FID_INPUT_ISCD"))
+	assert.Equal(t, "D", capturedQuery.Get("FID_PERIOD_DIV_CODE"))
+
+	require.Len(t, res.Output, 2)
+
+	// output[0] 필드 검증
+	assert.Equal(t, "005930", res.Output[0].MkscShrnIscd)
+	assert.Equal(t, "삼성전자", res.Output[0].HtsKorIsnm)
+	d, _ := decimal.NewFromString("75800")
+	assert.True(t, d.Equal(res.Output[0].StckPrpr))
+	dVrss, _ := decimal.NewFromString("-200")
+	assert.True(t, dVrss.Equal(res.Output[0].PrdyVrss))
+	assert.Equal(t, "5", res.Output[0].PrdyVrssSign)
+	assert.InDelta(t, -0.26, res.Output[0].PrdyCtrt, 0.001)
+	assert.Equal(t, int64(12345678), res.Output[0].AcmlVol)
+	assert.Equal(t, int64(935714440400), res.Output[0].AcmlTrPbmn)
+	assert.Equal(t, int64(123456), res.Output[0].SstsCntgQty)
+	assert.InDelta(t, 1.00, res.Output[0].SstsVolRlim, 0.001)
+	assert.Equal(t, int64(9357144404), res.Output[0].SstsTrPbmn)
+	assert.InDelta(t, 1.00, res.Output[0].SstsTrPbmnRlim, 0.001)
+	assert.Equal(t, "20260501", res.Output[0].StndDate1)
+	assert.Equal(t, "20260507", res.Output[0].StndDate2)
+	dAvrg, _ := decimal.NewFromString("75800")
+	assert.True(t, dAvrg.Equal(res.Output[0].AvrgPrc))
+}
+
+func TestClient_InquireDailyShortSale(t *testing.T) {
+	httpmock.Activate()
+	defer httpmock.DeactivateAndReset()
+
+	var capturedQuery url.Values
+	httpmock.RegisterResponder(
+		http.MethodGet,
+		`=~/quotations/daily-short-sale`,
+		func(req *http.Request) (*http.Response, error) {
+			capturedQuery = req.URL.Query()
+			return httpmock.NewStringResponse(http.StatusOK, loadFixtureString(t, "daily_short_sale_success.json")), nil
+		},
+	)
+
+	c := newTestClient(t)
+	res, err := c.InquireDailyShortSale(context.Background(), domestic.InquireDailyShortSaleParams{
+		Symbol:     "005930",
+		InputDate1: "20260501",
+		InputDate2: "20260507",
+	})
+	require.NoError(t, err)
+	require.NotNil(t, res)
+
+	// UPPERCASE FID_ 키 검증
+	assert.Equal(t, "J", capturedQuery.Get("FID_COND_MRKT_DIV_CODE"))
+	assert.Equal(t, "005930", capturedQuery.Get("FID_INPUT_ISCD"))
+	assert.Equal(t, "20260501", capturedQuery.Get("FID_INPUT_DATE_1"))
+	assert.Equal(t, "20260507", capturedQuery.Get("FID_INPUT_DATE_2"))
+
+	// output1 (single obj) 검증
+	d1, _ := decimal.NewFromString("75800")
+	assert.True(t, d1.Equal(res.Output1.StckPrpr))
+	dVrss, _ := decimal.NewFromString("-200")
+	assert.True(t, dVrss.Equal(res.Output1.PrdyVrss))
+	assert.Equal(t, "5", res.Output1.PrdyVrssSign)
+	assert.InDelta(t, -0.26, res.Output1.PrdyCtrt, 0.001)
+	assert.Equal(t, int64(12345678), res.Output1.AcmlVol)
+	assert.Equal(t, int64(13456789), res.Output1.PrdyVol)
+
+	// output2 (array) 검증
+	require.Len(t, res.Output2, 2)
+	assert.Equal(t, "20260507", res.Output2[0].StckBsopDate)
+	d2, _ := decimal.NewFromString("75800")
+	assert.True(t, d2.Equal(res.Output2[0].StckClpr))
+	assert.InDelta(t, -0.26, res.Output2[0].PrdyCtrt, 0.001)
+	assert.Equal(t, int64(12345678), res.Output2[0].AcmlVol)
+	assert.Equal(t, int64(123456), res.Output2[0].SstsCntgQty)
+	assert.InDelta(t, 1.90, res.Output2[0].AcmlSstsCntgQtyRlim, 0.001)
+	assert.Equal(t, int64(935714440400), res.Output2[0].AcmlTrPbmn)
+	assert.InDelta(t, 2.00, res.Output2[0].AcmlSstsTrPbmnRlim, 0.001)
+	dOprc, _ := decimal.NewFromString("76000")
+	assert.True(t, dOprc.Equal(res.Output2[0].StckOprc))
+	dHgpr, _ := decimal.NewFromString("76200")
+	assert.True(t, dHgpr.Equal(res.Output2[0].StckHgpr))
+	dLwpr, _ := decimal.NewFromString("75500")
+	assert.True(t, dLwpr.Equal(res.Output2[0].StckLwpr))
+	dAvrg, _ := decimal.NewFromString("75800")
+	assert.True(t, dAvrg.Equal(res.Output2[0].AvrgPrc))
+}
+
+func TestClient_InquireCreditBalance(t *testing.T) {
+	httpmock.Activate()
+	defer httpmock.DeactivateAndReset()
+
+	var capturedQuery url.Values
+	httpmock.RegisterResponder(
+		http.MethodGet,
+		`=~/ranking/credit-balance`,
+		func(req *http.Request) (*http.Response, error) {
+			capturedQuery = req.URL.Query()
+			return httpmock.NewStringResponse(http.StatusOK, loadFixtureString(t, "credit_balance_success.json")), nil
+		},
+	)
+
+	c := newTestClient(t)
+	res, err := c.InquireCreditBalance(context.Background(), domestic.InquireCreditBalanceParams{
+		Symbol:       "005930",
+		Option:       "5",
+		RankSortCode: "0",
+	})
+	require.NoError(t, err)
+	require.NotNil(t, res)
+
+	// UPPERCASE FID_ 키 검증
+	assert.Equal(t, "J", capturedQuery.Get("FID_COND_MRKT_DIV_CODE"))
+	assert.Equal(t, "11701", capturedQuery.Get("FID_COND_SCR_DIV_CODE"))
+	assert.Equal(t, "005930", capturedQuery.Get("FID_INPUT_ISCD"))
+	assert.Equal(t, "5", capturedQuery.Get("FID_OPTION"))
+	assert.Equal(t, "0", capturedQuery.Get("FID_RANK_SORT_CLS_CODE"))
+
+	// output1 (header array) 검증
+	require.Len(t, res.Output1, 2)
+	assert.Equal(t, "0001", res.Output1[0].BstpClsCode)
+	assert.Equal(t, "코스피", res.Output1[0].HtsKorIsnm)
+	assert.Equal(t, "20260501", res.Output1[0].StndDate1)
+	assert.Equal(t, "20260507", res.Output1[0].StndDate2)
+
+	// output2 (balance array) 검증
+	require.Len(t, res.Output2, 2)
+	assert.Equal(t, "005930", res.Output2[0].MkscShrnIscd)
+	assert.Equal(t, "삼성전자", res.Output2[0].HtsKorIsnm)
+	dPrpr, _ := decimal.NewFromString("75800")
+	assert.True(t, dPrpr.Equal(res.Output2[0].StckPrpr))
+	dVrss, _ := decimal.NewFromString("-200")
+	assert.True(t, dVrss.Equal(res.Output2[0].PrdyVrss))
+	assert.Equal(t, "5", res.Output2[0].PrdyVrssSign)
+	assert.InDelta(t, -0.26, res.Output2[0].PrdyCtrt, 0.001)
+	assert.Equal(t, int64(12345678), res.Output2[0].AcmlVol)
+	assert.Equal(t, int64(9876543), res.Output2[0].WholLoanRmndStcn)
+	assert.Equal(t, int64(748681660), res.Output2[0].WholLoanRmndAmt)
+	assert.InDelta(t, 0.08, res.Output2[0].WholLoanRmndRate, 0.001)
+	assert.Equal(t, int64(1234567), res.Output2[0].WholStlnRmndStcn)
+	assert.Equal(t, int64(93623580), res.Output2[0].WholStlnRmndAmt)
+	assert.InDelta(t, 0.01, res.Output2[0].WholStlnRmndRate, 0.001)
+	assert.InDelta(t, 0.12, res.Output2[0].NdayVrssLoanRmndInrt, 0.001)
+	assert.InDelta(t, -0.05, res.Output2[0].NdayVrssStlnRmndInrt, 0.001)
+}
+
+func TestClient_InquireDailyCreditBalance(t *testing.T) {
+	httpmock.Activate()
+	defer httpmock.DeactivateAndReset()
+
+	var capturedQuery url.Values
+	httpmock.RegisterResponder(
+		http.MethodGet,
+		`=~/quotations/daily-credit-balance`,
+		func(req *http.Request) (*http.Response, error) {
+			capturedQuery = req.URL.Query()
+			return httpmock.NewStringResponse(http.StatusOK, loadFixtureString(t, "daily_credit_balance_success.json")), nil
+		},
+	)
+
+	c := newTestClient(t)
+	res, err := c.InquireDailyCreditBalance(context.Background(), domestic.InquireDailyCreditBalanceParams{
+		Symbol:     "005930",
+		InputDate1: "20260507",
+	})
+	require.NoError(t, err)
+	require.NotNil(t, res)
+
+	// lowercase fid_* 키 검증 (UPPERCASE 아님)
+	assert.Equal(t, "J", capturedQuery.Get("fid_cond_mrkt_div_code"))
+	assert.Equal(t, "20476", capturedQuery.Get("fid_cond_scr_div_code"))
+	assert.Equal(t, "005930", capturedQuery.Get("fid_input_iscd"))
+	assert.Equal(t, "20260507", capturedQuery.Get("fid_input_date_1"))
+	assert.Empty(t, capturedQuery.Get("FID_INPUT_ISCD"), "uppercase 키는 비어야 함")
+
+	require.Len(t, res.Output, 2)
+
+	// output[0] 핵심 필드 검증
+	assert.Equal(t, "20260507", res.Output[0].DealDate)
+	dPrpr, _ := decimal.NewFromString("75800")
+	assert.True(t, dPrpr.Equal(res.Output[0].StckPrpr))
+	assert.Equal(t, "5", res.Output[0].PrdyVrssSign)
+	dVrss, _ := decimal.NewFromString("-200")
+	assert.True(t, dVrss.Equal(res.Output[0].PrdyVrss))
+	assert.InDelta(t, -0.26, res.Output[0].PrdyCtrt, 0.001)
+	assert.Equal(t, int64(12345678), res.Output[0].AcmlVol)
+	assert.Equal(t, "20260509", res.Output[0].StlmDate)
+	assert.Equal(t, int64(123456), res.Output[0].WholLoanNewStcn)
+	assert.Equal(t, int64(98765), res.Output[0].WholLoanRdmpStcn)
+	assert.Equal(t, int64(9876543), res.Output[0].WholLoanRmndStcn)
+	assert.Equal(t, int64(9357144404), res.Output[0].WholLoanNewAmt)
+	assert.Equal(t, int64(7487234056), res.Output[0].WholLoanRdmpAmt)
+	assert.Equal(t, int64(748681660), res.Output[0].WholLoanRmndAmt)
+	assert.InDelta(t, 0.08, res.Output[0].WholLoanRmndRate, 0.001)
+	assert.InDelta(t, 98.50, res.Output[0].WholLoanGvrt, 0.001)
+	assert.Equal(t, int64(12345), res.Output[0].WholStlnNewStcn)
+	assert.Equal(t, int64(9876), res.Output[0].WholStlnRdmpStcn)
+	assert.Equal(t, int64(1234567), res.Output[0].WholStlnRmndStcn)
+	assert.Equal(t, int64(935714440), res.Output[0].WholStlnNewAmt)
+	assert.Equal(t, int64(748481660), res.Output[0].WholStlnRdmpAmt)
+	assert.Equal(t, int64(93623580), res.Output[0].WholStlnRmndAmt)
+	assert.InDelta(t, 0.01, res.Output[0].WholStlnRmndRate, 0.001)
+	assert.InDelta(t, 99.20, res.Output[0].WholStlnGvrt, 0.001)
+	dOprc, _ := decimal.NewFromString("76000")
+	assert.True(t, dOprc.Equal(res.Output[0].StckOprc))
+	dHgpr, _ := decimal.NewFromString("76200")
+	assert.True(t, dHgpr.Equal(res.Output[0].StckHgpr))
+	dLwpr, _ := decimal.NewFromString("75500")
+	assert.True(t, dLwpr.Equal(res.Output[0].StckLwpr))
+}
+
+func TestClient_InquireLendableByCompany(t *testing.T) {
+	httpmock.Activate()
+	defer httpmock.DeactivateAndReset()
+
+	var capturedQuery url.Values
+	httpmock.RegisterResponder(
+		http.MethodGet,
+		`=~/quotations/lendable-by-company`,
+		func(req *http.Request) (*http.Response, error) {
+			capturedQuery = req.URL.Query()
+			return httpmock.NewStringResponse(http.StatusOK, loadFixtureString(t, "lendable_by_company_success.json")), nil
+		},
+	)
+
+	c := newTestClient(t)
+	res, err := c.InquireLendableByCompany(context.Background(), domestic.InquireLendableByCompanyParams{
+		ExcgDvsnCd:     "02",
+		Pdno:           "005930",
+		ThcoStlnPsblYn: "Y",
+		InqrDvsn1:      "1",
+	})
+	require.NoError(t, err)
+	require.NotNil(t, res)
+
+	// non-FID UPPERCASE 키 검증
+	assert.Equal(t, "02", capturedQuery.Get("EXCG_DVSN_CD"))
+	assert.Equal(t, "005930", capturedQuery.Get("PDNO"))
+	assert.Equal(t, "Y", capturedQuery.Get("THCO_STLN_PSBL_YN"))
+	assert.Equal(t, "1", capturedQuery.Get("INQR_DVSN_1"))
+	assert.Equal(t, "", capturedQuery.Get("CTX_AREA_FK200"))
+	assert.Equal(t, "", capturedQuery.Get("CTX_AREA_NK100"))
+
+	// output1 (array) 검증
+	require.Len(t, res.Output1, 2)
+	assert.Equal(t, "005930", res.Output1[0].Pdno)
+	assert.Equal(t, "삼성전자", res.Output1[0].PrdtName)
+	dPapr, _ := decimal.NewFromString("75800")
+	assert.True(t, dPapr.Equal(res.Output1[0].Papr))
+	dClpr, _ := decimal.NewFromString("76000")
+	assert.True(t, dClpr.Equal(res.Output1[0].BfdyClpr))
+	dSbst, _ := decimal.NewFromString("75800")
+	assert.True(t, dSbst.Equal(res.Output1[0].SbstPrvs))
+	assert.Equal(t, "정상", res.Output1[0].TrStopDvsnName)
+	assert.Equal(t, "가능", res.Output1[0].PsblYnName)
+	assert.Equal(t, int64(500000), res.Output1[0].LmtQty1)
+	assert.Equal(t, int64(123456), res.Output1[0].UseQty1)
+	assert.Equal(t, int64(376544), res.Output1[0].TradPsblQty2)
+	assert.Equal(t, "01", res.Output1[0].RghtTypeCd)
+	assert.Equal(t, "20260507", res.Output1[0].BassDt)
+	assert.Equal(t, "Y", res.Output1[0].PsblYn)
+
+	// output2 (summary) 검증
+	assert.Equal(t, int64(800000), res.Output2.TotStupLmtQty)
+	assert.Equal(t, int64(600000), res.Output2.BrchLmtQty)
+	assert.Equal(t, int64(588890), res.Output2.RqstPsblQty)
+}
+
+func TestClient_InquireAfterHourBalance(t *testing.T) {
+	httpmock.Activate()
+	defer httpmock.DeactivateAndReset()
+
+	var capturedQuery url.Values
+	httpmock.RegisterResponder(
+		http.MethodGet,
+		`=~/ranking/after-hour-balance`,
+		func(req *http.Request) (*http.Response, error) {
+			capturedQuery = req.URL.Query()
+			return httpmock.NewStringResponse(http.StatusOK, loadFixtureString(t, "after_hour_balance_success.json")), nil
+		},
+	)
+
+	c := newTestClient(t)
+	res, err := c.InquireAfterHourBalance(context.Background(), domestic.InquireAfterHourBalanceParams{
+		Symbol:       "0000",
+		RankSortCode: "0",
+		DivClsCode:   "0",
+	})
+	require.NoError(t, err)
+	require.NotNil(t, res)
+
+	// lowercase fid_* 키 검증 (UPPERCASE 아님)
+	assert.Equal(t, "J", capturedQuery.Get("fid_cond_mrkt_div_code"))
+	assert.Equal(t, "20176", capturedQuery.Get("fid_cond_scr_div_code"))
+	assert.Equal(t, "0000", capturedQuery.Get("fid_input_iscd"))
+	assert.Equal(t, "0", capturedQuery.Get("fid_rank_sort_cls_code"))
+	assert.Equal(t, "0", capturedQuery.Get("fid_div_cls_code"))
+	assert.Empty(t, capturedQuery.Get("FID_INPUT_ISCD"), "uppercase 키는 비어야 함")
+
+	require.Len(t, res.Output, 2)
+
+	// output[0] 핵심 필드 검증
+	assert.Equal(t, "005930", res.Output[0].StckShrnIscd)
+	assert.Equal(t, "1", res.Output[0].DataRank)
+	assert.Equal(t, "삼성전자", res.Output[0].HtsKorIsnm)
+	dPrpr, _ := decimal.NewFromString("75800")
+	assert.True(t, dPrpr.Equal(res.Output[0].StckPrpr))
+	dVrss, _ := decimal.NewFromString("-200")
+	assert.True(t, dVrss.Equal(res.Output[0].PrdyVrss))
+	assert.Equal(t, "5", res.Output[0].PrdyVrssSign)
+	assert.InDelta(t, -0.26, res.Output[0].PrdyCtrt, 0.001)
+	assert.Equal(t, int64(345678), res.Output[0].OvtmTotalAskpRsqn)
+	assert.Equal(t, int64(456789), res.Output[0].OvtmTotalBidpRsqn)
+	assert.Equal(t, int64(234567), res.Output[0].MkobOtcpVol)
+	assert.Equal(t, int64(222222), res.Output[0].MkfaOtcpVol)
+}
+
+func TestClient_InquireQuoteBalance(t *testing.T) {
+	httpmock.Activate()
+	defer httpmock.DeactivateAndReset()
+
+	var capturedQuery url.Values
+	httpmock.RegisterResponder(
+		http.MethodGet,
+		`=~/ranking/quote-balance`,
+		func(req *http.Request) (*http.Response, error) {
+			capturedQuery = req.URL.Query()
+			return httpmock.NewStringResponse(http.StatusOK, loadFixtureString(t, "quote_balance_success.json")), nil
+		},
+	)
+
+	c := newTestClient(t)
+	res, err := c.InquireQuoteBalance(context.Background(), domestic.InquireQuoteBalanceParams{
+		VolCnt:       "30",
+		Symbol:       "0000",
+		RankSortCode: "0",
+		DivClsCode:   "0",
+		TrgtClsCode:  "111111111",
+		TrgtExlsCode: "000000000",
+	})
+	require.NoError(t, err)
+	require.NotNil(t, res)
+
+	// lowercase fid_* 키 검증 (UPPERCASE 아님)
+	assert.Equal(t, "J", capturedQuery.Get("fid_cond_mrkt_div_code"))
+	assert.Equal(t, "20172", capturedQuery.Get("fid_cond_scr_div_code"))
+	assert.Equal(t, "0000", capturedQuery.Get("fid_input_iscd"))
+	assert.Equal(t, "30", capturedQuery.Get("fid_vol_cnt"))
+	assert.Equal(t, "0", capturedQuery.Get("fid_rank_sort_cls_code"))
+	assert.Equal(t, "0", capturedQuery.Get("fid_div_cls_code"))
+	assert.Empty(t, capturedQuery.Get("FID_INPUT_ISCD"), "uppercase 키는 비어야 함")
+
+	require.Len(t, res.Output, 2)
+
+	// output[0] 핵심 필드 검증
+	assert.Equal(t, "005930", res.Output[0].MkscShrnIscd)
+	assert.Equal(t, "1", res.Output[0].DataRank)
+	assert.Equal(t, "삼성전자", res.Output[0].HtsKorIsnm)
+	dPrpr, _ := decimal.NewFromString("75800")
+	assert.True(t, dPrpr.Equal(res.Output[0].StckPrpr))
+	dVrss, _ := decimal.NewFromString("-200")
+	assert.True(t, dVrss.Equal(res.Output[0].PrdyVrss))
+	assert.Equal(t, "5", res.Output[0].PrdyVrssSign)
+	assert.InDelta(t, -0.26, res.Output[0].PrdyCtrt, 0.001)
+	assert.Equal(t, int64(12345678), res.Output[0].AcmlVol)
+	assert.Equal(t, int64(2345678), res.Output[0].TotalAskpRsqn)
+	assert.Equal(t, int64(3456789), res.Output[0].TotalBidpRsqn)
+	assert.Equal(t, int64(1111111), res.Output[0].TotalNtslBidpRsqn)
+	assert.InDelta(t, 59.60, res.Output[0].ShnuRsqnRate, 0.001)
+	assert.InDelta(t, 40.40, res.Output[0].SelnRsqnRate, 0.001)
+}
+
+func TestClient_InquireOvertimeExpTransFluct(t *testing.T) {
+	httpmock.Activate()
+	defer httpmock.DeactivateAndReset()
+
+	var capturedQuery url.Values
+	httpmock.RegisterResponder(
+		http.MethodGet,
+		`=~/ranking/overtime-exp-trans-fluct`,
+		func(req *http.Request) (*http.Response, error) {
+			capturedQuery = req.URL.Query()
+			return httpmock.NewStringResponse(http.StatusOK, loadFixtureString(t, "overtime_exp_trans_fluct_success.json")), nil
+		},
+	)
+
+	c := newTestClient(t)
+	res, err := c.InquireOvertimeExpTransFluct(context.Background(), domestic.InquireOvertimeExpTransFluctParams{
+		Symbol:       "0000",
+		RankSortCode: "0",
+		DivClsCode:   "0",
+	})
+	require.NoError(t, err)
+	require.NotNil(t, res)
+
+	// UPPERCASE FID_ 키 검증
+	assert.Equal(t, "J", capturedQuery.Get("FID_COND_MRKT_DIV_CODE"))
+	assert.Equal(t, "11186", capturedQuery.Get("FID_COND_SCR_DIV_CODE"))
+	assert.Equal(t, "0000", capturedQuery.Get("FID_INPUT_ISCD"))
+	assert.Equal(t, "0", capturedQuery.Get("FID_RANK_SORT_CLS_CODE"))
+	assert.Equal(t, "0", capturedQuery.Get("FID_DIV_CLS_CODE"))
+	assert.Empty(t, capturedQuery.Get("fid_input_iscd"), "lowercase 키는 비어야 함")
+
+	// output 은 단일 객체 (배열 아님) 검증
+	assert.Equal(t, "1", res.Output.DataRank)
+	assert.Equal(t, "00", res.Output.IscdStatClsCode)
+	assert.Equal(t, "005930", res.Output.StckShrnIscd)
+	assert.Equal(t, "삼성전자", res.Output.HtsKorIsnm)
+	dCnpr, _ := decimal.NewFromString("75900")
+	assert.True(t, dCnpr.Equal(res.Output.OvtmUntpAntcCnpr))
+	dVrss, _ := decimal.NewFromString("100")
+	assert.True(t, dVrss.Equal(res.Output.OvtmUntpAntcCntgVrss))
+	// KIS docs 오타 보존: vrss+sign 연결 (밑줄 없음)
+	assert.Equal(t, "2", res.Output.OvtmUntpAntcCntgVrsssign)
+	assert.InDelta(t, 0.13, res.Output.OvtmUntpAntcCntgCtrt, 0.001)
+	assert.Equal(t, int64(234567), res.Output.OvtmUntpAskpRsqn1)
+	assert.Equal(t, int64(345678), res.Output.OvtmUntpBidpRsqn1)
+	assert.Equal(t, int64(111111), res.Output.OvtmUntpAntcCnqn)
+	assert.Equal(t, int64(98765), res.Output.ItmtVol)
+	dPrpr, _ := decimal.NewFromString("75800")
+	assert.True(t, dPrpr.Equal(res.Output.StckPrpr))
+}
+
+func TestClient_InquireMarketValue(t *testing.T) {
+	httpmock.Activate()
+	defer httpmock.DeactivateAndReset()
+
+	var capturedQuery url.Values
+	httpmock.RegisterResponder(
+		http.MethodGet,
+		`=~/ranking/market-value`,
+		func(req *http.Request) (*http.Response, error) {
+			capturedQuery = req.URL.Query()
+			return httpmock.NewStringResponse(http.StatusOK, loadFixtureString(t, "market_value_success.json")), nil
+		},
+	)
+
+	c := newTestClient(t)
+	res, err := c.InquireMarketValue(context.Background(), domestic.InquireMarketValueParams{
+		Symbol:       "0000",
+		RankSortCode: "0",
+		DivClsCode:   "0",
+		TrgtClsCode:  "111111111",
+		TrgtExlsCode: "000000000",
+		BlngClsCode:  "0",
+		InputOption1: "2025",
+		InputOption2: "1",
+	})
+	require.NoError(t, err)
+	require.NotNil(t, res)
+
+	// lowercase fid_* 키 검증 (UPPERCASE 아님)
+	assert.Equal(t, "J", capturedQuery.Get("fid_cond_mrkt_div_code"))
+	assert.Equal(t, "20179", capturedQuery.Get("fid_cond_scr_div_code"))
+	assert.Equal(t, "0000", capturedQuery.Get("fid_input_iscd"))
+	assert.Equal(t, "0", capturedQuery.Get("fid_rank_sort_cls_code"))
+	assert.Equal(t, "0", capturedQuery.Get("fid_div_cls_code"))
+	assert.Equal(t, "2025", capturedQuery.Get("fid_input_option_1"))
+	assert.Equal(t, "1", capturedQuery.Get("fid_input_option_2"))
+	assert.Empty(t, capturedQuery.Get("FID_INPUT_ISCD"), "uppercase 키는 비어야 함")
+
+	require.Len(t, res.Output, 2)
+
+	// output[0] 핵심 필드 검증 (20 fields)
+	assert.Equal(t, "1", res.Output[0].DataRank)
+	assert.Equal(t, "삼성전자", res.Output[0].HtsKorIsnm)
+	assert.Equal(t, "005930", res.Output[0].MkscShrnIscd)
+	dPrpr, _ := decimal.NewFromString("75800")
+	assert.True(t, dPrpr.Equal(res.Output[0].StckPrpr))
+	dVrss, _ := decimal.NewFromString("-200")
+	assert.True(t, dVrss.Equal(res.Output[0].PrdyVrss))
+	assert.Equal(t, "5", res.Output[0].PrdyVrssSign)
+	assert.InDelta(t, -0.26, res.Output[0].PrdyCtrt, 0.001)
+	assert.Equal(t, int64(12345678), res.Output[0].AcmlVol)
+	assert.InDelta(t, 12.34, res.Output[0].Per, 0.001)
+	assert.InDelta(t, 1.23, res.Output[0].Pbr, 0.001)
+	assert.InDelta(t, 8.90, res.Output[0].Pcr, 0.001)
+	assert.InDelta(t, 1.45, res.Output[0].Psr, 0.001)
+	assert.InDelta(t, 6143.0, res.Output[0].Eps, 0.001)
+	assert.InDelta(t, 1234567.0, res.Output[0].Eva, 0.001)
+	assert.InDelta(t, 98765432.0, res.Output[0].Ebitda, 0.001)
+	assert.InDelta(t, 7.65, res.Output[0].PvDivEbitda, 0.001)
+	assert.InDelta(t, 23.45, res.Output[0].EbitdaDivFnncExpn, 0.001)
+	assert.Equal(t, "12", res.Output[0].StacMonth)
+	assert.Equal(t, "01", res.Output[0].StacMonthClsCode)
+	assert.Equal(t, "1", res.Output[0].IqryCsnu)
+}
+
+func TestClient_InquireDisparity(t *testing.T) {
+	httpmock.Activate()
+	defer httpmock.DeactivateAndReset()
+
+	var capturedQuery url.Values
+	httpmock.RegisterResponder(
+		http.MethodGet,
+		`=~/ranking/disparity`,
+		func(req *http.Request) (*http.Response, error) {
+			capturedQuery = req.URL.Query()
+			return httpmock.NewStringResponse(http.StatusOK, loadFixtureString(t, "disparity_success.json")), nil
+		},
+	)
+
+	c := newTestClient(t)
+	res, err := c.InquireDisparity(context.Background(), domestic.InquireDisparityParams{
+		Symbol:       "0000",
+		HourClsCode:  "20",
+		DivClsCode:   "0",
+		RankSortCode: "0",
+		TrgtClsCode:  "111111111",
+		TrgtExlsCode: "000000000",
+	})
+	require.NoError(t, err)
+	require.NotNil(t, res)
+
+	// lowercase fid_* 키 검증
+	assert.Equal(t, "J", capturedQuery.Get("fid_cond_mrkt_div_code"))
+	assert.Equal(t, "20178", capturedQuery.Get("fid_cond_scr_div_code"))
+	assert.Equal(t, "0000", capturedQuery.Get("fid_input_iscd"))
+	assert.Equal(t, "20", capturedQuery.Get("fid_hour_cls_code"))
+	assert.Equal(t, "0", capturedQuery.Get("fid_div_cls_code"))
+	assert.Empty(t, capturedQuery.Get("FID_COND_MRKT_DIV_CODE"), "uppercase 키는 비어야 함")
+
+	require.Len(t, res.Output, 2)
+
+	// output[0] 핵심 필드 검증 (13 fields)
+	assert.Equal(t, "005930", res.Output[0].MkscShrnIscd)
+	assert.Equal(t, "1", res.Output[0].DataRank)
+	assert.Equal(t, "삼성전자", res.Output[0].HtsKorIsnm)
+	dPrpr, _ := decimal.NewFromString("75800")
+	assert.True(t, dPrpr.Equal(res.Output[0].StckPrpr))
+	dVrss, _ := decimal.NewFromString("-200")
+	assert.True(t, dVrss.Equal(res.Output[0].PrdyVrss))
+	assert.InDelta(t, -0.26, res.Output[0].PrdyCtrt, 0.001)
+	assert.Equal(t, "5", res.Output[0].PrdyVrssSign)
+	assert.Equal(t, int64(12345678), res.Output[0].AcmlVol)
+	assert.InDelta(t, 101.23, res.Output[0].D5Dsrt, 0.001)
+	assert.InDelta(t, 99.87, res.Output[0].D10Dsrt, 0.001)
+	assert.InDelta(t, 98.54, res.Output[0].D20Dsrt, 0.001)
+	assert.InDelta(t, 97.32, res.Output[0].D60Dsrt, 0.001)
+	assert.InDelta(t, 96.10, res.Output[0].D120Dsrt, 0.001)
+}
+
+func TestClient_InquirePreferDisparateRatio(t *testing.T) {
+	httpmock.Activate()
+	defer httpmock.DeactivateAndReset()
+
+	var capturedQuery url.Values
+	httpmock.RegisterResponder(
+		http.MethodGet,
+		`=~/ranking/prefer-disparate-ratio`,
+		func(req *http.Request) (*http.Response, error) {
+			capturedQuery = req.URL.Query()
+			return httpmock.NewStringResponse(http.StatusOK, loadFixtureString(t, "prefer_disparate_ratio_success.json")), nil
+		},
+	)
+
+	c := newTestClient(t)
+	res, err := c.InquirePreferDisparateRatio(context.Background(), domestic.InquirePreferDisparateRatioParams{
+		Symbol:       "0000",
+		DivClsCode:   "0",
+		TrgtClsCode:  "111111111",
+		TrgtExlsCode: "000000000",
+	})
+	require.NoError(t, err)
+	require.NotNil(t, res)
+
+	// lowercase fid_* 키 검증
+	assert.Equal(t, "J", capturedQuery.Get("fid_cond_mrkt_div_code"))
+	assert.Equal(t, "20177", capturedQuery.Get("fid_cond_scr_div_code"))
+	assert.Equal(t, "0000", capturedQuery.Get("fid_input_iscd"))
+	assert.Equal(t, "0", capturedQuery.Get("fid_div_cls_code"))
+	assert.Empty(t, capturedQuery.Get("FID_COND_MRKT_DIV_CODE"), "uppercase 키는 비어야 함")
+
+	require.Len(t, res.Output, 2)
+
+	// output[0] 핵심 필드 검증 (17 fields)
+	assert.Equal(t, "005930", res.Output[0].MkscShrnIscd)
+	assert.Equal(t, "1", res.Output[0].DataRank)
+	assert.Equal(t, "삼성전자", res.Output[0].HtsKorIsnm)
+	dPrpr, _ := decimal.NewFromString("75800")
+	assert.True(t, dPrpr.Equal(res.Output[0].StckPrpr))
+	dVrss, _ := decimal.NewFromString("-200")
+	assert.True(t, dVrss.Equal(res.Output[0].PrdyVrss))
+	assert.Equal(t, "5", res.Output[0].PrdyVrssSign)
+	assert.Equal(t, int64(12345678), res.Output[0].AcmlVol)
+	assert.Equal(t, "005935", res.Output[0].PrstIscd)
+	assert.Equal(t, "삼성전자우", res.Output[0].PrstKorIsnm)
+	dPrstPrpr, _ := decimal.NewFromString("68500")
+	assert.True(t, dPrstPrpr.Equal(res.Output[0].PrstPrpr))
+	dPrstVrss, _ := decimal.NewFromString("-300")
+	assert.True(t, dPrstVrss.Equal(res.Output[0].PrstPrdyVrss))
+	assert.Equal(t, "5", res.Output[0].PrstPrdyVrssSign)
+	assert.Equal(t, int64(234567), res.Output[0].PrstAcmlVol)
+	dDiffPrpr, _ := decimal.NewFromString("7300")
+	assert.True(t, dDiffPrpr.Equal(res.Output[0].DiffPrpr))
+	assert.InDelta(t, 10.66, res.Output[0].Dprt, 0.001)
+	assert.InDelta(t, -0.26, res.Output[0].PrdyCtrt, 0.001)
+	assert.InDelta(t, -0.44, res.Output[0].PrstPrdyCtrt, 0.001)
+}
+
+func TestClient_InquireProfitAssetIndex(t *testing.T) {
+	httpmock.Activate()
+	defer httpmock.DeactivateAndReset()
+
+	var capturedQuery url.Values
+	httpmock.RegisterResponder(
+		http.MethodGet,
+		`=~/ranking/profit-asset-index`,
+		func(req *http.Request) (*http.Response, error) {
+			capturedQuery = req.URL.Query()
+			return httpmock.NewStringResponse(http.StatusOK, loadFixtureString(t, "profit_asset_index_success.json")), nil
+		},
+	)
+
+	c := newTestClient(t)
+	res, err := c.InquireProfitAssetIndex(context.Background(), domestic.InquireProfitAssetIndexParams{
+		Symbol:       "0000",
+		DivClsCode:   "0",
+		TrgtClsCode:  "111111111",
+		TrgtExlsCode: "000000000",
+		RankSortCode: "0",
+		BlngClsCode:  "0",
+		InputOption1: "2025",
+		InputOption2: "1",
+	})
+	require.NoError(t, err)
+	require.NotNil(t, res)
+
+	// lowercase fid_* 키 검증
+	assert.Equal(t, "J", capturedQuery.Get("fid_cond_mrkt_div_code"))
+	assert.Equal(t, "20173", capturedQuery.Get("fid_cond_scr_div_code"))
+	assert.Equal(t, "0000", capturedQuery.Get("fid_input_iscd"))
+	assert.Equal(t, "0", capturedQuery.Get("fid_div_cls_code"))
+	assert.Equal(t, "2025", capturedQuery.Get("fid_input_option_1"))
+	assert.Equal(t, "1", capturedQuery.Get("fid_input_option_2"))
+	assert.Empty(t, capturedQuery.Get("FID_COND_MRKT_DIV_CODE"), "uppercase 키는 비어야 함")
+
+	require.Len(t, res.Output, 2)
+
+	// output[0] 핵심 필드 검증 (18 fields)
+	assert.Equal(t, "1", res.Output[0].DataRank)
+	assert.Equal(t, "삼성전자", res.Output[0].HtsKorIsnm)
+	assert.Equal(t, "5", res.Output[0].PrdyVrssSign)
+	assert.Equal(t, "005930", res.Output[0].MkscShrnIscd)
+	dPrpr, _ := decimal.NewFromString("75800")
+	assert.True(t, dPrpr.Equal(res.Output[0].StckPrpr))
+	dVrss, _ := decimal.NewFromString("-200")
+	assert.True(t, dVrss.Equal(res.Output[0].PrdyVrss))
+	assert.InDelta(t, -0.26, res.Output[0].PrdyCtrt, 0.001)
+	assert.Equal(t, int64(12345678), res.Output[0].AcmlVol)
+	assert.Equal(t, int64(12345678901), res.Output[0].SaleTotlPrfi)
+	assert.Equal(t, int64(9876543210), res.Output[0].BsopPrti)
+	assert.Equal(t, int64(9876543210), res.Output[0].OpPrfi)
+	assert.Equal(t, int64(8765432109), res.Output[0].ThtrNtin)
+	assert.Equal(t, int64(987654321098), res.Output[0].TotalAset)
+	assert.Equal(t, int64(345678901234), res.Output[0].TotalLblt)
+	assert.Equal(t, int64(641975419864), res.Output[0].TotalCptl)
+	assert.Equal(t, "12", res.Output[0].StacMonth)
+	assert.Equal(t, "01", res.Output[0].StacMonthClsCode)
+	assert.Equal(t, "1", res.Output[0].IqryCsnu)
+}
+
+func TestClient_InquireMktfunds(t *testing.T) {
+	httpmock.Activate()
+	defer httpmock.DeactivateAndReset()
+
+	var capturedQuery url.Values
+	httpmock.RegisterResponder(
+		http.MethodGet,
+		`=~/quotations/mktfunds`,
+		func(req *http.Request) (*http.Response, error) {
+			capturedQuery = req.URL.Query()
+			return httpmock.NewStringResponse(http.StatusOK, loadFixtureString(t, "mktfunds_success.json")), nil
+		},
+	)
+
+	c := newTestClient(t)
+	res, err := c.InquireMktfunds(context.Background(), domestic.InquireMktfundsParams{
+		InputDate1: "20260507",
+	})
+	require.NoError(t, err)
+	require.NotNil(t, res)
+
+	// UPPERCASE FID_ 키 검증
+	assert.Equal(t, "20260507", capturedQuery.Get("FID_INPUT_DATE_1"))
+	assert.Empty(t, capturedQuery.Get("fid_input_date_1"), "uppercase 키 사용 확인")
+
+	require.Len(t, res.Output, 2)
+
+	// output[0] 핵심 필드 검증 (17 fields)
+	assert.Equal(t, "20260507", res.Output[0].BsopDate)
+	dNmixPrpr, _ := decimal.NewFromString("2650.45")
+	assert.True(t, dNmixPrpr.Equal(res.Output[0].BstpNmixPrpr))
+	dNmixVrss, _ := decimal.NewFromString("-12.34")
+	assert.True(t, dNmixVrss.Equal(res.Output[0].BstpNmixPrdyVrss))
+	assert.Equal(t, "5", res.Output[0].PrdyVrssSign)
+	assert.InDelta(t, -0.46, res.Output[0].PrdyCtrt, 0.001)
+	assert.Equal(t, int64(1987654321098), res.Output[0].HtsAvls)
+	assert.Equal(t, int64(345678901234), res.Output[0].CustDpmnAmt)
+	assert.Equal(t, int64(1234567890), res.Output[0].CustDpmnAmtPrdyVrss)
+	assert.InDelta(t, 0.87, res.Output[0].AmtTnrt, 0.001)
+	assert.Equal(t, int64(23456789012), res.Output[0].UnclAmt)
+	assert.Equal(t, int64(12345678901), res.Output[0].CrdtLoanRmnd)
+	assert.Equal(t, int64(3456789012), res.Output[0].FutsTfamAmt)
+	assert.Equal(t, int64(2345678901), res.Output[0].SttpAmt)
+	assert.Equal(t, int64(1234567890), res.Output[0].MxtpAmt)
+	assert.Equal(t, int64(987654321), res.Output[0].BntpAmt)
+	assert.Equal(t, int64(5678901234), res.Output[0].MmfAmt)
+	assert.Equal(t, int64(876543210), res.Output[0].SecuLendAmt)
+}

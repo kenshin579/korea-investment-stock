@@ -1,0 +1,51 @@
+{
+  "rt_cd": "0",
+  "msg_cd": "MCA00000",
+  "msg1": "정상처리 되었습니다.",
+  "output": [
+    {
+      "data_rank": "1",
+      "hts_kor_isnm": "삼성전자",
+      "mksc_shrn_iscd": "005930",
+      "stck_prpr": "75800",
+      "prdy_vrss": "-200",
+      "prdy_vrss_sign": "5",
+      "prdy_ctrt": "-0.26",
+      "acml_vol": "12345678",
+      "per": "12.34",
+      "pbr": "1.23",
+      "pcr": "8.90",
+      "psr": "1.45",
+      "eps": "6143",
+      "eva": "1234567",
+      "ebitda": "98765432",
+      "pv_div_ebitda": "7.65",
+      "ebitda_div_fnnc_expn": "23.45",
+      "stac_month": "12",
+      "stac_month_cls_code": "01",
+      "iqry_csnu": "1"
+    },
+    {
+      "data_rank": "2",
+      "hts_kor_isnm": "SK하이닉스",
+      "mksc_shrn_iscd": "000660",
+      "stck_prpr": "188500",
+      "prdy_vrss": "1500",
+      "prdy_vrss_sign": "2",
+      "prdy_ctrt": "0.80",
+      "acml_vol": "5678901",
+      "per": "8.75",
+      "pbr": "1.67",
+      "pcr": "5.43",
+      "psr": "2.10",
+      "eps": "21543",
+      "eva": "3456789",
+      "ebitda": "234567890",
+      "pv_div_ebitda": "5.43",
+      "ebitda_div_fnnc_expn": "34.56",
+      "stac_month": "12",
+      "stac_month_cls_code": "01",
+      "iqry_csnu": "1"
+    }
+  ]
+}

@@ -1071,3 +1071,1126 @@ func (c *Client) InquireExpTransUpdown(ctx context.Context, params InquireExpTra
 	}
 	return &res, nil
 }
+
+// ShortSale 은 국내주식 공매도 상위 (FHPST04820000) 응답.
+//
+// 한투 docs: docs/api/국내주식/국내주식_공매도_상위.md
+// path: /uapi/domestic-stock/v1/ranking/short-sale
+//
+// 공매도 체결량/비중 상위 종목 목록.
+type ShortSale struct {
+	Output []ShortSaleItem `json:"output"`
+}
+
+// ShortSaleItem 은 공매도 상위 응답의 한 행.
+type ShortSaleItem struct {
+	MkscShrnIscd   string          `json:"mksc_shrn_iscd"`           // 유가증권 단축 종목코드
+	HtsKorIsnm     string          `json:"hts_kor_isnm"`             // HTS 한글 종목명
+	StckPrpr       decimal.Decimal `json:"stck_prpr"`                // 주식 현재가
+	PrdyVrss       decimal.Decimal `json:"prdy_vrss"`                // 전일 대비
+	PrdyVrssSign   string          `json:"prdy_vrss_sign"`           // 전일 대비 부호
+	PrdyCtrt       float64         `json:"prdy_ctrt,string"`         // 전일 대비율
+	AcmlVol        int64           `json:"acml_vol,string"`          // 누적 거래량
+	AcmlTrPbmn     int64           `json:"acml_tr_pbmn,string"`      // 누적 거래 대금
+	SstsCntgQty    int64           `json:"ssts_cntg_qty,string"`     // 공매도 체결 수량
+	SstsVolRlim    float64         `json:"ssts_vol_rlim,string"`     // 공매도 거래량 비중
+	SstsTrPbmn     int64           `json:"ssts_tr_pbmn,string"`      // 공매도 거래 대금
+	SstsTrPbmnRlim float64         `json:"ssts_tr_pbmn_rlim,string"` // 공매도 거래 대금 비중
+	StndDate1      string          `json:"stnd_date1"`               // 기준 일자1
+	StndDate2      string          `json:"stnd_date2"`               // 기준 일자2
+	AvrgPrc        decimal.Decimal `json:"avrg_prc"`                 // 평균가
+}
+
+// InquireShortSaleParams 는 공매도 상위 조회 파라미터.
+type InquireShortSaleParams struct {
+	AplyRangVol    string // FID_APLY_RANG_VOL — 적용범위 거래량. 빈 값 OK
+	MarketCode     string // FID_COND_MRKT_DIV_CODE — "J":KRX. 빈 값=>"J"
+	CondScrDivCode string // FID_COND_SCR_DIV_CODE — 고정 "20482". 빈 값=>"20482"
+	Symbol         string // FID_INPUT_ISCD — 종목코드 (예 "005930")
+	PeriodDivCode  string // FID_PERIOD_DIV_CODE — D:일, W:주, M:월
+	InputCnt1      string // FID_INPUT_CNT_1 — 입력 개수1
+	TrgtExlsCode   string // FID_TRGT_EXLS_CLS_CODE — 대상 제외 구분 코드
+	TrgtClsCode    string // FID_TRGT_CLS_CODE — 대상 구분 코드
+	AplyRangPrc1   string // FID_APLY_RANG_PRC_1 — 가격 ~. 빈 값 OK
+	AplyRangPrc2   string // FID_APLY_RANG_PRC_2 — ~ 가격. 빈 값 OK
+}
+
+// InquireShortSale 은 국내주식 공매도 상위 호출.
+//
+// 한투 docs: docs/api/국내주식/국내주식_공매도_상위.md
+// path: /uapi/domestic-stock/v1/ranking/short-sale (FHPST04820000)
+func (c *Client) InquireShortSale(ctx context.Context, params InquireShortSaleParams) (*ShortSale, error) {
+	market := params.MarketCode
+	if market == "" {
+		market = "J"
+	}
+	scrDiv := params.CondScrDivCode
+	if scrDiv == "" {
+		scrDiv = "20482"
+	}
+
+	resp, err := c.http.Do(ctx, &httpclient.Request{
+		Method: http.MethodGet,
+		Path:   "/uapi/domestic-stock/v1/ranking/short-sale",
+		TrID:   "FHPST04820000",
+		Query: map[string]string{
+			"FID_APLY_RANG_VOL":      params.AplyRangVol,
+			"FID_COND_MRKT_DIV_CODE": market,
+			"FID_COND_SCR_DIV_CODE":  scrDiv,
+			"FID_INPUT_ISCD":         params.Symbol,
+			"FID_PERIOD_DIV_CODE":    params.PeriodDivCode,
+			"FID_INPUT_CNT_1":        params.InputCnt1,
+			"FID_TRGT_EXLS_CLS_CODE": params.TrgtExlsCode,
+			"FID_TRGT_CLS_CODE":      params.TrgtClsCode,
+			"FID_APLY_RANG_PRC_1":    params.AplyRangPrc1,
+			"FID_APLY_RANG_PRC_2":    params.AplyRangPrc2,
+		},
+		CustType: "P",
+	})
+	if err != nil {
+		return nil, err
+	}
+	var res ShortSale
+	if err := json.Unmarshal(resp.Raw, &res); err != nil {
+		return nil, fmt.Errorf("kis: parse ShortSale: %w", err)
+	}
+	return &res, nil
+}
+
+// DailyShortSale 은 국내주식 공매도 일별추이 (FHPST04830000) 응답.
+//
+// 한투 docs: docs/api/국내주식/국내주식_공매도_일별추이.md
+// path: /uapi/domestic-stock/v1/quotations/daily-short-sale
+//
+// output1: 현재가 요약 (단일 객체), output2: 일자별 공매도 추이 목록.
+type DailyShortSale struct {
+	Output1 DailyShortSaleSummary `json:"output1"`
+	Output2 []DailyShortSaleItem  `json:"output2"`
+}
+
+// DailyShortSaleSummary 는 공매도 일별추이 현재가 요약 (output1).
+type DailyShortSaleSummary struct {
+	StckPrpr     decimal.Decimal `json:"stck_prpr"`        // 주식 현재가
+	PrdyVrss     decimal.Decimal `json:"prdy_vrss"`        // 전일 대비
+	PrdyVrssSign string          `json:"prdy_vrss_sign"`   // 전일 대비 부호
+	PrdyCtrt     float64         `json:"prdy_ctrt,string"` // 전일 대비율
+	AcmlVol      int64           `json:"acml_vol,string"`  // 누적 거래량
+	PrdyVol      int64           `json:"prdy_vol,string"`  // 전일 거래량
+}
+
+// DailyShortSaleItem 은 공매도 일별추이 응답의 한 행 (output2).
+type DailyShortSaleItem struct {
+	StckBsopDate        string          `json:"stck_bsop_date"`                 // 주식 영업 일자
+	StckClpr            decimal.Decimal `json:"stck_clpr"`                      // 주식 종가
+	PrdyVrss            decimal.Decimal `json:"prdy_vrss"`                      // 전일 대비
+	PrdyVrssSign        string          `json:"prdy_vrss_sign"`                 // 전일 대비 부호
+	PrdyCtrt            float64         `json:"prdy_ctrt,string"`               // 전일 대비율
+	AcmlVol             int64           `json:"acml_vol,string"`                // 누적 거래량
+	StndVolSmtn         int64           `json:"stnd_vol_smtn,string"`           // 기준 거래량 합계
+	SstsCntgQty         int64           `json:"ssts_cntg_qty,string"`           // 공매도 체결 수량
+	SstsVolRlim         float64         `json:"ssts_vol_rlim,string"`           // 공매도 거래량 비중
+	AcmlSstsCntgQty     int64           `json:"acml_ssts_cntg_qty,string"`      // 누적 공매도 체결 수량
+	AcmlSstsCntgQtyRlim float64         `json:"acml_ssts_cntg_qty_rlim,string"` // 누적 공매도 수량 비중
+	AcmlTrPbmn          int64           `json:"acml_tr_pbmn,string"`            // 누적 거래 대금
+	StndTrPbmnSmtn      int64           `json:"stnd_tr_pbmn_smtn,string"`       // 기준 거래 대금 합계
+	SstsTrPbmn          int64           `json:"ssts_tr_pbmn,string"`            // 공매도 거래 대금
+	SstsTrPbmnRlim      float64         `json:"ssts_tr_pbmn_rlim,string"`       // 공매도 거래 대금 비중
+	AcmlSstsTrPbmn      int64           `json:"acml_ssts_tr_pbmn,string"`       // 누적 공매도 거래 대금
+	AcmlSstsTrPbmnRlim  float64         `json:"acml_ssts_tr_pbmn_rlim,string"`  // 누적 공매도 대금 비중
+	StckOprc            decimal.Decimal `json:"stck_oprc"`                      // 주식 시가
+	StckHgpr            decimal.Decimal `json:"stck_hgpr"`                      // 주식 최고가
+	StckLwpr            decimal.Decimal `json:"stck_lwpr"`                      // 주식 최저가
+	AvrgPrc             decimal.Decimal `json:"avrg_prc"`                       // 평균가
+}
+
+// InquireDailyShortSaleParams 는 공매도 일별추이 조회 파라미터.
+type InquireDailyShortSaleParams struct {
+	InputDate2 string // FID_INPUT_DATE_2 — 조회 종료 일자 (YYYYMMDD)
+	MarketCode string // FID_COND_MRKT_DIV_CODE — "J":KRX. 빈 값=>"J"
+	Symbol     string // FID_INPUT_ISCD — 종목코드 (예 "005930")
+	InputDate1 string // FID_INPUT_DATE_1 — 조회 시작 일자 (YYYYMMDD)
+}
+
+// InquireDailyShortSale 은 국내주식 공매도 일별추이 호출.
+//
+// 한투 docs: docs/api/국내주식/국내주식_공매도_일별추이.md
+// path: /uapi/domestic-stock/v1/quotations/daily-short-sale (FHPST04830000)
+func (c *Client) InquireDailyShortSale(ctx context.Context, params InquireDailyShortSaleParams) (*DailyShortSale, error) {
+	market := params.MarketCode
+	if market == "" {
+		market = "J"
+	}
+
+	resp, err := c.http.Do(ctx, &httpclient.Request{
+		Method: http.MethodGet,
+		Path:   "/uapi/domestic-stock/v1/quotations/daily-short-sale",
+		TrID:   "FHPST04830000",
+		Query: map[string]string{
+			"FID_INPUT_DATE_2":       params.InputDate2,
+			"FID_COND_MRKT_DIV_CODE": market,
+			"FID_INPUT_ISCD":         params.Symbol,
+			"FID_INPUT_DATE_1":       params.InputDate1,
+		},
+		CustType: "P",
+	})
+	if err != nil {
+		return nil, err
+	}
+	var res DailyShortSale
+	if err := json.Unmarshal(resp.Raw, &res); err != nil {
+		return nil, fmt.Errorf("kis: parse DailyShortSale: %w", err)
+	}
+	return &res, nil
+}
+
+// CreditBalance 는 국내주식 신용잔고 상위 (FHKST17010000) 응답.
+//
+// 한투 docs: docs/api/국내주식/국내주식_신용잔고_상위.md
+// path: /uapi/domestic-stock/v1/ranking/credit-balance
+//
+// output1: 날짜 헤더 배열, output2: 신용잔고 상위 종목 배열.
+type CreditBalance struct {
+	Output1 []CreditBalanceHeader `json:"output1"`
+	Output2 []CreditBalanceItem   `json:"output2"`
+}
+
+// CreditBalanceHeader 는 신용잔고 상위 날짜 헤더 (output1 한 행).
+type CreditBalanceHeader struct {
+	BstpClsCode string `json:"bstp_cls_code"` // 업종 구분 코드
+	HtsKorIsnm  string `json:"hts_kor_isnm"`  // HTS 한글 종목명
+	StndDate1   string `json:"stnd_date1"`    // 기준 일자1
+	StndDate2   string `json:"stnd_date2"`    // 기준 일자2
+}
+
+// CreditBalanceItem 은 신용잔고 상위 응답의 한 행 (output2).
+type CreditBalanceItem struct {
+	MkscShrnIscd         string          `json:"mksc_shrn_iscd"`                  // 유가증권 단축 종목코드
+	HtsKorIsnm           string          `json:"hts_kor_isnm"`                    // HTS 한글 종목명
+	StckPrpr             decimal.Decimal `json:"stck_prpr"`                       // 주식 현재가
+	PrdyVrss             decimal.Decimal `json:"prdy_vrss"`                       // 전일 대비
+	PrdyVrssSign         string          `json:"prdy_vrss_sign"`                  // 전일 대비 부호
+	PrdyCtrt             float64         `json:"prdy_ctrt,string"`                // 전일 대비율
+	AcmlVol              int64           `json:"acml_vol,string"`                 // 누적 거래량
+	WholLoanRmndStcn     int64           `json:"whol_loan_rmnd_stcn,string"`      // 전체 융자 잔고 수량
+	WholLoanRmndAmt      int64           `json:"whol_loan_rmnd_amt,string"`       // 전체 융자 잔고 금액
+	WholLoanRmndRate     float64         `json:"whol_loan_rmnd_rate,string"`      // 전체 융자 잔고 비율
+	WholStlnRmndStcn     int64           `json:"whol_stln_rmnd_stcn,string"`      // 전체 대주 잔고 수량
+	WholStlnRmndAmt      int64           `json:"whol_stln_rmnd_amt,string"`       // 전체 대주 잔고 금액
+	WholStlnRmndRate     float64         `json:"whol_stln_rmnd_rate,string"`      // 전체 대주 잔고 비율
+	NdayVrssLoanRmndInrt float64         `json:"nday_vrss_loan_rmnd_inrt,string"` // N일 대비 융자 잔고 증가율
+	NdayVrssStlnRmndInrt float64         `json:"nday_vrss_stln_rmnd_inrt,string"` // N일 대비 대주 잔고 증가율
+}
+
+// InquireCreditBalanceParams 는 신용잔고 상위 조회 파라미터.
+type InquireCreditBalanceParams struct {
+	CondScrDivCode string // FID_COND_SCR_DIV_CODE — 고정 "11701". 빈 값=>"11701"
+	Symbol         string // FID_INPUT_ISCD — 종목코드 또는 시장코드
+	Option         string // FID_OPTION — N일 윈도우 (2-999)
+	MarketCode     string // FID_COND_MRKT_DIV_CODE — "J":KRX. 빈 값=>"J"
+	RankSortCode   string // FID_RANK_SORT_CLS_CODE — 정렬 구분 코드
+}
+
+// InquireCreditBalance 는 국내주식 신용잔고 상위 호출.
+//
+// 한투 docs: docs/api/국내주식/국내주식_신용잔고_상위.md
+// path: /uapi/domestic-stock/v1/ranking/credit-balance (FHKST17010000)
+func (c *Client) InquireCreditBalance(ctx context.Context, params InquireCreditBalanceParams) (*CreditBalance, error) {
+	market := params.MarketCode
+	if market == "" {
+		market = "J"
+	}
+	scrDiv := params.CondScrDivCode
+	if scrDiv == "" {
+		scrDiv = "11701"
+	}
+
+	resp, err := c.http.Do(ctx, &httpclient.Request{
+		Method: http.MethodGet,
+		Path:   "/uapi/domestic-stock/v1/ranking/credit-balance",
+		TrID:   "FHKST17010000",
+		Query: map[string]string{
+			"FID_COND_SCR_DIV_CODE":  scrDiv,
+			"FID_INPUT_ISCD":         params.Symbol,
+			"FID_OPTION":             params.Option,
+			"FID_COND_MRKT_DIV_CODE": market,
+			"FID_RANK_SORT_CLS_CODE": params.RankSortCode,
+		},
+		CustType: "P",
+	})
+	if err != nil {
+		return nil, err
+	}
+	var res CreditBalance
+	if err := json.Unmarshal(resp.Raw, &res); err != nil {
+		return nil, fmt.Errorf("kis: parse CreditBalance: %w", err)
+	}
+	return &res, nil
+}
+
+// DailyCreditBalance 는 국내주식 신용잔고 일별추이 (FHPST04760000) 응답.
+//
+// 한투 docs: docs/api/국내주식/국내주식_신용잔고_일별추이.md
+// path: /uapi/domestic-stock/v1/quotations/daily-credit-balance
+//
+// 특정 종목의 일별 융자/대주 신규·상환·잔고 추이.
+type DailyCreditBalance struct {
+	Output []DailyCreditBalanceItem `json:"output"`
+}
+
+// DailyCreditBalanceItem 은 신용잔고 일별추이 응답의 한 행.
+type DailyCreditBalanceItem struct {
+	DealDate         string          `json:"deal_date"`                  // 결제 일자
+	StckPrpr         decimal.Decimal `json:"stck_prpr"`                  // 주식 현재가
+	PrdyVrssSign     string          `json:"prdy_vrss_sign"`             // 전일 대비 부호
+	PrdyVrss         decimal.Decimal `json:"prdy_vrss"`                  // 전일 대비
+	PrdyCtrt         float64         `json:"prdy_ctrt,string"`           // 전일 대비율
+	AcmlVol          int64           `json:"acml_vol,string"`            // 누적 거래량
+	StlmDate         string          `json:"stlm_date"`                  // 결산 일자
+	WholLoanNewStcn  int64           `json:"whol_loan_new_stcn,string"`  // 전체 융자 신규 수량
+	WholLoanRdmpStcn int64           `json:"whol_loan_rdmp_stcn,string"` // 전체 융자 상환 수량
+	WholLoanRmndStcn int64           `json:"whol_loan_rmnd_stcn,string"` // 전체 융자 잔고 수량
+	WholLoanNewAmt   int64           `json:"whol_loan_new_amt,string"`   // 전체 융자 신규 금액
+	WholLoanRdmpAmt  int64           `json:"whol_loan_rdmp_amt,string"`  // 전체 융자 상환 금액
+	WholLoanRmndAmt  int64           `json:"whol_loan_rmnd_amt,string"`  // 전체 융자 잔고 금액
+	WholLoanRmndRate float64         `json:"whol_loan_rmnd_rate,string"` // 전체 융자 잔고 비율
+	WholLoanGvrt     float64         `json:"whol_loan_gvrt,string"`      // 전체 융자 담보비율
+	WholStlnNewStcn  int64           `json:"whol_stln_new_stcn,string"`  // 전체 대주 신규 수량
+	WholStlnRdmpStcn int64           `json:"whol_stln_rdmp_stcn,string"` // 전체 대주 상환 수량
+	WholStlnRmndStcn int64           `json:"whol_stln_rmnd_stcn,string"` // 전체 대주 잔고 수량
+	WholStlnNewAmt   int64           `json:"whol_stln_new_amt,string"`   // 전체 대주 신규 금액
+	WholStlnRdmpAmt  int64           `json:"whol_stln_rdmp_amt,string"`  // 전체 대주 상환 금액
+	WholStlnRmndAmt  int64           `json:"whol_stln_rmnd_amt,string"`  // 전체 대주 잔고 금액
+	WholStlnRmndRate float64         `json:"whol_stln_rmnd_rate,string"` // 전체 대주 잔고 비율
+	WholStlnGvrt     float64         `json:"whol_stln_gvrt,string"`      // 전체 대주 담보비율
+	StckOprc         decimal.Decimal `json:"stck_oprc"`                  // 주식 시가
+	StckHgpr         decimal.Decimal `json:"stck_hgpr"`                  // 주식 최고가
+	StckLwpr         decimal.Decimal `json:"stck_lwpr"`                  // 주식 최저가
+}
+
+// InquireDailyCreditBalanceParams 는 신용잔고 일별추이 조회 파라미터.
+//
+// 쿼리 파라미터는 lowercase fid_* 형식으로 전송.
+type InquireDailyCreditBalanceParams struct {
+	MarketCode     string // fid_cond_mrkt_div_code — "J":KRX. 빈 값=>"J"
+	CondScrDivCode string // fid_cond_scr_div_code — 고정 "20476". 빈 값=>"20476"
+	Symbol         string // fid_input_iscd — 종목코드 (예 "005930")
+	InputDate1     string // fid_input_date_1 — 조회 기준일 (YYYYMMDD)
+}
+
+// InquireDailyCreditBalance 는 국내주식 신용잔고 일별추이 호출.
+//
+// 한투 docs: docs/api/국내주식/국내주식_신용잔고_일별추이.md
+// path: /uapi/domestic-stock/v1/quotations/daily-credit-balance (FHPST04760000)
+//
+// 쿼리 파라미터는 lowercase fid_* 형식 사용.
+func (c *Client) InquireDailyCreditBalance(ctx context.Context, params InquireDailyCreditBalanceParams) (*DailyCreditBalance, error) {
+	market := params.MarketCode
+	if market == "" {
+		market = "J"
+	}
+	scrDiv := params.CondScrDivCode
+	if scrDiv == "" {
+		scrDiv = "20476"
+	}
+
+	resp, err := c.http.Do(ctx, &httpclient.Request{
+		Method: http.MethodGet,
+		Path:   "/uapi/domestic-stock/v1/quotations/daily-credit-balance",
+		TrID:   "FHPST04760000",
+		Query: map[string]string{
+			"fid_cond_mrkt_div_code": market,
+			"fid_cond_scr_div_code":  scrDiv,
+			"fid_input_iscd":         params.Symbol,
+			"fid_input_date_1":       params.InputDate1,
+		},
+		CustType: "P",
+	})
+	if err != nil {
+		return nil, err
+	}
+	var res DailyCreditBalance
+	if err := json.Unmarshal(resp.Raw, &res); err != nil {
+		return nil, fmt.Errorf("kis: parse DailyCreditBalance: %w", err)
+	}
+	return &res, nil
+}
+
+// LendableByCompany 는 당사 대주가능 종목 (CTSC2702R) 응답.
+//
+// 한투 docs: docs/api/국내주식/국내주식_당사대주가능종목.md
+// path: /uapi/domestic-stock/v1/quotations/lendable-by-company
+//
+// output1: 대주가능 종목 배열, output2: 한도 합계 요약.
+type LendableByCompany struct {
+	Output1 []LendableByCompanyItem  `json:"output1"`
+	Output2 LendableByCompanySummary `json:"output2"`
+}
+
+// LendableByCompanyItem 은 당사 대주가능 종목 응답의 한 행 (output1).
+type LendableByCompanyItem struct {
+	Pdno           string          `json:"pdno"`                  // 상품번호 (종목코드)
+	PrdtName       string          `json:"prdt_name"`             // 상품명
+	Papr           decimal.Decimal `json:"papr"`                  // 액면가
+	BfdyClpr       decimal.Decimal `json:"bfdy_clpr"`             // 전일 종가
+	SbstPrvs       decimal.Decimal `json:"sbst_prvs"`             // 대용가
+	TrStopDvsnName string          `json:"tr_stop_dvsn_name"`     // 거래정지 구분 명
+	PsblYnName     string          `json:"psbl_yn_name"`          // 가능 여부 명
+	LmtQty1        int64           `json:"lmt_qty1,string"`       // 한도 수량1
+	UseQty1        int64           `json:"use_qty1,string"`       // 사용 수량1
+	TradPsblQty2   int64           `json:"trad_psbl_qty2,string"` // 거래 가능 수량2
+	RghtTypeCd     string          `json:"rght_type_cd"`          // 권리 유형 코드
+	BassDt         string          `json:"bass_dt"`               // 기준 일자
+	PsblYn         string          `json:"psbl_yn"`               // 가능 여부
+}
+
+// LendableByCompanySummary 는 당사 대주가능 종목 한도 합계 요약 (output2).
+type LendableByCompanySummary struct {
+	TotStupLmtQty int64 `json:"tot_stup_lmt_qty,string"` // 총 설정 한도 수량
+	BrchLmtQty    int64 `json:"brch_lmt_qty,string"`     // 지점 한도 수량
+	RqstPsblQty   int64 `json:"rqst_psbl_qty,string"`    // 신청 가능 수량
+}
+
+// InquireLendableByCompanyParams 는 당사 대주가능 종목 조회 파라미터.
+//
+// 쿼리 파라미터는 non-FID UPPERCASE 형식 (EXCG_DVSN_CD, PDNO 등).
+type InquireLendableByCompanyParams struct {
+	ExcgDvsnCd     string // EXCG_DVSN_CD — 거래소 구분 코드
+	Pdno           string // PDNO — 상품번호 (종목코드)
+	ThcoStlnPsblYn string // THCO_STLN_PSBL_YN — 당사 대주 가능 여부
+	InqrDvsn1      string // INQR_DVSN_1 — 조회 구분1
+	CtxAreaFk200   string // CTX_AREA_FK200 — 연속조회 커서 (빈 값 가능)
+	CtxAreaNk100   string // CTX_AREA_NK100 — 연속조회 키 (빈 값 가능)
+}
+
+// InquireLendableByCompany 는 당사 대주가능 종목 호출.
+//
+// 한투 docs: docs/api/국내주식/국내주식_당사대주가능종목.md
+// path: /uapi/domestic-stock/v1/quotations/lendable-by-company (CTSC2702R)
+//
+// 쿼리 파라미터는 non-FID UPPERCASE 형식 사용. CANO 불필요.
+func (c *Client) InquireLendableByCompany(ctx context.Context, params InquireLendableByCompanyParams) (*LendableByCompany, error) {
+	resp, err := c.http.Do(ctx, &httpclient.Request{
+		Method: http.MethodGet,
+		Path:   "/uapi/domestic-stock/v1/quotations/lendable-by-company",
+		TrID:   "CTSC2702R",
+		Query: map[string]string{
+			"EXCG_DVSN_CD":      params.ExcgDvsnCd,
+			"PDNO":              params.Pdno,
+			"THCO_STLN_PSBL_YN": params.ThcoStlnPsblYn,
+			"INQR_DVSN_1":       params.InqrDvsn1,
+			"CTX_AREA_FK200":    params.CtxAreaFk200,
+			"CTX_AREA_NK100":    params.CtxAreaNk100,
+		},
+		CustType: "P",
+	})
+	if err != nil {
+		return nil, err
+	}
+	var res LendableByCompany
+	if err := json.Unmarshal(resp.Raw, &res); err != nil {
+		return nil, fmt.Errorf("kis: parse LendableByCompany: %w", err)
+	}
+	return &res, nil
+}
+
+// QuoteBalance 는 국내주식 호가잔량 순위 (FHPST01720000) 응답.
+//
+// 한투 docs: docs/api/국내주식/국내주식_호가잔량_순위.md
+// path: /uapi/domestic-stock/v1/ranking/quote-balance
+//
+// 매도/매수 호가잔량 상위 종목 순위.
+type QuoteBalance struct {
+	Output []QuoteBalanceItem `json:"output"`
+}
+
+// QuoteBalanceItem 은 호가잔량 순위 응답의 한 행.
+type QuoteBalanceItem struct {
+	MkscShrnIscd      string          `json:"mksc_shrn_iscd"`              // 유가증권 단축 종목코드
+	DataRank          string          `json:"data_rank"`                   // 데이터 순위
+	HtsKorIsnm        string          `json:"hts_kor_isnm"`                // HTS 한글 종목명
+	StckPrpr          decimal.Decimal `json:"stck_prpr"`                   // 주식 현재가
+	PrdyVrss          decimal.Decimal `json:"prdy_vrss"`                   // 전일 대비
+	PrdyVrssSign      string          `json:"prdy_vrss_sign"`              // 전일 대비 부호
+	PrdyCtrt          float64         `json:"prdy_ctrt,string"`            // 전일 대비율
+	AcmlVol           int64           `json:"acml_vol,string"`             // 누적 거래량
+	TotalAskpRsqn     int64           `json:"total_askp_rsqn,string"`      // 총 매도호가 잔량
+	TotalBidpRsqn     int64           `json:"total_bidp_rsqn,string"`      // 총 매수호가 잔량
+	TotalNtslBidpRsqn int64           `json:"total_ntsl_bidp_rsqn,string"` // 총 순매수 매수호가 잔량
+	ShnuRsqnRate      float64         `json:"shnu_rsqn_rate,string"`       // 매수 잔량 비율
+	SelnRsqnRate      float64         `json:"seln_rsqn_rate,string"`       // 매도 잔량 비율
+}
+
+// InquireQuoteBalanceParams 는 호가잔량 순위 조회 파라미터.
+//
+// 쿼리 파라미터는 lowercase fid_* 형식으로 전송.
+type InquireQuoteBalanceParams struct {
+	VolCnt         string // fid_vol_cnt — 조회 건수
+	MarketCode     string // fid_cond_mrkt_div_code — "J":KRX. 빈 값=>"J"
+	CondScrDivCode string // fid_cond_scr_div_code — 고정 "20172". 빈 값=>"20172"
+	Symbol         string // fid_input_iscd — 종목코드 또는 시장코드
+	RankSortCode   string // fid_rank_sort_cls_code — 정렬 구분 코드
+	DivClsCode     string // fid_div_cls_code — 구분 코드
+	TrgtClsCode    string // fid_trgt_cls_code — 대상 구분 코드
+	TrgtExlsCode   string // fid_trgt_exls_cls_code — 대상 제외 구분 코드
+	InputPrice1    string // fid_input_price_1 — 입력 가격1
+	InputPrice2    string // fid_input_price_2 — 입력 가격2
+}
+
+// InquireQuoteBalance 는 국내주식 호가잔량 순위 호출.
+//
+// 한투 docs: docs/api/국내주식/국내주식_호가잔량_순위.md
+// path: /uapi/domestic-stock/v1/ranking/quote-balance (FHPST01720000)
+//
+// 쿼리 파라미터는 lowercase fid_* 형식 사용.
+func (c *Client) InquireQuoteBalance(ctx context.Context, params InquireQuoteBalanceParams) (*QuoteBalance, error) {
+	market := params.MarketCode
+	if market == "" {
+		market = "J"
+	}
+	scrDiv := params.CondScrDivCode
+	if scrDiv == "" {
+		scrDiv = "20172"
+	}
+
+	resp, err := c.http.Do(ctx, &httpclient.Request{
+		Method: http.MethodGet,
+		Path:   "/uapi/domestic-stock/v1/ranking/quote-balance",
+		TrID:   "FHPST01720000",
+		Query: map[string]string{
+			"fid_vol_cnt":            params.VolCnt,
+			"fid_cond_mrkt_div_code": market,
+			"fid_cond_scr_div_code":  scrDiv,
+			"fid_input_iscd":         params.Symbol,
+			"fid_rank_sort_cls_code": params.RankSortCode,
+			"fid_div_cls_code":       params.DivClsCode,
+			"fid_trgt_cls_code":      params.TrgtClsCode,
+			"fid_trgt_exls_cls_code": params.TrgtExlsCode,
+			"fid_input_price_1":      params.InputPrice1,
+			"fid_input_price_2":      params.InputPrice2,
+		},
+		CustType: "P",
+	})
+	if err != nil {
+		return nil, err
+	}
+	var res QuoteBalance
+	if err := json.Unmarshal(resp.Raw, &res); err != nil {
+		return nil, fmt.Errorf("kis: parse QuoteBalance: %w", err)
+	}
+	return &res, nil
+}
+
+// AfterHourBalance 는 국내주식 시간외잔량 순위 (FHPST01760000) 응답.
+//
+// 한투 docs: docs/api/국내주식/국내주식_시간외잔량_순위.md
+// path: /uapi/domestic-stock/v1/ranking/after-hour-balance
+//
+// 시간외잔량 상위 종목 순위. 쿼리 파라미터는 lowercase fid_* 형식 사용.
+type AfterHourBalance struct {
+	Output []AfterHourBalanceItem `json:"output"`
+}
+
+// AfterHourBalanceItem 은 시간외잔량 순위 응답의 한 행.
+type AfterHourBalanceItem struct {
+	StckShrnIscd      string          `json:"stck_shrn_iscd"`              // 주식 단축 종목코드 (NOT mksc_shrn_iscd)
+	DataRank          string          `json:"data_rank"`                   // 데이터 순위
+	HtsKorIsnm        string          `json:"hts_kor_isnm"`                // HTS 한글 종목명
+	StckPrpr          decimal.Decimal `json:"stck_prpr"`                   // 주식 현재가
+	PrdyVrss          decimal.Decimal `json:"prdy_vrss"`                   // 전일 대비
+	PrdyVrssSign      string          `json:"prdy_vrss_sign"`              // 전일 대비 부호
+	PrdyCtrt          float64         `json:"prdy_ctrt,string"`            // 전일 대비율
+	OvtmTotalAskpRsqn int64           `json:"ovtm_total_askp_rsqn,string"` // 시간외 총 매도호가 잔량
+	OvtmTotalBidpRsqn int64           `json:"ovtm_total_bidp_rsqn,string"` // 시간외 총 매수호가 잔량
+	MkobOtcpVol       int64           `json:"mkob_otcp_vol,string"`        // 장개시전 시간외종가 거래량
+	MkfaOtcpVol       int64           `json:"mkfa_otcp_vol,string"`        // 장종료후 시간외종가 거래량
+}
+
+// InquireAfterHourBalanceParams 는 시간외잔량 순위 조회 파라미터.
+//
+// 쿼리 파라미터는 lowercase fid_* 형식으로 전송.
+type InquireAfterHourBalanceParams struct {
+	InputPrice1    string // fid_input_price_1 — 입력 가격1
+	MarketCode     string // fid_cond_mrkt_div_code — "J":KRX. 빈 값=>"J"
+	CondScrDivCode string // fid_cond_scr_div_code — 고정 "20176". 빈 값=>"20176"
+	RankSortCode   string // fid_rank_sort_cls_code — 정렬 구분 코드
+	DivClsCode     string // fid_div_cls_code — 구분 코드
+	Symbol         string // fid_input_iscd — 종목코드 또는 시장코드
+	TrgtExlsCode   string // fid_trgt_exls_cls_code — 대상 제외 구분 코드
+	TrgtClsCode    string // fid_trgt_cls_code — 대상 구분 코드
+	VolCnt         string // fid_vol_cnt — 조회 건수
+	InputPrice2    string // fid_input_price_2 — 입력 가격2
+}
+
+// InquireAfterHourBalance 는 국내주식 시간외잔량 순위 호출.
+//
+// 한투 docs: docs/api/국내주식/국내주식_시간외잔량_순위.md
+// path: /uapi/domestic-stock/v1/ranking/after-hour-balance (FHPST01760000)
+//
+// 쿼리 파라미터는 lowercase fid_* 형식 사용. StckShrnIscd (NOT mksc_shrn_iscd) 주의.
+func (c *Client) InquireAfterHourBalance(ctx context.Context, params InquireAfterHourBalanceParams) (*AfterHourBalance, error) {
+	market := params.MarketCode
+	if market == "" {
+		market = "J"
+	}
+	scrDiv := params.CondScrDivCode
+	if scrDiv == "" {
+		scrDiv = "20176"
+	}
+
+	resp, err := c.http.Do(ctx, &httpclient.Request{
+		Method: http.MethodGet,
+		Path:   "/uapi/domestic-stock/v1/ranking/after-hour-balance",
+		TrID:   "FHPST01760000",
+		Query: map[string]string{
+			"fid_input_price_1":      params.InputPrice1,
+			"fid_cond_mrkt_div_code": market,
+			"fid_cond_scr_div_code":  scrDiv,
+			"fid_rank_sort_cls_code": params.RankSortCode,
+			"fid_div_cls_code":       params.DivClsCode,
+			"fid_input_iscd":         params.Symbol,
+			"fid_trgt_exls_cls_code": params.TrgtExlsCode,
+			"fid_trgt_cls_code":      params.TrgtClsCode,
+			"fid_vol_cnt":            params.VolCnt,
+			"fid_input_price_2":      params.InputPrice2,
+		},
+		CustType: "P",
+	})
+	if err != nil {
+		return nil, err
+	}
+	var res AfterHourBalance
+	if err := json.Unmarshal(resp.Raw, &res); err != nil {
+		return nil, fmt.Errorf("kis: parse AfterHourBalance: %w", err)
+	}
+	return &res, nil
+}
+
+// OvertimeExpTransFluct 는 국내주식 시간외 예상체결 등락률 (FHKST11860000) 응답.
+//
+// 한투 docs: docs/api/국내주식/국내주식_시간외_예상체결_등락률.md
+// path: /uapi/domestic-stock/v1/ranking/overtime-exp-trans-fluct
+//
+// output 은 배열이 아닌 단일 객체. 쿼리 파라미터는 UPPERCASE FID_ 형식 사용.
+// InquireOvertimeFluctuation (Phase 2.2) 과 다른 별도 API.
+type OvertimeExpTransFluct struct {
+	Output OvertimeExpTransFluctData `json:"output"`
+}
+
+// OvertimeExpTransFluctData 는 시간외 예상체결 등락률 응답의 output 단일 객체.
+//
+// NOTE: ovtm_untp_antc_cntg_vrsssign — KIS docs 오타 보존 (vrss+sign 연결, 밑줄 없음).
+type OvertimeExpTransFluctData struct {
+	DataRank                 string          `json:"data_rank"`                       // 데이터 순위
+	IscdStatClsCode          string          `json:"iscd_stat_cls_code"`              // 종목 상태 구분 코드
+	StckShrnIscd             string          `json:"stck_shrn_iscd"`                  // 주식 단축 종목코드
+	HtsKorIsnm               string          `json:"hts_kor_isnm"`                    // HTS 한글 종목명
+	OvtmUntpAntcCnpr         decimal.Decimal `json:"ovtm_untp_antc_cnpr"`             // 시간외 단일가 예상 체결가
+	OvtmUntpAntcCntgVrss     decimal.Decimal `json:"ovtm_untp_antc_cntg_vrss"`        // 시간외 단일가 예상 체결 대비
+	OvtmUntpAntcCntgVrsssign string          `json:"ovtm_untp_antc_cntg_vrsssign"`    // 시간외 단일가 예상 체결 대비 부호 (KIS 오타: vrsssign)
+	OvtmUntpAntcCntgCtrt     float64         `json:"ovtm_untp_antc_cntg_ctrt,string"` // 시간외 단일가 예상 체결 대비율
+	OvtmUntpAskpRsqn1        int64           `json:"ovtm_untp_askp_rsqn1,string"`     // 시간외 단일가 매도호가 잔량1
+	OvtmUntpBidpRsqn1        int64           `json:"ovtm_untp_bidp_rsqn1,string"`     // 시간외 단일가 매수호가 잔량1
+	OvtmUntpAntcCnqn         int64           `json:"ovtm_untp_antc_cnqn,string"`      // 시간외 단일가 예상 체결량
+	ItmtVol                  int64           `json:"itmt_vol,string"`                 // 중간 거래량
+	StckPrpr                 decimal.Decimal `json:"stck_prpr"`                       // 주식 현재가
+}
+
+// InquireOvertimeExpTransFluctParams 는 시간외 예상체결 등락률 조회 파라미터.
+//
+// 쿼리 파라미터는 UPPERCASE FID_ 형식으로 전송.
+type InquireOvertimeExpTransFluctParams struct {
+	MarketCode     string // FID_COND_MRKT_DIV_CODE — "J":KRX. 빈 값=>"J"
+	CondScrDivCode string // FID_COND_SCR_DIV_CODE — 고정 "11186". 빈 값=>"11186"
+	Symbol         string // FID_INPUT_ISCD — 종목코드 또는 시장코드
+	RankSortCode   string // FID_RANK_SORT_CLS_CODE — 정렬 구분 코드
+	DivClsCode     string // FID_DIV_CLS_CODE — 구분 코드
+	InputPrice1    string // FID_INPUT_PRICE_1 — 입력 가격1
+	InputPrice2    string // FID_INPUT_PRICE_2 — 입력 가격2
+	InputVol1      string // FID_INPUT_VOL_1 — 입력 거래량1
+}
+
+// InquireOvertimeExpTransFluct 는 국내주식 시간외 예상체결 등락률 호출.
+//
+// 한투 docs: docs/api/국내주식/국내주식_시간외_예상체결_등락률.md
+// path: /uapi/domestic-stock/v1/ranking/overtime-exp-trans-fluct (FHKST11860000)
+//
+// output 은 단일 객체 (배열 아님). 쿼리 파라미터는 UPPERCASE FID_ 형식 사용.
+func (c *Client) InquireOvertimeExpTransFluct(ctx context.Context, params InquireOvertimeExpTransFluctParams) (*OvertimeExpTransFluct, error) {
+	market := params.MarketCode
+	if market == "" {
+		market = "J"
+	}
+	scrDiv := params.CondScrDivCode
+	if scrDiv == "" {
+		scrDiv = "11186"
+	}
+
+	resp, err := c.http.Do(ctx, &httpclient.Request{
+		Method: http.MethodGet,
+		Path:   "/uapi/domestic-stock/v1/ranking/overtime-exp-trans-fluct",
+		TrID:   "FHKST11860000",
+		Query: map[string]string{
+			"FID_COND_MRKT_DIV_CODE": market,
+			"FID_COND_SCR_DIV_CODE":  scrDiv,
+			"FID_INPUT_ISCD":         params.Symbol,
+			"FID_RANK_SORT_CLS_CODE": params.RankSortCode,
+			"FID_DIV_CLS_CODE":       params.DivClsCode,
+			"FID_INPUT_PRICE_1":      params.InputPrice1,
+			"FID_INPUT_PRICE_2":      params.InputPrice2,
+			"FID_INPUT_VOL_1":        params.InputVol1,
+		},
+		CustType: "P",
+	})
+	if err != nil {
+		return nil, err
+	}
+	var res OvertimeExpTransFluct
+	if err := json.Unmarshal(resp.Raw, &res); err != nil {
+		return nil, fmt.Errorf("kis: parse OvertimeExpTransFluct: %w", err)
+	}
+	return &res, nil
+}
+
+// MarketValue 는 국내주식 시장가치 순위 (FHPST01790000) 응답.
+//
+// 한투 docs: docs/api/국내주식/국내주식_시장가치_순위.md
+// path: /uapi/domestic-stock/v1/ranking/market-value
+//
+// PER/PBR/PCR/PSR/EPS/EVA/EBITDA 등 가치지표 기반 순위.
+// 쿼리 파라미터는 lowercase fid_* 형식 사용.
+type MarketValue struct {
+	Output []MarketValueItem `json:"output"`
+}
+
+// MarketValueItem 은 시장가치 순위 응답의 한 행.
+type MarketValueItem struct {
+	DataRank          string          `json:"data_rank"`                   // 데이터 순위
+	HtsKorIsnm        string          `json:"hts_kor_isnm"`                // HTS 한글 종목명
+	MkscShrnIscd      string          `json:"mksc_shrn_iscd"`              // 유가증권 단축 종목코드
+	StckPrpr          decimal.Decimal `json:"stck_prpr"`                   // 주식 현재가
+	PrdyVrss          decimal.Decimal `json:"prdy_vrss"`                   // 전일 대비
+	PrdyVrssSign      string          `json:"prdy_vrss_sign"`              // 전일 대비 부호
+	PrdyCtrt          float64         `json:"prdy_ctrt,string"`            // 전일 대비율
+	AcmlVol           int64           `json:"acml_vol,string"`             // 누적 거래량
+	Per               float64         `json:"per,string"`                  // PER
+	Pbr               float64         `json:"pbr,string"`                  // PBR
+	Pcr               float64         `json:"pcr,string"`                  // PCR
+	Psr               float64         `json:"psr,string"`                  // PSR
+	Eps               float64         `json:"eps,string"`                  // EPS
+	Eva               float64         `json:"eva,string"`                  // EVA
+	Ebitda            float64         `json:"ebitda,string"`               // EBITDA
+	PvDivEbitda       float64         `json:"pv_div_ebitda,string"`        // EV/EBITDA
+	EbitdaDivFnncExpn float64         `json:"ebitda_div_fnnc_expn,string"` // EBITDA/금융비용
+	StacMonth         string          `json:"stac_month"`                  // 결산 월
+	StacMonthClsCode  string          `json:"stac_month_cls_code"`         // 결산 월 구분 코드
+	IqryCsnu          string          `json:"iqry_csnu"`                   // 조회 건수
+}
+
+// InquireMarketValueParams 는 시장가치 순위 조회 파라미터.
+//
+// 쿼리 파라미터는 lowercase fid_* 형식으로 전송.
+type InquireMarketValueParams struct {
+	TrgtClsCode    string // fid_trgt_cls_code — 대상 구분 코드
+	MarketCode     string // fid_cond_mrkt_div_code — "J":KRX. 빈 값=>"J"
+	CondScrDivCode string // fid_cond_scr_div_code — 고정 "20179". 빈 값=>"20179"
+	Symbol         string // fid_input_iscd — 종목코드 또는 시장코드
+	DivClsCode     string // fid_div_cls_code — 구분 코드
+	InputPrice1    string // fid_input_price_1 — 입력 가격1
+	InputPrice2    string // fid_input_price_2 — 입력 가격2
+	VolCnt         string // fid_vol_cnt — 조회 건수
+	InputOption1   string // fid_input_option_1 — 회계연도
+	InputOption2   string // fid_input_option_2 — 분기구분
+	RankSortCode   string // fid_rank_sort_cls_code — 정렬 구분 코드
+	BlngClsCode    string // fid_blng_cls_code — 소속 구분 코드
+	TrgtExlsCode   string // fid_trgt_exls_cls_code — 대상 제외 구분 코드
+}
+
+// InquireMarketValue 는 국내주식 시장가치 순위 호출.
+//
+// 한투 docs: docs/api/국내주식/국내주식_시장가치_순위.md
+// path: /uapi/domestic-stock/v1/ranking/market-value (FHPST01790000)
+//
+// 쿼리 파라미터는 lowercase fid_* 형식 사용.
+func (c *Client) InquireMarketValue(ctx context.Context, params InquireMarketValueParams) (*MarketValue, error) {
+	market := params.MarketCode
+	if market == "" {
+		market = "J"
+	}
+	scrDiv := params.CondScrDivCode
+	if scrDiv == "" {
+		scrDiv = "20179"
+	}
+
+	resp, err := c.http.Do(ctx, &httpclient.Request{
+		Method: http.MethodGet,
+		Path:   "/uapi/domestic-stock/v1/ranking/market-value",
+		TrID:   "FHPST01790000",
+		Query: map[string]string{
+			"fid_trgt_cls_code":      params.TrgtClsCode,
+			"fid_cond_mrkt_div_code": market,
+			"fid_cond_scr_div_code":  scrDiv,
+			"fid_input_iscd":         params.Symbol,
+			"fid_div_cls_code":       params.DivClsCode,
+			"fid_input_price_1":      params.InputPrice1,
+			"fid_input_price_2":      params.InputPrice2,
+			"fid_vol_cnt":            params.VolCnt,
+			"fid_input_option_1":     params.InputOption1,
+			"fid_input_option_2":     params.InputOption2,
+			"fid_rank_sort_cls_code": params.RankSortCode,
+			"fid_blng_cls_code":      params.BlngClsCode,
+			"fid_trgt_exls_cls_code": params.TrgtExlsCode,
+		},
+		CustType: "P",
+	})
+	if err != nil {
+		return nil, err
+	}
+	var res MarketValue
+	if err := json.Unmarshal(resp.Raw, &res); err != nil {
+		return nil, fmt.Errorf("kis: parse MarketValue: %w", err)
+	}
+	return &res, nil
+}
+
+// Disparity 는 국내주식 이격도 순위 (FHPST01780000) 응답.
+//
+// 한투 docs: docs/api/국내주식/국내주식_이격도_순위.md
+// path: /uapi/domestic-stock/v1/ranking/disparity
+//
+// 이동평균선(5/10/20/60/120일)과 현재가의 이격도 순위.
+type Disparity struct {
+	Output []DisparityItem `json:"output"`
+}
+
+// DisparityItem 은 이격도 순위 응답의 한 행.
+type DisparityItem struct {
+	MkscShrnIscd string          `json:"mksc_shrn_iscd"`   // 유가증권 단축 종목코드
+	DataRank     string          `json:"data_rank"`        // 데이터 순위
+	HtsKorIsnm   string          `json:"hts_kor_isnm"`     // HTS 한글 종목명
+	StckPrpr     decimal.Decimal `json:"stck_prpr"`        // 주식 현재가
+	PrdyVrss     decimal.Decimal `json:"prdy_vrss"`        // 전일 대비
+	PrdyCtrt     float64         `json:"prdy_ctrt,string"` // 전일 대비율
+	PrdyVrssSign string          `json:"prdy_vrss_sign"`   // 전일 대비 부호
+	AcmlVol      int64           `json:"acml_vol,string"`  // 누적 거래량
+	D5Dsrt       float64         `json:"d5_dsrt,string"`   // 5일 이격도
+	D10Dsrt      float64         `json:"d10_dsrt,string"`  // 10일 이격도
+	D20Dsrt      float64         `json:"d20_dsrt,string"`  // 20일 이격도
+	D60Dsrt      float64         `json:"d60_dsrt,string"`  // 60일 이격도
+	D120Dsrt     float64         `json:"d120_dsrt,string"` // 120일 이격도
+}
+
+// InquireDisparityParams 는 이격도 순위 조회 파라미터.
+//
+// FID_COND_SCR_DIV_CODE = "20178" 고정.
+// HourClsCode: 5/10/20/60/120 (일수).
+type InquireDisparityParams struct {
+	InputPrice2    string // fid_input_price_2 — 입력 가격2
+	MarketCode     string // fid_cond_mrkt_div_code — "J":KRX. 빈 값=>"J"
+	CondScrDivCode string // fid_cond_scr_div_code — 빈 값=>"20178"
+	DivClsCode     string // fid_div_cls_code — 구분 코드
+	RankSortCode   string // fid_rank_sort_cls_code — 정렬 구분 코드
+	HourClsCode    string // fid_hour_cls_code — 5/10/20/60/120일
+	Symbol         string // fid_input_iscd — 종목코드 (0000:전체)
+	TrgtClsCode    string // fid_trgt_cls_code — 대상 구분 코드
+	TrgtExlsCode   string // fid_trgt_exls_cls_code — 대상 제외 구분 코드
+	InputPrice1    string // fid_input_price_1 — 입력 가격1
+	VolCnt         string // fid_vol_cnt — 조회 건수
+}
+
+// InquireDisparity 는 국내주식 이격도 순위 호출.
+//
+// 한투 docs: docs/api/국내주식/국내주식_이격도_순위.md
+// path: /uapi/domestic-stock/v1/ranking/disparity (FHPST01780000)
+//
+// 쿼리 파라미터는 lowercase fid_* 형식 사용.
+// HourClsCode: 5/10/20/60/120 (이동평균일수).
+func (c *Client) InquireDisparity(ctx context.Context, params InquireDisparityParams) (*Disparity, error) {
+	market := params.MarketCode
+	if market == "" {
+		market = "J"
+	}
+	scrDiv := params.CondScrDivCode
+	if scrDiv == "" {
+		scrDiv = "20178"
+	}
+
+	resp, err := c.http.Do(ctx, &httpclient.Request{
+		Method: http.MethodGet,
+		Path:   "/uapi/domestic-stock/v1/ranking/disparity",
+		TrID:   "FHPST01780000",
+		Query: map[string]string{
+			"fid_input_price_2":      params.InputPrice2,
+			"fid_cond_mrkt_div_code": market,
+			"fid_cond_scr_div_code":  scrDiv,
+			"fid_div_cls_code":       params.DivClsCode,
+			"fid_rank_sort_cls_code": params.RankSortCode,
+			"fid_hour_cls_code":      params.HourClsCode,
+			"fid_input_iscd":         params.Symbol,
+			"fid_trgt_cls_code":      params.TrgtClsCode,
+			"fid_trgt_exls_cls_code": params.TrgtExlsCode,
+			"fid_input_price_1":      params.InputPrice1,
+			"fid_vol_cnt":            params.VolCnt,
+		},
+		CustType: "P",
+	})
+	if err != nil {
+		return nil, err
+	}
+	var res Disparity
+	if err := json.Unmarshal(resp.Raw, &res); err != nil {
+		return nil, fmt.Errorf("kis: parse Disparity: %w", err)
+	}
+	return &res, nil
+}
+
+// PreferDisparateRatio 는 국내주식 우선주 괴리율 상위 (FHPST01770000) 응답.
+//
+// 한투 docs: docs/api/국내주식/국내주식_우선주_괴리율_상위.md
+// path: /uapi/domestic-stock/v1/ranking/prefer-disparate-ratio
+//
+// 보통주-우선주 간 괴리율 순위.
+type PreferDisparateRatio struct {
+	Output []PreferDisparateRatioItem `json:"output"`
+}
+
+// PreferDisparateRatioItem 은 우선주 괴리율 상위 응답의 한 행.
+type PreferDisparateRatioItem struct {
+	MkscShrnIscd     string          `json:"mksc_shrn_iscd"`        // 유가증권 단축 종목코드 (보통주)
+	DataRank         string          `json:"data_rank"`             // 데이터 순위
+	HtsKorIsnm       string          `json:"hts_kor_isnm"`          // HTS 한글 종목명 (보통주)
+	StckPrpr         decimal.Decimal `json:"stck_prpr"`             // 주식 현재가 (보통주)
+	PrdyVrss         decimal.Decimal `json:"prdy_vrss"`             // 전일 대비 (보통주)
+	PrdyVrssSign     string          `json:"prdy_vrss_sign"`        // 전일 대비 부호 (보통주)
+	AcmlVol          int64           `json:"acml_vol,string"`       // 누적 거래량 (보통주)
+	PrstIscd         string          `json:"prst_iscd"`             // 우선주 종목코드
+	PrstKorIsnm      string          `json:"prst_kor_isnm"`         // 우선주 한글 종목명
+	PrstPrpr         decimal.Decimal `json:"prst_prpr"`             // 우선주 현재가
+	PrstPrdyVrss     decimal.Decimal `json:"prst_prdy_vrss"`        // 우선주 전일 대비
+	PrstPrdyVrssSign string          `json:"prst_prdy_vrss_sign"`   // 우선주 전일 대비 부호
+	PrstAcmlVol      int64           `json:"prst_acml_vol,string"`  // 우선주 누적 거래량
+	DiffPrpr         decimal.Decimal `json:"diff_prpr"`             // 차이 현재가
+	Dprt             float64         `json:"dprt,string"`           // 괴리율
+	PrdyCtrt         float64         `json:"prdy_ctrt,string"`      // 보통주 전일 대비율
+	PrstPrdyCtrt     float64         `json:"prst_prdy_ctrt,string"` // 우선주 전일 대비율
+}
+
+// InquirePreferDisparateRatioParams 는 우선주 괴리율 상위 조회 파라미터.
+//
+// FID_COND_SCR_DIV_CODE = "20177" 고정.
+type InquirePreferDisparateRatioParams struct {
+	VolCnt         string // fid_vol_cnt — 조회 건수
+	MarketCode     string // fid_cond_mrkt_div_code — "J":KRX. 빈 값=>"J"
+	CondScrDivCode string // fid_cond_scr_div_code — 빈 값=>"20177"
+	DivClsCode     string // fid_div_cls_code — 구분 코드
+	Symbol         string // fid_input_iscd — 종목코드 (0000:전체)
+	TrgtClsCode    string // fid_trgt_cls_code — 대상 구분 코드
+	TrgtExlsCode   string // fid_trgt_exls_cls_code — 대상 제외 구분 코드
+	InputPrice1    string // fid_input_price_1 — 입력 가격1
+	InputPrice2    string // fid_input_price_2 — 입력 가격2
+}
+
+// InquirePreferDisparateRatio 는 국내주식 우선주 괴리율 상위 호출.
+//
+// 한투 docs: docs/api/국내주식/국내주식_우선주_괴리율_상위.md
+// path: /uapi/domestic-stock/v1/ranking/prefer-disparate-ratio (FHPST01770000)
+//
+// 쿼리 파라미터는 lowercase fid_* 형식 사용.
+func (c *Client) InquirePreferDisparateRatio(ctx context.Context, params InquirePreferDisparateRatioParams) (*PreferDisparateRatio, error) {
+	market := params.MarketCode
+	if market == "" {
+		market = "J"
+	}
+	scrDiv := params.CondScrDivCode
+	if scrDiv == "" {
+		scrDiv = "20177"
+	}
+
+	resp, err := c.http.Do(ctx, &httpclient.Request{
+		Method: http.MethodGet,
+		Path:   "/uapi/domestic-stock/v1/ranking/prefer-disparate-ratio",
+		TrID:   "FHPST01770000",
+		Query: map[string]string{
+			"fid_vol_cnt":            params.VolCnt,
+			"fid_cond_mrkt_div_code": market,
+			"fid_cond_scr_div_code":  scrDiv,
+			"fid_div_cls_code":       params.DivClsCode,
+			"fid_input_iscd":         params.Symbol,
+			"fid_trgt_cls_code":      params.TrgtClsCode,
+			"fid_trgt_exls_cls_code": params.TrgtExlsCode,
+			"fid_input_price_1":      params.InputPrice1,
+			"fid_input_price_2":      params.InputPrice2,
+		},
+		CustType: "P",
+	})
+	if err != nil {
+		return nil, err
+	}
+	var res PreferDisparateRatio
+	if err := json.Unmarshal(resp.Raw, &res); err != nil {
+		return nil, fmt.Errorf("kis: parse PreferDisparateRatio: %w", err)
+	}
+	return &res, nil
+}
+
+// ProfitAssetIndex 는 국내주식 수익자산지표 순위 (FHPST01730000) 응답.
+//
+// 한투 docs: docs/api/국내주식/국내주식_수익자산지표_순위.md
+// path: /uapi/domestic-stock/v1/ranking/profit-asset-index
+//
+// 매출이익·영업이익·경상이익·당기순이익·자산/부채/자본총계 등 재무지표 기반 순위.
+type ProfitAssetIndex struct {
+	Output []ProfitAssetIndexItem `json:"output"`
+}
+
+// ProfitAssetIndexItem 은 수익자산지표 순위 응답의 한 행.
+type ProfitAssetIndexItem struct {
+	DataRank         string          `json:"data_rank"`             // 데이터 순위
+	HtsKorIsnm       string          `json:"hts_kor_isnm"`          // HTS 한글 종목명
+	PrdyVrssSign     string          `json:"prdy_vrss_sign"`        // 전일 대비 부호
+	MkscShrnIscd     string          `json:"mksc_shrn_iscd"`        // 유가증권 단축 종목코드
+	StckPrpr         decimal.Decimal `json:"stck_prpr"`             // 주식 현재가
+	PrdyVrss         decimal.Decimal `json:"prdy_vrss"`             // 전일 대비
+	PrdyCtrt         float64         `json:"prdy_ctrt,string"`      // 전일 대비율
+	AcmlVol          int64           `json:"acml_vol,string"`       // 누적 거래량
+	SaleTotlPrfi     int64           `json:"sale_totl_prfi,string"` // 매출 총 이익
+	BsopPrti         int64           `json:"bsop_prti,string"`      // 영업 이익
+	OpPrfi           int64           `json:"op_prfi,string"`        // 경상 이익
+	ThtrNtin         int64           `json:"thtr_ntin,string"`      // 당기순이익
+	TotalAset        int64           `json:"total_aset,string"`     // 자산총계
+	TotalLblt        int64           `json:"total_lblt,string"`     // 부채총계
+	TotalCptl        int64           `json:"total_cptl,string"`     // 자본총계
+	StacMonth        string          `json:"stac_month"`            // 결산 월
+	StacMonthClsCode string          `json:"stac_month_cls_code"`   // 결산 월 구분 코드
+	IqryCsnu         string          `json:"iqry_csnu"`             // 조회 건수
+}
+
+// InquireProfitAssetIndexParams 는 수익자산지표 순위 조회 파라미터.
+//
+// FID_COND_SCR_DIV_CODE = "20173" 고정.
+type InquireProfitAssetIndexParams struct {
+	MarketCode     string // fid_cond_mrkt_div_code — "J":KRX. 빈 값=>"J"
+	TrgtClsCode    string // fid_trgt_cls_code — 대상 구분 코드
+	CondScrDivCode string // fid_cond_scr_div_code — 빈 값=>"20173"
+	Symbol         string // fid_input_iscd — 종목코드 (0000:전체)
+	DivClsCode     string // fid_div_cls_code — 구분 코드
+	InputPrice1    string // fid_input_price_1 — 입력 가격1
+	InputPrice2    string // fid_input_price_2 — 입력 가격2
+	VolCnt         string // fid_vol_cnt — 조회 건수
+	InputOption1   string // fid_input_option_1 — 회계연도
+	InputOption2   string // fid_input_option_2 — 분기구분
+	RankSortCode   string // fid_rank_sort_cls_code — 정렬 구분 코드
+	BlngClsCode    string // fid_blng_cls_code — 소속 구분 코드
+	TrgtExlsCode   string // fid_trgt_exls_cls_code — 대상 제외 구분 코드
+}
+
+// InquireProfitAssetIndex 는 국내주식 수익자산지표 순위 호출.
+//
+// 한투 docs: docs/api/국내주식/국내주식_수익자산지표_순위.md
+// path: /uapi/domestic-stock/v1/ranking/profit-asset-index (FHPST01730000)
+//
+// 쿼리 파라미터는 lowercase fid_* 형식 사용.
+func (c *Client) InquireProfitAssetIndex(ctx context.Context, params InquireProfitAssetIndexParams) (*ProfitAssetIndex, error) {
+	market := params.MarketCode
+	if market == "" {
+		market = "J"
+	}
+	scrDiv := params.CondScrDivCode
+	if scrDiv == "" {
+		scrDiv = "20173"
+	}
+
+	resp, err := c.http.Do(ctx, &httpclient.Request{
+		Method: http.MethodGet,
+		Path:   "/uapi/domestic-stock/v1/ranking/profit-asset-index",
+		TrID:   "FHPST01730000",
+		Query: map[string]string{
+			"fid_cond_mrkt_div_code": market,
+			"fid_trgt_cls_code":      params.TrgtClsCode,
+			"fid_cond_scr_div_code":  scrDiv,
+			"fid_input_iscd":         params.Symbol,
+			"fid_div_cls_code":       params.DivClsCode,
+			"fid_input_price_1":      params.InputPrice1,
+			"fid_input_price_2":      params.InputPrice2,
+			"fid_vol_cnt":            params.VolCnt,
+			"fid_input_option_1":     params.InputOption1,
+			"fid_input_option_2":     params.InputOption2,
+			"fid_rank_sort_cls_code": params.RankSortCode,
+			"fid_blng_cls_code":      params.BlngClsCode,
+			"fid_trgt_exls_cls_code": params.TrgtExlsCode,
+		},
+		CustType: "P",
+	})
+	if err != nil {
+		return nil, err
+	}
+	var res ProfitAssetIndex
+	if err := json.Unmarshal(resp.Raw, &res); err != nil {
+		return nil, fmt.Errorf("kis: parse ProfitAssetIndex: %w", err)
+	}
+	return &res, nil
+}
+
+// Mktfunds 는 국내주식 증시자금 종합 (FHKST649100C0) 응답.
+//
+// 한투 docs: docs/api/국내주식/국내주식_증시자금_종합.md
+// path: /uapi/domestic-stock/v1/quotations/mktfunds
+//
+// 일별 증시자금 현황 (KOFIA 데이터): 고객예탁금·신용융자잔고·미수금·펀드·담보대출 등.
+type Mktfunds struct {
+	Output []MktfundsItem `json:"output"`
+}
+
+// MktfundsItem 은 증시자금 종합 응답의 한 행 (영업일 1건).
+type MktfundsItem struct {
+	BsopDate            string          `json:"bsop_date"`                      // 영업일자
+	BstpNmixPrpr        decimal.Decimal `json:"bstp_nmix_prpr"`                 // 업종지수현재가
+	BstpNmixPrdyVrss    decimal.Decimal `json:"bstp_nmix_prdy_vrss"`            // 업종지수전일대비
+	PrdyVrssSign        string          `json:"prdy_vrss_sign"`                 // 전일 대비 부호
+	PrdyCtrt            float64         `json:"prdy_ctrt,string"`               // 전일 대비율
+	HtsAvls             int64           `json:"hts_avls,string"`                // HTS 시가총액 (백만원)
+	CustDpmnAmt         int64           `json:"cust_dpmn_amt,string"`           // 고객예탁금금액 (억원)
+	CustDpmnAmtPrdyVrss int64           `json:"cust_dpmn_amt_prdy_vrss,string"` // 고객예탁금금액전일대비 (억원)
+	AmtTnrt             float64         `json:"amt_tnrt,string"`                // 금액회전율
+	UnclAmt             int64           `json:"uncl_amt,string"`                // 미수금액 (억원)
+	CrdtLoanRmnd        int64           `json:"crdt_loan_rmnd,string"`          // 신용융자잔고 (억원)
+	FutsTfamAmt         int64           `json:"futs_tfam_amt,string"`           // 선물예수금 (억원)
+	SttpAmt             int64           `json:"sttp_amt,string"`                // 주식형 (억원)
+	MxtpAmt             int64           `json:"mxtp_amt,string"`                // 혼합형 (억원)
+	BntpAmt             int64           `json:"bntp_amt,string"`                // 채권형 (억원)
+	MmfAmt              int64           `json:"mmf_amt,string"`                 // MMF (억원)
+	SecuLendAmt         int64           `json:"secu_lend_amt,string"`           // 담보대출잔고 (억원)
+}
+
+// InquireMktfundsParams 는 증시자금 종합 조회 파라미터.
+//
+// 파라미터는 UPPERCASE FID_ 형식 사용.
+type InquireMktfundsParams struct {
+	InputDate1 string // FID_INPUT_DATE_1 — 조회 기준일 (YYYYMMDD, 필수)
+}
+
+// InquireMktfunds 는 국내주식 증시자금 종합 호출.
+//
+// 한투 docs: docs/api/국내주식/국내주식_증시자금_종합.md
+// path: /uapi/domestic-stock/v1/quotations/mktfunds (FHKST649100C0)
+//
+// 쿼리 파라미터는 UPPERCASE FID_ 형식 사용.
+// KOFIA 제공 데이터: 고객예탁금·신용융자잔고·미수금·펀드순자산·담보대출잔고 (단위: 억원/백만원).
+func (c *Client) InquireMktfunds(ctx context.Context, params InquireMktfundsParams) (*Mktfunds, error) {
+	resp, err := c.http.Do(ctx, &httpclient.Request{
+		Method: http.MethodGet,
+		Path:   "/uapi/domestic-stock/v1/quotations/mktfunds",
+		TrID:   "FHKST649100C0",
+		Query: map[string]string{
+			"FID_INPUT_DATE_1": params.InputDate1,
+		},
+		CustType: "P",
+	})
+	if err != nil {
+		return nil, err
+	}
+	var res Mktfunds
+	if err := json.Unmarshal(resp.Raw, &res); err != nil {
+		return nil, fmt.Errorf("kis: parse Mktfunds: %w", err)
+	}
+	return &res, nil
+}

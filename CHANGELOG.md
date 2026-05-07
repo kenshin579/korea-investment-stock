@@ -1,5 +1,33 @@
 # CHANGELOG
 
+## [1.14.0] - 2026-05-07
+
+### Added — Phase 4.3 (국내주식 ranking/흐름 13 메서드)
+
+- `Domestic.InquireShortSale` — 공매도 상위 (FHPST04820000) — output array 14 fields/item
+- `Domestic.InquireDailyShortSale` — 공매도 일별추이 (FHPST04830000) — output1 single+output2 array 13 fields/item
+- `Domestic.InquireCreditBalance` — 신용잔고 상위 (FHKST17010000) — output1 header array+output2 balance array 13 fields/item
+- `Domestic.InquireDailyCreditBalance` — 신용잔고 일별추이 (FHPST04760000) — output array 24 fields/item
+- `Domestic.InquireLendableByCompany` — 당사 대주가능 (CTSC2702R) — output1 array+output2 summary 13+3 fields
+- `Domestic.InquireQuoteBalance` — 호가잔량 순위 (FHPST01720000) — output array 12 fields/item
+- `Domestic.InquireAfterHourBalance` — 시간외잔량 순위 (FHPST01760000) — output array 13 fields/item
+- `Domestic.InquireOvertimeExpTransFluct` — 시간외 예상체결 등락률 (FHKST11860000) — output 단일 객체 15 fields
+- `Domestic.InquireMarketValue` — 시장가치 순위 (FHPST01790000) — output array 20 fields/item
+- `Domestic.InquireDisparity` — 이격도 순위 (FHPST01780000) — output array 13 fields/item
+- `Domestic.InquirePreferDisparateRatio` — 우선주 괴리율 (FHPST01770000) — output array 17 fields/item
+- `Domestic.InquireProfitAssetIndex` — 수익자산지표 순위 (FHPST01730000) — output array 18 fields/item
+- `Domestic.InquireMktfunds` — 증시자금 종합 (FHKST649100C0) — output array 17 fields/item
+- examples: `domestic_rank_flow`
+
+### Notes
+
+- **Phase 4 종료** — Phase 4.1+4.2+4.3 = 27 메서드 (WebSocket 3개 제외). 누적 106 메서드.
+- EP2/EP3 이중 output (output1 단일+output2 배열 구조).
+- EP5 (`InquireLendableByCompany`) 비표준 UPPERCASE 파라미터 (FID_ 접두어 없음: EXCG_DVSN_CD/PDNO/THCO_STLN_PSBL_YN 등), CTSC prefix TR_ID.
+- EP6/EP7/EP9/EP10/EP11/EP12 lowercase fid_* query params.
+- EP8 (`InquireOvertimeExpTransFluct`) output 단일 객체 (배열 아님), UPPERCASE FID_ params.
+- 누적 93 → 106 메서드.
+
 ## [1.13.0] - 2026-05-07
 
 ### Added — Phase 4.2 (국내주식 시장운영/특수상태)
