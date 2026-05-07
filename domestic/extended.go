@@ -1664,3 +1664,89 @@ func (c *Client) InquireAfterHourBalance(ctx context.Context, params InquireAfte
 	}
 	return &res, nil
 }
+
+// OvertimeExpTransFluct 는 국내주식 시간외 예상체결 등락률 (FHKST11860000) 응답.
+//
+// 한투 docs: docs/api/국내주식/국내주식_시간외_예상체결_등락률.md
+// path: /uapi/domestic-stock/v1/ranking/overtime-exp-trans-fluct
+//
+// output 은 배열이 아닌 단일 객체. 쿼리 파라미터는 UPPERCASE FID_ 형식 사용.
+// InquireOvertimeFluctuation (Phase 2.2) 과 다른 별도 API.
+type OvertimeExpTransFluct struct {
+	Output OvertimeExpTransFluctData `json:"output"`
+}
+
+// OvertimeExpTransFluctData 는 시간외 예상체결 등락률 응답의 output 단일 객체.
+//
+// NOTE: ovtm_untp_antc_cntg_vrsssign — KIS docs 오타 보존 (vrss+sign 연결, 밑줄 없음).
+type OvertimeExpTransFluctData struct {
+	DataRank                 string          `json:"data_rank"`                       // 데이터 순위
+	IscdStatClsCode          string          `json:"iscd_stat_cls_code"`              // 종목 상태 구분 코드
+	StckShrnIscd             string          `json:"stck_shrn_iscd"`                  // 주식 단축 종목코드
+	HtsKorIsnm               string          `json:"hts_kor_isnm"`                    // HTS 한글 종목명
+	OvtmUntpAntcCnpr         decimal.Decimal `json:"ovtm_untp_antc_cnpr"`             // 시간외 단일가 예상 체결가
+	OvtmUntpAntcCntgVrss     decimal.Decimal `json:"ovtm_untp_antc_cntg_vrss"`        // 시간외 단일가 예상 체결 대비
+	OvtmUntpAntcCntgVrsssign string          `json:"ovtm_untp_antc_cntg_vrsssign"`    // 시간외 단일가 예상 체결 대비 부호 (KIS 오타: vrsssign)
+	OvtmUntpAntcCntgCtrt     float64         `json:"ovtm_untp_antc_cntg_ctrt,string"` // 시간외 단일가 예상 체결 대비율
+	OvtmUntpAskpRsqn1        int64           `json:"ovtm_untp_askp_rsqn1,string"`     // 시간외 단일가 매도호가 잔량1
+	OvtmUntpBidpRsqn1        int64           `json:"ovtm_untp_bidp_rsqn1,string"`     // 시간외 단일가 매수호가 잔량1
+	OvtmUntpAntcCnqn         int64           `json:"ovtm_untp_antc_cnqn,string"`      // 시간외 단일가 예상 체결량
+	ItmtVol                  int64           `json:"itmt_vol,string"`                 // 중간 거래량
+	StckPrpr                 decimal.Decimal `json:"stck_prpr"`                       // 주식 현재가
+}
+
+// InquireOvertimeExpTransFluctParams 는 시간외 예상체결 등락률 조회 파라미터.
+//
+// 쿼리 파라미터는 UPPERCASE FID_ 형식으로 전송.
+type InquireOvertimeExpTransFluctParams struct {
+	MarketCode     string // FID_COND_MRKT_DIV_CODE — "J":KRX. 빈 값=>"J"
+	CondScrDivCode string // FID_COND_SCR_DIV_CODE — 고정 "11186". 빈 값=>"11186"
+	Symbol         string // FID_INPUT_ISCD — 종목코드 또는 시장코드
+	RankSortCode   string // FID_RANK_SORT_CLS_CODE — 정렬 구분 코드
+	DivClsCode     string // FID_DIV_CLS_CODE — 구분 코드
+	InputPrice1    string // FID_INPUT_PRICE_1 — 입력 가격1
+	InputPrice2    string // FID_INPUT_PRICE_2 — 입력 가격2
+	InputVol1      string // FID_INPUT_VOL_1 — 입력 거래량1
+}
+
+// InquireOvertimeExpTransFluct 는 국내주식 시간외 예상체결 등락률 호출.
+//
+// 한투 docs: docs/api/국내주식/국내주식_시간외_예상체결_등락률.md
+// path: /uapi/domestic-stock/v1/ranking/overtime-exp-trans-fluct (FHKST11860000)
+//
+// output 은 단일 객체 (배열 아님). 쿼리 파라미터는 UPPERCASE FID_ 형식 사용.
+func (c *Client) InquireOvertimeExpTransFluct(ctx context.Context, params InquireOvertimeExpTransFluctParams) (*OvertimeExpTransFluct, error) {
+	market := params.MarketCode
+	if market == "" {
+		market = "J"
+	}
+	scrDiv := params.CondScrDivCode
+	if scrDiv == "" {
+		scrDiv = "11186"
+	}
+
+	resp, err := c.http.Do(ctx, &httpclient.Request{
+		Method: http.MethodGet,
+		Path:   "/uapi/domestic-stock/v1/ranking/overtime-exp-trans-fluct",
+		TrID:   "FHKST11860000",
+		Query: map[string]string{
+			"FID_COND_MRKT_DIV_CODE": market,
+			"FID_COND_SCR_DIV_CODE":  scrDiv,
+			"FID_INPUT_ISCD":         params.Symbol,
+			"FID_RANK_SORT_CLS_CODE": params.RankSortCode,
+			"FID_DIV_CLS_CODE":       params.DivClsCode,
+			"FID_INPUT_PRICE_1":      params.InputPrice1,
+			"FID_INPUT_PRICE_2":      params.InputPrice2,
+			"FID_INPUT_VOL_1":        params.InputVol1,
+		},
+		CustType: "P",
+	})
+	if err != nil {
+		return nil, err
+	}
+	var res OvertimeExpTransFluct
+	if err := json.Unmarshal(resp.Raw, &res); err != nil {
+		return nil, fmt.Errorf("kis: parse OvertimeExpTransFluct: %w", err)
+	}
+	return &res, nil
+}

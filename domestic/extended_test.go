@@ -856,3 +856,54 @@ func TestClient_InquireQuoteBalance(t *testing.T) {
 	assert.InDelta(t, 59.60, res.Output[0].ShnuRsqnRate, 0.001)
 	assert.InDelta(t, 40.40, res.Output[0].SelnRsqnRate, 0.001)
 }
+
+func TestClient_InquireOvertimeExpTransFluct(t *testing.T) {
+	httpmock.Activate()
+	defer httpmock.DeactivateAndReset()
+
+	var capturedQuery url.Values
+	httpmock.RegisterResponder(
+		http.MethodGet,
+		`=~/ranking/overtime-exp-trans-fluct`,
+		func(req *http.Request) (*http.Response, error) {
+			capturedQuery = req.URL.Query()
+			return httpmock.NewStringResponse(http.StatusOK, loadFixtureString(t, "overtime_exp_trans_fluct_success.json")), nil
+		},
+	)
+
+	c := newTestClient(t)
+	res, err := c.InquireOvertimeExpTransFluct(context.Background(), domestic.InquireOvertimeExpTransFluctParams{
+		Symbol:       "0000",
+		RankSortCode: "0",
+		DivClsCode:   "0",
+	})
+	require.NoError(t, err)
+	require.NotNil(t, res)
+
+	// UPPERCASE FID_ 키 검증
+	assert.Equal(t, "J", capturedQuery.Get("FID_COND_MRKT_DIV_CODE"))
+	assert.Equal(t, "11186", capturedQuery.Get("FID_COND_SCR_DIV_CODE"))
+	assert.Equal(t, "0000", capturedQuery.Get("FID_INPUT_ISCD"))
+	assert.Equal(t, "0", capturedQuery.Get("FID_RANK_SORT_CLS_CODE"))
+	assert.Equal(t, "0", capturedQuery.Get("FID_DIV_CLS_CODE"))
+	assert.Empty(t, capturedQuery.Get("fid_input_iscd"), "lowercase 키는 비어야 함")
+
+	// output 은 단일 객체 (배열 아님) 검증
+	assert.Equal(t, "1", res.Output.DataRank)
+	assert.Equal(t, "00", res.Output.IscdStatClsCode)
+	assert.Equal(t, "005930", res.Output.StckShrnIscd)
+	assert.Equal(t, "삼성전자", res.Output.HtsKorIsnm)
+	dCnpr, _ := decimal.NewFromString("75900")
+	assert.True(t, dCnpr.Equal(res.Output.OvtmUntpAntcCnpr))
+	dVrss, _ := decimal.NewFromString("100")
+	assert.True(t, dVrss.Equal(res.Output.OvtmUntpAntcCntgVrss))
+	// KIS docs 오타 보존: vrss+sign 연결 (밑줄 없음)
+	assert.Equal(t, "2", res.Output.OvtmUntpAntcCntgVrsssign)
+	assert.InDelta(t, 0.13, res.Output.OvtmUntpAntcCntgCtrt, 0.001)
+	assert.Equal(t, int64(234567), res.Output.OvtmUntpAskpRsqn1)
+	assert.Equal(t, int64(345678), res.Output.OvtmUntpBidpRsqn1)
+	assert.Equal(t, int64(111111), res.Output.OvtmUntpAntcCnqn)
+	assert.Equal(t, int64(98765), res.Output.ItmtVol)
+	dPrpr, _ := decimal.NewFromString("75800")
+	assert.True(t, dPrpr.Equal(res.Output.StckPrpr))
+}
