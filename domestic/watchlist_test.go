@@ -126,3 +126,38 @@ func TestClient_InquireIntstockStocklistByGroup(t *testing.T) {
 	assert.Equal(t, "SK하이닉스", res.Output2[1].HtsKorIsnm)
 	assert.Equal(t, int64(50), res.Output2[1].FxdtNtbyQty)
 }
+
+func TestClient_InquireIntstockGrouplist(t *testing.T) {
+	httpmock.Activate()
+	defer httpmock.DeactivateAndReset()
+
+	var capturedQuery url.Values
+	httpmock.RegisterResponder(
+		http.MethodGet,
+		`=~/quotations/intstock-grouplist`,
+		func(req *http.Request) (*http.Response, error) {
+			capturedQuery = req.URL.Query()
+			return httpmock.NewStringResponse(200, loadFixtureString(t, "intstock_grouplist_success.json")), nil
+		},
+	)
+
+	c := newTestClient(t)
+	res, err := c.InquireIntstockGrouplist(context.Background(), domestic.InquireIntstockGrouplistParams{
+		UserID: "testuser123",
+	})
+	require.NoError(t, err)
+	require.NotNil(t, res)
+
+	// query param 검증
+	assert.Equal(t, "1", capturedQuery.Get("TYPE"))
+	assert.Equal(t, "00", capturedQuery.Get("FID_ETC_CLS_CODE"))
+	assert.Equal(t, "testuser123", capturedQuery.Get("USER_ID"))
+
+	// output2 검증 (output1 없음)
+	assert.Equal(t, "20250506", res.Output2.Date)
+	assert.Equal(t, "132500", res.Output2.TrnmHour)
+	assert.Equal(t, "1", res.Output2.DataRank)
+	assert.Equal(t, "001", res.Output2.InterGrpCode)
+	assert.Equal(t, "반도체", res.Output2.InterGrpName)
+	assert.Equal(t, "12", res.Output2.AskCnt)
+}

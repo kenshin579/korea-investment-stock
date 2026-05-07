@@ -191,3 +191,70 @@ func (c *Client) InquireIntstockStocklistByGroup(ctx context.Context, params Inq
 	}
 	return &res, nil
 }
+
+// IntstockGrouplist 는 관심종목 그룹조회 (HHKCM113004C7) 응답.
+//
+// 한투 docs: docs/api/국내주식/관심종목그룹조회.md
+// path: /uapi/domestic-stock/v1/quotations/intstock-grouplist
+//
+// NOTE: output2 만 존재 (output1 없음). Output2 필드의 JSON 태그는 "output2".
+type IntstockGrouplist struct {
+	Output2 IntstockGrouplistItem `json:"output2"`
+}
+
+// IntstockGrouplistItem 은 관심종목 그룹조회 output2 (단일 객체 6 fields).
+type IntstockGrouplistItem struct {
+	Date         string `json:"date"`           // 일자
+	TrnmHour     string `json:"trnm_hour"`      // 전송 시간
+	DataRank     string `json:"data_rank"`      // 데이터 순위
+	InterGrpCode string `json:"inter_grp_code"` // 관심 그룹 코드
+	InterGrpName string `json:"inter_grp_name"` // 관심 그룹명
+	AskCnt       string `json:"ask_cnt"`        // 종목 수
+}
+
+// InquireIntstockGrouplistParams 는 관심종목 그룹조회 파라미터.
+//
+// CRITICAL: UserID 는 HTS 로그인 ID (HTS_ID). 반드시 제공 필요.
+type InquireIntstockGrouplistParams struct {
+	Type          string // TYPE — "1" 기본값
+	FidEtcClsCode string // FID_ETC_CLS_CODE — 기타 구분 코드. 빈 값=>"00"
+	UserID        string // USER_ID — HTS 로그인 ID (HTS_ID). 필수
+}
+
+// InquireIntstockGrouplist 는 관심종목 그룹조회 호출.
+//
+// 한투 docs: docs/api/국내주식/관심종목그룹조회.md
+// path: /uapi/domestic-stock/v1/quotations/intstock-grouplist (HHKCM113004C7)
+//
+// NOTE: output2 만 반환됨 (output1 없음). USER_ID 에 HTS 로그인 ID 를 반드시 입력해야 합니다.
+func (c *Client) InquireIntstockGrouplist(ctx context.Context, params InquireIntstockGrouplistParams) (*IntstockGrouplist, error) {
+	typ := params.Type
+	if typ == "" {
+		typ = "1"
+	}
+	etcCls := params.FidEtcClsCode
+	if etcCls == "" {
+		etcCls = "00"
+	}
+
+	resp, err := c.http.Do(ctx, &httpclient.Request{
+		Method: http.MethodGet,
+		Path:   "/uapi/domestic-stock/v1/quotations/intstock-grouplist",
+		TrID:   "HHKCM113004C7",
+		Query: map[string]string{
+			"TYPE":             typ,
+			"FID_ETC_CLS_CODE": etcCls,
+			"USER_ID":          params.UserID,
+		},
+		CustType: "P",
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	var res IntstockGrouplist
+	if err := json.Unmarshal(resp.Raw, &res); err != nil {
+		return nil, fmt.Errorf("kis: parse IntstockGrouplist: %w", err)
+	}
+	return &res, nil
+}
