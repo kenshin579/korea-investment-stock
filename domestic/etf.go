@@ -343,3 +343,77 @@ func (c *Client) InquireNavComparisonDailyTrend(ctx context.Context, params Inqu
 	}
 	return &res, nil
 }
+
+// NavComparisonTrend 는 NAV 비교 추이 (FHPST02440000) 응답.
+//
+// 한투 docs: docs/api/국내주식/NAV비교추이.md
+// path: /uapi/etfetn/v1/quotations/nav-comparison-trend
+type NavComparisonTrend struct {
+	Output1 NavComparisonTrendPrice `json:"output1"`
+	Output2 NavComparisonTrendNav   `json:"output2"`
+}
+
+// NavComparisonTrendPrice 는 NAV 비교 추이 응답 output1 — 주식 가격 정보 (12 fields, 단일 객체).
+type NavComparisonTrendPrice struct {
+	StckPrpr     decimal.Decimal `json:"stck_prpr"`           // 주식 현재가
+	PrdyVrss     decimal.Decimal `json:"prdy_vrss"`           // 전일 대비
+	PrdyVrssSign string          `json:"prdy_vrss_sign"`      // 전일 대비 부호
+	PrdyCtrt     float64         `json:"prdy_ctrt,string"`    // 전일 대비율
+	AcmlVol      int64           `json:"acml_vol,string"`     // 누적 거래량
+	AcmlTrPbmn   int64           `json:"acml_tr_pbmn,string"` // 누적 거래 대금
+	StckPrdyClpr decimal.Decimal `json:"stck_prdy_clpr"`      // 주식 전일 종가
+	StckOprc     decimal.Decimal `json:"stck_oprc"`           // 주식 시가
+	StckHgpr     decimal.Decimal `json:"stck_hgpr"`           // 주식 최고가
+	StckLwpr     decimal.Decimal `json:"stck_lwpr"`           // 주식 최저가
+	StckMxpr     decimal.Decimal `json:"stck_mxpr"`           // 주식 상한가
+	StckLlam     decimal.Decimal `json:"stck_llam"`           // 주식 하한가
+}
+
+// NavComparisonTrendNav 는 NAV 비교 추이 응답 output2 — NAV 정보 (8 fields, 단일 객체).
+type NavComparisonTrendNav struct {
+	Nav             decimal.Decimal `json:"nav"`                  // NAV
+	NavPrdyVrssSign string          `json:"nav_prdy_vrss_sign"`   // NAV 전일 대비 부호
+	NavPrdyVrss     decimal.Decimal `json:"nav_prdy_vrss"`        // NAV 전일 대비
+	NavPrdyCtrt     float64         `json:"nav_prdy_ctrt,string"` // NAV 전일 대비율
+	PrdyClprNav     decimal.Decimal `json:"prdy_clpr_nav"`        // 전일 종가 NAV
+	OprcNav         decimal.Decimal `json:"oprc_nav"`             // 시가 NAV
+	HprcNav         decimal.Decimal `json:"hprc_nav"`             // 최고가 NAV
+	LprcNav         decimal.Decimal `json:"lprc_nav"`             // 최저가 NAV
+}
+
+// InquireNavComparisonTrendParams 는 NAV 비교 추이 조회 파라미터.
+type InquireNavComparisonTrendParams struct {
+	MarketCode string // FID_COND_MRKT_DIV_CODE — "J":KRX. 빈 값=>"J"
+	Symbol     string // FID_INPUT_ISCD — 종목코드 (예 "069500") Y
+}
+
+// InquireNavComparisonTrend 는 NAV 비교 추이 호출.
+//
+// 한투 docs: docs/api/국내주식/NAV비교추이.md
+// path: /uapi/etfetn/v1/quotations/nav-comparison-trend (FHPST02440000)
+func (c *Client) InquireNavComparisonTrend(ctx context.Context, params InquireNavComparisonTrendParams) (*NavComparisonTrend, error) {
+	market := params.MarketCode
+	if market == "" {
+		market = "J"
+	}
+
+	resp, err := c.http.Do(ctx, &httpclient.Request{
+		Method: http.MethodGet,
+		Path:   "/uapi/etfetn/v1/quotations/nav-comparison-trend",
+		TrID:   "FHPST02440000",
+		Query: map[string]string{
+			"FID_COND_MRKT_DIV_CODE": market,
+			"FID_INPUT_ISCD":         params.Symbol,
+		},
+		CustType: "P",
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	var res NavComparisonTrend
+	if err := json.Unmarshal(resp.Raw, &res); err != nil {
+		return nil, fmt.Errorf("kis: parse NavComparisonTrend: %w", err)
+	}
+	return &res, nil
+}

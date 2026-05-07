@@ -195,3 +195,52 @@ func TestClient_InquireNavComparisonDailyTrend(t *testing.T) {
 	assert.InDelta(t, -0.48, res.Output[0].NavPrdyCtrt, 0.001)
 	assert.Equal(t, "20250502", res.Output[1].StckBsopDate)
 }
+
+func TestClient_InquireNavComparisonTrend(t *testing.T) {
+	httpmock.Activate()
+	defer httpmock.DeactivateAndReset()
+
+	var capturedQuery url.Values
+	httpmock.RegisterResponder(
+		http.MethodGet,
+		`=~/etfetn/v1/quotations/nav-comparison-trend`,
+		func(req *http.Request) (*http.Response, error) {
+			capturedQuery = req.URL.Query()
+			return httpmock.NewStringResponse(200, loadFixtureString(t, "nav_comparison_trend_success.json")), nil
+		},
+	)
+
+	c := newTestClient(t)
+	res, err := c.InquireNavComparisonTrend(context.Background(), domestic.InquireNavComparisonTrendParams{
+		Symbol: "069500",
+	})
+	require.NoError(t, err)
+	require.NotNil(t, res)
+
+	// query param 검증
+	assert.Equal(t, "J", capturedQuery.Get("FID_COND_MRKT_DIV_CODE"))
+	assert.Equal(t, "069500", capturedQuery.Get("FID_INPUT_ISCD"))
+
+	// output1 필드 검증
+	d1, _ := decimal.NewFromString("28350")
+	assert.True(t, d1.Equal(res.Output1.StckPrpr))
+	dVrss, _ := decimal.NewFromString("-150")
+	assert.True(t, dVrss.Equal(res.Output1.PrdyVrss))
+	assert.InDelta(t, -0.53, res.Output1.PrdyCtrt, 0.001)
+	assert.Equal(t, int64(12345678), res.Output1.AcmlVol)
+	assert.Equal(t, int64(350123456789), res.Output1.AcmlTrPbmn)
+	dMxpr, _ := decimal.NewFromString("36850")
+	assert.True(t, dMxpr.Equal(res.Output1.StckMxpr))
+	dLlam, _ := decimal.NewFromString("19850")
+	assert.True(t, dLlam.Equal(res.Output1.StckLlam))
+
+	// output2 필드 검증
+	dNav, _ := decimal.NewFromString("28342")
+	assert.True(t, dNav.Equal(res.Output2.Nav))
+	assert.Equal(t, "5", res.Output2.NavPrdyVrssSign)
+	dNavVrss, _ := decimal.NewFromString("-138")
+	assert.True(t, dNavVrss.Equal(res.Output2.NavPrdyVrss))
+	assert.InDelta(t, -0.48, res.Output2.NavPrdyCtrt, 0.001)
+	dHprcNav, _ := decimal.NewFromString("28560")
+	assert.True(t, dHprcNav.Equal(res.Output2.HprcNav))
+}
