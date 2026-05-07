@@ -1326,3 +1326,91 @@ func (c *Client) InquireCreditBalance(ctx context.Context, params InquireCreditB
 	}
 	return &res, nil
 }
+
+// DailyCreditBalance 는 국내주식 신용잔고 일별추이 (FHPST04760000) 응답.
+//
+// 한투 docs: docs/api/국내주식/국내주식_신용잔고_일별추이.md
+// path: /uapi/domestic-stock/v1/quotations/daily-credit-balance
+//
+// 특정 종목의 일별 융자/대주 신규·상환·잔고 추이.
+type DailyCreditBalance struct {
+	Output []DailyCreditBalanceItem `json:"output"`
+}
+
+// DailyCreditBalanceItem 은 신용잔고 일별추이 응답의 한 행.
+type DailyCreditBalanceItem struct {
+	DealDate         string          `json:"deal_date"`                  // 결제 일자
+	StckPrpr         decimal.Decimal `json:"stck_prpr"`                  // 주식 현재가
+	PrdyVrssSign     string          `json:"prdy_vrss_sign"`             // 전일 대비 부호
+	PrdyVrss         decimal.Decimal `json:"prdy_vrss"`                  // 전일 대비
+	PrdyCtrt         float64         `json:"prdy_ctrt,string"`           // 전일 대비율
+	AcmlVol          int64           `json:"acml_vol,string"`            // 누적 거래량
+	StlmDate         string          `json:"stlm_date"`                  // 결산 일자
+	WholLoanNewStcn  int64           `json:"whol_loan_new_stcn,string"`  // 전체 융자 신규 수량
+	WholLoanRdmpStcn int64           `json:"whol_loan_rdmp_stcn,string"` // 전체 융자 상환 수량
+	WholLoanRmndStcn int64           `json:"whol_loan_rmnd_stcn,string"` // 전체 융자 잔고 수량
+	WholLoanNewAmt   int64           `json:"whol_loan_new_amt,string"`   // 전체 융자 신규 금액
+	WholLoanRdmpAmt  int64           `json:"whol_loan_rdmp_amt,string"`  // 전체 융자 상환 금액
+	WholLoanRmndAmt  int64           `json:"whol_loan_rmnd_amt,string"`  // 전체 융자 잔고 금액
+	WholLoanRmndRate float64         `json:"whol_loan_rmnd_rate,string"` // 전체 융자 잔고 비율
+	WholLoanGvrt     float64         `json:"whol_loan_gvrt,string"`      // 전체 융자 담보비율
+	WholStlnNewStcn  int64           `json:"whol_stln_new_stcn,string"`  // 전체 대주 신규 수량
+	WholStlnRdmpStcn int64           `json:"whol_stln_rdmp_stcn,string"` // 전체 대주 상환 수량
+	WholStlnRmndStcn int64           `json:"whol_stln_rmnd_stcn,string"` // 전체 대주 잔고 수량
+	WholStlnNewAmt   int64           `json:"whol_stln_new_amt,string"`   // 전체 대주 신규 금액
+	WholStlnRdmpAmt  int64           `json:"whol_stln_rdmp_amt,string"`  // 전체 대주 상환 금액
+	WholStlnRmndAmt  int64           `json:"whol_stln_rmnd_amt,string"`  // 전체 대주 잔고 금액
+	WholStlnRmndRate float64         `json:"whol_stln_rmnd_rate,string"` // 전체 대주 잔고 비율
+	WholStlnGvrt     float64         `json:"whol_stln_gvrt,string"`      // 전체 대주 담보비율
+	StckOprc         decimal.Decimal `json:"stck_oprc"`                  // 주식 시가
+	StckHgpr         decimal.Decimal `json:"stck_hgpr"`                  // 주식 최고가
+	StckLwpr         decimal.Decimal `json:"stck_lwpr"`                  // 주식 최저가
+}
+
+// InquireDailyCreditBalanceParams 는 신용잔고 일별추이 조회 파라미터.
+//
+// 쿼리 파라미터는 lowercase fid_* 형식으로 전송.
+type InquireDailyCreditBalanceParams struct {
+	MarketCode     string // fid_cond_mrkt_div_code — "J":KRX. 빈 값=>"J"
+	CondScrDivCode string // fid_cond_scr_div_code — 고정 "20476". 빈 값=>"20476"
+	Symbol         string // fid_input_iscd — 종목코드 (예 "005930")
+	InputDate1     string // fid_input_date_1 — 조회 기준일 (YYYYMMDD)
+}
+
+// InquireDailyCreditBalance 는 국내주식 신용잔고 일별추이 호출.
+//
+// 한투 docs: docs/api/국내주식/국내주식_신용잔고_일별추이.md
+// path: /uapi/domestic-stock/v1/quotations/daily-credit-balance (FHPST04760000)
+//
+// 쿼리 파라미터는 lowercase fid_* 형식 사용.
+func (c *Client) InquireDailyCreditBalance(ctx context.Context, params InquireDailyCreditBalanceParams) (*DailyCreditBalance, error) {
+	market := params.MarketCode
+	if market == "" {
+		market = "J"
+	}
+	scrDiv := params.CondScrDivCode
+	if scrDiv == "" {
+		scrDiv = "20476"
+	}
+
+	resp, err := c.http.Do(ctx, &httpclient.Request{
+		Method: http.MethodGet,
+		Path:   "/uapi/domestic-stock/v1/quotations/daily-credit-balance",
+		TrID:   "FHPST04760000",
+		Query: map[string]string{
+			"fid_cond_mrkt_div_code": market,
+			"fid_cond_scr_div_code":  scrDiv,
+			"fid_input_iscd":         params.Symbol,
+			"fid_input_date_1":       params.InputDate1,
+		},
+		CustType: "P",
+	})
+	if err != nil {
+		return nil, err
+	}
+	var res DailyCreditBalance
+	if err := json.Unmarshal(resp.Raw, &res); err != nil {
+		return nil, fmt.Errorf("kis: parse DailyCreditBalance: %w", err)
+	}
+	return &res, nil
+}

@@ -630,3 +630,68 @@ func TestClient_InquireCreditBalance(t *testing.T) {
 	assert.InDelta(t, 0.12, res.Output2[0].NdayVrssLoanRmndInrt, 0.001)
 	assert.InDelta(t, -0.05, res.Output2[0].NdayVrssStlnRmndInrt, 0.001)
 }
+
+func TestClient_InquireDailyCreditBalance(t *testing.T) {
+	httpmock.Activate()
+	defer httpmock.DeactivateAndReset()
+
+	var capturedQuery url.Values
+	httpmock.RegisterResponder(
+		http.MethodGet,
+		`=~/quotations/daily-credit-balance`,
+		func(req *http.Request) (*http.Response, error) {
+			capturedQuery = req.URL.Query()
+			return httpmock.NewStringResponse(http.StatusOK, loadFixtureString(t, "daily_credit_balance_success.json")), nil
+		},
+	)
+
+	c := newTestClient(t)
+	res, err := c.InquireDailyCreditBalance(context.Background(), domestic.InquireDailyCreditBalanceParams{
+		Symbol:     "005930",
+		InputDate1: "20260507",
+	})
+	require.NoError(t, err)
+	require.NotNil(t, res)
+
+	// lowercase fid_* 키 검증 (UPPERCASE 아님)
+	assert.Equal(t, "J", capturedQuery.Get("fid_cond_mrkt_div_code"))
+	assert.Equal(t, "20476", capturedQuery.Get("fid_cond_scr_div_code"))
+	assert.Equal(t, "005930", capturedQuery.Get("fid_input_iscd"))
+	assert.Equal(t, "20260507", capturedQuery.Get("fid_input_date_1"))
+	assert.Empty(t, capturedQuery.Get("FID_INPUT_ISCD"), "uppercase 키는 비어야 함")
+
+	require.Len(t, res.Output, 2)
+
+	// output[0] 핵심 필드 검증
+	assert.Equal(t, "20260507", res.Output[0].DealDate)
+	dPrpr, _ := decimal.NewFromString("75800")
+	assert.True(t, dPrpr.Equal(res.Output[0].StckPrpr))
+	assert.Equal(t, "5", res.Output[0].PrdyVrssSign)
+	dVrss, _ := decimal.NewFromString("-200")
+	assert.True(t, dVrss.Equal(res.Output[0].PrdyVrss))
+	assert.InDelta(t, -0.26, res.Output[0].PrdyCtrt, 0.001)
+	assert.Equal(t, int64(12345678), res.Output[0].AcmlVol)
+	assert.Equal(t, "20260509", res.Output[0].StlmDate)
+	assert.Equal(t, int64(123456), res.Output[0].WholLoanNewStcn)
+	assert.Equal(t, int64(98765), res.Output[0].WholLoanRdmpStcn)
+	assert.Equal(t, int64(9876543), res.Output[0].WholLoanRmndStcn)
+	assert.Equal(t, int64(9357144404), res.Output[0].WholLoanNewAmt)
+	assert.Equal(t, int64(7487234056), res.Output[0].WholLoanRdmpAmt)
+	assert.Equal(t, int64(748681660), res.Output[0].WholLoanRmndAmt)
+	assert.InDelta(t, 0.08, res.Output[0].WholLoanRmndRate, 0.001)
+	assert.InDelta(t, 98.50, res.Output[0].WholLoanGvrt, 0.001)
+	assert.Equal(t, int64(12345), res.Output[0].WholStlnNewStcn)
+	assert.Equal(t, int64(9876), res.Output[0].WholStlnRdmpStcn)
+	assert.Equal(t, int64(1234567), res.Output[0].WholStlnRmndStcn)
+	assert.Equal(t, int64(935714440), res.Output[0].WholStlnNewAmt)
+	assert.Equal(t, int64(748481660), res.Output[0].WholStlnRdmpAmt)
+	assert.Equal(t, int64(93623580), res.Output[0].WholStlnRmndAmt)
+	assert.InDelta(t, 0.01, res.Output[0].WholStlnRmndRate, 0.001)
+	assert.InDelta(t, 99.20, res.Output[0].WholStlnGvrt, 0.001)
+	dOprc, _ := decimal.NewFromString("76000")
+	assert.True(t, dOprc.Equal(res.Output[0].StckOprc))
+	dHgpr, _ := decimal.NewFromString("76200")
+	assert.True(t, dHgpr.Equal(res.Output[0].StckHgpr))
+	dLwpr, _ := decimal.NewFromString("75500")
+	assert.True(t, dLwpr.Equal(res.Output[0].StckLwpr))
+}
