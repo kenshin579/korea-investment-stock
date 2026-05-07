@@ -112,3 +112,44 @@ func TestClient_InquireComponentStockPrice(t *testing.T) {
 	assert.InDelta(t, 19.99, res.Output2[0].EtfCnfgIssuRlim, 0.001)
 	assert.Equal(t, "000660", res.Output2[1].StckShrnIscd)
 }
+
+func TestClient_InquireNavComparisonTimeTrend(t *testing.T) {
+	httpmock.Activate()
+	defer httpmock.DeactivateAndReset()
+
+	var capturedQuery url.Values
+	httpmock.RegisterResponder(
+		http.MethodGet,
+		`=~/etfetn/v1/quotations/nav-comparison-time-trend`,
+		func(req *http.Request) (*http.Response, error) {
+			capturedQuery = req.URL.Query()
+			return httpmock.NewStringResponse(200, loadFixtureString(t, "nav_comparison_time_trend_success.json")), nil
+		},
+	)
+
+	c := newTestClient(t)
+	res, err := c.InquireNavComparisonTimeTrend(context.Background(), domestic.InquireNavComparisonTimeTrendParams{
+		HourClsCode: "60",
+		Symbol:      "069500",
+	})
+	require.NoError(t, err)
+	require.NotNil(t, res)
+
+	// query param 검증
+	assert.Equal(t, "E", capturedQuery.Get("fid_cond_mrkt_div_code"))
+	assert.Equal(t, "60", capturedQuery.Get("fid_hour_cls_code"))
+	assert.Equal(t, "069500", capturedQuery.Get("fid_input_iscd"))
+
+	// output 배열 검증
+	require.Len(t, res.Output, 2)
+	assert.Equal(t, "130000", res.Output[0].BsopHour)
+	dNav, _ := decimal.NewFromString("28342")
+	assert.True(t, dNav.Equal(res.Output[0].Nav))
+	assert.InDelta(t, -0.48, res.Output[0].NavPrdyCtrt, 0.001)
+	assert.InDelta(t, -0.03, res.Output[0].Dprt, 0.001)
+	dPrpr, _ := decimal.NewFromString("28350")
+	assert.True(t, dPrpr.Equal(res.Output[0].StckPrpr))
+	assert.Equal(t, int64(9876543), res.Output[0].AcmlVol)
+	assert.Equal(t, int64(1234), res.Output[0].CntgVol)
+	assert.Equal(t, "131500", res.Output[1].BsopHour)
+}

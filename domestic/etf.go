@@ -213,3 +213,67 @@ func (c *Client) InquireComponentStockPrice(ctx context.Context, params InquireC
 	}
 	return &res, nil
 }
+
+// NavComparisonTimeTrend 는 NAV 비교 시간 추이 (FHPST02440100) 응답.
+//
+// 한투 docs: docs/api/국내주식/NAV비교시간추이.md
+// path: /uapi/etfetn/v1/quotations/nav-comparison-time-trend
+type NavComparisonTimeTrend struct {
+	Output []NavComparisonTimeTrendItem `json:"output"`
+}
+
+// NavComparisonTimeTrendItem 은 NAV 비교 시간 추이 응답의 한 행 (13 fields/item).
+type NavComparisonTimeTrendItem struct {
+	BsopHour        string          `json:"bsop_hour"`            // 영업 시간
+	Nav             decimal.Decimal `json:"nav"`                  // NAV
+	NavPrdyVrssSign string          `json:"nav_prdy_vrss_sign"`   // NAV 전일 대비 부호
+	NavPrdyVrss     decimal.Decimal `json:"nav_prdy_vrss"`        // NAV 전일 대비
+	NavPrdyCtrt     float64         `json:"nav_prdy_ctrt,string"` // NAV 전일 대비율
+	NavVrssPrpr     decimal.Decimal `json:"nav_vrss_prpr"`        // NAV 대비 현재가
+	Dprt            float64         `json:"dprt,string"`          // 괴리율
+	StckPrpr        decimal.Decimal `json:"stck_prpr"`            // 주식 현재가
+	PrdyVrss        decimal.Decimal `json:"prdy_vrss"`            // 전일 대비
+	PrdyVrssSign    string          `json:"prdy_vrss_sign"`       // 전일 대비 부호
+	PrdyCtrt        float64         `json:"prdy_ctrt,string"`     // 전일 대비율
+	AcmlVol         int64           `json:"acml_vol,string"`      // 누적 거래량
+	CntgVol         int64           `json:"cntg_vol,string"`      // 체결 거래량
+}
+
+// InquireNavComparisonTimeTrendParams 는 NAV 비교 시간 추이 조회 파라미터.
+type InquireNavComparisonTimeTrendParams struct {
+	HourClsCode string // fid_hour_cls_code — 시간 구분 코드 (예 "60") Y
+	MarketCode  string // fid_cond_mrkt_div_code — "E":ETF. 빈 값=>"E"
+	Symbol      string // fid_input_iscd — 종목코드 (예 "069500") Y
+}
+
+// InquireNavComparisonTimeTrend 는 NAV 비교 시간 추이 호출.
+//
+// 한투 docs: docs/api/국내주식/NAV비교시간추이.md
+// path: /uapi/etfetn/v1/quotations/nav-comparison-time-trend (FHPST02440100)
+func (c *Client) InquireNavComparisonTimeTrend(ctx context.Context, params InquireNavComparisonTimeTrendParams) (*NavComparisonTimeTrend, error) {
+	market := params.MarketCode
+	if market == "" {
+		market = "E"
+	}
+
+	resp, err := c.http.Do(ctx, &httpclient.Request{
+		Method: http.MethodGet,
+		Path:   "/uapi/etfetn/v1/quotations/nav-comparison-time-trend",
+		TrID:   "FHPST02440100",
+		Query: map[string]string{
+			"fid_hour_cls_code":      params.HourClsCode,
+			"fid_cond_mrkt_div_code": market,
+			"fid_input_iscd":         params.Symbol,
+		},
+		CustType: "P",
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	var res NavComparisonTimeTrend
+	if err := json.Unmarshal(resp.Raw, &res); err != nil {
+		return nil, fmt.Errorf("kis: parse NavComparisonTimeTrend: %w", err)
+	}
+	return &res, nil
+}
