@@ -218,3 +218,87 @@ func (c *Client) InquireViStatus(ctx context.Context, params InquireViStatusPara
 	}
 	return &res, nil
 }
+
+// ─── EP7: InquireCaptureUplowprice ──────────────────────────────────────────
+
+// InquireCaptureUplowpriceParams 는 상하한가 포착 조회 파라미터.
+type InquireCaptureUplowpriceParams struct {
+	MarketCode     string // FID_COND_MRKT_DIV_CODE: 기본 "J"
+	CondScrDivCode string // FID_COND_SCR_DIV_CODE: 기본 "11300" (hardcoded)
+	PrcClsCode     string // FID_PRC_CLS_CODE: 0=상한가/1=하한가
+	DivClsCode     string // FID_DIV_CLS_CODE: 0=상하한가/6=8%근접/5=10%근접/1=15%근접/2=20%근접/3=25%근접
+	Symbol         string // FID_INPUT_ISCD: 0000=전체/0001=코스피/1001=코스닥
+	TrgtClsCode    string // FID_TRGT_CLS_CODE (공란 가능)
+	TrgtExlsCode   string // FID_TRGT_EXLS_CLS_CODE (공란 가능)
+	InputPrice1    string // FID_INPUT_PRICE_1 (공란 가능)
+	InputPrice2    string // FID_INPUT_PRICE_2 (공란 가능)
+	VolCnt         string // FID_VOL_CNT (공란 가능)
+}
+
+// CaptureUplowpriceItem 은 상하한가 포착 종목별 데이터.
+type CaptureUplowpriceItem struct {
+	MkscShrnIscd    string          `json:"mksc_shrn_iscd"`
+	HtsKorIsnm      string          `json:"hts_kor_isnm"`
+	StckPrpr        decimal.Decimal `json:"stck_prpr"`
+	PrdyVrssSign    string          `json:"prdy_vrss_sign"`
+	PrdyVrss        decimal.Decimal `json:"prdy_vrss"`
+	PrdyCtrt        float64         `json:"prdy_ctrt,string"`
+	AcmlVol         int64           `json:"acml_vol,string"`
+	TotalAskpRsqn   int64           `json:"total_askp_rsqn,string"`
+	TotalBidpRsqn   int64           `json:"total_bidp_rsqn,string"`
+	AskpRsqn1       int64           `json:"askp_rsqn1,string"`
+	BidpRsqn1       int64           `json:"bidp_rsqn1,string"`
+	PrdyVol         int64           `json:"prdy_vol,string"`
+	SelnCnqn        int64           `json:"seln_cnqn,string"`
+	ShnuCnqn        int64           `json:"shnu_cnqn,string"`
+	StckLlam        decimal.Decimal `json:"stck_llam"`
+	StckMxpr        decimal.Decimal `json:"stck_mxpr"`
+	PrdyVrssVolRate float64         `json:"prdy_vrss_vol_rate,string"`
+}
+
+// InquireCaptureUplowpriceResponse 는 상하한가 포착 응답.
+type InquireCaptureUplowpriceResponse struct {
+	RtCd   string                  `json:"rt_cd"`
+	MsgCd  string                  `json:"msg_cd"`
+	Msg1   string                  `json:"msg1"`
+	Output []CaptureUplowpriceItem `json:"output"`
+}
+
+// InquireCaptureUplowprice 는 상하한가 포착 종목을 조회한다 (FHKST130000C0).
+// FID_COND_SCR_DIV_CODE 는 "11300" 으로 hardcoded.
+func (c *Client) InquireCaptureUplowprice(ctx context.Context, params InquireCaptureUplowpriceParams) (*InquireCaptureUplowpriceResponse, error) {
+	market := params.MarketCode
+	if market == "" {
+		market = "J"
+	}
+	scrDiv := params.CondScrDivCode
+	if scrDiv == "" {
+		scrDiv = "11300"
+	}
+	resp, err := c.http.Do(ctx, &httpclient.Request{
+		Method: http.MethodGet,
+		Path:   "/uapi/domestic-stock/v1/quotations/capture-uplowprice",
+		TrID:   "FHKST130000C0",
+		Query: map[string]string{
+			"FID_COND_MRKT_DIV_CODE": market,
+			"FID_COND_SCR_DIV_CODE":  scrDiv,
+			"FID_PRC_CLS_CODE":       params.PrcClsCode,
+			"FID_DIV_CLS_CODE":       params.DivClsCode,
+			"FID_INPUT_ISCD":         params.Symbol,
+			"FID_TRGT_CLS_CODE":      params.TrgtClsCode,
+			"FID_TRGT_EXLS_CLS_CODE": params.TrgtExlsCode,
+			"FID_INPUT_PRICE_1":      params.InputPrice1,
+			"FID_INPUT_PRICE_2":      params.InputPrice2,
+			"FID_VOL_CNT":            params.VolCnt,
+		},
+		CustType: "P",
+	})
+	if err != nil {
+		return nil, err
+	}
+	var res InquireCaptureUplowpriceResponse
+	if err := json.Unmarshal(resp.Raw, &res); err != nil {
+		return nil, fmt.Errorf("kis: parse InquireCaptureUplowpriceResponse: %w", err)
+	}
+	return &res, nil
+}

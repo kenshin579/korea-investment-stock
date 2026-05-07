@@ -138,3 +138,53 @@ func TestInquireViStatus(t *testing.T) {
 	assert.InDelta(t, 2.48, out.ViDmcDprt, 0.001)
 	assert.Equal(t, int64(3), out.ViCount)
 }
+
+func TestInquireCaptureUplowprice(t *testing.T) {
+	httpmock.Activate()
+	defer httpmock.DeactivateAndReset()
+
+	var capturedQuery url.Values
+	httpmock.RegisterResponder(
+		http.MethodGet,
+		`=~/quotations/capture-uplowprice`,
+		func(req *http.Request) (*http.Response, error) {
+			capturedQuery = req.URL.Query()
+			return httpmock.NewStringResponse(200, loadFixtureString(t, "capture_uplowprice_success.json")), nil
+		},
+	)
+
+	c := newTestClient(t)
+	res, err := c.InquireCaptureUplowprice(context.Background(), domestic.InquireCaptureUplowpriceParams{
+		PrcClsCode: "0",
+		DivClsCode: "0",
+		Symbol:     "0000",
+	})
+	require.NoError(t, err)
+	require.Len(t, res.Output, 2)
+
+	// wire param keys 검증
+	assert.Equal(t, "J", capturedQuery.Get("FID_COND_MRKT_DIV_CODE"))
+	assert.Equal(t, "11300", capturedQuery.Get("FID_COND_SCR_DIV_CODE"))
+	assert.Equal(t, "0", capturedQuery.Get("FID_PRC_CLS_CODE"))
+	assert.Equal(t, "0", capturedQuery.Get("FID_DIV_CLS_CODE"))
+	assert.Equal(t, "0000", capturedQuery.Get("FID_INPUT_ISCD"))
+
+	item := res.Output[0]
+	assert.Equal(t, "005930", item.MkscShrnIscd)
+	assert.Equal(t, "삼성전자", item.HtsKorIsnm)
+	assert.Equal(t, "82500", item.StckPrpr.String())
+	assert.Equal(t, "2", item.PrdyVrssSign)
+	assert.Equal(t, "500", item.PrdyVrss.String())
+	assert.InDelta(t, 0.61, item.PrdyCtrt, 0.001)
+	assert.Equal(t, int64(8750000), item.AcmlVol)
+	assert.Equal(t, int64(250000), item.TotalAskpRsqn)
+	assert.Equal(t, int64(310000), item.TotalBidpRsqn)
+	assert.Equal(t, int64(45000), item.AskpRsqn1)
+	assert.Equal(t, int64(62000), item.BidpRsqn1)
+	assert.Equal(t, int64(9200000), item.PrdyVol)
+	assert.Equal(t, int64(4200000), item.SelnCnqn)
+	assert.Equal(t, int64(4550000), item.ShnuCnqn)
+	assert.Equal(t, "57750", item.StckLlam.String())
+	assert.Equal(t, "107250", item.StckMxpr.String())
+	assert.InDelta(t, -4.89, item.PrdyVrssVolRate, 0.001)
+}
