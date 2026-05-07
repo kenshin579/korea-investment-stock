@@ -343,3 +343,46 @@ func TestClient_InquireHtsTopView(t *testing.T) {
 	assert.Equal(t, "J", res.Output1.MrktDivClsCode)
 	assert.Equal(t, "005930", res.Output1.MkscShrnIscd)
 }
+
+func TestClient_InquirePbarTraRatio(t *testing.T) {
+	httpmock.Activate()
+	defer httpmock.DeactivateAndReset()
+
+	var capturedQuery url.Values
+	httpmock.RegisterResponder(http.MethodGet, `=~/quotations/pbar-tratio`,
+		func(req *http.Request) (*http.Response, error) {
+			capturedQuery = req.URL.Query()
+			return httpmock.NewStringResponse(http.StatusOK, loadFixtureString(t, "pbar_tratio_success.json")), nil
+		})
+
+	c := newTestClient(t)
+	res, err := c.InquirePbarTraRatio(context.Background(), domestic.InquirePbarTraRatioParams{
+		Symbol:     "005930",
+		InputHour1: "153000",
+	})
+	require.NoError(t, err)
+	require.NotNil(t, res)
+
+	assert.Equal(t, "J", capturedQuery.Get("FID_COND_MRKT_DIV_CODE"))
+	assert.Equal(t, "11130", capturedQuery.Get("FID_COND_SCR_DIV_CODE"))
+	assert.Equal(t, "005930", capturedQuery.Get("FID_INPUT_ISCD"))
+	assert.Equal(t, "153000", capturedQuery.Get("FID_INPUT_HOUR_1"))
+
+	assert.Equal(t, "KOSPI", res.Output1.RprsMrktKorName)
+	assert.Equal(t, "005930", res.Output1.StckShrnIscd)
+	assert.Equal(t, "삼성전자", res.Output1.HtsKorIsnm)
+	wantPrpr, _ := decimal.NewFromString("82500")
+	assert.True(t, wantPrpr.Equal(res.Output1.StckPrpr))
+	assert.Equal(t, int64(12500000), res.Output1.AcmlVol)
+	assert.Equal(t, int64(11000000), res.Output1.PrdyVol)
+	assert.Equal(t, int64(5969782550), res.Output1.LstnStcn)
+	wantWavg, _ := decimal.NewFromString("82350")
+	assert.True(t, wantWavg.Equal(res.Output1.WghnAvrgStckPrc))
+
+	require.Len(t, res.Output2, 2)
+	assert.Equal(t, "1", res.Output2[0].DataRank)
+	wantItemPrpr, _ := decimal.NewFromString("82500")
+	assert.True(t, wantItemPrpr.Equal(res.Output2[0].StckPrpr))
+	assert.Equal(t, int64(1500000), res.Output2[0].CntgVol)
+	assert.InDelta(t, 12.00, res.Output2[0].AcmlVolRlim, 0.001)
+}

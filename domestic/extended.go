@@ -826,3 +826,81 @@ func (c *Client) InquireHtsTopView(ctx context.Context, _ InquireHtsTopViewParam
 	}
 	return &res, nil
 }
+
+// PbarTraRatio 는 국내주식 매물대/거래비중 (FHPST01130000) 응답.
+//
+// 한투 docs: docs/api/국내주식/국내주식_매물대_거래비중.md
+// path: /uapi/domestic-stock/v1/quotations/pbar-tratio
+//
+// dual output: output1 (단건 종합 11 필드) + output2 (가격대별 array, 4 필드/item).
+type PbarTraRatio struct {
+	Output1 PbarTraRatioSummary `json:"output1"`
+	Output2 []PbarTraRatioItem  `json:"output2"`
+}
+
+// PbarTraRatioSummary 는 매물대 거래비중 응답 종합 (output1) — 11 필드.
+type PbarTraRatioSummary struct {
+	RprsMrktKorName string          `json:"rprs_mrkt_kor_name"` // 대표시장한글명
+	StckShrnIscd    string          `json:"stck_shrn_iscd"`     // 주식단축종목코드
+	HtsKorIsnm      string          `json:"hts_kor_isnm"`       // HTS한글종목명
+	StckPrpr        decimal.Decimal `json:"stck_prpr"`          // 주식현재가
+	PrdyVrssSign    string          `json:"prdy_vrss_sign"`     // 전일대비부호
+	PrdyVrss        decimal.Decimal `json:"prdy_vrss"`          // 전일대비
+	PrdyCtrt        float64         `json:"prdy_ctrt,string"`   // 전일대비율
+	AcmlVol         int64           `json:"acml_vol,string"`    // 누적거래량
+	PrdyVol         int64           `json:"prdy_vol,string"`    // 전일거래량
+	WghnAvrgStckPrc decimal.Decimal `json:"wghn_avrg_stck_prc"` // 가중평균주식가격
+	LstnStcn        int64           `json:"lstn_stcn,string"`   // 상장주수
+}
+
+// PbarTraRatioItem 은 매물대 거래비중 output2 의 한 행 (가격대별, 4 필드).
+type PbarTraRatioItem struct {
+	DataRank    string          `json:"data_rank"`            // 데이터순위
+	StckPrpr    decimal.Decimal `json:"stck_prpr"`            // 주식현재가 (가격대)
+	CntgVol     int64           `json:"cntg_vol,string"`      // 체결거래량
+	AcmlVolRlim float64         `json:"acml_vol_rlim,string"` // 누적거래량비중
+}
+
+// InquirePbarTraRatioParams 는 매물대 거래비중 조회 파라미터.
+type InquirePbarTraRatioParams struct {
+	MarketCode     string // FID_COND_MRKT_DIV_CODE — default "J"
+	CondScrDivCode string // FID_COND_SCR_DIV_CODE — default "11130"
+	Symbol         string // FID_INPUT_ISCD — 종목코드
+	InputHour1     string // FID_INPUT_HOUR_1 — 입력시간1
+}
+
+// InquirePbarTraRatio 는 국내주식 매물대 거래비중 호출.
+//
+// 한투 docs: docs/api/국내주식/국내주식_매물대_거래비중.md
+// path: /uapi/domestic-stock/v1/quotations/pbar-tratio (FHPST01130000)
+func (c *Client) InquirePbarTraRatio(ctx context.Context, params InquirePbarTraRatioParams) (*PbarTraRatio, error) {
+	market := params.MarketCode
+	if market == "" {
+		market = "J"
+	}
+	scrDiv := params.CondScrDivCode
+	if scrDiv == "" {
+		scrDiv = "11130"
+	}
+
+	resp, err := c.http.Do(ctx, &httpclient.Request{
+		Method: http.MethodGet,
+		Path:   "/uapi/domestic-stock/v1/quotations/pbar-tratio",
+		TrID:   "FHPST01130000",
+		Query: map[string]string{
+			"FID_COND_MRKT_DIV_CODE": market,
+			"FID_COND_SCR_DIV_CODE":  scrDiv,
+			"FID_INPUT_ISCD":         params.Symbol,
+			"FID_INPUT_HOUR_1":       params.InputHour1,
+		},
+		CustType: "P",
+	})
+	if err != nil {
+		return nil, err
+	}
+	var res PbarTraRatio
+	if err := json.Unmarshal(resp.Raw, &res); err != nil {
+		return nil, fmt.Errorf("kis: parse PbarTraRatio: %w", err)
+	}
+	return &res, nil
+}

@@ -3,30 +3,30 @@
   "msg_cd": "MCA00000",
   "msg1": "정상처리 되었습니다.",
   "output1": {
+    "rprs_mrkt_kor_name": "KOSPI",
+    "stck_shrn_iscd": "005930",
+    "hts_kor_isnm": "삼성전자",
     "stck_prpr": "82500",
-    "prdy_vrss": "500",
     "prdy_vrss_sign": "2",
+    "prdy_vrss": "500",
     "prdy_ctrt": "0.61",
     "acml_vol": "12500000",
-    "total_askp_rsqn": "3500000",
-    "total_bidp_rsqn": "4200000",
-    "askp": "82600",
-    "bidp": "82400",
-    "antc_cnpr": "82500",
-    "antc_cntg_vrss": "500"
+    "prdy_vol": "11000000",
+    "wghn_avrg_stck_prc": "82350",
+    "lstn_stcn": "5969782550"
   },
   "output2": [
     {
-      "stck_bsop_date": "20260506",
-      "acml_vol": "12500000",
-      "seln_rsqn": "3500000",
-      "shnu_rsqn": "4200000"
+      "data_rank": "1",
+      "stck_prpr": "82500",
+      "cntg_vol": "1500000",
+      "acml_vol_rlim": "12.00"
     },
     {
-      "stck_bsop_date": "20260505",
-      "acml_vol": "11800000",
-      "seln_rsqn": "3200000",
-      "shnu_rsqn": "4000000"
+      "data_rank": "2",
+      "stck_prpr": "82400",
+      "cntg_vol": "1200000",
+      "acml_vol_rlim": "9.60"
     }
   ]
 }
