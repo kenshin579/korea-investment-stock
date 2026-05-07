@@ -112,5 +112,22 @@
 //	EP6 whol_shun_vol_rate KIS wire typo (shun ≠ shnu) — 그대로 보존
 //	EP7 zero params endpoint
 //
+// Phase 4.2 — 시장운영/특수상태 (v1.13.0)
+//
+//	EP4  InquireExpClosingPrice    — 장마감 예상체결가   FHKST117300C0
+//	EP5  InquireChkHoliday         — 휴장일 조회         CTCA0903R
+//	EP6  InquireViStatus           — 변동성완화장치 현황 FHPST01390000
+//	EP7  InquireCaptureUplowprice  — 상하한가 포착       FHKST130000C0
+//
+// Anomalies (Phase 4.2):
+//
+//	EP4 output1 (not output) array, FID_INPUT_ISCD=시장구분코드 (종목코드 아님)
+//	EP4 FID_COND_SCR_DIV_CODE="11173" hardcoded
+//	EP5 non-FID UPPERCASE params (BASS_DT/CTX_AREA_NK/CTX_AREA_FK), CTCA prefix TR_ID
+//	EP5 단시간 다수 호출 자제 (1일 1회 권장)
+//	EP6 FID_COND_SCR_DIV_CODE="20139" hardcoded, output {} 단일 Object (runtime 배열 가능)
+//	EP7 FID_COND_SCR_DIV_CODE="11300" hardcoded
+//	WebSocket 제외: H0STMKO0/H0NXMKO0/H0UNMKO0 (장운영정보 KRX/NXT/통합) → Phase 5 이연
+//
 // 사용자는 root kis.Client 의 Domestic 필드로 접근.
 package domestic
