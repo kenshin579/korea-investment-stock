@@ -86,5 +86,31 @@
 //	EP8/EP9 prdy_ctrt short form (NOT bstp_nmix_prdy_ctrt)
 //	EP9 KIS docs Korean labels scrambled — field names are correct
 //
+// Phase 4.1 — 종목정보/분석 (v1.12.0)
+//
+// Opinion 3:
+//
+//	EP1  InquireInvestOpinion    — 종목투자의견        FHKST663300C0
+//	EP2  InquireInvestOpbysec    — 증권사별투자의견    FHKST663400C0
+//	EP3  InquireEstimatePerform  — 종목추정실적        HHKST668300C0
+//
+// Extended 7:
+//
+//	EP4  InquireVolumePower      — 체결강도상위        FHPST01680000
+//	EP5  InquireBulkTransNum     — 대량체결건수상위    FHKST190900C0
+//	EP6  InquireTradprtByamt     — 체결금액별매매비중  FHKST111900C0
+//	EP7  InquireHtsTopView       — HTS조회상위20종목   HHMCM000100C0
+//	EP8  InquirePbarTraRatio     — 매물대거래비중      FHPST01130000
+//	EP9  InquireExpPriceTrend    — 예상체결가추이      FHPST01810000
+//	EP10 InquireExpTransUpdown   — 예상체결상승/하락상위 FHPST01820000
+//
+// Anomalies (Phase 4.1):
+//
+//	EP3 quad-output (output1/2/3/4), SHT_CD non-FID param name, KIS docs 오표기
+//	EP4/EP5/EP9/EP10 lowercase fid_* query params
+//	EP5 mksc_shrn_iscd (시장구분 포함) ≠ stck_shrn_iscd
+//	EP6 whol_shun_vol_rate KIS wire typo (shun ≠ shnu) — 그대로 보존
+//	EP7 zero params endpoint
+//
 // 사용자는 root kis.Client 의 Domestic 필드로 접근.
 package domestic
