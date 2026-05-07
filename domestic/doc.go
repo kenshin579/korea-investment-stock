@@ -153,5 +153,34 @@
 //	EP8 output 단일 객체 (배열 아님), UPPERCASE FID_ params
 //	EP13 KOFIA 데이터: 고객예탁금/신용융자/미수금/펀드/담보대출 (단위: 억원/백만원)
 //
+// Phase 5 — ETF/NAV/관심종목 (v1.15.0)
+//
+// ETF/NAV 5:
+//
+//	EP1  InquireEtfPrice                  — ETF/ETN 현재가           FHPST02400000
+//	EP2  InquireComponentStockPrice       — ETF 구성종목 시세         FHKST121600C0
+//	EP3  InquireNavComparisonTimeTrend    — NAV 비교 시간 추이        FHPST02440100
+//	EP4  InquireNavComparisonDailyTrend   — NAV 비교 일별 추이        FHPST02440200
+//	EP5  InquireNavComparisonTrend        — NAV 비교 추이             FHPST02440000
+//
+// 관심종목 4:
+//
+//	EP6  InquireIntstockMultprice          — 관심종목 멀티 시세        FHKST11300006
+//	EP7  InquireIntstockStocklistByGroup   — 관심종목 그룹별 종목조회  HHKCM113004C6
+//	EP8  InquireIntstockGrouplist          — 관심종목 그룹조회         HHKCM113004C7
+//	EP9  InquireTopInterestStock           — 관심종목등록 상위         FHPST01800000
+//
+// Anomalies (Phase 5):
+//
+//	WebSocket EP3 제외: 장운영정보 (H0STMKO0/H0NXMKO0/H0UNMKO0) Phase 5+ 이연
+//	EP1 name: InquireEtfPrice (InquirePrice 와 충돌 방지)
+//	ETF base path: /uapi/etfetn/v1/ (일반 /uapi/domestic-stock/v1/ 아님)
+//	Mixed FID casing: EP1/EP3/EP4 lowercase fid_*; EP2/EP5 UPPERCASE FID_; 관심종목 모두 UPPERCASE
+//	EP2 docs corrupt: KIS docs output2 table 깨짐 → Python dataclass 기준 15 fields 복원
+//	EP6 batch single object: output 단일 객체 반환 (마지막 종목 데이터만 포함 가능)
+//	EP7/EP8 USER_ID: HTS 로그인 ID 필수 (API key 와 별개)
+//	EP8 output2-only: output1 없이 output2 단일 객체만 반환
+//	EP9 fid_cond_scr_div_code="20180" 고정
+//
 // 사용자는 root kis.Client 의 Domestic 필드로 접근.
 package domestic

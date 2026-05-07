@@ -1,5 +1,33 @@
 # CHANGELOG
 
+## [1.15.0] - 2026-05-07
+
+### Added — Phase 5 (ETF/NAV/관심종목 9 메서드)
+
+- `Domestic.InquireEtfPrice` — ETF/ETN 현재가 (FHPST02400000) — output 단일 객체 54 fields
+- `Domestic.InquireComponentStockPrice` — ETF 구성종목 시세 (FHKST121600C0) — output1 단일 16 fields + output2 배열 15 fields/item
+- `Domestic.InquireNavComparisonTimeTrend` — NAV 비교 시간 추이 (FHPST02440100) — output 배열 13 fields/item
+- `Domestic.InquireNavComparisonDailyTrend` — NAV 비교 일별 추이 (FHPST02440200) — output 배열 13 fields/item
+- `Domestic.InquireNavComparisonTrend` — NAV 비교 추이 (FHPST02440000) — output1 단일 12 fields + output2 단일 8 fields
+- `Domestic.InquireIntstockMultprice` — 관심종목 멀티 시세 (FHKST11300006) — output 단일 객체 29 fields; 최대 30종목 batch
+- `Domestic.InquireIntstockStocklistByGroup` — 관심종목 그룹별 종목조회 (HHKCM113004C6) — output1 단일 2 fields + output2 배열 10 fields/item
+- `Domestic.InquireIntstockGrouplist` — 관심종목 그룹조회 (HHKCM113004C7) — output2 단일 6 fields
+- `Domestic.InquireTopInterestStock` — 관심종목등록 상위 (FHPST01800000) — output 배열 13 fields/item
+- examples: `domestic_etf_watchlist`
+
+### Notes
+
+- **WebSocket EP3 제외** — 장운영정보 WebSocket (H0STMKO0/H0NXMKO0/H0UNMKO0) Phase 5+ 이연 유지.
+- **EP1 name collision rename** — `InquireEtfPrice` (ETF 전용) vs `InquirePrice` (일반주식) 충돌 방지 위해 명시적 명명.
+- **ETF base path** — ETF/NAV 5 메서드: `/uapi/etfetn/v1/` (일반 `/uapi/domestic-stock/v1/` 아님).
+- **Mixed FID casing** — EP1/EP3/EP4 lowercase `fid_*`; EP2 UPPERCASE `FID_`; EP5 UPPERCASE `FID_`; 관심종목 EP6-EP10 모두 UPPERCASE.
+- **EP2 docs corrupt** — KIS docs output2 table 깨짐 → Python dataclass 기준 15 fields 복원.
+- **EP7 batch single object** — `InquireIntstockMultprice` 는 배열이 아닌 단일 output 반환 (마지막 종목 데이터만 포함 가능).
+- **EP8/EP9 USER_ID** — `InquireIntstockStocklistByGroup`/`InquireIntstockGrouplist` 는 HTS 로그인 ID 필수 (API key 와 별개).
+- **EP9 output2-only** — `InquireIntstockGrouplist` 는 output1 없이 output2 단일 객체만 반환.
+- **EP10 hardcoded scr_div** — `InquireTopInterestStock` 는 `fid_cond_scr_div_code="20180"` 고정 (사용자 변경 불가).
+- 누적 106 → 115 메서드.
+
 ## [1.14.0] - 2026-05-07
 
 ### Added — Phase 4.3 (국내주식 ranking/흐름 13 메서드)
