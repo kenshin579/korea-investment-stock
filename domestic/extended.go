@@ -2129,3 +2129,68 @@ func (c *Client) InquireProfitAssetIndex(ctx context.Context, params InquireProf
 	}
 	return &res, nil
 }
+
+// Mktfunds 는 국내주식 증시자금 종합 (FHKST649100C0) 응답.
+//
+// 한투 docs: docs/api/국내주식/국내주식_증시자금_종합.md
+// path: /uapi/domestic-stock/v1/quotations/mktfunds
+//
+// 일별 증시자금 현황 (KOFIA 데이터): 고객예탁금·신용융자잔고·미수금·펀드·담보대출 등.
+type Mktfunds struct {
+	Output []MktfundsItem `json:"output"`
+}
+
+// MktfundsItem 은 증시자금 종합 응답의 한 행 (영업일 1건).
+type MktfundsItem struct {
+	BsopDate            string          `json:"bsop_date"`                      // 영업일자
+	BstpNmixPrpr        decimal.Decimal `json:"bstp_nmix_prpr"`                 // 업종지수현재가
+	BstpNmixPrdyVrss    decimal.Decimal `json:"bstp_nmix_prdy_vrss"`            // 업종지수전일대비
+	PrdyVrssSign        string          `json:"prdy_vrss_sign"`                 // 전일 대비 부호
+	PrdyCtrt            float64         `json:"prdy_ctrt,string"`               // 전일 대비율
+	HtsAvls             int64           `json:"hts_avls,string"`                // HTS 시가총액 (백만원)
+	CustDpmnAmt         int64           `json:"cust_dpmn_amt,string"`           // 고객예탁금금액 (억원)
+	CustDpmnAmtPrdyVrss int64           `json:"cust_dpmn_amt_prdy_vrss,string"` // 고객예탁금금액전일대비 (억원)
+	AmtTnrt             float64         `json:"amt_tnrt,string"`                // 금액회전율
+	UnclAmt             int64           `json:"uncl_amt,string"`                // 미수금액 (억원)
+	CrdtLoanRmnd        int64           `json:"crdt_loan_rmnd,string"`          // 신용융자잔고 (억원)
+	FutsTfamAmt         int64           `json:"futs_tfam_amt,string"`           // 선물예수금 (억원)
+	SttpAmt             int64           `json:"sttp_amt,string"`                // 주식형 (억원)
+	MxtpAmt             int64           `json:"mxtp_amt,string"`                // 혼합형 (억원)
+	BntpAmt             int64           `json:"bntp_amt,string"`                // 채권형 (억원)
+	MmfAmt              int64           `json:"mmf_amt,string"`                 // MMF (억원)
+	SecuLendAmt         int64           `json:"secu_lend_amt,string"`           // 담보대출잔고 (억원)
+}
+
+// InquireMktfundsParams 는 증시자금 종합 조회 파라미터.
+//
+// 파라미터는 UPPERCASE FID_ 형식 사용.
+type InquireMktfundsParams struct {
+	InputDate1 string // FID_INPUT_DATE_1 — 조회 기준일 (YYYYMMDD, 필수)
+}
+
+// InquireMktfunds 는 국내주식 증시자금 종합 호출.
+//
+// 한투 docs: docs/api/국내주식/국내주식_증시자금_종합.md
+// path: /uapi/domestic-stock/v1/quotations/mktfunds (FHKST649100C0)
+//
+// 쿼리 파라미터는 UPPERCASE FID_ 형식 사용.
+// KOFIA 제공 데이터: 고객예탁금·신용융자잔고·미수금·펀드순자산·담보대출잔고 (단위: 억원/백만원).
+func (c *Client) InquireMktfunds(ctx context.Context, params InquireMktfundsParams) (*Mktfunds, error) {
+	resp, err := c.http.Do(ctx, &httpclient.Request{
+		Method: http.MethodGet,
+		Path:   "/uapi/domestic-stock/v1/quotations/mktfunds",
+		TrID:   "FHKST649100C0",
+		Query: map[string]string{
+			"FID_INPUT_DATE_1": params.InputDate1,
+		},
+		CustType: "P",
+	})
+	if err != nil {
+		return nil, err
+	}
+	var res Mktfunds
+	if err := json.Unmarshal(resp.Raw, &res); err != nil {
+		return nil, fmt.Errorf("kis: parse Mktfunds: %w", err)
+	}
+	return &res, nil
+}

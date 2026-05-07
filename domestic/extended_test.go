@@ -1146,3 +1146,52 @@ func TestClient_InquireProfitAssetIndex(t *testing.T) {
 	assert.Equal(t, "01", res.Output[0].StacMonthClsCode)
 	assert.Equal(t, "1", res.Output[0].IqryCsnu)
 }
+
+func TestClient_InquireMktfunds(t *testing.T) {
+	httpmock.Activate()
+	defer httpmock.DeactivateAndReset()
+
+	var capturedQuery url.Values
+	httpmock.RegisterResponder(
+		http.MethodGet,
+		`=~/quotations/mktfunds`,
+		func(req *http.Request) (*http.Response, error) {
+			capturedQuery = req.URL.Query()
+			return httpmock.NewStringResponse(http.StatusOK, loadFixtureString(t, "mktfunds_success.json")), nil
+		},
+	)
+
+	c := newTestClient(t)
+	res, err := c.InquireMktfunds(context.Background(), domestic.InquireMktfundsParams{
+		InputDate1: "20260507",
+	})
+	require.NoError(t, err)
+	require.NotNil(t, res)
+
+	// UPPERCASE FID_ 키 검증
+	assert.Equal(t, "20260507", capturedQuery.Get("FID_INPUT_DATE_1"))
+	assert.Empty(t, capturedQuery.Get("fid_input_date_1"), "uppercase 키 사용 확인")
+
+	require.Len(t, res.Output, 2)
+
+	// output[0] 핵심 필드 검증 (17 fields)
+	assert.Equal(t, "20260507", res.Output[0].BsopDate)
+	dNmixPrpr, _ := decimal.NewFromString("2650.45")
+	assert.True(t, dNmixPrpr.Equal(res.Output[0].BstpNmixPrpr))
+	dNmixVrss, _ := decimal.NewFromString("-12.34")
+	assert.True(t, dNmixVrss.Equal(res.Output[0].BstpNmixPrdyVrss))
+	assert.Equal(t, "5", res.Output[0].PrdyVrssSign)
+	assert.InDelta(t, -0.46, res.Output[0].PrdyCtrt, 0.001)
+	assert.Equal(t, int64(1987654321098), res.Output[0].HtsAvls)
+	assert.Equal(t, int64(345678901234), res.Output[0].CustDpmnAmt)
+	assert.Equal(t, int64(1234567890), res.Output[0].CustDpmnAmtPrdyVrss)
+	assert.InDelta(t, 0.87, res.Output[0].AmtTnrt, 0.001)
+	assert.Equal(t, int64(23456789012), res.Output[0].UnclAmt)
+	assert.Equal(t, int64(12345678901), res.Output[0].CrdtLoanRmnd)
+	assert.Equal(t, int64(3456789012), res.Output[0].FutsTfamAmt)
+	assert.Equal(t, int64(2345678901), res.Output[0].SttpAmt)
+	assert.Equal(t, int64(1234567890), res.Output[0].MxtpAmt)
+	assert.Equal(t, int64(987654321), res.Output[0].BntpAmt)
+	assert.Equal(t, int64(5678901234), res.Output[0].MmfAmt)
+	assert.Equal(t, int64(876543210), res.Output[0].SecuLendAmt)
+}
