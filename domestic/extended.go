@@ -1851,3 +1851,94 @@ func (c *Client) InquireMarketValue(ctx context.Context, params InquireMarketVal
 	}
 	return &res, nil
 }
+
+// Disparity 는 국내주식 이격도 순위 (FHPST01780000) 응답.
+//
+// 한투 docs: docs/api/국내주식/국내주식_이격도_순위.md
+// path: /uapi/domestic-stock/v1/ranking/disparity
+//
+// 이동평균선(5/10/20/60/120일)과 현재가의 이격도 순위.
+type Disparity struct {
+	Output []DisparityItem `json:"output"`
+}
+
+// DisparityItem 은 이격도 순위 응답의 한 행.
+type DisparityItem struct {
+	MkscShrnIscd string          `json:"mksc_shrn_iscd"`   // 유가증권 단축 종목코드
+	DataRank     string          `json:"data_rank"`        // 데이터 순위
+	HtsKorIsnm   string          `json:"hts_kor_isnm"`     // HTS 한글 종목명
+	StckPrpr     decimal.Decimal `json:"stck_prpr"`        // 주식 현재가
+	PrdyVrss     decimal.Decimal `json:"prdy_vrss"`        // 전일 대비
+	PrdyCtrt     float64         `json:"prdy_ctrt,string"` // 전일 대비율
+	PrdyVrssSign string          `json:"prdy_vrss_sign"`   // 전일 대비 부호
+	AcmlVol      int64           `json:"acml_vol,string"`  // 누적 거래량
+	D5Dsrt       float64         `json:"d5_dsrt,string"`   // 5일 이격도
+	D10Dsrt      float64         `json:"d10_dsrt,string"`  // 10일 이격도
+	D20Dsrt      float64         `json:"d20_dsrt,string"`  // 20일 이격도
+	D60Dsrt      float64         `json:"d60_dsrt,string"`  // 60일 이격도
+	D120Dsrt     float64         `json:"d120_dsrt,string"` // 120일 이격도
+}
+
+// InquireDisparityParams 는 이격도 순위 조회 파라미터.
+//
+// FID_COND_SCR_DIV_CODE = "20178" 고정.
+// HourClsCode: 5/10/20/60/120 (일수).
+type InquireDisparityParams struct {
+	InputPrice2    string // fid_input_price_2 — 입력 가격2
+	MarketCode     string // fid_cond_mrkt_div_code — "J":KRX. 빈 값=>"J"
+	CondScrDivCode string // fid_cond_scr_div_code — 빈 값=>"20178"
+	DivClsCode     string // fid_div_cls_code — 구분 코드
+	RankSortCode   string // fid_rank_sort_cls_code — 정렬 구분 코드
+	HourClsCode    string // fid_hour_cls_code — 5/10/20/60/120일
+	Symbol         string // fid_input_iscd — 종목코드 (0000:전체)
+	TrgtClsCode    string // fid_trgt_cls_code — 대상 구분 코드
+	TrgtExlsCode   string // fid_trgt_exls_cls_code — 대상 제외 구분 코드
+	InputPrice1    string // fid_input_price_1 — 입력 가격1
+	VolCnt         string // fid_vol_cnt — 조회 건수
+}
+
+// InquireDisparity 는 국내주식 이격도 순위 호출.
+//
+// 한투 docs: docs/api/국내주식/국내주식_이격도_순위.md
+// path: /uapi/domestic-stock/v1/ranking/disparity (FHPST01780000)
+//
+// 쿼리 파라미터는 lowercase fid_* 형식 사용.
+// HourClsCode: 5/10/20/60/120 (이동평균일수).
+func (c *Client) InquireDisparity(ctx context.Context, params InquireDisparityParams) (*Disparity, error) {
+	market := params.MarketCode
+	if market == "" {
+		market = "J"
+	}
+	scrDiv := params.CondScrDivCode
+	if scrDiv == "" {
+		scrDiv = "20178"
+	}
+
+	resp, err := c.http.Do(ctx, &httpclient.Request{
+		Method: http.MethodGet,
+		Path:   "/uapi/domestic-stock/v1/ranking/disparity",
+		TrID:   "FHPST01780000",
+		Query: map[string]string{
+			"fid_input_price_2":      params.InputPrice2,
+			"fid_cond_mrkt_div_code": market,
+			"fid_cond_scr_div_code":  scrDiv,
+			"fid_div_cls_code":       params.DivClsCode,
+			"fid_rank_sort_cls_code": params.RankSortCode,
+			"fid_hour_cls_code":      params.HourClsCode,
+			"fid_input_iscd":         params.Symbol,
+			"fid_trgt_cls_code":      params.TrgtClsCode,
+			"fid_trgt_exls_cls_code": params.TrgtExlsCode,
+			"fid_input_price_1":      params.InputPrice1,
+			"fid_vol_cnt":            params.VolCnt,
+		},
+		CustType: "P",
+	})
+	if err != nil {
+		return nil, err
+	}
+	var res Disparity
+	if err := json.Unmarshal(resp.Raw, &res); err != nil {
+		return nil, fmt.Errorf("kis: parse Disparity: %w", err)
+	}
+	return &res, nil
+}

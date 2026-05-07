@@ -972,3 +972,57 @@ func TestClient_InquireMarketValue(t *testing.T) {
 	assert.Equal(t, "01", res.Output[0].StacMonthClsCode)
 	assert.Equal(t, "1", res.Output[0].IqryCsnu)
 }
+
+func TestClient_InquireDisparity(t *testing.T) {
+	httpmock.Activate()
+	defer httpmock.DeactivateAndReset()
+
+	var capturedQuery url.Values
+	httpmock.RegisterResponder(
+		http.MethodGet,
+		`=~/ranking/disparity`,
+		func(req *http.Request) (*http.Response, error) {
+			capturedQuery = req.URL.Query()
+			return httpmock.NewStringResponse(http.StatusOK, loadFixtureString(t, "disparity_success.json")), nil
+		},
+	)
+
+	c := newTestClient(t)
+	res, err := c.InquireDisparity(context.Background(), domestic.InquireDisparityParams{
+		Symbol:       "0000",
+		HourClsCode:  "20",
+		DivClsCode:   "0",
+		RankSortCode: "0",
+		TrgtClsCode:  "111111111",
+		TrgtExlsCode: "000000000",
+	})
+	require.NoError(t, err)
+	require.NotNil(t, res)
+
+	// lowercase fid_* 키 검증
+	assert.Equal(t, "J", capturedQuery.Get("fid_cond_mrkt_div_code"))
+	assert.Equal(t, "20178", capturedQuery.Get("fid_cond_scr_div_code"))
+	assert.Equal(t, "0000", capturedQuery.Get("fid_input_iscd"))
+	assert.Equal(t, "20", capturedQuery.Get("fid_hour_cls_code"))
+	assert.Equal(t, "0", capturedQuery.Get("fid_div_cls_code"))
+	assert.Empty(t, capturedQuery.Get("FID_COND_MRKT_DIV_CODE"), "uppercase 키는 비어야 함")
+
+	require.Len(t, res.Output, 2)
+
+	// output[0] 핵심 필드 검증 (13 fields)
+	assert.Equal(t, "005930", res.Output[0].MkscShrnIscd)
+	assert.Equal(t, "1", res.Output[0].DataRank)
+	assert.Equal(t, "삼성전자", res.Output[0].HtsKorIsnm)
+	dPrpr, _ := decimal.NewFromString("75800")
+	assert.True(t, dPrpr.Equal(res.Output[0].StckPrpr))
+	dVrss, _ := decimal.NewFromString("-200")
+	assert.True(t, dVrss.Equal(res.Output[0].PrdyVrss))
+	assert.InDelta(t, -0.26, res.Output[0].PrdyCtrt, 0.001)
+	assert.Equal(t, "5", res.Output[0].PrdyVrssSign)
+	assert.Equal(t, int64(12345678), res.Output[0].AcmlVol)
+	assert.InDelta(t, 101.23, res.Output[0].D5Dsrt, 0.001)
+	assert.InDelta(t, 99.87, res.Output[0].D10Dsrt, 0.001)
+	assert.InDelta(t, 98.54, res.Output[0].D20Dsrt, 0.001)
+	assert.InDelta(t, 97.32, res.Output[0].D60Dsrt, 0.001)
+	assert.InDelta(t, 96.10, res.Output[0].D120Dsrt, 0.001)
+}
