@@ -1084,3 +1084,65 @@ func TestClient_InquirePreferDisparateRatio(t *testing.T) {
 	assert.InDelta(t, -0.26, res.Output[0].PrdyCtrt, 0.001)
 	assert.InDelta(t, -0.44, res.Output[0].PrstPrdyCtrt, 0.001)
 }
+
+func TestClient_InquireProfitAssetIndex(t *testing.T) {
+	httpmock.Activate()
+	defer httpmock.DeactivateAndReset()
+
+	var capturedQuery url.Values
+	httpmock.RegisterResponder(
+		http.MethodGet,
+		`=~/ranking/profit-asset-index`,
+		func(req *http.Request) (*http.Response, error) {
+			capturedQuery = req.URL.Query()
+			return httpmock.NewStringResponse(http.StatusOK, loadFixtureString(t, "profit_asset_index_success.json")), nil
+		},
+	)
+
+	c := newTestClient(t)
+	res, err := c.InquireProfitAssetIndex(context.Background(), domestic.InquireProfitAssetIndexParams{
+		Symbol:       "0000",
+		DivClsCode:   "0",
+		TrgtClsCode:  "111111111",
+		TrgtExlsCode: "000000000",
+		RankSortCode: "0",
+		BlngClsCode:  "0",
+		InputOption1: "2025",
+		InputOption2: "1",
+	})
+	require.NoError(t, err)
+	require.NotNil(t, res)
+
+	// lowercase fid_* 키 검증
+	assert.Equal(t, "J", capturedQuery.Get("fid_cond_mrkt_div_code"))
+	assert.Equal(t, "20173", capturedQuery.Get("fid_cond_scr_div_code"))
+	assert.Equal(t, "0000", capturedQuery.Get("fid_input_iscd"))
+	assert.Equal(t, "0", capturedQuery.Get("fid_div_cls_code"))
+	assert.Equal(t, "2025", capturedQuery.Get("fid_input_option_1"))
+	assert.Equal(t, "1", capturedQuery.Get("fid_input_option_2"))
+	assert.Empty(t, capturedQuery.Get("FID_COND_MRKT_DIV_CODE"), "uppercase 키는 비어야 함")
+
+	require.Len(t, res.Output, 2)
+
+	// output[0] 핵심 필드 검증 (18 fields)
+	assert.Equal(t, "1", res.Output[0].DataRank)
+	assert.Equal(t, "삼성전자", res.Output[0].HtsKorIsnm)
+	assert.Equal(t, "5", res.Output[0].PrdyVrssSign)
+	assert.Equal(t, "005930", res.Output[0].MkscShrnIscd)
+	dPrpr, _ := decimal.NewFromString("75800")
+	assert.True(t, dPrpr.Equal(res.Output[0].StckPrpr))
+	dVrss, _ := decimal.NewFromString("-200")
+	assert.True(t, dVrss.Equal(res.Output[0].PrdyVrss))
+	assert.InDelta(t, -0.26, res.Output[0].PrdyCtrt, 0.001)
+	assert.Equal(t, int64(12345678), res.Output[0].AcmlVol)
+	assert.Equal(t, int64(12345678901), res.Output[0].SaleTotlPrfi)
+	assert.Equal(t, int64(9876543210), res.Output[0].BsopPrti)
+	assert.Equal(t, int64(9876543210), res.Output[0].OpPrfi)
+	assert.Equal(t, int64(8765432109), res.Output[0].ThtrNtin)
+	assert.Equal(t, int64(987654321098), res.Output[0].TotalAset)
+	assert.Equal(t, int64(345678901234), res.Output[0].TotalLblt)
+	assert.Equal(t, int64(641975419864), res.Output[0].TotalCptl)
+	assert.Equal(t, "12", res.Output[0].StacMonth)
+	assert.Equal(t, "01", res.Output[0].StacMonthClsCode)
+	assert.Equal(t, "1", res.Output[0].IqryCsnu)
+}

@@ -2031,3 +2031,101 @@ func (c *Client) InquirePreferDisparateRatio(ctx context.Context, params Inquire
 	}
 	return &res, nil
 }
+
+// ProfitAssetIndex 는 국내주식 수익자산지표 순위 (FHPST01730000) 응답.
+//
+// 한투 docs: docs/api/국내주식/국내주식_수익자산지표_순위.md
+// path: /uapi/domestic-stock/v1/ranking/profit-asset-index
+//
+// 매출이익·영업이익·경상이익·당기순이익·자산/부채/자본총계 등 재무지표 기반 순위.
+type ProfitAssetIndex struct {
+	Output []ProfitAssetIndexItem `json:"output"`
+}
+
+// ProfitAssetIndexItem 은 수익자산지표 순위 응답의 한 행.
+type ProfitAssetIndexItem struct {
+	DataRank         string          `json:"data_rank"`             // 데이터 순위
+	HtsKorIsnm       string          `json:"hts_kor_isnm"`          // HTS 한글 종목명
+	PrdyVrssSign     string          `json:"prdy_vrss_sign"`        // 전일 대비 부호
+	MkscShrnIscd     string          `json:"mksc_shrn_iscd"`        // 유가증권 단축 종목코드
+	StckPrpr         decimal.Decimal `json:"stck_prpr"`             // 주식 현재가
+	PrdyVrss         decimal.Decimal `json:"prdy_vrss"`             // 전일 대비
+	PrdyCtrt         float64         `json:"prdy_ctrt,string"`      // 전일 대비율
+	AcmlVol          int64           `json:"acml_vol,string"`       // 누적 거래량
+	SaleTotlPrfi     int64           `json:"sale_totl_prfi,string"` // 매출 총 이익
+	BsopPrti         int64           `json:"bsop_prti,string"`      // 영업 이익
+	OpPrfi           int64           `json:"op_prfi,string"`        // 경상 이익
+	ThtrNtin         int64           `json:"thtr_ntin,string"`      // 당기순이익
+	TotalAset        int64           `json:"total_aset,string"`     // 자산총계
+	TotalLblt        int64           `json:"total_lblt,string"`     // 부채총계
+	TotalCptl        int64           `json:"total_cptl,string"`     // 자본총계
+	StacMonth        string          `json:"stac_month"`            // 결산 월
+	StacMonthClsCode string          `json:"stac_month_cls_code"`   // 결산 월 구분 코드
+	IqryCsnu         string          `json:"iqry_csnu"`             // 조회 건수
+}
+
+// InquireProfitAssetIndexParams 는 수익자산지표 순위 조회 파라미터.
+//
+// FID_COND_SCR_DIV_CODE = "20173" 고정.
+type InquireProfitAssetIndexParams struct {
+	MarketCode     string // fid_cond_mrkt_div_code — "J":KRX. 빈 값=>"J"
+	TrgtClsCode    string // fid_trgt_cls_code — 대상 구분 코드
+	CondScrDivCode string // fid_cond_scr_div_code — 빈 값=>"20173"
+	Symbol         string // fid_input_iscd — 종목코드 (0000:전체)
+	DivClsCode     string // fid_div_cls_code — 구분 코드
+	InputPrice1    string // fid_input_price_1 — 입력 가격1
+	InputPrice2    string // fid_input_price_2 — 입력 가격2
+	VolCnt         string // fid_vol_cnt — 조회 건수
+	InputOption1   string // fid_input_option_1 — 회계연도
+	InputOption2   string // fid_input_option_2 — 분기구분
+	RankSortCode   string // fid_rank_sort_cls_code — 정렬 구분 코드
+	BlngClsCode    string // fid_blng_cls_code — 소속 구분 코드
+	TrgtExlsCode   string // fid_trgt_exls_cls_code — 대상 제외 구분 코드
+}
+
+// InquireProfitAssetIndex 는 국내주식 수익자산지표 순위 호출.
+//
+// 한투 docs: docs/api/국내주식/국내주식_수익자산지표_순위.md
+// path: /uapi/domestic-stock/v1/ranking/profit-asset-index (FHPST01730000)
+//
+// 쿼리 파라미터는 lowercase fid_* 형식 사용.
+func (c *Client) InquireProfitAssetIndex(ctx context.Context, params InquireProfitAssetIndexParams) (*ProfitAssetIndex, error) {
+	market := params.MarketCode
+	if market == "" {
+		market = "J"
+	}
+	scrDiv := params.CondScrDivCode
+	if scrDiv == "" {
+		scrDiv = "20173"
+	}
+
+	resp, err := c.http.Do(ctx, &httpclient.Request{
+		Method: http.MethodGet,
+		Path:   "/uapi/domestic-stock/v1/ranking/profit-asset-index",
+		TrID:   "FHPST01730000",
+		Query: map[string]string{
+			"fid_cond_mrkt_div_code": market,
+			"fid_trgt_cls_code":      params.TrgtClsCode,
+			"fid_cond_scr_div_code":  scrDiv,
+			"fid_input_iscd":         params.Symbol,
+			"fid_div_cls_code":       params.DivClsCode,
+			"fid_input_price_1":      params.InputPrice1,
+			"fid_input_price_2":      params.InputPrice2,
+			"fid_vol_cnt":            params.VolCnt,
+			"fid_input_option_1":     params.InputOption1,
+			"fid_input_option_2":     params.InputOption2,
+			"fid_rank_sort_cls_code": params.RankSortCode,
+			"fid_blng_cls_code":      params.BlngClsCode,
+			"fid_trgt_exls_cls_code": params.TrgtExlsCode,
+		},
+		CustType: "P",
+	})
+	if err != nil {
+		return nil, err
+	}
+	var res ProfitAssetIndex
+	if err := json.Unmarshal(resp.Raw, &res); err != nil {
+		return nil, fmt.Errorf("kis: parse ProfitAssetIndex: %w", err)
+	}
+	return &res, nil
+}
