@@ -1,0 +1,35 @@
+{
+  "rt_cd": "0",
+  "msg_cd": "MCA00000",
+  "msg1": "정상처리 되었습니다.",
+  "output1": {
+    "data_rank": "1",
+    "inter_grp_name": "반도체"
+  },
+  "output2": [
+    {
+      "fid_mrkt_cls_code": "J",
+      "data_rank": "1",
+      "exch_code": "KRX",
+      "jong_code": "005930",
+      "color_code": "2",
+      "memo": "주력 보유",
+      "hts_kor_isnm": "삼성전자",
+      "fxdt_ntby_qty": "100",
+      "cntg_unpr": "57800",
+      "cntg_cls_code": "1"
+    },
+    {
+      "fid_mrkt_cls_code": "J",
+      "data_rank": "2",
+      "exch_code": "KRX",
+      "jong_code": "000660",
+      "color_code": "1",
+      "memo": "",
+      "hts_kor_isnm": "SK하이닉스",
+      "fxdt_ntby_qty": "50",
+      "cntg_unpr": "198500",
+      "cntg_cls_code": "1"
+    }
+  ]
+}

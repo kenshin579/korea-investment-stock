@@ -61,7 +61,7 @@ func main() {
 }
 ```
 
-## Available Methods (Phase 1.2 ~ 4.3)
+## Available Methods (Phase 1.2 ~ 5)
 
 | Method | 한투 path | TR_ID |
 |--------|----------|-------|
@@ -174,6 +174,20 @@ func main() {
 | `Domestic.InquireViStatus` | `quotations/inquire-vi-status` | FHPST01390000 |
 | `Domestic.InquireCaptureUplowprice` | `quotations/capture-uplowprice` | FHKST130000C0 |
 
+### ETF/NAV/관심종목 — Phase 5 (v1.15.0)
+
+| Method | 한투 path | TR_ID |
+|--------|----------|-------|
+| `Domestic.InquireEtfPrice` | `etfetn/inquire-price` | FHPST02400000 |
+| `Domestic.InquireComponentStockPrice` | `etfetn/inquire-component-stock-price` | FHKST121600C0 |
+| `Domestic.InquireNavComparisonTimeTrend` | `etfetn/nav-comparison-time-trend` | FHPST02440100 |
+| `Domestic.InquireNavComparisonDailyTrend` | `etfetn/nav-comparison-daily-trend` | FHPST02440200 |
+| `Domestic.InquireNavComparisonTrend` | `etfetn/nav-comparison-trend` | FHPST02440000 |
+| `Domestic.InquireIntstockMultprice` | `quotations/intstock-multprice` | FHKST11300006 |
+| `Domestic.InquireIntstockStocklistByGroup` | `quotations/intstock-stocklist-by-group` | HHKCM113004C6 |
+| `Domestic.InquireIntstockGrouplist` | `quotations/intstock-grouplist` | HHKCM113004C7 |
+| `Domestic.InquireTopInterestStock` | `ranking/top-interest-stock` | FHPST01800000 |
+
 ### Bonds (장내채권) — Phase 3.1
 
 | Go 메서드 | path | TR_ID |
@@ -200,7 +214,7 @@ func main() {
 
 ## Scope
 
-- ✅ 국내주식 (시세, 차트, 순위, 재무, 투자자 동향, IPO/예탁원, 심볼)
+- ✅ 국내주식 (시세, 차트, 순위, 재무, 투자자 동향, IPO/예탁원, ETF/NAV, 관심종목, 심볼)
 - ✅ 해외주식 (시세, 차트, 순위)
 - ✅ 장내채권 (시세, 발행정보, 호가, 기간별, 평균단가 — Phase 3.1)
 - ❌ 선물옵션 — 영구 제외
