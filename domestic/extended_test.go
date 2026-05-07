@@ -1026,3 +1026,61 @@ func TestClient_InquireDisparity(t *testing.T) {
 	assert.InDelta(t, 97.32, res.Output[0].D60Dsrt, 0.001)
 	assert.InDelta(t, 96.10, res.Output[0].D120Dsrt, 0.001)
 }
+
+func TestClient_InquirePreferDisparateRatio(t *testing.T) {
+	httpmock.Activate()
+	defer httpmock.DeactivateAndReset()
+
+	var capturedQuery url.Values
+	httpmock.RegisterResponder(
+		http.MethodGet,
+		`=~/ranking/prefer-disparate-ratio`,
+		func(req *http.Request) (*http.Response, error) {
+			capturedQuery = req.URL.Query()
+			return httpmock.NewStringResponse(http.StatusOK, loadFixtureString(t, "prefer_disparate_ratio_success.json")), nil
+		},
+	)
+
+	c := newTestClient(t)
+	res, err := c.InquirePreferDisparateRatio(context.Background(), domestic.InquirePreferDisparateRatioParams{
+		Symbol:       "0000",
+		DivClsCode:   "0",
+		TrgtClsCode:  "111111111",
+		TrgtExlsCode: "000000000",
+	})
+	require.NoError(t, err)
+	require.NotNil(t, res)
+
+	// lowercase fid_* 키 검증
+	assert.Equal(t, "J", capturedQuery.Get("fid_cond_mrkt_div_code"))
+	assert.Equal(t, "20177", capturedQuery.Get("fid_cond_scr_div_code"))
+	assert.Equal(t, "0000", capturedQuery.Get("fid_input_iscd"))
+	assert.Equal(t, "0", capturedQuery.Get("fid_div_cls_code"))
+	assert.Empty(t, capturedQuery.Get("FID_COND_MRKT_DIV_CODE"), "uppercase 키는 비어야 함")
+
+	require.Len(t, res.Output, 2)
+
+	// output[0] 핵심 필드 검증 (17 fields)
+	assert.Equal(t, "005930", res.Output[0].MkscShrnIscd)
+	assert.Equal(t, "1", res.Output[0].DataRank)
+	assert.Equal(t, "삼성전자", res.Output[0].HtsKorIsnm)
+	dPrpr, _ := decimal.NewFromString("75800")
+	assert.True(t, dPrpr.Equal(res.Output[0].StckPrpr))
+	dVrss, _ := decimal.NewFromString("-200")
+	assert.True(t, dVrss.Equal(res.Output[0].PrdyVrss))
+	assert.Equal(t, "5", res.Output[0].PrdyVrssSign)
+	assert.Equal(t, int64(12345678), res.Output[0].AcmlVol)
+	assert.Equal(t, "005935", res.Output[0].PrstIscd)
+	assert.Equal(t, "삼성전자우", res.Output[0].PrstKorIsnm)
+	dPrstPrpr, _ := decimal.NewFromString("68500")
+	assert.True(t, dPrstPrpr.Equal(res.Output[0].PrstPrpr))
+	dPrstVrss, _ := decimal.NewFromString("-300")
+	assert.True(t, dPrstVrss.Equal(res.Output[0].PrstPrdyVrss))
+	assert.Equal(t, "5", res.Output[0].PrstPrdyVrssSign)
+	assert.Equal(t, int64(234567), res.Output[0].PrstAcmlVol)
+	dDiffPrpr, _ := decimal.NewFromString("7300")
+	assert.True(t, dDiffPrpr.Equal(res.Output[0].DiffPrpr))
+	assert.InDelta(t, 10.66, res.Output[0].Dprt, 0.001)
+	assert.InDelta(t, -0.26, res.Output[0].PrdyCtrt, 0.001)
+	assert.InDelta(t, -0.44, res.Output[0].PrstPrdyCtrt, 0.001)
+}

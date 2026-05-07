@@ -1942,3 +1942,92 @@ func (c *Client) InquireDisparity(ctx context.Context, params InquireDisparityPa
 	}
 	return &res, nil
 }
+
+// PreferDisparateRatio 는 국내주식 우선주 괴리율 상위 (FHPST01770000) 응답.
+//
+// 한투 docs: docs/api/국내주식/국내주식_우선주_괴리율_상위.md
+// path: /uapi/domestic-stock/v1/ranking/prefer-disparate-ratio
+//
+// 보통주-우선주 간 괴리율 순위.
+type PreferDisparateRatio struct {
+	Output []PreferDisparateRatioItem `json:"output"`
+}
+
+// PreferDisparateRatioItem 은 우선주 괴리율 상위 응답의 한 행.
+type PreferDisparateRatioItem struct {
+	MkscShrnIscd     string          `json:"mksc_shrn_iscd"`        // 유가증권 단축 종목코드 (보통주)
+	DataRank         string          `json:"data_rank"`             // 데이터 순위
+	HtsKorIsnm       string          `json:"hts_kor_isnm"`          // HTS 한글 종목명 (보통주)
+	StckPrpr         decimal.Decimal `json:"stck_prpr"`             // 주식 현재가 (보통주)
+	PrdyVrss         decimal.Decimal `json:"prdy_vrss"`             // 전일 대비 (보통주)
+	PrdyVrssSign     string          `json:"prdy_vrss_sign"`        // 전일 대비 부호 (보통주)
+	AcmlVol          int64           `json:"acml_vol,string"`       // 누적 거래량 (보통주)
+	PrstIscd         string          `json:"prst_iscd"`             // 우선주 종목코드
+	PrstKorIsnm      string          `json:"prst_kor_isnm"`         // 우선주 한글 종목명
+	PrstPrpr         decimal.Decimal `json:"prst_prpr"`             // 우선주 현재가
+	PrstPrdyVrss     decimal.Decimal `json:"prst_prdy_vrss"`        // 우선주 전일 대비
+	PrstPrdyVrssSign string          `json:"prst_prdy_vrss_sign"`   // 우선주 전일 대비 부호
+	PrstAcmlVol      int64           `json:"prst_acml_vol,string"`  // 우선주 누적 거래량
+	DiffPrpr         decimal.Decimal `json:"diff_prpr"`             // 차이 현재가
+	Dprt             float64         `json:"dprt,string"`           // 괴리율
+	PrdyCtrt         float64         `json:"prdy_ctrt,string"`      // 보통주 전일 대비율
+	PrstPrdyCtrt     float64         `json:"prst_prdy_ctrt,string"` // 우선주 전일 대비율
+}
+
+// InquirePreferDisparateRatioParams 는 우선주 괴리율 상위 조회 파라미터.
+//
+// FID_COND_SCR_DIV_CODE = "20177" 고정.
+type InquirePreferDisparateRatioParams struct {
+	VolCnt         string // fid_vol_cnt — 조회 건수
+	MarketCode     string // fid_cond_mrkt_div_code — "J":KRX. 빈 값=>"J"
+	CondScrDivCode string // fid_cond_scr_div_code — 빈 값=>"20177"
+	DivClsCode     string // fid_div_cls_code — 구분 코드
+	Symbol         string // fid_input_iscd — 종목코드 (0000:전체)
+	TrgtClsCode    string // fid_trgt_cls_code — 대상 구분 코드
+	TrgtExlsCode   string // fid_trgt_exls_cls_code — 대상 제외 구분 코드
+	InputPrice1    string // fid_input_price_1 — 입력 가격1
+	InputPrice2    string // fid_input_price_2 — 입력 가격2
+}
+
+// InquirePreferDisparateRatio 는 국내주식 우선주 괴리율 상위 호출.
+//
+// 한투 docs: docs/api/국내주식/국내주식_우선주_괴리율_상위.md
+// path: /uapi/domestic-stock/v1/ranking/prefer-disparate-ratio (FHPST01770000)
+//
+// 쿼리 파라미터는 lowercase fid_* 형식 사용.
+func (c *Client) InquirePreferDisparateRatio(ctx context.Context, params InquirePreferDisparateRatioParams) (*PreferDisparateRatio, error) {
+	market := params.MarketCode
+	if market == "" {
+		market = "J"
+	}
+	scrDiv := params.CondScrDivCode
+	if scrDiv == "" {
+		scrDiv = "20177"
+	}
+
+	resp, err := c.http.Do(ctx, &httpclient.Request{
+		Method: http.MethodGet,
+		Path:   "/uapi/domestic-stock/v1/ranking/prefer-disparate-ratio",
+		TrID:   "FHPST01770000",
+		Query: map[string]string{
+			"fid_vol_cnt":            params.VolCnt,
+			"fid_cond_mrkt_div_code": market,
+			"fid_cond_scr_div_code":  scrDiv,
+			"fid_div_cls_code":       params.DivClsCode,
+			"fid_input_iscd":         params.Symbol,
+			"fid_trgt_cls_code":      params.TrgtClsCode,
+			"fid_trgt_exls_cls_code": params.TrgtExlsCode,
+			"fid_input_price_1":      params.InputPrice1,
+			"fid_input_price_2":      params.InputPrice2,
+		},
+		CustType: "P",
+	})
+	if err != nil {
+		return nil, err
+	}
+	var res PreferDisparateRatio
+	if err := json.Unmarshal(resp.Raw, &res); err != nil {
+		return nil, fmt.Errorf("kis: parse PreferDisparateRatio: %w", err)
+	}
+	return &res, nil
+}
