@@ -1071,3 +1071,88 @@ func (c *Client) InquireExpTransUpdown(ctx context.Context, params InquireExpTra
 	}
 	return &res, nil
 }
+
+// ShortSale 은 국내주식 공매도 상위 (FHPST04820000) 응답.
+//
+// 한투 docs: docs/api/국내주식/국내주식_공매도_상위.md
+// path: /uapi/domestic-stock/v1/ranking/short-sale
+//
+// 공매도 체결량/비중 상위 종목 목록.
+type ShortSale struct {
+	Output []ShortSaleItem `json:"output"`
+}
+
+// ShortSaleItem 은 공매도 상위 응답의 한 행.
+type ShortSaleItem struct {
+	MkscShrnIscd   string          `json:"mksc_shrn_iscd"`           // 유가증권 단축 종목코드
+	HtsKorIsnm     string          `json:"hts_kor_isnm"`             // HTS 한글 종목명
+	StckPrpr       decimal.Decimal `json:"stck_prpr"`                // 주식 현재가
+	PrdyVrss       decimal.Decimal `json:"prdy_vrss"`                // 전일 대비
+	PrdyVrssSign   string          `json:"prdy_vrss_sign"`           // 전일 대비 부호
+	PrdyCtrt       float64         `json:"prdy_ctrt,string"`         // 전일 대비율
+	AcmlVol        int64           `json:"acml_vol,string"`          // 누적 거래량
+	AcmlTrPbmn     int64           `json:"acml_tr_pbmn,string"`      // 누적 거래 대금
+	SstsCntgQty    int64           `json:"ssts_cntg_qty,string"`     // 공매도 체결 수량
+	SstsVolRlim    float64         `json:"ssts_vol_rlim,string"`     // 공매도 거래량 비중
+	SstsTrPbmn     int64           `json:"ssts_tr_pbmn,string"`      // 공매도 거래 대금
+	SstsTrPbmnRlim float64         `json:"ssts_tr_pbmn_rlim,string"` // 공매도 거래 대금 비중
+	StndDate1      string          `json:"stnd_date1"`               // 기준 일자1
+	StndDate2      string          `json:"stnd_date2"`               // 기준 일자2
+	AvrgPrc        decimal.Decimal `json:"avrg_prc"`                 // 평균가
+}
+
+// InquireShortSaleParams 는 공매도 상위 조회 파라미터.
+type InquireShortSaleParams struct {
+	AplyRangVol    string // FID_APLY_RANG_VOL — 적용범위 거래량. 빈 값 OK
+	MarketCode     string // FID_COND_MRKT_DIV_CODE — "J":KRX. 빈 값=>"J"
+	CondScrDivCode string // FID_COND_SCR_DIV_CODE — 고정 "20482". 빈 값=>"20482"
+	Symbol         string // FID_INPUT_ISCD — 종목코드 (예 "005930")
+	PeriodDivCode  string // FID_PERIOD_DIV_CODE — D:일, W:주, M:월
+	InputCnt1      string // FID_INPUT_CNT_1 — 입력 개수1
+	TrgtExlsCode   string // FID_TRGT_EXLS_CLS_CODE — 대상 제외 구분 코드
+	TrgtClsCode    string // FID_TRGT_CLS_CODE — 대상 구분 코드
+	AplyRangPrc1   string // FID_APLY_RANG_PRC_1 — 가격 ~. 빈 값 OK
+	AplyRangPrc2   string // FID_APLY_RANG_PRC_2 — ~ 가격. 빈 값 OK
+}
+
+// InquireShortSale 은 국내주식 공매도 상위 호출.
+//
+// 한투 docs: docs/api/국내주식/국내주식_공매도_상위.md
+// path: /uapi/domestic-stock/v1/ranking/short-sale (FHPST04820000)
+func (c *Client) InquireShortSale(ctx context.Context, params InquireShortSaleParams) (*ShortSale, error) {
+	market := params.MarketCode
+	if market == "" {
+		market = "J"
+	}
+	scrDiv := params.CondScrDivCode
+	if scrDiv == "" {
+		scrDiv = "20482"
+	}
+
+	resp, err := c.http.Do(ctx, &httpclient.Request{
+		Method: http.MethodGet,
+		Path:   "/uapi/domestic-stock/v1/ranking/short-sale",
+		TrID:   "FHPST04820000",
+		Query: map[string]string{
+			"FID_APLY_RANG_VOL":      params.AplyRangVol,
+			"FID_COND_MRKT_DIV_CODE": market,
+			"FID_COND_SCR_DIV_CODE":  scrDiv,
+			"FID_INPUT_ISCD":         params.Symbol,
+			"FID_PERIOD_DIV_CODE":    params.PeriodDivCode,
+			"FID_INPUT_CNT_1":        params.InputCnt1,
+			"FID_TRGT_EXLS_CLS_CODE": params.TrgtExlsCode,
+			"FID_TRGT_CLS_CODE":      params.TrgtClsCode,
+			"FID_APLY_RANG_PRC_1":    params.AplyRangPrc1,
+			"FID_APLY_RANG_PRC_2":    params.AplyRangPrc2,
+		},
+		CustType: "P",
+	})
+	if err != nil {
+		return nil, err
+	}
+	var res ShortSale
+	if err := json.Unmarshal(resp.Raw, &res); err != nil {
+		return nil, fmt.Errorf("kis: parse ShortSale: %w", err)
+	}
+	return &res, nil
+}

@@ -461,3 +461,54 @@ func TestClient_InquireExpTransUpdown(t *testing.T) {
 	assert.InDelta(t, 0.61, res.Output[0].PrdyCtrt, 0.001)
 	assert.Equal(t, int64(70297500000), res.Output[0].AntcTrPbmn)
 }
+
+func TestClient_InquireShortSale(t *testing.T) {
+	httpmock.Activate()
+	defer httpmock.DeactivateAndReset()
+
+	var capturedQuery url.Values
+	httpmock.RegisterResponder(
+		http.MethodGet,
+		`=~/ranking/short-sale`,
+		func(req *http.Request) (*http.Response, error) {
+			capturedQuery = req.URL.Query()
+			return httpmock.NewStringResponse(http.StatusOK, loadFixtureString(t, "short_sale_success.json")), nil
+		},
+	)
+
+	c := newTestClient(t)
+	res, err := c.InquireShortSale(context.Background(), domestic.InquireShortSaleParams{
+		Symbol:        "005930",
+		PeriodDivCode: "D",
+	})
+	require.NoError(t, err)
+	require.NotNil(t, res)
+
+	// UPPERCASE FID_ 키 검증
+	assert.Equal(t, "J", capturedQuery.Get("FID_COND_MRKT_DIV_CODE"))
+	assert.Equal(t, "20482", capturedQuery.Get("FID_COND_SCR_DIV_CODE"))
+	assert.Equal(t, "005930", capturedQuery.Get("FID_INPUT_ISCD"))
+	assert.Equal(t, "D", capturedQuery.Get("FID_PERIOD_DIV_CODE"))
+
+	require.Len(t, res.Output, 2)
+
+	// output[0] 필드 검증
+	assert.Equal(t, "005930", res.Output[0].MkscShrnIscd)
+	assert.Equal(t, "삼성전자", res.Output[0].HtsKorIsnm)
+	d, _ := decimal.NewFromString("75800")
+	assert.True(t, d.Equal(res.Output[0].StckPrpr))
+	dVrss, _ := decimal.NewFromString("-200")
+	assert.True(t, dVrss.Equal(res.Output[0].PrdyVrss))
+	assert.Equal(t, "5", res.Output[0].PrdyVrssSign)
+	assert.InDelta(t, -0.26, res.Output[0].PrdyCtrt, 0.001)
+	assert.Equal(t, int64(12345678), res.Output[0].AcmlVol)
+	assert.Equal(t, int64(935714440400), res.Output[0].AcmlTrPbmn)
+	assert.Equal(t, int64(123456), res.Output[0].SstsCntgQty)
+	assert.InDelta(t, 1.00, res.Output[0].SstsVolRlim, 0.001)
+	assert.Equal(t, int64(9357144404), res.Output[0].SstsTrPbmn)
+	assert.InDelta(t, 1.00, res.Output[0].SstsTrPbmnRlim, 0.001)
+	assert.Equal(t, "20260501", res.Output[0].StndDate1)
+	assert.Equal(t, "20260507", res.Output[0].StndDate2)
+	dAvrg, _ := decimal.NewFromString("75800")
+	assert.True(t, dAvrg.Equal(res.Output[0].AvrgPrc))
+}
