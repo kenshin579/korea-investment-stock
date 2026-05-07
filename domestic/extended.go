@@ -1414,3 +1414,81 @@ func (c *Client) InquireDailyCreditBalance(ctx context.Context, params InquireDa
 	}
 	return &res, nil
 }
+
+// LendableByCompany 는 당사 대주가능 종목 (CTSC2702R) 응답.
+//
+// 한투 docs: docs/api/국내주식/국내주식_당사대주가능종목.md
+// path: /uapi/domestic-stock/v1/quotations/lendable-by-company
+//
+// output1: 대주가능 종목 배열, output2: 한도 합계 요약.
+type LendableByCompany struct {
+	Output1 []LendableByCompanyItem  `json:"output1"`
+	Output2 LendableByCompanySummary `json:"output2"`
+}
+
+// LendableByCompanyItem 은 당사 대주가능 종목 응답의 한 행 (output1).
+type LendableByCompanyItem struct {
+	Pdno           string          `json:"pdno"`                  // 상품번호 (종목코드)
+	PrdtName       string          `json:"prdt_name"`             // 상품명
+	Papr           decimal.Decimal `json:"papr"`                  // 액면가
+	BfdyClpr       decimal.Decimal `json:"bfdy_clpr"`             // 전일 종가
+	SbstPrvs       decimal.Decimal `json:"sbst_prvs"`             // 대용가
+	TrStopDvsnName string          `json:"tr_stop_dvsn_name"`     // 거래정지 구분 명
+	PsblYnName     string          `json:"psbl_yn_name"`          // 가능 여부 명
+	LmtQty1        int64           `json:"lmt_qty1,string"`       // 한도 수량1
+	UseQty1        int64           `json:"use_qty1,string"`       // 사용 수량1
+	TradPsblQty2   int64           `json:"trad_psbl_qty2,string"` // 거래 가능 수량2
+	RghtTypeCd     string          `json:"rght_type_cd"`          // 권리 유형 코드
+	BassDt         string          `json:"bass_dt"`               // 기준 일자
+	PsblYn         string          `json:"psbl_yn"`               // 가능 여부
+}
+
+// LendableByCompanySummary 는 당사 대주가능 종목 한도 합계 요약 (output2).
+type LendableByCompanySummary struct {
+	TotStupLmtQty int64 `json:"tot_stup_lmt_qty,string"` // 총 설정 한도 수량
+	BrchLmtQty    int64 `json:"brch_lmt_qty,string"`     // 지점 한도 수량
+	RqstPsblQty   int64 `json:"rqst_psbl_qty,string"`    // 신청 가능 수량
+}
+
+// InquireLendableByCompanyParams 는 당사 대주가능 종목 조회 파라미터.
+//
+// 쿼리 파라미터는 non-FID UPPERCASE 형식 (EXCG_DVSN_CD, PDNO 등).
+type InquireLendableByCompanyParams struct {
+	ExcgDvsnCd     string // EXCG_DVSN_CD — 거래소 구분 코드
+	Pdno           string // PDNO — 상품번호 (종목코드)
+	ThcoStlnPsblYn string // THCO_STLN_PSBL_YN — 당사 대주 가능 여부
+	InqrDvsn1      string // INQR_DVSN_1 — 조회 구분1
+	CtxAreaFk200   string // CTX_AREA_FK200 — 연속조회 커서 (빈 값 가능)
+	CtxAreaNk100   string // CTX_AREA_NK100 — 연속조회 키 (빈 값 가능)
+}
+
+// InquireLendableByCompany 는 당사 대주가능 종목 호출.
+//
+// 한투 docs: docs/api/국내주식/국내주식_당사대주가능종목.md
+// path: /uapi/domestic-stock/v1/quotations/lendable-by-company (CTSC2702R)
+//
+// 쿼리 파라미터는 non-FID UPPERCASE 형식 사용. CANO 불필요.
+func (c *Client) InquireLendableByCompany(ctx context.Context, params InquireLendableByCompanyParams) (*LendableByCompany, error) {
+	resp, err := c.http.Do(ctx, &httpclient.Request{
+		Method: http.MethodGet,
+		Path:   "/uapi/domestic-stock/v1/quotations/lendable-by-company",
+		TrID:   "CTSC2702R",
+		Query: map[string]string{
+			"EXCG_DVSN_CD":      params.ExcgDvsnCd,
+			"PDNO":              params.Pdno,
+			"THCO_STLN_PSBL_YN": params.ThcoStlnPsblYn,
+			"INQR_DVSN_1":       params.InqrDvsn1,
+			"CTX_AREA_FK200":    params.CtxAreaFk200,
+			"CTX_AREA_NK100":    params.CtxAreaNk100,
+		},
+		CustType: "P",
+	})
+	if err != nil {
+		return nil, err
+	}
+	var res LendableByCompany
+	if err := json.Unmarshal(resp.Raw, &res); err != nil {
+		return nil, fmt.Errorf("kis: parse LendableByCompany: %w", err)
+	}
+	return &res, nil
+}

@@ -695,3 +695,60 @@ func TestClient_InquireDailyCreditBalance(t *testing.T) {
 	dLwpr, _ := decimal.NewFromString("75500")
 	assert.True(t, dLwpr.Equal(res.Output[0].StckLwpr))
 }
+
+func TestClient_InquireLendableByCompany(t *testing.T) {
+	httpmock.Activate()
+	defer httpmock.DeactivateAndReset()
+
+	var capturedQuery url.Values
+	httpmock.RegisterResponder(
+		http.MethodGet,
+		`=~/quotations/lendable-by-company`,
+		func(req *http.Request) (*http.Response, error) {
+			capturedQuery = req.URL.Query()
+			return httpmock.NewStringResponse(http.StatusOK, loadFixtureString(t, "lendable_by_company_success.json")), nil
+		},
+	)
+
+	c := newTestClient(t)
+	res, err := c.InquireLendableByCompany(context.Background(), domestic.InquireLendableByCompanyParams{
+		ExcgDvsnCd:     "02",
+		Pdno:           "005930",
+		ThcoStlnPsblYn: "Y",
+		InqrDvsn1:      "1",
+	})
+	require.NoError(t, err)
+	require.NotNil(t, res)
+
+	// non-FID UPPERCASE 키 검증
+	assert.Equal(t, "02", capturedQuery.Get("EXCG_DVSN_CD"))
+	assert.Equal(t, "005930", capturedQuery.Get("PDNO"))
+	assert.Equal(t, "Y", capturedQuery.Get("THCO_STLN_PSBL_YN"))
+	assert.Equal(t, "1", capturedQuery.Get("INQR_DVSN_1"))
+	assert.Equal(t, "", capturedQuery.Get("CTX_AREA_FK200"))
+	assert.Equal(t, "", capturedQuery.Get("CTX_AREA_NK100"))
+
+	// output1 (array) 검증
+	require.Len(t, res.Output1, 2)
+	assert.Equal(t, "005930", res.Output1[0].Pdno)
+	assert.Equal(t, "삼성전자", res.Output1[0].PrdtName)
+	dPapr, _ := decimal.NewFromString("75800")
+	assert.True(t, dPapr.Equal(res.Output1[0].Papr))
+	dClpr, _ := decimal.NewFromString("76000")
+	assert.True(t, dClpr.Equal(res.Output1[0].BfdyClpr))
+	dSbst, _ := decimal.NewFromString("75800")
+	assert.True(t, dSbst.Equal(res.Output1[0].SbstPrvs))
+	assert.Equal(t, "정상", res.Output1[0].TrStopDvsnName)
+	assert.Equal(t, "가능", res.Output1[0].PsblYnName)
+	assert.Equal(t, int64(500000), res.Output1[0].LmtQty1)
+	assert.Equal(t, int64(123456), res.Output1[0].UseQty1)
+	assert.Equal(t, int64(376544), res.Output1[0].TradPsblQty2)
+	assert.Equal(t, "01", res.Output1[0].RghtTypeCd)
+	assert.Equal(t, "20260507", res.Output1[0].BassDt)
+	assert.Equal(t, "Y", res.Output1[0].PsblYn)
+
+	// output2 (summary) 검증
+	assert.Equal(t, int64(800000), res.Output2.TotStupLmtQty)
+	assert.Equal(t, int64(600000), res.Output2.BrchLmtQty)
+	assert.Equal(t, int64(588890), res.Output2.RqstPsblQty)
+}
