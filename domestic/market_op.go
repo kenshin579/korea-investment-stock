@@ -141,3 +141,80 @@ func (c *Client) InquireChkHoliday(ctx context.Context, params InquireChkHoliday
 	}
 	return &res, nil
 }
+
+// ─── EP6: InquireViStatus ────────────────────────────────────────────────────
+
+// InquireViStatusParams 는 변동성완화장치(VI) 현황 조회 파라미터.
+type InquireViStatusParams struct {
+	DivClsCode      string // FID_DIV_CLS_CODE (Y): 0=전체/1=상승/2=하락
+	CondScrDivCode  string // FID_COND_SCR_DIV_CODE: 기본 "20139" (hardcoded)
+	MrktClsCode     string // FID_MRKT_CLS_CODE (Y): 0=전체/K=거래소/Q=코스닥
+	Symbol          string // FID_INPUT_ISCD (Y, 공란 가능)
+	RankSortClsCode string // FID_RANK_SORT_CLS_CODE (Y): 0=전체/1=정적/2=동적/3=정적&동적
+	InputDate1      string // FID_INPUT_DATE_1 (Y): YYYYMMDD
+	TrgtClsCode     string // FID_TRGT_CLS_CODE (Y, 공란 가능)
+	TrgtExlsCode    string // FID_TRGT_EXLS_CLS_CODE (Y, 공란 가능)
+}
+
+// ViStatusOutput 는 변동성완화장치(VI) 현황 응답 단일 객체.
+//
+// KIS 공식 문서는 output 을 단일 Object({})로 선언하나, 실제 응답에서 배열([])을 반환할 수 있음.
+// ("30건" 등 복수 건 문구 포함). 실 API 호출 시 배열 반환 확인 시 []ViStatusOutput 로 전환 필요.
+type ViStatusOutput struct {
+	HtsKorIsnm   string          `json:"hts_kor_isnm"`
+	MkscShrnIscd string          `json:"mksc_shrn_iscd"`
+	ViClsCode    string          `json:"vi_cls_code"`  // Y=발동/N=해제
+	BsopDate     string          `json:"bsop_date"`    // YYYYMMDD
+	CntgViHour   string          `json:"cntg_vi_hour"` // HHMMSS
+	ViCnclHour   string          `json:"vi_cncl_hour"` // HHMMSS
+	ViKindCode   string          `json:"vi_kind_code"` // 1=정적/2=동적/3=정적&동적
+	ViPrc        decimal.Decimal `json:"vi_prc"`
+	ViStndPrc    decimal.Decimal `json:"vi_stnd_prc"`
+	ViDprt       float64         `json:"vi_dprt,string"`
+	ViDmcStndPrc decimal.Decimal `json:"vi_dmc_stnd_prc"`
+	ViDmcDprt    float64         `json:"vi_dmc_dprt,string"`
+	ViCount      int64           `json:"vi_count,string"`
+}
+
+// InquireViStatusResponse 는 변동성완화장치(VI) 현황 응답.
+type InquireViStatusResponse struct {
+	RtCd   string          `json:"rt_cd"`
+	MsgCd  string          `json:"msg_cd"`
+	Msg1   string          `json:"msg1"`
+	Output *ViStatusOutput `json:"output"`
+}
+
+// InquireViStatus 는 변동성완화장치(VI) 현황을 조회한다 (FHPST01390000).
+//
+// KIS 문서가 output 을 단일 Object로 선언. 실 API 에서 배열 반환 시 struct 변경 필요.
+// FID_COND_SCR_DIV_CODE 는 "20139" 로 hardcoded.
+func (c *Client) InquireViStatus(ctx context.Context, params InquireViStatusParams) (*InquireViStatusResponse, error) {
+	scrDiv := params.CondScrDivCode
+	if scrDiv == "" {
+		scrDiv = "20139"
+	}
+	resp, err := c.http.Do(ctx, &httpclient.Request{
+		Method: http.MethodGet,
+		Path:   "/uapi/domestic-stock/v1/quotations/inquire-vi-status",
+		TrID:   "FHPST01390000",
+		Query: map[string]string{
+			"FID_DIV_CLS_CODE":       params.DivClsCode,
+			"FID_COND_SCR_DIV_CODE":  scrDiv,
+			"FID_MRKT_CLS_CODE":      params.MrktClsCode,
+			"FID_INPUT_ISCD":         params.Symbol,
+			"FID_RANK_SORT_CLS_CODE": params.RankSortClsCode,
+			"FID_INPUT_DATE_1":       params.InputDate1,
+			"FID_TRGT_CLS_CODE":      params.TrgtClsCode,
+			"FID_TRGT_EXLS_CLS_CODE": params.TrgtExlsCode,
+		},
+		CustType: "P",
+	})
+	if err != nil {
+		return nil, err
+	}
+	var res InquireViStatusResponse
+	if err := json.Unmarshal(resp.Raw, &res); err != nil {
+		return nil, fmt.Errorf("kis: parse InquireViStatusResponse: %w", err)
+	}
+	return &res, nil
+}

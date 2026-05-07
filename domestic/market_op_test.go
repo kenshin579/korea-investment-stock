@@ -89,3 +89,52 @@ func TestInquireChkHoliday(t *testing.T) {
 	assert.Equal(t, "Y", out.OpndYn)
 	assert.Equal(t, "Y", out.SttlDayYn)
 }
+
+func TestInquireViStatus(t *testing.T) {
+	httpmock.Activate()
+	defer httpmock.DeactivateAndReset()
+
+	var capturedQuery url.Values
+	httpmock.RegisterResponder(
+		http.MethodGet,
+		`=~/quotations/inquire-vi-status`,
+		func(req *http.Request) (*http.Response, error) {
+			capturedQuery = req.URL.Query()
+			return httpmock.NewStringResponse(200, loadFixtureString(t, "vi_status_success.json")), nil
+		},
+	)
+
+	c := newTestClient(t)
+	res, err := c.InquireViStatus(context.Background(), domestic.InquireViStatusParams{
+		DivClsCode:      "0",
+		MrktClsCode:     "0",
+		Symbol:          "",
+		RankSortClsCode: "0",
+		InputDate1:      "20260507",
+		TrgtClsCode:     "",
+		TrgtExlsCode:    "",
+	})
+	require.NoError(t, err)
+	require.NotNil(t, res.Output)
+
+	// wire param keys 검증
+	assert.Equal(t, "20139", capturedQuery.Get("FID_COND_SCR_DIV_CODE"))
+	assert.Equal(t, "0", capturedQuery.Get("FID_DIV_CLS_CODE"))
+	assert.Equal(t, "0", capturedQuery.Get("FID_MRKT_CLS_CODE"))
+	assert.Equal(t, "20260507", capturedQuery.Get("FID_INPUT_DATE_1"))
+
+	out := res.Output
+	assert.Equal(t, "삼성전자", out.HtsKorIsnm)
+	assert.Equal(t, "005930", out.MkscShrnIscd)
+	assert.Equal(t, "Y", out.ViClsCode)
+	assert.Equal(t, "20260507", out.BsopDate)
+	assert.Equal(t, "100530", out.CntgViHour)
+	assert.Equal(t, "100830", out.ViCnclHour)
+	assert.Equal(t, "1", out.ViKindCode)
+	assert.Equal(t, "82500", out.ViPrc.String())
+	assert.Equal(t, "81000", out.ViStndPrc.String())
+	assert.InDelta(t, 1.85, out.ViDprt, 0.001)
+	assert.Equal(t, "80500", out.ViDmcStndPrc.String())
+	assert.InDelta(t, 2.48, out.ViDmcDprt, 0.001)
+	assert.Equal(t, int64(3), out.ViCount)
+}
