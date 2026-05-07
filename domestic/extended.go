@@ -1156,3 +1156,89 @@ func (c *Client) InquireShortSale(ctx context.Context, params InquireShortSalePa
 	}
 	return &res, nil
 }
+
+// DailyShortSale 은 국내주식 공매도 일별추이 (FHPST04830000) 응답.
+//
+// 한투 docs: docs/api/국내주식/국내주식_공매도_일별추이.md
+// path: /uapi/domestic-stock/v1/quotations/daily-short-sale
+//
+// output1: 현재가 요약 (단일 객체), output2: 일자별 공매도 추이 목록.
+type DailyShortSale struct {
+	Output1 DailyShortSaleSummary `json:"output1"`
+	Output2 []DailyShortSaleItem  `json:"output2"`
+}
+
+// DailyShortSaleSummary 는 공매도 일별추이 현재가 요약 (output1).
+type DailyShortSaleSummary struct {
+	StckPrpr     decimal.Decimal `json:"stck_prpr"`        // 주식 현재가
+	PrdyVrss     decimal.Decimal `json:"prdy_vrss"`        // 전일 대비
+	PrdyVrssSign string          `json:"prdy_vrss_sign"`   // 전일 대비 부호
+	PrdyCtrt     float64         `json:"prdy_ctrt,string"` // 전일 대비율
+	AcmlVol      int64           `json:"acml_vol,string"`  // 누적 거래량
+	PrdyVol      int64           `json:"prdy_vol,string"`  // 전일 거래량
+}
+
+// DailyShortSaleItem 은 공매도 일별추이 응답의 한 행 (output2).
+type DailyShortSaleItem struct {
+	StckBsopDate        string          `json:"stck_bsop_date"`                 // 주식 영업 일자
+	StckClpr            decimal.Decimal `json:"stck_clpr"`                      // 주식 종가
+	PrdyVrss            decimal.Decimal `json:"prdy_vrss"`                      // 전일 대비
+	PrdyVrssSign        string          `json:"prdy_vrss_sign"`                 // 전일 대비 부호
+	PrdyCtrt            float64         `json:"prdy_ctrt,string"`               // 전일 대비율
+	AcmlVol             int64           `json:"acml_vol,string"`                // 누적 거래량
+	StndVolSmtn         int64           `json:"stnd_vol_smtn,string"`           // 기준 거래량 합계
+	SstsCntgQty         int64           `json:"ssts_cntg_qty,string"`           // 공매도 체결 수량
+	SstsVolRlim         float64         `json:"ssts_vol_rlim,string"`           // 공매도 거래량 비중
+	AcmlSstsCntgQty     int64           `json:"acml_ssts_cntg_qty,string"`      // 누적 공매도 체결 수량
+	AcmlSstsCntgQtyRlim float64         `json:"acml_ssts_cntg_qty_rlim,string"` // 누적 공매도 수량 비중
+	AcmlTrPbmn          int64           `json:"acml_tr_pbmn,string"`            // 누적 거래 대금
+	StndTrPbmnSmtn      int64           `json:"stnd_tr_pbmn_smtn,string"`       // 기준 거래 대금 합계
+	SstsTrPbmn          int64           `json:"ssts_tr_pbmn,string"`            // 공매도 거래 대금
+	SstsTrPbmnRlim      float64         `json:"ssts_tr_pbmn_rlim,string"`       // 공매도 거래 대금 비중
+	AcmlSstsTrPbmn      int64           `json:"acml_ssts_tr_pbmn,string"`       // 누적 공매도 거래 대금
+	AcmlSstsTrPbmnRlim  float64         `json:"acml_ssts_tr_pbmn_rlim,string"`  // 누적 공매도 대금 비중
+	StckOprc            decimal.Decimal `json:"stck_oprc"`                      // 주식 시가
+	StckHgpr            decimal.Decimal `json:"stck_hgpr"`                      // 주식 최고가
+	StckLwpr            decimal.Decimal `json:"stck_lwpr"`                      // 주식 최저가
+	AvrgPrc             decimal.Decimal `json:"avrg_prc"`                       // 평균가
+}
+
+// InquireDailyShortSaleParams 는 공매도 일별추이 조회 파라미터.
+type InquireDailyShortSaleParams struct {
+	InputDate2 string // FID_INPUT_DATE_2 — 조회 종료 일자 (YYYYMMDD)
+	MarketCode string // FID_COND_MRKT_DIV_CODE — "J":KRX. 빈 값=>"J"
+	Symbol     string // FID_INPUT_ISCD — 종목코드 (예 "005930")
+	InputDate1 string // FID_INPUT_DATE_1 — 조회 시작 일자 (YYYYMMDD)
+}
+
+// InquireDailyShortSale 은 국내주식 공매도 일별추이 호출.
+//
+// 한투 docs: docs/api/국내주식/국내주식_공매도_일별추이.md
+// path: /uapi/domestic-stock/v1/quotations/daily-short-sale (FHPST04830000)
+func (c *Client) InquireDailyShortSale(ctx context.Context, params InquireDailyShortSaleParams) (*DailyShortSale, error) {
+	market := params.MarketCode
+	if market == "" {
+		market = "J"
+	}
+
+	resp, err := c.http.Do(ctx, &httpclient.Request{
+		Method: http.MethodGet,
+		Path:   "/uapi/domestic-stock/v1/quotations/daily-short-sale",
+		TrID:   "FHPST04830000",
+		Query: map[string]string{
+			"FID_INPUT_DATE_2":       params.InputDate2,
+			"FID_COND_MRKT_DIV_CODE": market,
+			"FID_INPUT_ISCD":         params.Symbol,
+			"FID_INPUT_DATE_1":       params.InputDate1,
+		},
+		CustType: "P",
+	})
+	if err != nil {
+		return nil, err
+	}
+	var res DailyShortSale
+	if err := json.Unmarshal(resp.Raw, &res); err != nil {
+		return nil, fmt.Errorf("kis: parse DailyShortSale: %w", err)
+	}
+	return &res, nil
+}

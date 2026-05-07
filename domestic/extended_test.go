@@ -512,3 +512,63 @@ func TestClient_InquireShortSale(t *testing.T) {
 	dAvrg, _ := decimal.NewFromString("75800")
 	assert.True(t, dAvrg.Equal(res.Output[0].AvrgPrc))
 }
+
+func TestClient_InquireDailyShortSale(t *testing.T) {
+	httpmock.Activate()
+	defer httpmock.DeactivateAndReset()
+
+	var capturedQuery url.Values
+	httpmock.RegisterResponder(
+		http.MethodGet,
+		`=~/quotations/daily-short-sale`,
+		func(req *http.Request) (*http.Response, error) {
+			capturedQuery = req.URL.Query()
+			return httpmock.NewStringResponse(http.StatusOK, loadFixtureString(t, "daily_short_sale_success.json")), nil
+		},
+	)
+
+	c := newTestClient(t)
+	res, err := c.InquireDailyShortSale(context.Background(), domestic.InquireDailyShortSaleParams{
+		Symbol:     "005930",
+		InputDate1: "20260501",
+		InputDate2: "20260507",
+	})
+	require.NoError(t, err)
+	require.NotNil(t, res)
+
+	// UPPERCASE FID_ 키 검증
+	assert.Equal(t, "J", capturedQuery.Get("FID_COND_MRKT_DIV_CODE"))
+	assert.Equal(t, "005930", capturedQuery.Get("FID_INPUT_ISCD"))
+	assert.Equal(t, "20260501", capturedQuery.Get("FID_INPUT_DATE_1"))
+	assert.Equal(t, "20260507", capturedQuery.Get("FID_INPUT_DATE_2"))
+
+	// output1 (single obj) 검증
+	d1, _ := decimal.NewFromString("75800")
+	assert.True(t, d1.Equal(res.Output1.StckPrpr))
+	dVrss, _ := decimal.NewFromString("-200")
+	assert.True(t, dVrss.Equal(res.Output1.PrdyVrss))
+	assert.Equal(t, "5", res.Output1.PrdyVrssSign)
+	assert.InDelta(t, -0.26, res.Output1.PrdyCtrt, 0.001)
+	assert.Equal(t, int64(12345678), res.Output1.AcmlVol)
+	assert.Equal(t, int64(13456789), res.Output1.PrdyVol)
+
+	// output2 (array) 검증
+	require.Len(t, res.Output2, 2)
+	assert.Equal(t, "20260507", res.Output2[0].StckBsopDate)
+	d2, _ := decimal.NewFromString("75800")
+	assert.True(t, d2.Equal(res.Output2[0].StckClpr))
+	assert.InDelta(t, -0.26, res.Output2[0].PrdyCtrt, 0.001)
+	assert.Equal(t, int64(12345678), res.Output2[0].AcmlVol)
+	assert.Equal(t, int64(123456), res.Output2[0].SstsCntgQty)
+	assert.InDelta(t, 1.90, res.Output2[0].AcmlSstsCntgQtyRlim, 0.001)
+	assert.Equal(t, int64(935714440400), res.Output2[0].AcmlTrPbmn)
+	assert.InDelta(t, 2.00, res.Output2[0].AcmlSstsTrPbmnRlim, 0.001)
+	dOprc, _ := decimal.NewFromString("76000")
+	assert.True(t, dOprc.Equal(res.Output2[0].StckOprc))
+	dHgpr, _ := decimal.NewFromString("76200")
+	assert.True(t, dHgpr.Equal(res.Output2[0].StckHgpr))
+	dLwpr, _ := decimal.NewFromString("75500")
+	assert.True(t, dLwpr.Equal(res.Output2[0].StckLwpr))
+	dAvrg, _ := decimal.NewFromString("75800")
+	assert.True(t, dAvrg.Equal(res.Output2[0].AvrgPrc))
+}
