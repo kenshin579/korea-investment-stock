@@ -1,5 +1,26 @@
 # CHANGELOG
 
+## [1.17.0] - 2026-05-08
+
+### Added — Phase 7 (헬퍼 4 메서드)
+
+- `Domestic.InquireMarketTime` — 국내선물 영업일조회 (HHMCM000002C0) — output1 배열 9 fields/item (D-2~D+2 영업일 + today + time + s_time/e_time)
+- `Domestic.InquireCompInterest` — 금리 종합 (FHPST07020000) — output1 단일 7 fields + output2 배열 7 fields/item (대표 채권금리 + 개별 항목)
+- `Domestic.InquireTradedByCompany` — 당사매매종목 상위 (FHPST01860000) — output 배열 12 fields/item, 최대 30 건, 다음 조회 불가
+- `Domestic.InquireCreditByCompany` — 당사 신용가능종목 (FHPST04770000) — output 배열 3 fields/item, 최대 100 건
+- examples: `domestic_helpers` (4 메서드 통합 시연)
+
+### Notes
+
+- **EP0 (상품기본조회 CTPF1604R) 제외** — 원래 Group D 는 5 메서드 후보였으나, `상품기본조회` 는 Phase 1.1 에서 이미 `Domestic.SearchInfo` (`domestic/info.go:47`) 로 출시됨. 동일 path/TR_ID/Query/Output 이라 중복 구현 방지.
+- **EP1 (`InquireMarketTime`) 파라미터 없음** — path + tr_id 만으로 호출. `output1` 은 단일 array (1 element 가 일반적이지만 docs 상 array).
+- **EP2 (`InquireCompInterest`) 4 query 모두 hardcoded** — `FID_COND_MRKT_DIV_CODE="I"`, `FID_COND_SCR_DIV_CODE="20702"`, `FID_DIV_CLS_CODE="1"`, `FID_DIV_CLS_CODE1=""` (UPPERCASE). Params 빈 struct.
+- **EP2 dual output** — output1 (단일 대표 객체) + output2 (개별 항목 array). output1.prdy_ctrt 와 output2.bstp_nmix_prdy_ctrt 는 키 이름 다르지만 동일 의미 (전일대비율).
+- **EP3 (`InquireTradedByCompany`) 4 hardcoded** — `fid_trgt_exls_cls_code`/`fid_cond_scr_div_code`/`fid_trgt_cls_code`/`fid_aply_rang_vol`. 페이지네이션 없음.
+- **EP4 (`InquireCreditByCompany`) 2 hardcoded** — `fid_cond_scr_div_code="20477"`, `fid_cond_mrkt_div_code="J"`. 페이지네이션 없음.
+- **모든 EP 모의투자 미지원** — 실전 only.
+- 누적 117 → 121 메서드.
+
 ## [1.16.0] - 2026-05-08
 
 ### Added — Phase 6 (재무 추가 2 메서드)

@@ -195,6 +195,15 @@ func main() {
 | `Domestic.InquireOtherMajorRatios` | `finance/other-major-ratios` | FHKST66430500 |
 | `Domestic.InquireFinanceRatioRanking` | `ranking/finance-ratio` | FHPST01750000 |
 
+### 헬퍼 — Phase 7 (v1.17.0)
+
+| Method | 한투 path | TR_ID |
+|--------|----------|-------|
+| `Domestic.InquireMarketTime` | `quotations/market-time` | HHMCM000002C0 |
+| `Domestic.InquireCompInterest` | `quotations/comp-interest` | FHPST07020000 |
+| `Domestic.InquireTradedByCompany` | `ranking/traded-by-company` | FHPST01860000 |
+| `Domestic.InquireCreditByCompany` | `quotations/credit-by-company` | FHPST04770000 |
+
 ### Bonds (장내채권) — Phase 3.1
 
 | Go 메서드 | path | TR_ID |

@@ -526,3 +526,100 @@ func (c *Client) InquireFinanceRatioRanking(ctx context.Context, params InquireF
 	}
 	return &res, nil
 }
+
+// TradedByCompany 는 당사매매종목 상위 (FHPST01860000) 응답.
+//
+// 한투 docs: docs/api/국내주식/국내주식_당사매매종목_상위.md
+// path: /uapi/domestic-stock/v1/ranking/traded-by-company
+//
+// HTS [0186] 당사매매종목 상위. 최대 30 건. tr_cont 미지원.
+type TradedByCompany struct {
+	Output []TradedByCompanyItem `json:"output"`
+}
+
+// TradedByCompanyItem 은 당사매매종목 상위 응답의 한 행.
+type TradedByCompanyItem struct {
+	DataRank     int64           `json:"data_rank,string"`      // 데이터 순위
+	MkscShrnIscd string          `json:"mksc_shrn_iscd"`        // 단축 종목코드
+	HtsKorIsnm   string          `json:"hts_kor_isnm"`          // HTS 한글 종목명
+	StckPrpr     decimal.Decimal `json:"stck_prpr"`             // 주식 현재가
+	PrdyVrssSign string          `json:"prdy_vrss_sign"`        // 전일대비 부호
+	PrdyVrss     decimal.Decimal `json:"prdy_vrss"`             // 전일대비
+	PrdyCtrt     float64         `json:"prdy_ctrt,string"`      // 전일대비율
+	AcmlVol      int64           `json:"acml_vol,string"`       // 누적 거래량
+	AcmlTrPbmn   int64           `json:"acml_tr_pbmn,string"`   // 누적 거래대금
+	SelnCnqnSmtn int64           `json:"seln_cnqn_smtn,string"` // 매도 체결량 합계
+	ShnuCnqnSmtn int64           `json:"shnu_cnqn_smtn,string"` // 매수 체결량 합계
+	NtbyCnqn     int64           `json:"ntby_cnqn,string"`      // 순매수 체결량
+}
+
+// InquireTradedByCompanyParams 는 당사매매종목 상위 조회 파라미터.
+//
+// 4개 query (fid_trgt_exls_cls_code/fid_cond_scr_div_code/fid_trgt_cls_code/fid_aply_rang_vol) 는 hardcoded → struct 미노출.
+type InquireTradedByCompanyParams struct {
+	MarketCode string // fid_cond_mrkt_div_code (J=KRX, NX=NXT). 빈 값=>"J"
+	DivCode    string // fid_div_cls_code (0=전체, 1=관리, 2=투자주의, ..., 6=보통주, 7=우선주). 빈 값=>"0"
+	SortCode   string // fid_rank_sort_cls_code (0=매도상위, 1=매수상위). 빈 값=>"0"
+	InputDate1 string // fid_input_date_1 (YYYYMMDD, 시작)
+	InputDate2 string // fid_input_date_2 (YYYYMMDD, 종료)
+	InputISCD  string // fid_input_iscd (0000=전체, 0001=거래소, 1001=코스닥 등). 빈 값=>"0000"
+	PriceFrom  string // fid_aply_rang_prc_1 (가격 시작)
+	PriceTo    string // fid_aply_rang_prc_2 (가격 종료)
+}
+
+// InquireTradedByCompany 는 당사매매종목 상위 호출.
+//
+// 한투 docs: docs/api/국내주식/국내주식_당사매매종목_상위.md
+// path: /uapi/domestic-stock/v1/ranking/traded-by-company (FHPST01860000)
+//
+// 4 hardcoded: fid_trgt_exls_cls_code="0", fid_cond_scr_div_code="20186",
+//
+//	fid_trgt_cls_code="0", fid_aply_rang_vol="0".
+func (c *Client) InquireTradedByCompany(ctx context.Context, params InquireTradedByCompanyParams) (*TradedByCompany, error) {
+	market := params.MarketCode
+	if market == "" {
+		market = "J"
+	}
+	div := params.DivCode
+	if div == "" {
+		div = "0"
+	}
+	sort := params.SortCode
+	if sort == "" {
+		sort = "0"
+	}
+	iscd := params.InputISCD
+	if iscd == "" {
+		iscd = "0000"
+	}
+
+	resp, err := c.http.Do(ctx, &httpclient.Request{
+		Method: http.MethodGet,
+		Path:   "/uapi/domestic-stock/v1/ranking/traded-by-company",
+		TrID:   "FHPST01860000",
+		Query: map[string]string{
+			"fid_trgt_exls_cls_code": "0",
+			"fid_cond_mrkt_div_code": market,
+			"fid_cond_scr_div_code":  "20186",
+			"fid_div_cls_code":       div,
+			"fid_rank_sort_cls_code": sort,
+			"fid_input_date_1":       params.InputDate1,
+			"fid_input_date_2":       params.InputDate2,
+			"fid_input_iscd":         iscd,
+			"fid_trgt_cls_code":      "0",
+			"fid_aply_rang_vol":      "0",
+			"fid_aply_rang_prc_1":    params.PriceFrom,
+			"fid_aply_rang_prc_2":    params.PriceTo,
+		},
+		CustType: "P",
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	var res TradedByCompany
+	if err := json.Unmarshal(resp.Raw, &res); err != nil {
+		return nil, fmt.Errorf("kis: parse TradedByCompany: %w", err)
+	}
+	return &res, nil
+}

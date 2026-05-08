@@ -305,3 +305,105 @@ func TestClient_InquireFinanceRatioRanking_InvalidJSON(t *testing.T) {
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "FinanceRatioRanking")
 }
+
+func TestClient_InquireTradedByCompany(t *testing.T) {
+	httpmock.Activate()
+	defer httpmock.DeactivateAndReset()
+
+	var capturedQuery url.Values
+	httpmock.RegisterResponder(
+		http.MethodGet,
+		`=~/ranking/traded-by-company`,
+		func(req *http.Request) (*http.Response, error) {
+			capturedQuery = req.URL.Query()
+			return httpmock.NewStringResponse(200, loadFixtureString(t, "traded_by_company_success.json")), nil
+		},
+	)
+
+	c := newTestClient(t)
+	res, err := c.InquireTradedByCompany(context.Background(), domestic.InquireTradedByCompanyParams{
+		InputDate1: "20260501",
+		InputDate2: "20260508",
+	})
+	require.NoError(t, err)
+	require.NotNil(t, res)
+
+	// 4 hardcoded
+	assert.Equal(t, "0", capturedQuery.Get("fid_trgt_exls_cls_code"))
+	assert.Equal(t, "20186", capturedQuery.Get("fid_cond_scr_div_code"))
+	assert.Equal(t, "0", capturedQuery.Get("fid_trgt_cls_code"))
+	assert.Equal(t, "0", capturedQuery.Get("fid_aply_rang_vol"))
+	// default 값
+	assert.Equal(t, "J", capturedQuery.Get("fid_cond_mrkt_div_code"))
+	assert.Equal(t, "0", capturedQuery.Get("fid_div_cls_code"))
+	assert.Equal(t, "0", capturedQuery.Get("fid_rank_sort_cls_code"))
+	assert.Equal(t, "0000", capturedQuery.Get("fid_input_iscd"))
+	// 사용자 입력
+	assert.Equal(t, "20260501", capturedQuery.Get("fid_input_date_1"))
+	assert.Equal(t, "20260508", capturedQuery.Get("fid_input_date_2"))
+
+	require.Len(t, res.Output, 2)
+	assert.Equal(t, int64(1), res.Output[0].DataRank)
+	assert.Equal(t, "005930", res.Output[0].MkscShrnIscd)
+	assert.Equal(t, "삼성전자", res.Output[0].HtsKorIsnm)
+	assert.Equal(t, decimal.NewFromInt(75500), res.Output[0].StckPrpr)
+	assert.Equal(t, decimal.NewFromInt(1500), res.Output[0].PrdyVrss)
+	assert.InDelta(t, 2.03, res.Output[0].PrdyCtrt, 0.001)
+	assert.Equal(t, int64(12345678), res.Output[0].AcmlVol)
+	assert.Equal(t, int64(987654321000), res.Output[0].AcmlTrPbmn)
+	assert.Equal(t, int64(5000000), res.Output[0].SelnCnqnSmtn)
+	assert.Equal(t, int64(7345678), res.Output[0].ShnuCnqnSmtn)
+	assert.Equal(t, int64(2345678), res.Output[0].NtbyCnqn)
+	// 두 번째 행 — 음수 순매수
+	assert.Equal(t, int64(-1234567), res.Output[1].NtbyCnqn)
+}
+
+func TestClient_InquireTradedByCompany_Overrides(t *testing.T) {
+	httpmock.Activate()
+	defer httpmock.DeactivateAndReset()
+
+	var capturedQuery url.Values
+	httpmock.RegisterResponder(
+		http.MethodGet,
+		`=~/ranking/traded-by-company`,
+		func(req *http.Request) (*http.Response, error) {
+			capturedQuery = req.URL.Query()
+			return httpmock.NewStringResponse(200, loadFixtureString(t, "traded_by_company_success.json")), nil
+		},
+	)
+
+	c := newTestClient(t)
+	_, err := c.InquireTradedByCompany(context.Background(), domestic.InquireTradedByCompanyParams{
+		MarketCode: "NX",
+		DivCode:    "6", // 보통주
+		SortCode:   "1", // 매수상위
+		InputDate1: "20260101",
+		InputDate2: "20260131",
+		InputISCD:  "1001", // 코스닥
+		PriceFrom:  "10000",
+		PriceTo:    "100000",
+	})
+	require.NoError(t, err)
+	assert.Equal(t, "NX", capturedQuery.Get("fid_cond_mrkt_div_code"))
+	assert.Equal(t, "6", capturedQuery.Get("fid_div_cls_code"))
+	assert.Equal(t, "1", capturedQuery.Get("fid_rank_sort_cls_code"))
+	assert.Equal(t, "1001", capturedQuery.Get("fid_input_iscd"))
+	assert.Equal(t, "10000", capturedQuery.Get("fid_aply_rang_prc_1"))
+	assert.Equal(t, "100000", capturedQuery.Get("fid_aply_rang_prc_2"))
+}
+
+func TestClient_InquireTradedByCompany_InvalidJSON(t *testing.T) {
+	httpmock.Activate()
+	defer httpmock.DeactivateAndReset()
+
+	httpmock.RegisterResponder(
+		http.MethodGet,
+		`=~/ranking/traded-by-company`,
+		httpmock.NewStringResponder(200, `{"rt_cd":"0","msg_cd":"X","msg1":"x","output":"not-array"}`),
+	)
+
+	c := newTestClient(t)
+	_, err := c.InquireTradedByCompany(context.Background(), domestic.InquireTradedByCompanyParams{})
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "TradedByCompany")
+}
