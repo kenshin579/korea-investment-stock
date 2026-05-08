@@ -195,5 +195,22 @@
 //	EP2 13 query 중 5 개 hardcoded (fid_trgt_cls_code/fid_cond_scr_div_code/fid_div_cls_code/fid_blng_cls_code/fid_trgt_exls_cls_code)
 //	EP2 페이지네이션 없음 (최대 30 건, tr_cont 미사용)
 //
+// Phase 7 — 헬퍼 (v1.17.0)
+//
+//	EP1  InquireMarketTime         — 국내선물 영업일조회 (D-2~D+2 + 장 시간) HHMCM000002C0
+//	EP2  InquireCompInterest       — 금리 종합 (대표 + 개별 채권금리)        FHPST07020000
+//	EP3  InquireTradedByCompany    — 당사매매종목 상위 (매도/매수 누적합)    FHPST01860000
+//	EP4  InquireCreditByCompany    — 당사 신용가능종목 (신용주문 가능 list) FHPST04770000
+//
+// Anomalies (Phase 7):
+//
+//	상품기본조회 (CTPF1604R) 는 Phase 1.1 SearchInfo 로 이미 출시 — 중복 제외
+//	EP1 파라미터 없음 (path + tr_id 만)
+//	EP2 4 query 모두 UPPERCASE + hardcoded (FID_COND_MRKT_DIV_CODE="I" 등) — Params 빈 struct
+//	EP2 dual output (output1 단일 + output2 array) — 두 output 의 prdy_ctrt 키 이름 다름
+//	EP3 12 query 중 4 개 hardcoded (fid_trgt_exls_cls_code/fid_cond_scr_div_code/fid_trgt_cls_code/fid_aply_rang_vol)
+//	EP4 5 query 중 2 개 hardcoded (fid_cond_scr_div_code/fid_cond_mrkt_div_code)
+//	모든 EP 모의투자 미지원
+//
 // 사용자는 root kis.Client 의 Domestic 필드로 접근.
 package domestic
