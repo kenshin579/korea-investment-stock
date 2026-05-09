@@ -10,7 +10,7 @@
 | 호가 | H0NXASP0 | H0UNASP0 | 65 | KRX 59 + KMID/NMID 6 (중간가) | 미지원 |
 | 예상체결 | H0NXANC0 | H0UNANC0 | 46 | KRX 45 + VI_STND_PRC | 미지원 |
 | 프로그램매매 | H0NXPGM0 | H0UNPGM0 | 11 | 신규 EP (Phase 8 OoS) | 미지원 |
-| 회원사 | H0NXMBC0 | H0UNMBC0 | 72 | 신규 EP (Phase 8 OoS) | 미지원 |
+| 회원사 | H0NXMBC0 | H0UNMBC0 | 78 | 신규 EP (Phase 8 OoS) | 미지원 |
 
 **중요한 패턴**: NXT 와 통합은 schema **완전 동일**. 차이는 TR_ID 와 모의 지원만. → 5 base struct + 10 type alias 권장.
 
@@ -22,7 +22,7 @@
 |---|---|---|
 | NXT 호가 fields | 59 (KRX 동일) | **65** (+KMID/NMID) |
 | NXT 예상체결 fields | 45 (KRX 동일) | **46** (+VI_STND_PRC) |
-| 회원사 fields | 미상 | **72** |
+| 회원사 fields | 미상 | **78** (docs 응답 표 직접 검증, 2026-05-09) |
 | 프로그램매매 | KRX schema | 신규 schema (11 fields, KRX 와 별도) |
 
 ---
@@ -215,7 +215,7 @@ type UnifiedProgramTradeEvent = ProgramTradeEvent
 
 ---
 
-## EP9/10 — 회원사 NXT/통합 (72 fields, 신규)
+## EP9/10 — 회원사 NXT/통합 (78 fields, 신규)
 
 5단계 매도/매수 회원사 + 외국계 통계.
 
@@ -245,9 +245,9 @@ type UnifiedProgramTradeEvent = ProgramTradeEvent
 [73..77]                     BYOV_MBCR_ENG_NAME1..5   (BuyBrokerEngNames, [5]string)
 ```
 
-총 78 fields (실제 docs 표 기준). 하지만 그 중 어떤 게 request header (approval_key 등 6) 인지 분리 필요.
-
-**Implementation 단계 검증 필수**: Body fields 정확한 개수 (78 - request 6 = 72? 또는 실제 다른 값) 직접 docs 보고 확정.
+총 **78 fields** (실제 docs 응답 body 표 기준, 2026-05-09 직접 검증).
+Request header (approval_key/custtype/tr_type/content-type) 와 request body (tr_id/tr_key) 는 응답 body 와 별개.
+NXT 와 통합 docs 모두 응답 body 78 fields 동일.
 
 ```go
 type MemberEvent struct {

@@ -1,5 +1,35 @@
 # CHANGELOG
 
+## [1.19.0] - 2026-05-09
+
+### Added — Phase 9 (WebSocket — NXT/통합 변형 10 endpoint)
+
+NXT (대체거래소) 와 통합 (KRX+NXT) 시장의 5종 실시간 EP × 2 = 10 신규 endpoint.
+
+- `WS.SubscribeNxtTrade` / `OnNxtTrade` — 실시간체결가 NXT (H0NXCNT0)
+- `WS.SubscribeUnifiedTrade` / `OnUnifiedTrade` — 실시간체결가 통합 (H0UNCNT0)
+- `WS.SubscribeNxtAsk` / `OnNxtAsk` — 실시간호가 NXT (H0NXASP0)
+- `WS.SubscribeUnifiedAsk` / `OnUnifiedAsk` — 실시간호가 통합 (H0UNASP0)
+- `WS.SubscribeNxtExpectTrade` / `OnNxtExpectTrade` — 실시간예상체결 NXT (H0NXANC0)
+- `WS.SubscribeUnifiedExpectTrade` / `OnUnifiedExpectTrade` — 실시간예상체결 통합 (H0UNANC0)
+- `WS.SubscribeNxtProgramTrade` / `OnNxtProgramTrade` — 실시간프로그램매매 NXT (H0NXPGM0, 신규 EP)
+- `WS.SubscribeUnifiedProgramTrade` / `OnUnifiedProgramTrade` — 실시간프로그램매매 통합 (H0UNPGM0, 신규 EP)
+- `WS.SubscribeNxtMember` / `OnNxtMember` — 실시간회원사 NXT (H0NXMBC0, 신규 EP)
+- `WS.SubscribeUnifiedMember` / `OnUnifiedMember` — 실시간회원사 통합 (H0UNMBC0, 신규 EP)
+
+### Notes
+
+- **5 base struct + 10 type alias 패턴**: NXT 와 통합은 schema 가 완전히 동일해서 `AltMarketTradeEvent`/`AltMarketAskEvent`/`AltMarketExpectTradeEvent`/`ProgramTradeEvent`/`MemberEvent` 5 base 만 정의. 사용자 facing API 는 시장 구분을 위해 10 type alias (`NxtTradeEvent`/`UnifiedTradeEvent` 등) 제공.
+- **KRX 와 schema 차이**:
+  - 체결가 (46 fields, KRX 동일): 22번 필드명만 차이 (KRX `CCLD_DVSN`, NXT/통합 `CNTG_CLS_CODE` — 의미 동일)
+  - 호가 (65 fields = KRX 59 + 6): 끝에 `KMID_PRC`/`KMID_TOTAL_RSQN`/`KMID_CLS_CODE`/`NMID_PRC`/`NMID_TOTAL_RSQN`/`NMID_CLS_CODE` (KRX/NXT 중간가) 추가
+  - 예상체결 (46 fields = KRX 45 + 1): 끝에 `VI_STND_PRC` (정적VI발동기준가) 추가
+  - 프로그램매매 (11 fields, 신규): KRX `H0STPGM0` 와 별개 schema
+  - 회원사 (78 fields, 신규): 5단계 매도/매수 회원사명/수량/비중/거래원코드/증감 + 외국계 통계 + 영문회원사명
+- **모든 EP 모의 미지원** — 실전 only. KRX 만 모의 지원 (Phase 8).
+- **Plan deviation**: 회원사 EP fields 수가 schema reference 의 추정 72 가 아닌 docs 응답 표 직접 검증 결과 **78** 로 확정.
+- 누적 121 REST + 15 WS = **136 endpoints**.
+
 ## [1.18.0] - 2026-05-09
 
 ### Added — Phase 8 (WebSocket — KRX 시세 5 endpoint)

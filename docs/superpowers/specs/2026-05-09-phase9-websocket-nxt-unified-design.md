@@ -16,7 +16,7 @@
 | 호가 | H0NXASP0 | H0UNASP0 | 65 | KRX 59 + KMID/NMID 6 (중간가) |
 | 예상체결 | H0NXANC0 | H0UNANC0 | 46 | KRX 45 + VI_STND_PRC |
 | 프로그램매매 | H0NXPGM0 | H0UNPGM0 | 11 | 신규 EP (KRX H0STPGM0 도 Phase 8 OoS) |
-| 회원사 | H0NXMBC0 | H0UNMBC0 | ~72 (직접 검증) | 신규 EP (KRX H0STMBC0 도 Phase 8 OoS) |
+| 회원사 | H0NXMBC0 | H0UNMBC0 | 78 | 신규 EP (KRX H0STMBC0 도 Phase 8 OoS) |
 
 전체 schema reference: `websocket/testdata/_schemas_phase9.md` (10 fixtures 와 함께 commit 됨).
 
@@ -52,7 +52,7 @@ type AltMarketTradeEvent struct { /* 46 fields */ }
 type AltMarketAskEvent struct { /* 65 fields, KrxMidPrice/NxtMidPrice 등 추가 */ }
 type AltMarketExpectTradeEvent struct { /* 46 fields, ViStandardPrice 추가 */ }
 type ProgramTradeEvent struct { /* 11 fields */ }
-type MemberEvent struct { /* ~72 fields, 5단계 매도/매수 + 외국계 */ }
+type MemberEvent struct { /* 78 fields, 5단계 매도/매수 + 외국계 + 영문회원사명 */ }
 
 // 10 type alias
 type NxtTradeEvent = AltMarketTradeEvent
@@ -173,4 +173,4 @@ Tasks:
 11. 최종 점검 (gofmt/vet/build/race/coverage ≥70%)
 12. PR + merge + tag v1.19.0 + GitHub Release
 
-회원사 EP 의 정확한 응답 body field count + 인덱스 매핑은 implementation 단계에서 docs 직접 검증 필수 (현재 fixture 78 fields 작성 — 정확치는 implementation 시 확정).
+회원사 EP body field count = **78** (NXT/통합 동일, 2026-05-09 docs 응답 표 직접 검증).
