@@ -1,5 +1,38 @@
 # CHANGELOG
 
+## [1.22.0] - 2026-05-09
+
+### Added — Phase 11.2 (WebSocket — 국내선물옵션 실시간 11 EP)
+
+국내선물옵션 실시간 시세 11 endpoint. WebSocket 인프라 (Phase 8/9/10) 그대로 재사용. 11 EP 모두 distinct schema (Phase 9 의 alias 패턴 적용 불가).
+
+**KRX 야간 (5 EP)**:
+- `WS.SubscribeKrxNightFuturesTrade` / `OnKrxNightFuturesTrade` — H0MFCNT0 (49 fields)
+- `WS.SubscribeKrxNightFuturesAsk` / `OnKrxNightFuturesAsk` — H0MFASP0 (38 fields, 5단계 호가)
+- `WS.SubscribeKrxNightOptionTrade` / `OnKrxNightOptionTrade` — H0EUCNT0 (56 fields, 그릭스 포함)
+- `WS.SubscribeKrxNightOptionAsk` / `OnKrxNightOptionAsk` — H0EUASP0 (38 fields)
+- `WS.SubscribeKrxNightOptionExpectTrade` / `OnKrxNightOptionExpectTrade` — H0EUANC0 (8 fields)
+
+**주식 선물옵션 (6 EP)**:
+- `WS.SubscribeStockFuturesTrade` / `OnStockFuturesTrade` — H0ZFCNT0 (49 fields)
+- `WS.SubscribeStockFuturesAsk` / `OnStockFuturesAsk` — H0ZFASP0 (68 fields, 10단계 호가)
+- `WS.SubscribeStockFuturesExpectTrade` / `OnStockFuturesExpectTrade` — H0ZFANC0 (8 fields)
+- `WS.SubscribeStockOptionTrade` / `OnStockOptionTrade` — H0ZOCNT0 (53 fields, 그릭스 포함)
+- `WS.SubscribeStockOptionAsk` / `OnStockOptionAsk` — H0ZOASP0 (68 fields)
+- `WS.SubscribeStockOptionExpectTrade` / `OnStockOptionExpectTrade` — H0ZOANC0 (7 fields, ANTC_CNQN 누락)
+
+### Notes
+
+- **TR_ID 명명 규칙**: `H0` + `MF` (KRX 야간 선물) / `EU` (KRX 야간 옵션) / `ZF` (주식 선물) / `ZO` (주식 옵션) + `CNT0` (체결) / `ASP0` (호가) / `ANC0` (예상체결).
+- **모든 EP 모의 미지원** — 실전 only.
+- **선물 vs 옵션 schema 차이**: 선물은 MRKT_BASIS / DPRT / 스프레드 / 근월물 / 원월물 포함, 옵션은 그릭스 (DELTA / GAMA / VEGA / THETA / RHO) + IV / HV 포함. 완전 별개.
+- **호가 단계 차이**: KRX 야간 5단계 (`[5]decimal.Decimal`), 주식 10단계 (`[10]decimal.Decimal`).
+- **옵션 그릭스**: Plan 의 `decimal.Decimal` 검토 결과 docs 가 비율로 표기 → `float64` 매핑.
+- **EP H0EUCNT0 DYNM 순서 anomaly**: KRX 야간 옵션 체결가의 DYNM 필드 순서 (MXPR → PRC_LIMT_YN → LLAM) 가 다른 EP 와 다름 — fixture 로 검증.
+- **EP H0ZOANC0 7 fields**: ANTC_CNQN 필드 없음 (다른 ANC0 EP 들은 8 fields).
+- **Coverage**: websocket 70.4% (목표 ≥70%).
+- 누적: 130 REST + 17 → 28 WS = **130 REST + 28 WS = 158 endpoints**.
+
 ## [1.21.0] - 2026-05-09
 
 ### Added — Phase 11.1 (국내선물옵션 시세/조회 9 EP, 신규 `futures/` sub-package)
