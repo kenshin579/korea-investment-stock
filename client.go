@@ -21,6 +21,7 @@ import (
 	"github.com/kenshin579/korea-investment-stock/internal/ratelimit"
 	"github.com/kenshin579/korea-investment-stock/internal/token"
 	"github.com/kenshin579/korea-investment-stock/overseas"
+	"github.com/kenshin579/korea-investment-stock/websocket"
 )
 
 // KIS OpenAPI base URLs.
@@ -43,6 +44,7 @@ type Client struct {
 	Domestic *domestic.Client
 	Overseas *overseas.Client
 	Bonds    *bonds.Client
+	WS       *websocket.Client
 }
 
 // Option 은 functional option.
@@ -83,6 +85,18 @@ func NewClient(apiKey, apiSecret, accountNo string, opts ...Option) (*Client, er
 	c.Domestic = domestic.New(c.httpClient, c.masterC)
 	c.Overseas = overseas.New(c.httpClient, c.masterC)
 	c.Bonds = bonds.New(c.httpClient)
+
+	// WebSocket endpoint: 실전 vs 모의투자
+	wsEndpoint := "ws://ops.koreainvestment.com:21000"
+	if cfg.baseURL == PaperEnv {
+		wsEndpoint = "ws://ops.koreainvestment.com:31000"
+	}
+	c.WS = websocket.NewClient(websocket.Options{
+		Endpoint:  wsEndpoint,
+		BaseURL:   cfg.baseURL,
+		AppKey:    apiKey,
+		AppSecret: apiSecret,
+	})
 	return c, nil
 }
 
