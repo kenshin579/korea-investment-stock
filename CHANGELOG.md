@@ -1,5 +1,34 @@
 # CHANGELOG
 
+## [1.23.0] - 2026-05-09
+
+### Added — Phase 11.3 (WebSocket — 지수선물옵션 + 상품선물 실시간 6 EP)
+
+Phase 11.2 후속. 지수 4 + 상품 2 = 6 EP. 4 base struct + 2 alias 패턴 (Phase 9 처럼) 적용.
+
+**지수선물옵션 (4 EP, 모의 미지원)**:
+- `WS.SubscribeIndexFuturesTrade` / `OnIndexFuturesTrade` — H0IFCNT0 (50 fields)
+- `WS.SubscribeIndexFuturesAsk` / `OnIndexFuturesAsk` — H0IFASP0 (38 fields, 5단계)
+- `WS.SubscribeIndexOptionTrade` / `OnIndexOptionTrade` — H0IOCNT0 (58 fields, 그릭스 + AVRG_VLTL + DSCS_LRQN_VOL + DYNM 3)
+- `WS.SubscribeIndexOptionAsk` / `OnIndexOptionAsk` — H0IOASP0 (38 fields, 5단계)
+
+**상품선물 (2 EP, 모의 미지원)**:
+- `WS.SubscribeCommodityFuturesTrade` / `OnCommodityFuturesTrade` — H0CFCNT0 (`= IndexFuturesTradeEvent` alias)
+- `WS.SubscribeCommodityFuturesAsk` / `OnCommodityFuturesAsk` — H0CFASP0 (`= IndexFuturesAskEvent` alias)
+
+### Notes
+
+- **TR_ID 명명 규칙**: `H0` + `IF` (지수선물) / `IO` (지수옵션) / `CF` (상품선물) + `CNT0` / `ASP0`.
+- **4 base + 2 alias 패턴**: 상품선물 (CF) schema = 지수선물 (IF) schema 완전 동일 → `CommodityFuturesTradeEvent = IndexFuturesTradeEvent` (Go type alias, compile-time 해소). dispatcher 슬롯은 별도 (사용자가 시장 구분 가능).
+- **지수옵션 schema** 는 주식옵션 (Phase 11.2 ZO) 과 다름:
+  - +AVRG_VLTL (평균변동성, 지수옵션에만)
+  - +DSCS_LRQN_VOL (협의대량거래량)
+  - +DYNM 3 fields
+- **EP H0IOCNT0 DYNM 순서**: MXPR → LLAM → PRC_LIMT_YN (Phase 11.2 의 H0EUCNT0 와 다름).
+- **모든 EP 모의 미지원** — 실전 only.
+- **Coverage**: websocket 72.3% (목표 ≥70%).
+- 누적 130 REST + 28 → 34 WS = **130 REST + 34 WS = 164 endpoints**.
+
 ## [1.22.0] - 2026-05-09
 
 ### Added — Phase 11.2 (WebSocket — 국내선물옵션 실시간 11 EP)
