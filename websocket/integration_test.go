@@ -269,6 +269,47 @@ func TestIntegration_UnifiedProgramTrade(t *testing.T) {
 	require.Eventually(t, func() bool { return calls.Load() > 0 }, 2*time.Second, 10*time.Millisecond)
 }
 
+// samplePayloadOverseasTrade — HDFSCNT0 fixture 와 동일 layout, 26 fields.
+func samplePayloadOverseasTrade(symbol string) string {
+	return symbol + "^AAPL^4^20260509^260509^093015^260509^223015^195.32^196.50^194.80^195.85^2^0.53^0.27^195.83^195.86^1500^1200^150^25000000^4900000000^120000^150000^102.5^1"
+}
+
+// TestIntegration_OverseasTrade — Phase 10 해외주식 체결가 시나리오.
+func TestIntegration_OverseasTrade(t *testing.T) {
+	setupApprovalMock(t)
+
+	srv := wsmock.New(t)
+	defer srv.Close()
+
+	c := newClient(t, srv.URL())
+
+	var calls atomic.Int32
+	c.OnOverseasTrade(func(ev websocket.OverseasTradeEvent) {
+		calls.Add(1)
+		assert.Equal(t, "DNASAAPL", ev.Symbol)
+		assert.Equal(t, "AAPL", ev.SymbolCode)
+	})
+
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	go c.Run(ctx)
+	require.NoError(t, srv.WaitConnected(ctx))
+
+	require.NoError(t, c.SubscribeOverseasTrade("DNASAAPL"))
+
+	select {
+	case msg := <-srv.Received():
+		assert.Contains(t, msg, "HDFSCNT0")
+		assert.Contains(t, msg, "DNASAAPL")
+	case <-ctx.Done():
+		t.Fatal("did not receive overseas subscribe frame")
+	}
+
+	require.NoError(t, srv.SendRealtime(ctx, "HDFSCNT0", samplePayloadOverseasTrade("DNASAAPL")))
+	require.Eventually(t, func() bool { return calls.Load() > 0 }, 2*time.Second, 10*time.Millisecond)
+}
+
 func TestIntegration_GracefulShutdown(t *testing.T) {
 	setupApprovalMock(t)
 
