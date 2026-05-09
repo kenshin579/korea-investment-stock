@@ -135,3 +135,21 @@ func TestDispatcher_Phase9Routers(t *testing.T) {
 	assert.Equal(t, int32(1), nxtMember.Load())
 	assert.Equal(t, int32(1), unMember.Load())
 }
+
+func TestDispatcher_Phase10Routers(t *testing.T) {
+	// Phase 10 — 해외주식 2 핸들러 라우팅 검증.
+	d := newDispatcher()
+	var (
+		ovTrade atomic.Int32
+		ovAsk   atomic.Int32
+	)
+
+	d.OnOverseasTrade(func(OverseasTradeEvent) { ovTrade.Add(1) })
+	d.OnOverseasAsk(func(OverseasAskEvent) { ovAsk.Add(1) })
+
+	d.RouteOverseasTrade(OverseasTradeEvent{})
+	d.RouteOverseasAsk(OverseasAskEvent{})
+
+	assert.Equal(t, int32(1), ovTrade.Load())
+	assert.Equal(t, int32(1), ovAsk.Load())
+}

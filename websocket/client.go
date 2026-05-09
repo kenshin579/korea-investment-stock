@@ -68,6 +68,10 @@ const (
 	trIDUnifiedExpectTrade  = "H0UNANC0" // 실시간예상체결 통합
 	trIDUnifiedProgramTrade = "H0UNPGM0" // 실시간프로그램매매 통합
 	trIDUnifiedMember       = "H0UNMBC0" // 실시간회원사 통합
+
+	// Phase 10 — 해외주식
+	trIDOverseasTrade = "HDFSCNT0" // 해외주식 실시간지연체결가
+	trIDOverseasAsk   = "HDFSASP0" // 해외주식 실시간호가
 )
 
 // Client 는 KIS WebSocket 진입점. kis.Client.WS 로 접근.
@@ -153,6 +157,15 @@ func (c *Client) SubscribeUnifiedMember(symbols ...string) error {
 	return c.subscribe(trIDUnifiedMember, symbols)
 }
 
+// Phase 10 — 해외주식 Subscribe.
+// tr_key 형식: D|R + 시장구분(NAS/NYS/AMS/HKS/TSE 등) + 종목코드 (예: "DNASAAPL").
+func (c *Client) SubscribeOverseasTrade(symbols ...string) error {
+	return c.subscribe(trIDOverseasTrade, symbols)
+}
+func (c *Client) SubscribeOverseasAsk(symbols ...string) error {
+	return c.subscribe(trIDOverseasAsk, symbols)
+}
+
 // === Unsubscribe (대칭) ===
 
 func (c *Client) UnsubscribeKrxTrade(symbols ...string) error {
@@ -203,6 +216,14 @@ func (c *Client) UnsubscribeUnifiedProgramTrade(symbols ...string) error {
 }
 func (c *Client) UnsubscribeUnifiedMember(symbols ...string) error {
 	return c.unsubscribe(trIDUnifiedMember, symbols)
+}
+
+// Phase 10 — 해외주식 Unsubscribe
+func (c *Client) UnsubscribeOverseasTrade(symbols ...string) error {
+	return c.unsubscribe(trIDOverseasTrade, symbols)
+}
+func (c *Client) UnsubscribeOverseasAsk(symbols ...string) error {
+	return c.unsubscribe(trIDOverseasAsk, symbols)
 }
 
 func (c *Client) subscribe(trID string, symbols []string) error {
@@ -275,6 +296,10 @@ func (c *Client) OnUnifiedProgramTrade(h func(UnifiedProgramTradeEvent)) {
 }
 func (c *Client) OnNxtMember(h func(NxtMemberEvent))         { c.dispatcher.OnNxtMember(h) }
 func (c *Client) OnUnifiedMember(h func(UnifiedMemberEvent)) { c.dispatcher.OnUnifiedMember(h) }
+
+// Phase 10 — 해외주식 Handler 위임 (2)
+func (c *Client) OnOverseasTrade(h func(OverseasTradeEvent)) { c.dispatcher.OnOverseasTrade(h) }
+func (c *Client) OnOverseasAsk(h func(OverseasAskEvent))     { c.dispatcher.OnOverseasAsk(h) }
 
 func (c *Client) OnConnected(h func())            { c.dispatcher.OnConnected(h) }
 func (c *Client) OnReconnect(h func(attempt int)) { c.dispatcher.OnReconnect(h) }
@@ -541,6 +566,26 @@ func (c *Client) routeRealtime(f frame) {
 		}
 		for _, ev := range evs {
 			c.dispatcher.RouteUnifiedMember(ev)
+		}
+
+	// Phase 10 — 해외주식 시세
+	case trIDOverseasTrade:
+		evs, err := decodeOverseasTrade(f)
+		if err != nil {
+			c.dispatcher.RouteError(err)
+			return
+		}
+		for _, ev := range evs {
+			c.dispatcher.RouteOverseasTrade(ev)
+		}
+	case trIDOverseasAsk:
+		evs, err := decodeOverseasAsk(f)
+		if err != nil {
+			c.dispatcher.RouteError(err)
+			return
+		}
+		for _, ev := range evs {
+			c.dispatcher.RouteOverseasAsk(ev)
 		}
 
 	default:

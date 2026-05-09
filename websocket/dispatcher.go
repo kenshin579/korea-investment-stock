@@ -31,6 +31,10 @@ type dispatcher struct {
 	onNxtMember           func(NxtMemberEvent)
 	onUnifiedMember       func(UnifiedMemberEvent)
 
+	// Phase 10 — 해외주식 시세 (2)
+	onOverseasTrade func(OverseasTradeEvent)
+	onOverseasAsk   func(OverseasAskEvent)
+
 	onConnected  func()
 	onReconnect  func(attempt int)
 	onDisconnect func(error)
@@ -117,6 +121,19 @@ func (d *dispatcher) OnNxtMember(h func(NxtMemberEvent)) {
 func (d *dispatcher) OnUnifiedMember(h func(UnifiedMemberEvent)) {
 	d.mu.Lock()
 	d.onUnifiedMember = h
+	d.mu.Unlock()
+}
+
+// Phase 10 — 해외주식 등록 메서드 (2)
+
+func (d *dispatcher) OnOverseasTrade(h func(OverseasTradeEvent)) {
+	d.mu.Lock()
+	d.onOverseasTrade = h
+	d.mu.Unlock()
+}
+func (d *dispatcher) OnOverseasAsk(h func(OverseasAskEvent)) {
+	d.mu.Lock()
+	d.onOverseasAsk = h
 	d.mu.Unlock()
 }
 
@@ -248,6 +265,23 @@ func (d *dispatcher) RouteUnifiedMember(ev UnifiedMemberEvent) {
 	d.safeCall(func(h *dispatcher) {
 		if h.onUnifiedMember != nil {
 			h.onUnifiedMember(ev)
+		}
+	})
+}
+
+// Phase 10 — 해외주식 라우팅 메서드 (2)
+
+func (d *dispatcher) RouteOverseasTrade(ev OverseasTradeEvent) {
+	d.safeCall(func(h *dispatcher) {
+		if h.onOverseasTrade != nil {
+			h.onOverseasTrade(ev)
+		}
+	})
+}
+func (d *dispatcher) RouteOverseasAsk(ev OverseasAskEvent) {
+	d.safeCall(func(h *dispatcher) {
+		if h.onOverseasAsk != nil {
+			h.onOverseasAsk(ev)
 		}
 	})
 }
