@@ -2,7 +2,9 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** 신규 `futures/` sub-package 도입 + 국내선물옵션 시세/조회 11 EP REST 추가 (`v1.21.0` release). bonds/ (Phase 3.1) 패턴 참조.
+**Goal:** 신규 `futures/` sub-package 도입 + 국내선물옵션 시세/조회 **9 EP REST** 추가 (`v1.21.0` release). bonds/ (Phase 3.1) 패턴 참조.
+
+> **Scope 정정 (Task 1 docs analyzer 후)**: EP4 `InquireCcnlBstime` (CTFO5139R) + EP7 `InquireDailyAmountFee` (CTFO6119R) 가 CANO/ACNT_PRDT_CD 필수 → 본 phase 에서 제외 (Phase 11.4 로 미룸). 사용자 confirm 받음. 9 EP 만 구현.
 
 **Architecture:** Phase 1+ 인프라 + 패턴 재사용. 신규 `futures/` sub-package 신설 (Client, doc.go). Root `client.go` 에 `Futures *futures.Client` 필드 + `wireInfra` 에서 `bonds.New(...)` 옆에 `futures.New(...)` 추가. TDD: docs analyzer → schemas.md → fixture → 실패 테스트 → struct + 메서드 → 통과 → commit.
 
@@ -22,9 +24,9 @@
 | 시작 HEAD | v1.20.0 (Phase 10 완료, 121 REST + 17 WS = 138 endpoints) |
 | Release 목표 | `v1.21.0` |
 | PR 베이스 | `main` |
-| 누적 (완료 후) | 132 REST + 17 WS = **149 endpoints** |
+| 누적 (완료 후) | 130 REST + 17 WS = **147 endpoints** |
 
-> **IMPORTANT**: #4 (`InquireCcnlBstime`) + #7 (`InquireDailyAmountFee`) 두 EP 는 path 가 `trading/...` 으로 시작 (조회 성격이지만 path 카테고리는 trading). docs analyzer (Task 1) 단계에서 계좌 정보 (CANO/ACNT_PRDT_CD) 가 query param 으로 필요한지 확인 필수. 만약 계좌 정보 필요 시 본 phase 에서 빼고 Phase 11.4 (Trading) 로 미룰 것 — 사용자 확인 받음 후 결정.
+> **CONFIRMED (Task 1 결과 + 사용자 결정 2026-05-09)**: #4 (`InquireCcnlBstime`) + #7 (`InquireDailyAmountFee`) 두 EP 는 query 에 CANO/ACNT_PRDT_CD 필수 → **Phase 11.4 Trading 으로 미룸**. 본 phase 에서 9 EP 만 구현. 두 EP 의 schema 는 `futures/testdata/_schemas.md` 에 보존되어 Phase 11.4 시점에 재사용.
 
 ## 메서드 매핑 (docs grep 결과, Task 1 에서 정밀 검증)
 
@@ -35,10 +37,10 @@ base path = `/uapi/domestic-futureoption/v1/`
 | 1 | 선물옵션_시세 | `quotations/inquire-price` | FHMIF10000000 | `InquirePrice` | quote.go | ? | 현재가 |
 | 2 | 선물옵션_시세호가 | `quotations/inquire-asking-price` | FHMIF10010000 | `InquireAskingPrice` | quote.go | ? | 시세 + 호가 |
 | 3 | 선물옵션_분봉조회 | `quotations/inquire-time-fuopchartprice` | FHKIF03020200 | `InquireTimeFuopchartprice` | chart.go | ? | 분봉 |
-| 4 | 선물옵션_기준일체결내역 | `trading/inquire-ccnl-bstime` | CTFO5139R | `InquireCcnlBstime` | conclusion.go | 미지원 | trading path — 계좌 정보 검증 |
+| ~~4~~ | ~~선물옵션_기준일체결내역~~ | ~~`trading/inquire-ccnl-bstime`~~ | ~~CTFO5139R~~ | ~~`InquireCcnlBstime`~~ | — | — | **Phase 11.4 미룸 (CANO/ACNT_PRDT_CD 필수)** |
 | 5 | 선물옵션_일중예상체결추이 | `quotations/exp-price-trend` | FHPIF05110100 | `ExpPriceTrend` | conclusion.go | ? | 일중 예상체결 |
 | 6 | 선물옵션기간별시세(일/주/월/년) | `quotations/inquire-daily-fuopchartprice` | FHKIF03020100 | `InquireDailyFuopchartprice` | chart.go | ? | 일/주/월/년 차트 |
-| 7 | 선물옵션기간약정수수료일별 | `trading/inquire-daily-amount-fee` | CTFO6119R | `InquireDailyAmountFee` | conclusion.go | 미지원 | trading path — 계좌 정보 검증 |
+| ~~7~~ | ~~선물옵션기간약정수수료일별~~ | ~~`trading/inquire-daily-amount-fee`~~ | ~~CTFO6119R~~ | ~~`InquireDailyAmountFee`~~ | — | — | **Phase 11.4 미룸 (CANO/ACNT_PRDT_CD 필수)** |
 | 8 | 국내선물_기초자산_시세 | `quotations/display-board-top` | FHPIF05030000 | `DisplayBoardTop` | board.go | ? | 전광판 top (제목 vs path 차이) |
 | 9 | 국내옵션전광판_선물 | `quotations/display-board-futures` | FHPIF05030200 | `DisplayBoardFutures` | board.go | ? | 전광판 선물 |
 | 10 | 국내옵션전광판_옵션월물리스트 | `quotations/display-board-option-list` | FHPIO056104C0 | `DisplayBoardOptionList` | board.go | ? | 월물 리스트 |
@@ -58,7 +60,7 @@ base path = `/uapi/domestic-futureoption/v1/`
 - `futures/quote_test.go`
 - `futures/chart.go` — 2 메서드 (InquireTimeFuopchartprice / InquireDailyFuopchartprice)
 - `futures/chart_test.go`
-- `futures/conclusion.go` — 3 메서드 (InquireCcnlBstime / ExpPriceTrend / InquireDailyAmountFee)
+- `futures/conclusion.go` — 1 메서드 (ExpPriceTrend) — EP4/EP7 은 Phase 11.4 미룸
 - `futures/conclusion_test.go`
 - `futures/board.go` — 4 메서드 (DisplayBoardTop / DisplayBoardFutures / DisplayBoardOptionList / DisplayBoardCallput)
 - `futures/board_test.go`
@@ -70,10 +72,10 @@ base path = `/uapi/domestic-futureoption/v1/`
 - `futures/testdata/inquire_price_success.json`
 - `futures/testdata/inquire_asking_price_success.json`
 - `futures/testdata/inquire_time_fuopchartprice_success.json`
-- `futures/testdata/inquire_ccnl_bstime_success.json`
+- ~~`futures/testdata/inquire_ccnl_bstime_success.json`~~ — Phase 11.4 로 미룸
 - `futures/testdata/exp_price_trend_success.json`
 - `futures/testdata/inquire_daily_fuopchartprice_success.json`
-- `futures/testdata/inquire_daily_amount_fee_success.json`
+- ~~`futures/testdata/inquire_daily_amount_fee_success.json`~~ — Phase 11.4 로 미룸
 - `futures/testdata/display_board_top_success.json`
 - `futures/testdata/display_board_futures_success.json`
 - `futures/testdata/display_board_option_list_success.json`
@@ -455,7 +457,9 @@ git commit -m "[feat] Phase 11.1 — Futures.InquirePrice (FHMIF10000000)"
 
 ---
 
-## Task 6: EP4 — `InquireCcnlBstime` (기준일 체결내역)
+## ~~Task 6: EP4 — `InquireCcnlBstime` (기준일 체결내역)~~ — **SKIPPED (Phase 11.4 미룸)**
+
+> Task 1 결과 + 사용자 결정으로 본 phase 에서 제외. Phase 11.4 Trading 시점에 구현. 아래 내용 참고용 보존.
 
 **Files:**
 - Create: `futures/testdata/inquire_ccnl_bstime_success.json`
@@ -513,7 +517,9 @@ git commit -m "[feat] Phase 11.1 — Futures.InquirePrice (FHMIF10000000)"
 
 ---
 
-## Task 9: EP7 — `InquireDailyAmountFee` (수수료 일별)
+## ~~Task 9: EP7 — `InquireDailyAmountFee` (수수료 일별)~~ — **SKIPPED (Phase 11.4 미룸)**
+
+> Task 1 결과 + 사용자 결정으로 본 phase 에서 제외. Phase 11.4 Trading 시점에 구현. 아래 내용 참고용 보존.
 
 **Files:**
 - Create: `futures/testdata/inquire_daily_amount_fee_success.json`

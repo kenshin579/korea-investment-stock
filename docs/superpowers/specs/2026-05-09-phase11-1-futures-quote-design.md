@@ -1,7 +1,9 @@
 # Phase 11.1 — 국내선물옵션 시세/조회 Design (Lightweight)
 
 **Status:** Active design (2026-05-09)
-**Goal:** 신규 도메인 `futures/` 도입. 국내선물옵션 시세/조회 11 EP REST 구현. 누적 121 → **132 REST + 17 WS = 149 endpoints**.
+**Goal:** 신규 도메인 `futures/` 도입. 국내선물옵션 시세/조회 9 EP REST 구현. 누적 121 → **130 REST + 17 WS = 147 endpoints**.
+
+> **Scope 정정 (2026-05-09)**: 원래 11 EP 였으나 docs analyzer (Plan Task 1) 결과 EP4 `InquireCcnlBstime` (CTFO5139R) + EP7 `InquireDailyAmountFee` (CTFO6119R) 가 query 에 CANO/ACNT_PRDT_CD 를 요구해서 본 phase 의 시세/조회 scope 와 충돌. 두 EP 는 **Phase 11.4 Trading** 으로 미룸. 사용자 confirm 받음.
 **Out of Scope:** 국내선물옵션 실시간 (Phase 11.2~11.3, 20 EP), Trading (Phase 11.4, HIGH RISK 12 EP), 해외선물옵션 (Phase 11.5~).
 
 > **Lightweight spec + 형식 plan**: 신규 sub-package `futures/` 스캐폴딩이 Phase 3.1 (bonds/) 패턴 그대로 재사용. bonds 도 plan 작성했던 전례라 본 phase 도 plan 작성 (writing-plans skill 호출).
@@ -17,7 +19,7 @@
 | 1순위 도메인 | 선물옵션 (큰 도메인 본격 시작) | ELW 보다 분량 크지만 우선순위 높음 |
 | 시작 sub-phase | 국내 시세 (Phase 11.1) | 해외 (11.5+) 와 실시간 (11.2~11.3) 은 후속 |
 | Sub-package 명 | `futures/` | bonds/ 패턴 일관, 짧고 단순. 옵션 포함 (yfinance/alpaca 등 관례) |
-| Phase 11.1 scope | 11 EP 모두 (수수료 포함) | Phase 9 (10 EP) 수준 |
+| Phase 11.1 scope | 9 EP (계좌정보 필요한 EP4/EP7 제외) | docs analyzer 결과 후 정정 |
 | 진행 절차 | lightweight spec + 형식 plan 작성 | bonds/ 신규 sub-package 도입은 Phase 3.1 처럼 plan 가치 있음 |
 
 ---
@@ -29,10 +31,10 @@
 | 1 | 선물옵션_시세 | `Futures.InquirePrice` | 현재가 |
 | 2 | 선물옵션_시세호가 | `Futures.InquireAskingPrice` | 시세 + 호가 |
 | 3 | 선물옵션_분봉조회 | `Futures.InquireTimeItemchartprice` | 분봉 차트 |
-| 4 | 선물옵션_기준일체결내역 | `Futures.InquireConclusion` | 기준일 체결 |
+| ~~4~~ | ~~선물옵션_기준일체결내역~~ | ~~`Futures.InquireCcnlBstime`~~ | **Phase 11.4 미룸 (CANO/ACNT_PRDT_CD 필요)** |
 | 5 | 선물옵션_일중예상체결추이 | `Futures.InquireExpectFluctTrend` | 일중 예상체결 |
 | 6 | 선물옵션기간별시세(일/주/월/년) | `Futures.InquireDailyPrice` | 일/주/월/년 차트 |
-| 7 | 선물옵션기간약정수수료일별 | `Futures.InquireDailyCcldFee` | 수수료 (시세 영역으로 분류) |
+| ~~7~~ | ~~선물옵션기간약정수수료일별~~ | ~~`Futures.InquireDailyAmountFee`~~ | **Phase 11.4 미룸 (CANO/ACNT_PRDT_CD 필요)** |
 | 8 | 국내선물_기초자산_시세 | `Futures.InquireUnderlyingPrice` | 기초자산 가격 |
 | 9 | 국내옵션전광판_선물 | `Futures.OptionBoardFuture` | 옵션 전광판 — 선물 |
 | 10 | 국내옵션전광판_옵션월물리스트 | `Futures.OptionMonthlyList` | 월물 리스트 |
