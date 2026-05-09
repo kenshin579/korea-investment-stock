@@ -22,6 +22,7 @@ import (
 	"github.com/kenshin579/korea-investment-stock/internal/ratelimit"
 	"github.com/kenshin579/korea-investment-stock/internal/token"
 	"github.com/kenshin579/korea-investment-stock/overseas"
+	"github.com/kenshin579/korea-investment-stock/overseasfutures"
 	"github.com/kenshin579/korea-investment-stock/websocket"
 )
 
@@ -42,11 +43,12 @@ type Client struct {
 	tokenMgr   *token.Manager
 	masterC    *mastercache.Cache // Phase 1.2 의 FetchKospi/Kosdaq Symbols 가 사용 예정
 
-	Domestic *domestic.Client
-	Overseas *overseas.Client
-	Bonds    *bonds.Client
-	Futures  *futures.Client
-	WS       *websocket.Client
+	Domestic       *domestic.Client
+	Overseas       *overseas.Client
+	Bonds          *bonds.Client
+	Futures        *futures.Client
+	OverseasFutures *overseasfutures.Client
+	WS             *websocket.Client
 }
 
 // Option 은 functional option.
@@ -88,6 +90,7 @@ func NewClient(apiKey, apiSecret, accountNo string, opts ...Option) (*Client, er
 	c.Overseas = overseas.New(c.httpClient, c.masterC)
 	c.Bonds = bonds.New(c.httpClient)
 	c.Futures = futures.New(c.httpClient)
+	c.OverseasFutures = overseasfutures.New(c.httpClient)
 
 	// WebSocket endpoint: 실전 vs 모의투자
 	wsEndpoint := "ws://ops.koreainvestment.com:21000"
