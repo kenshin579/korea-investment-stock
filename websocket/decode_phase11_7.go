@@ -90,12 +90,12 @@ func parseOverseasFuturesAskChunk(c []string) OverseasFuturesAskEvent {
 	}
 	for i := 0; i < 5; i++ {
 		base := 4 + i*6
-		ev.BidQntt[i] = asInt64(c[base])       // BID_QNTT_(i+1)
-		ev.BidNum[i] = c[base+1]                // BID_NUM_(i+1)
-		ev.BidPrice[i] = asDecimal(c[base+2])   // BID_PRICE_(i+1)
-		ev.AskQntt[i] = asInt64(c[base+3])      // ASK_QNTT_(i+1)
-		ev.AskNum[i] = c[base+4]                // ASK_NUM_(i+1)
-		ev.AskPrice[i] = asDecimal(c[base+5])   // ASK_PRICE_(i+1)
+		ev.BidQntt[i] = asInt64(c[base])      // BID_QNTT_(i+1)
+		ev.BidNum[i] = c[base+1]              // BID_NUM_(i+1)
+		ev.BidPrice[i] = asDecimal(c[base+2]) // BID_PRICE_(i+1)
+		ev.AskQntt[i] = asInt64(c[base+3])    // ASK_QNTT_(i+1)
+		ev.AskNum[i] = c[base+4]              // ASK_NUM_(i+1)
+		ev.AskPrice[i] = asDecimal(c[base+5]) // ASK_PRICE_(i+1)
 	}
 	return ev
 }

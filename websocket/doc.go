@@ -57,6 +57,11 @@
 //	H0CFCNT0  상품선물 체결 (= IF alias)      SubscribeCommodityFuturesTrade / OnCommodityFuturesTrade
 //	H0CFASP0  상품선물 호가 (= IF alias)      SubscribeCommodityFuturesAsk / OnCommodityFuturesAsk
 //
+// Phase 11.7 — 해외선물옵션 실시간 시세 2 endpoint (선물/옵션 통합 EP, 모의 미지원, 그릭스 미포함):
+//
+//	HDFFF020  해외선물옵션 체결가             SubscribeOverseasFuturesTrade / OnOverseasFuturesTrade
+//	HDFFF010  해외선물옵션 호가 (BID/ASK 5단계 교차) SubscribeOverseasFuturesAsk / OnOverseasFuturesAsk
+//
 // 사용자는 root kis.Client 의 WS 필드로 접근.
 package websocket
 

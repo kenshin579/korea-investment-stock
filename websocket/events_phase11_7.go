@@ -18,31 +18,31 @@ import "github.com/shopspring/decimal"
 // 선물/옵션 통합 EP. 그릭스 없음.
 // tr_key: 해외선물옵션 종목코드 6자리 (예: GCM24, 6AM24)
 type OverseasFuturesTradeEvent struct {
-	Symbol          string          // 0  SERIES_CD 종목코드
-	BsnsDate        string          // 1  BSNS_DATE 영업일자 (YYYYMMDD)
-	MrktOpenDate    string          // 2  MRKT_OPEN_DATE 장개시일자 (YYYYMMDD)
-	MrktOpenTime    string          // 3  MRKT_OPEN_TIME 장개시시각 (HHMMSS)
-	MrktCloseDate   string          // 4  MRKT_CLOSE_DATE 장종료일자 (YYYYMMDD)
-	MrktCloseTime   string          // 5  MRKT_CLOSE_TIME 장종료시각 (HHMMSS)
-	PrevPrice       decimal.Decimal // 6  PREV_PRICE 전일종가
-	RecvDate        string          // 7  RECV_DATE 수신일자 (YYYYMMDD)
-	RecvTime        string          // 8  RECV_TIME 수신시각 (HHMMSS)
-	ActiveFlag      string          // 9  ACTIVE_FLAG 본장_전산장구분 (1자리)
-	LastPrice       decimal.Decimal // 10 LAST_PRICE 체결가격
-	LastQntt        int64           // 11 LAST_QNTT 체결수량
-	PrevDiffPrice   decimal.Decimal // 12 PREV_DIFF_PRICE 전일대비가
-	PrevDiffRate    float64         // 13 PREV_DIFF_RATE 등락률
-	OpenPrice       decimal.Decimal // 14 OPEN_PRICE 시가
-	HighPrice       decimal.Decimal // 15 HIGH_PRICE 고가
-	LowPrice        decimal.Decimal // 16 LOW_PRICE 저가
-	Vol             int64           // 17 VOL 누적거래량
-	PrevSign        string          // 18 PREV_SIGN 전일대비부호 (1자리)
-	QuotSign        string          // 19 QUOTSIGN 체결구분 (1자리; 2:매수체결, 5:매도체결)
-	RecvTime2       string          // 20 RECV_TIME2 수신시각2 만분의일초 (4자리)
-	PsttlPrice      decimal.Decimal // 21 PSTTL_PRICE 전일정산가
-	PsttlSign       string          // 22 PSTTL_SIGN 전일정산가대비 (1자리)
-	PsttlDiffPrice  decimal.Decimal // 23 PSTTL_DIFF_PRICE 전일정산가대비가격
-	PsttlDiffRate   float64         // 24 PSTTL_DIFF_RATE 전일정산가대비율
+	Symbol         string          // 0  SERIES_CD 종목코드
+	BsnsDate       string          // 1  BSNS_DATE 영업일자 (YYYYMMDD)
+	MrktOpenDate   string          // 2  MRKT_OPEN_DATE 장개시일자 (YYYYMMDD)
+	MrktOpenTime   string          // 3  MRKT_OPEN_TIME 장개시시각 (HHMMSS)
+	MrktCloseDate  string          // 4  MRKT_CLOSE_DATE 장종료일자 (YYYYMMDD)
+	MrktCloseTime  string          // 5  MRKT_CLOSE_TIME 장종료시각 (HHMMSS)
+	PrevPrice      decimal.Decimal // 6  PREV_PRICE 전일종가
+	RecvDate       string          // 7  RECV_DATE 수신일자 (YYYYMMDD)
+	RecvTime       string          // 8  RECV_TIME 수신시각 (HHMMSS)
+	ActiveFlag     string          // 9  ACTIVE_FLAG 본장_전산장구분 (1자리)
+	LastPrice      decimal.Decimal // 10 LAST_PRICE 체결가격
+	LastQntt       int64           // 11 LAST_QNTT 체결수량
+	PrevDiffPrice  decimal.Decimal // 12 PREV_DIFF_PRICE 전일대비가
+	PrevDiffRate   float64         // 13 PREV_DIFF_RATE 등락률
+	OpenPrice      decimal.Decimal // 14 OPEN_PRICE 시가
+	HighPrice      decimal.Decimal // 15 HIGH_PRICE 고가
+	LowPrice       decimal.Decimal // 16 LOW_PRICE 저가
+	Vol            int64           // 17 VOL 누적거래량
+	PrevSign       string          // 18 PREV_SIGN 전일대비부호 (1자리)
+	QuotSign       string          // 19 QUOTSIGN 체결구분 (1자리; 2:매수체결, 5:매도체결)
+	RecvTime2      string          // 20 RECV_TIME2 수신시각2 만분의일초 (4자리)
+	PsttlPrice     decimal.Decimal // 21 PSTTL_PRICE 전일정산가
+	PsttlSign      string          // 22 PSTTL_SIGN 전일정산가대비 (1자리)
+	PsttlDiffPrice decimal.Decimal // 23 PSTTL_DIFF_PRICE 전일정산가대비가격
+	PsttlDiffRate  float64         // 24 PSTTL_DIFF_RATE 전일정산가대비율
 
 	Raw []string // caret 분리 원본 (escape hatch)
 }
