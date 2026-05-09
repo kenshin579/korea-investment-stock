@@ -158,17 +158,17 @@ func TestDispatcher_Phase11_2Routers(t *testing.T) {
 	// Phase 11.2 — 국내선물옵션 11 핸들러 라우팅 검증.
 	d := newDispatcher()
 	var (
-		krxNightFutTrade   atomic.Int32
-		krxNightFutAsk     atomic.Int32
-		krxNightOptTrade   atomic.Int32
-		krxNightOptAsk     atomic.Int32
+		krxNightFutTrade    atomic.Int32
+		krxNightFutAsk      atomic.Int32
+		krxNightOptTrade    atomic.Int32
+		krxNightOptAsk      atomic.Int32
 		krxNightOptExpTrade atomic.Int32
-		stockFutTrade      atomic.Int32
-		stockFutAsk        atomic.Int32
-		stockFutExpTrade   atomic.Int32
-		stockOptTrade      atomic.Int32
-		stockOptAsk        atomic.Int32
-		stockOptExpTrade   atomic.Int32
+		stockFutTrade       atomic.Int32
+		stockFutAsk         atomic.Int32
+		stockFutExpTrade    atomic.Int32
+		stockOptTrade       atomic.Int32
+		stockOptAsk         atomic.Int32
+		stockOptExpTrade    atomic.Int32
 	)
 
 	d.OnKrxNightFuturesTrade(func(KrxNightFuturesTradeEvent) { krxNightFutTrade.Add(1) })

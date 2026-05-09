@@ -388,3 +388,55 @@ func TestDecodeStockOptionExpectTrade(t *testing.T) {
 	// ANTC_CNQN 없음 — 7 fields
 	assert.Len(t, ev.Raw, 7)
 }
+
+// --------------------------------------------------------------------------
+// FieldCountMismatch 보강 (coverage ≥70%)
+// --------------------------------------------------------------------------
+
+func TestDecodeKrxNightFuturesAsk_FieldCountMismatch(t *testing.T) {
+	f := frame{Kind: frameKindRealtime, TrID: "H0MFASP0", Count: 1, Fields: []string{"a", "b"}}
+	_, err := decodeKrxNightFuturesAsk(f)
+	require.Error(t, err)
+}
+
+func TestDecodeKrxNightOptionAsk_FieldCountMismatch(t *testing.T) {
+	f := frame{Kind: frameKindRealtime, TrID: "H0EUASP0", Count: 1, Fields: []string{"a"}}
+	_, err := decodeKrxNightOptionAsk(f)
+	require.Error(t, err)
+}
+
+func TestDecodeKrxNightOptionExpectTrade_FieldCountMismatch(t *testing.T) {
+	f := frame{Kind: frameKindRealtime, TrID: "H0EUANC0", Count: 1, Fields: []string{"a"}}
+	_, err := decodeKrxNightOptionExpectTrade(f)
+	require.Error(t, err)
+}
+
+func TestDecodeStockFuturesTrade_FieldCountMismatch(t *testing.T) {
+	f := frame{Kind: frameKindRealtime, TrID: "H0ZFCNT0", Count: 1, Fields: []string{"a"}}
+	_, err := decodeStockFuturesTrade(f)
+	require.Error(t, err)
+}
+
+func TestDecodeStockFuturesAsk_FieldCountMismatch(t *testing.T) {
+	f := frame{Kind: frameKindRealtime, TrID: "H0ZFASP0", Count: 1, Fields: []string{"a"}}
+	_, err := decodeStockFuturesAsk(f)
+	require.Error(t, err)
+}
+
+func TestDecodeStockFuturesExpectTrade_FieldCountMismatch(t *testing.T) {
+	f := frame{Kind: frameKindRealtime, TrID: "H0ZFANC0", Count: 1, Fields: []string{"a"}}
+	_, err := decodeStockFuturesExpectTrade(f)
+	require.Error(t, err)
+}
+
+func TestDecodeStockOptionAsk_FieldCountMismatch(t *testing.T) {
+	f := frame{Kind: frameKindRealtime, TrID: "H0ZOASP0", Count: 1, Fields: []string{"a"}}
+	_, err := decodeStockOptionAsk(f)
+	require.Error(t, err)
+}
+
+func TestDecodeStockOptionExpectTrade_FieldCountMismatch(t *testing.T) {
+	f := frame{Kind: frameKindRealtime, TrID: "H0ZOANC0", Count: 1, Fields: []string{"a"}}
+	_, err := decodeStockOptionExpectTrade(f)
+	require.Error(t, err)
+}

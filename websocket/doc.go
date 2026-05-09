@@ -34,6 +34,20 @@
 //	HDFSCNT0  해외주식 실시간지연체결가      SubscribeOverseasTrade / OnOverseasTrade
 //	HDFSASP0  해외주식 실시간호가 (1호가)    SubscribeOverseasAsk / OnOverseasAsk
 //
+// Phase 11.2 — 국내선물옵션 실시간 11 endpoint (모두 distinct schema, 모의 미지원):
+//
+//	H0MFCNT0  KRX 야간 선물 체결              SubscribeKrxNightFuturesTrade / OnKrxNightFuturesTrade
+//	H0MFASP0  KRX 야간 선물 호가 (5단계)      SubscribeKrxNightFuturesAsk / OnKrxNightFuturesAsk
+//	H0EUCNT0  KRX 야간 옵션 체결가 (그릭스)   SubscribeKrxNightOptionTrade / OnKrxNightOptionTrade
+//	H0EUASP0  KRX 야간 옵션 호가 (5단계)      SubscribeKrxNightOptionAsk / OnKrxNightOptionAsk
+//	H0EUANC0  KRX 야간 옵션 예상체결          SubscribeKrxNightOptionExpectTrade / OnKrxNightOptionExpectTrade
+//	H0ZFCNT0  주식 선물 체결가                SubscribeStockFuturesTrade / OnStockFuturesTrade
+//	H0ZFASP0  주식 선물 호가 (10단계)         SubscribeStockFuturesAsk / OnStockFuturesAsk
+//	H0ZFANC0  주식 선물 예상체결              SubscribeStockFuturesExpectTrade / OnStockFuturesExpectTrade
+//	H0ZOCNT0  주식 옵션 체결가 (그릭스)       SubscribeStockOptionTrade / OnStockOptionTrade
+//	H0ZOASP0  주식 옵션 호가 (10단계)         SubscribeStockOptionAsk / OnStockOptionAsk
+//	H0ZOANC0  주식 옵션 예상체결              SubscribeStockOptionExpectTrade / OnStockOptionExpectTrade
+//
 // 사용자는 root kis.Client 의 WS 필드로 접근.
 package websocket
 
