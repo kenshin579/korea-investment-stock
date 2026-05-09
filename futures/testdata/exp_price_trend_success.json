@@ -1,0 +1,36 @@
+{
+  "rt_cd": "0",
+  "msg_cd": "KIOK0000",
+  "msg1": "조회가 완료되었습니다.",
+  "output1": {
+    "hts_kor_isnm": "KOSPI200선물 2506",
+    "futs_antc_cnpr": "363.75",
+    "antc_cntg_vrss_sign": "2",
+    "futs_antc_cntg_vrss": "2.50",
+    "antc_cntg_prdy_ctrt": "0.70",
+    "futs_sdpr": "361.25"
+  },
+  "output2": [
+    {
+      "stck_cntg_hour": "090000",
+      "futs_antc_cnpr": "363.50",
+      "antc_cntg_vrss_sign": "2",
+      "futs_antc_cntg_vrss": "2.25",
+      "antc_cntg_prdy_ctrt": "0.62"
+    },
+    {
+      "stck_cntg_hour": "093000",
+      "futs_antc_cnpr": "363.75",
+      "antc_cntg_vrss_sign": "2",
+      "futs_antc_cntg_vrss": "2.50",
+      "antc_cntg_prdy_ctrt": "0.70"
+    },
+    {
+      "stck_cntg_hour": "100000",
+      "futs_antc_cnpr": "364.00",
+      "antc_cntg_vrss_sign": "2",
+      "futs_antc_cntg_vrss": "2.75",
+      "antc_cntg_prdy_ctrt": "0.76"
+    }
+  ]
+}
