@@ -1,5 +1,29 @@
 # CHANGELOG
 
+## [1.18.0] - 2026-05-09
+
+### Added — Phase 8 (WebSocket — KRX 시세 5 endpoint)
+
+- `client.WS` — 신규 top-level WebSocket client (`websocket/` 패키지)
+- `WS.SubscribeKrxTrade` / `OnKrxTrade` — 실시간체결가 KRX (H0STCNT0)
+- `WS.SubscribeKrxAsk` / `OnKrxAsk` — 실시간호가 KRX (H0STASP0)
+- `WS.SubscribeKrxExpectTrade` / `OnKrxExpectTrade` — 실시간예상체결 KRX (H0STANC0)
+- `WS.SubscribeKrxOvernightTrade` / `OnKrxOvernightTrade` — 시간외 체결가 (H0STOUP0)
+- `WS.SubscribeKrxOvernightExpect` / `OnKrxOvernightExpect` — 시간외 예상체결 (H0STOAC0)
+- ApprovalKeyManager: `/oauth2/Approval` 23h TTL 캐시
+- 자동 재연결 + 구독 자동 복원 (exp backoff, max 10 attempts)
+- examples: `ws_krx_basic`
+
+### Notes
+
+- 첫 architecture 변경 (REST → WebSocket).
+- WebSocket 라이브러리: `github.com/coder/websocket` (구 nhooyr.io).
+- Phase 8 = KRX 시세 5 endpoint 만. NXT/통합/ELW/지수/해외/선물옵션 실시간 + 체결통보 (암호화) → Phase 9+.
+- Single connection per WS Client. multi-connection 은 사용자 책임.
+- Handler 는 reader goroutine 에서 동기 실행 — 무거운 작업은 사용자가 channel 로 fan-out.
+- Plan deviation: 시간외 TR_ID 정정 (H0STOAC0/H0STOAA0 → H0STOUP0/H0STOAC0). 5 distinct Event types (재사용 불가 — 본장/시간외 schema 다름).
+- 누적 121 REST + 5 WS = 126 endpoints.
+
 ## [1.17.0] - 2026-05-08
 
 ### Added — Phase 7 (헬퍼 4 메서드)
