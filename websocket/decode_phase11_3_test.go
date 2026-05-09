@@ -1,6 +1,7 @@
 package websocket
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/shopspring/decimal"
@@ -337,4 +338,26 @@ func TestDecodeIndexOptionAsk_FieldCountMismatch(t *testing.T) {
 	f := frame{Kind: frameKindRealtime, TrID: "H0IOASP0", Count: 1, Fields: []string{"a", "b"}}
 	_, err := decodeIndexOptionAsk(f)
 	require.Error(t, err)
+}
+
+// --------------------------------------------------------------------------
+// BadNumeric 보강 (parse fail → zero, coverage ≥70%)
+// --------------------------------------------------------------------------
+
+func TestDecodeIndexFuturesTrade_BadNumeric(t *testing.T) {
+	raw := strings.Replace(loadFixture(t, "h0ifcnt0_success.txt"), "270.50", "abc", 1)
+	f, err := parseFrame(raw)
+	require.NoError(t, err)
+	events, err := decodeIndexFuturesTrade(f)
+	require.NoError(t, err)
+	require.Len(t, events, 1)
+}
+
+func TestDecodeIndexOptionTrade_BadNumeric(t *testing.T) {
+	raw := strings.Replace(loadFixture(t, "h0iocnt0_success.txt"), "0.5", "xyz", 1)
+	f, err := parseFrame(raw)
+	require.NoError(t, err)
+	events, err := decodeIndexOptionTrade(f)
+	require.NoError(t, err)
+	require.Len(t, events, 1)
 }
