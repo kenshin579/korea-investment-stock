@@ -1,0 +1,59 @@
+{
+  "rt_cd": "0",
+  "msg_cd": "KIOK0000",
+  "msg1": "조회가 완료되었습니다.",
+  "output1": {
+    "open_price": "5230.50",
+    "high_price": "5245.75",
+    "lowp_rice": "5198.25",
+    "last_price": "5204.34",
+    "prev_price": "5272.75",
+    "vol": "1345678",
+    "prev_diff_price": "-68.41",
+    "prev_diff_rate": "-1.30",
+    "quot_date": "20240402",
+    "quot_time": "160023"
+  },
+  "output2": [
+    {
+      "bid_qntt": "45",
+      "bid_num": "12",
+      "bid_price": "5204.00",
+      "ask_qntt": "38",
+      "ask_num": "9",
+      "ask_price": "5204.25"
+    },
+    {
+      "bid_qntt": "120",
+      "bid_num": "31",
+      "bid_price": "5203.75",
+      "ask_qntt": "95",
+      "ask_num": "24",
+      "ask_price": "5204.50"
+    },
+    {
+      "bid_qntt": "87",
+      "bid_num": "22",
+      "bid_price": "5203.50",
+      "ask_qntt": "143",
+      "ask_num": "37",
+      "ask_price": "5204.75"
+    },
+    {
+      "bid_qntt": "234",
+      "bid_num": "58",
+      "bid_price": "5203.25",
+      "ask_qntt": "210",
+      "ask_num": "52",
+      "ask_price": "5205.00"
+    },
+    {
+      "bid_qntt": "178",
+      "bid_num": "45",
+      "bid_price": "5203.00",
+      "ask_qntt": "167",
+      "ask_num": "41",
+      "ask_price": "5205.25"
+    }
+  ]
+}
