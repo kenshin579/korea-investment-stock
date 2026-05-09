@@ -4,6 +4,7 @@ go 1.25.0
 
 require (
 	github.com/alicebob/miniredis/v2 v2.37.0
+	github.com/coder/websocket v1.8.14
 	github.com/go-resty/resty/v2 v2.17.2
 	github.com/jarcoal/httpmock v1.4.1
 	github.com/redis/go-redis/v9 v9.19.0
