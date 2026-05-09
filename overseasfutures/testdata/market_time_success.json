@@ -1,0 +1,58 @@
+{
+  "rt_cd": "0",
+  "msg_cd": "KIOK0000",
+  "msg1": "조회가 완료되었습니다.",
+  "output": [
+    {
+      "fm_pdgr_cd": "ES",
+      "fm_pdgr_name": "E-mini S&P500",
+      "fm_excg_cd": "CME",
+      "fm_excg_name": "CME",
+      "fuop_dvsn_name": "옵션",
+      "fm_clas_cd": "003",
+      "fm_clas_name": "지수",
+      "am_mkmn_strt_tmd": "180000",
+      "am_mkmn_end_tmd": "235959",
+      "pm_mkmn_strt_tmd": "000000",
+      "pm_mkmn_end_tmd": "170000",
+      "mkmn_nxdy_strt_tmd": "000000",
+      "mkmn_nxdy_end_tmd": "170000",
+      "base_mket_strt_tmd": "083000",
+      "base_mket_end_tmd": "150000"
+    },
+    {
+      "fm_pdgr_cd": "NQ",
+      "fm_pdgr_name": "E-mini NASDAQ-100",
+      "fm_excg_cd": "CME",
+      "fm_excg_name": "CME",
+      "fuop_dvsn_name": "옵션",
+      "fm_clas_cd": "003",
+      "fm_clas_name": "지수",
+      "am_mkmn_strt_tmd": "180000",
+      "am_mkmn_end_tmd": "235959",
+      "pm_mkmn_strt_tmd": "000000",
+      "pm_mkmn_end_tmd": "170000",
+      "mkmn_nxdy_strt_tmd": "000000",
+      "mkmn_nxdy_end_tmd": "170000",
+      "base_mket_strt_tmd": "083000",
+      "base_mket_end_tmd": "150000"
+    },
+    {
+      "fm_pdgr_cd": "6E",
+      "fm_pdgr_name": "Euro FX",
+      "fm_excg_cd": "CME",
+      "fm_excg_name": "CME",
+      "fuop_dvsn_name": "옵션",
+      "fm_clas_cd": "001",
+      "fm_clas_name": "통화",
+      "am_mkmn_strt_tmd": "180000",
+      "am_mkmn_end_tmd": "235959",
+      "pm_mkmn_strt_tmd": "000000",
+      "pm_mkmn_end_tmd": "170000",
+      "mkmn_nxdy_strt_tmd": "000000",
+      "mkmn_nxdy_end_tmd": "170000",
+      "base_mket_strt_tmd": "070000",
+      "base_mket_end_tmd": "160000"
+    }
+  ]
+}
