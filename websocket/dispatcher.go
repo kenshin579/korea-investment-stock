@@ -48,6 +48,14 @@ type dispatcher struct {
 	onStockOptionAsk            func(StockOptionAskEvent)
 	onStockOptionExpectTrade    func(StockOptionExpectTradeEvent)
 
+	// Phase 11.3 — 지수선물옵션 + 상품선물 (4 base + 2 alias type, 6 distinct slots)
+	onIndexFuturesTrade     func(IndexFuturesTradeEvent)
+	onIndexFuturesAsk       func(IndexFuturesAskEvent)
+	onIndexOptionTrade      func(IndexOptionTradeEvent)
+	onIndexOptionAsk        func(IndexOptionAskEvent)
+	onCommodityFuturesTrade func(CommodityFuturesTradeEvent)
+	onCommodityFuturesAsk   func(CommodityFuturesAskEvent)
+
 	onConnected  func()
 	onReconnect  func(attempt int)
 	onDisconnect func(error)
@@ -205,6 +213,39 @@ func (d *dispatcher) OnStockOptionAsk(h func(StockOptionAskEvent)) {
 func (d *dispatcher) OnStockOptionExpectTrade(h func(StockOptionExpectTradeEvent)) {
 	d.mu.Lock()
 	d.onStockOptionExpectTrade = h
+	d.mu.Unlock()
+}
+
+// Phase 11.3 — 지수선물옵션 + 상품선물 실시간 등록 메서드 (6)
+
+func (d *dispatcher) OnIndexFuturesTrade(h func(IndexFuturesTradeEvent)) {
+	d.mu.Lock()
+	d.onIndexFuturesTrade = h
+	d.mu.Unlock()
+}
+func (d *dispatcher) OnIndexFuturesAsk(h func(IndexFuturesAskEvent)) {
+	d.mu.Lock()
+	d.onIndexFuturesAsk = h
+	d.mu.Unlock()
+}
+func (d *dispatcher) OnIndexOptionTrade(h func(IndexOptionTradeEvent)) {
+	d.mu.Lock()
+	d.onIndexOptionTrade = h
+	d.mu.Unlock()
+}
+func (d *dispatcher) OnIndexOptionAsk(h func(IndexOptionAskEvent)) {
+	d.mu.Lock()
+	d.onIndexOptionAsk = h
+	d.mu.Unlock()
+}
+func (d *dispatcher) OnCommodityFuturesTrade(h func(CommodityFuturesTradeEvent)) {
+	d.mu.Lock()
+	d.onCommodityFuturesTrade = h
+	d.mu.Unlock()
+}
+func (d *dispatcher) OnCommodityFuturesAsk(h func(CommodityFuturesAskEvent)) {
+	d.mu.Lock()
+	d.onCommodityFuturesAsk = h
 	d.mu.Unlock()
 }
 
@@ -433,6 +474,51 @@ func (d *dispatcher) RouteStockOptionExpectTrade(ev StockOptionExpectTradeEvent)
 	d.safeCall(func(h *dispatcher) {
 		if h.onStockOptionExpectTrade != nil {
 			h.onStockOptionExpectTrade(ev)
+		}
+	})
+}
+
+// Phase 11.3 — 지수선물옵션 + 상품선물 실시간 라우팅 메서드 (6)
+
+func (d *dispatcher) RouteIndexFuturesTrade(ev IndexFuturesTradeEvent) {
+	d.safeCall(func(h *dispatcher) {
+		if h.onIndexFuturesTrade != nil {
+			h.onIndexFuturesTrade(ev)
+		}
+	})
+}
+func (d *dispatcher) RouteIndexFuturesAsk(ev IndexFuturesAskEvent) {
+	d.safeCall(func(h *dispatcher) {
+		if h.onIndexFuturesAsk != nil {
+			h.onIndexFuturesAsk(ev)
+		}
+	})
+}
+func (d *dispatcher) RouteIndexOptionTrade(ev IndexOptionTradeEvent) {
+	d.safeCall(func(h *dispatcher) {
+		if h.onIndexOptionTrade != nil {
+			h.onIndexOptionTrade(ev)
+		}
+	})
+}
+func (d *dispatcher) RouteIndexOptionAsk(ev IndexOptionAskEvent) {
+	d.safeCall(func(h *dispatcher) {
+		if h.onIndexOptionAsk != nil {
+			h.onIndexOptionAsk(ev)
+		}
+	})
+}
+func (d *dispatcher) RouteCommodityFuturesTrade(ev CommodityFuturesTradeEvent) {
+	d.safeCall(func(h *dispatcher) {
+		if h.onCommodityFuturesTrade != nil {
+			h.onCommodityFuturesTrade(ev)
+		}
+	})
+}
+func (d *dispatcher) RouteCommodityFuturesAsk(ev CommodityFuturesAskEvent) {
+	d.safeCall(func(h *dispatcher) {
+		if h.onCommodityFuturesAsk != nil {
+			h.onCommodityFuturesAsk(ev)
 		}
 	})
 }

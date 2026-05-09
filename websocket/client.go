@@ -85,6 +85,14 @@ const (
 	trIDStockOptionTrade          = "H0ZOCNT0" // 주식옵션 실시간체결가
 	trIDStockOptionAsk            = "H0ZOASP0" // 주식옵션 실시간호가
 	trIDStockOptionExpectTrade    = "H0ZOANC0" // 주식옵션 실시간예상체결
+
+	// Phase 11.3 — 지수선물옵션 + 상품선물 실시간
+	trIDIndexFuturesTrade     = "H0IFCNT0" // 지수선물 실시간체결가
+	trIDIndexFuturesAsk       = "H0IFASP0" // 지수선물 실시간호가
+	trIDIndexOptionTrade      = "H0IOCNT0" // 지수옵션 실시간체결가
+	trIDIndexOptionAsk        = "H0IOASP0" // 지수옵션 실시간호가
+	trIDCommodityFuturesTrade = "H0CFCNT0" // 상품선물 실시간체결가 (alias: IndexFutures schema)
+	trIDCommodityFuturesAsk   = "H0CFASP0" // 상품선물 실시간호가   (alias: IndexFutures schema)
 )
 
 // Client 는 KIS WebSocket 진입점. kis.Client.WS 로 접근.
@@ -214,6 +222,26 @@ func (c *Client) SubscribeStockOptionExpectTrade(symbols ...string) error {
 	return c.subscribe(trIDStockOptionExpectTrade, symbols)
 }
 
+// Phase 11.3 — 지수선물옵션 + 상품선물 실시간 Subscribe
+func (c *Client) SubscribeIndexFuturesTrade(symbols ...string) error {
+	return c.subscribe(trIDIndexFuturesTrade, symbols)
+}
+func (c *Client) SubscribeIndexFuturesAsk(symbols ...string) error {
+	return c.subscribe(trIDIndexFuturesAsk, symbols)
+}
+func (c *Client) SubscribeIndexOptionTrade(symbols ...string) error {
+	return c.subscribe(trIDIndexOptionTrade, symbols)
+}
+func (c *Client) SubscribeIndexOptionAsk(symbols ...string) error {
+	return c.subscribe(trIDIndexOptionAsk, symbols)
+}
+func (c *Client) SubscribeCommodityFuturesTrade(symbols ...string) error {
+	return c.subscribe(trIDCommodityFuturesTrade, symbols)
+}
+func (c *Client) SubscribeCommodityFuturesAsk(symbols ...string) error {
+	return c.subscribe(trIDCommodityFuturesAsk, symbols)
+}
+
 // === Unsubscribe (대칭) ===
 
 func (c *Client) UnsubscribeKrxTrade(symbols ...string) error {
@@ -307,6 +335,26 @@ func (c *Client) UnsubscribeStockOptionAsk(symbols ...string) error {
 }
 func (c *Client) UnsubscribeStockOptionExpectTrade(symbols ...string) error {
 	return c.unsubscribe(trIDStockOptionExpectTrade, symbols)
+}
+
+// Phase 11.3 — 지수선물옵션 + 상품선물 실시간 Unsubscribe
+func (c *Client) UnsubscribeIndexFuturesTrade(symbols ...string) error {
+	return c.unsubscribe(trIDIndexFuturesTrade, symbols)
+}
+func (c *Client) UnsubscribeIndexFuturesAsk(symbols ...string) error {
+	return c.unsubscribe(trIDIndexFuturesAsk, symbols)
+}
+func (c *Client) UnsubscribeIndexOptionTrade(symbols ...string) error {
+	return c.unsubscribe(trIDIndexOptionTrade, symbols)
+}
+func (c *Client) UnsubscribeIndexOptionAsk(symbols ...string) error {
+	return c.unsubscribe(trIDIndexOptionAsk, symbols)
+}
+func (c *Client) UnsubscribeCommodityFuturesTrade(symbols ...string) error {
+	return c.unsubscribe(trIDCommodityFuturesTrade, symbols)
+}
+func (c *Client) UnsubscribeCommodityFuturesAsk(symbols ...string) error {
+	return c.unsubscribe(trIDCommodityFuturesAsk, symbols)
 }
 
 func (c *Client) subscribe(trID string, symbols []string) error {
@@ -417,6 +465,26 @@ func (c *Client) OnStockOptionAsk(h func(StockOptionAskEvent)) {
 }
 func (c *Client) OnStockOptionExpectTrade(h func(StockOptionExpectTradeEvent)) {
 	c.dispatcher.OnStockOptionExpectTrade(h)
+}
+
+// Phase 11.3 — 지수선물옵션 + 상품선물 실시간 Handler 위임 (6)
+func (c *Client) OnIndexFuturesTrade(h func(IndexFuturesTradeEvent)) {
+	c.dispatcher.OnIndexFuturesTrade(h)
+}
+func (c *Client) OnIndexFuturesAsk(h func(IndexFuturesAskEvent)) {
+	c.dispatcher.OnIndexFuturesAsk(h)
+}
+func (c *Client) OnIndexOptionTrade(h func(IndexOptionTradeEvent)) {
+	c.dispatcher.OnIndexOptionTrade(h)
+}
+func (c *Client) OnIndexOptionAsk(h func(IndexOptionAskEvent)) {
+	c.dispatcher.OnIndexOptionAsk(h)
+}
+func (c *Client) OnCommodityFuturesTrade(h func(CommodityFuturesTradeEvent)) {
+	c.dispatcher.OnCommodityFuturesTrade(h)
+}
+func (c *Client) OnCommodityFuturesAsk(h func(CommodityFuturesAskEvent)) {
+	c.dispatcher.OnCommodityFuturesAsk(h)
 }
 
 func (c *Client) OnConnected(h func())            { c.dispatcher.OnConnected(h) }
@@ -805,6 +873,62 @@ func (c *Client) routeRealtime(f frame) {
 		}
 		for _, ev := range evs {
 			c.dispatcher.RouteStockOptionExpectTrade(ev)
+		}
+
+	// Phase 11.3 — 지수선물옵션 + 상품선물 실시간
+	case trIDIndexFuturesTrade:
+		evs, err := decodeIndexFuturesTrade(f)
+		if err != nil {
+			c.dispatcher.RouteError(err)
+			return
+		}
+		for _, ev := range evs {
+			c.dispatcher.RouteIndexFuturesTrade(ev)
+		}
+	case trIDIndexFuturesAsk:
+		evs, err := decodeIndexFuturesAsk(f)
+		if err != nil {
+			c.dispatcher.RouteError(err)
+			return
+		}
+		for _, ev := range evs {
+			c.dispatcher.RouteIndexFuturesAsk(ev)
+		}
+	case trIDIndexOptionTrade:
+		evs, err := decodeIndexOptionTrade(f)
+		if err != nil {
+			c.dispatcher.RouteError(err)
+			return
+		}
+		for _, ev := range evs {
+			c.dispatcher.RouteIndexOptionTrade(ev)
+		}
+	case trIDIndexOptionAsk:
+		evs, err := decodeIndexOptionAsk(f)
+		if err != nil {
+			c.dispatcher.RouteError(err)
+			return
+		}
+		for _, ev := range evs {
+			c.dispatcher.RouteIndexOptionAsk(ev)
+		}
+	case trIDCommodityFuturesTrade:
+		evs, err := decodeIndexFuturesTrade(f) // alias — same schema as IndexFutures
+		if err != nil {
+			c.dispatcher.RouteError(err)
+			return
+		}
+		for _, ev := range evs {
+			c.dispatcher.RouteCommodityFuturesTrade(ev)
+		}
+	case trIDCommodityFuturesAsk:
+		evs, err := decodeIndexFuturesAsk(f) // alias — same schema as IndexFutures
+		if err != nil {
+			c.dispatcher.RouteError(err)
+			return
+		}
+		for _, ev := range evs {
+			c.dispatcher.RouteCommodityFuturesAsk(ev)
 		}
 
 	default:
