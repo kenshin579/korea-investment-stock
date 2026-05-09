@@ -1,0 +1,60 @@
+{
+  "rt_cd": "0",
+  "msg_cd": "KIOK0000",
+  "msg1": "정상처리 되었습니다.",
+  "output1": {
+    "futs_prdy_vrss": "1.25",
+    "prdy_vrss_sign": "2",
+    "futs_prdy_ctrt": "0.35",
+    "futs_prdy_clpr": "361.25",
+    "prdy_nmix": "360.00",
+    "acml_vol": "125430",
+    "acml_tr_pbmn": "4530210",
+    "hts_kor_isnm": "KOSPI200선물 2506",
+    "futs_prpr": "362.50",
+    "futs_shrn_iscd": "101S06",
+    "prdy_vol": "98210",
+    "futs_mxpr": "380.00",
+    "futs_llam": "340.00",
+    "futs_oprc": "361.50",
+    "futs_hgpr": "363.00",
+    "futs_lwpr": "361.00",
+    "futs_prdy_oprc": "359.75",
+    "futs_prdy_hgpr": "362.00",
+    "futs_prdy_lwpr": "358.50",
+    "futs_askp": "362.55",
+    "futs_bidp": "362.45",
+    "basis": "0.85",
+    "kospi200_nmix": "361.65",
+    "kospi200_prdy_vrss": "1.25",
+    "kospi200_prdy_ctrt": "0.35",
+    "kospi200_prdy_vrss_sign": "2",
+    "hts_otst_stpl_qty": "310250",
+    "otst_stpl_qty_icdc": "1500",
+    "tday_rltv": "55.20",
+    "hts_thpr": "362.48",
+    "dprt": "0.01"
+  },
+  "output2": [
+    {
+      "stck_bsop_date": "20250509",
+      "stck_cntg_hour": "141500",
+      "futs_prpr": "362.50",
+      "futs_oprc": "362.25",
+      "futs_hgpr": "362.75",
+      "futs_lwpr": "362.10",
+      "cntg_vol": "320",
+      "acml_tr_pbmn": "115840"
+    },
+    {
+      "stck_bsop_date": "20250509",
+      "stck_cntg_hour": "141000",
+      "futs_prpr": "362.25",
+      "futs_oprc": "362.00",
+      "futs_hgpr": "362.50",
+      "futs_lwpr": "361.90",
+      "cntg_vol": "285",
+      "acml_tr_pbmn": "103050"
+    }
+  ]
+}
