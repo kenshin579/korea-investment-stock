@@ -14,17 +14,17 @@ import (
 // MarketTimeItem 는 해외선물옵션 장운영시간 항목 (15 필드).
 // 주의: 응답 키가 output1/output2 가 아닌 `output` 직접 사용 — 공통 TR 패턴.
 type MarketTimeItem struct {
-	FmPdgrCd       string `json:"fm_pdgr_cd"`        // FM상품군코드
-	FmPdgrName     string `json:"fm_pdgr_name"`      // FM상품군명
-	FmExcgCd       string `json:"fm_excg_cd"`        // FM거래소코드
-	FmExcgName     string `json:"fm_excg_name"`      // FM거래소명
-	FuopDvsnName   string `json:"fuop_dvsn_name"`    // 선물옵션구분명
-	FmClasCd       string `json:"fm_clas_cd"`        // FM클래스코드
-	FmClasName     string `json:"fm_clas_name"`      // FM클래스명
-	AmMkmnStrtTmd  string `json:"am_mkmn_strt_tmd"`  // 오전장운영시작시각
-	AmMkmnEndTmd   string `json:"am_mkmn_end_tmd"`   // 오전장운영종료시각
-	PmMkmnStrtTmd  string `json:"pm_mkmn_strt_tmd"`  // 오후장운영시작시각
-	PmMkmnEndTmd   string `json:"pm_mkmn_end_tmd"`   // 오후장운영종료시각
+	FmPdgrCd        string `json:"fm_pdgr_cd"`         // FM상품군코드
+	FmPdgrName      string `json:"fm_pdgr_name"`       // FM상품군명
+	FmExcgCd        string `json:"fm_excg_cd"`         // FM거래소코드
+	FmExcgName      string `json:"fm_excg_name"`       // FM거래소명
+	FuopDvsnName    string `json:"fuop_dvsn_name"`     // 선물옵션구분명
+	FmClasCd        string `json:"fm_clas_cd"`         // FM클래스코드
+	FmClasName      string `json:"fm_clas_name"`       // FM클래스명
+	AmMkmnStrtTmd   string `json:"am_mkmn_strt_tmd"`   // 오전장운영시작시각
+	AmMkmnEndTmd    string `json:"am_mkmn_end_tmd"`    // 오전장운영종료시각
+	PmMkmnStrtTmd   string `json:"pm_mkmn_strt_tmd"`   // 오후장운영시작시각
+	PmMkmnEndTmd    string `json:"pm_mkmn_end_tmd"`    // 오후장운영종료시각
 	MkmnNxdyStrtTmd string `json:"mkmn_nxdy_strt_tmd"` // 장운영익일시작시각
 	MkmnNxdyEndTmd  string `json:"mkmn_nxdy_end_tmd"`  // 장운영익일종료시각
 	BaseMketStrtTmd string `json:"base_mket_strt_tmd"` // 기본시장시작시각
@@ -46,10 +46,10 @@ type marketTimeResponse struct {
 
 // MarketTimeParams 는 해외선물옵션 장운영시간 조회 파라미터.
 type MarketTimeParams struct {
-	FmPdgrCd    string // FM상품군코드 (공백)
-	FmClasCd    string // FM클래스코드 ('공백':전체, '001':통화, '002':금리, '003':지수, '004':농산물, '005':축산물, '006':금속, '007':에너지)
-	FmExcgCd    string // FM거래소코드 (CME/EUREX/HKEx/ICE/SGX/OSE/ASX/CBOE/MDEX/NYSE/BMF/FTX/HNX/ETC)
-	OptYn       string // 옵션여부 (%:전체, N:선물, Y:옵션)
+	FmPdgrCd     string // FM상품군코드 (공백)
+	FmClasCd     string // FM클래스코드 ('공백':전체, '001':통화, '002':금리, '003':지수, '004':농산물, '005':축산물, '006':금속, '007':에너지)
+	FmExcgCd     string // FM거래소코드 (CME/EUREX/HKEx/ICE/SGX/OSE/ASX/CBOE/MDEX/NYSE/BMF/FTX/HNX/ETC)
+	OptYn        string // 옵션여부 (%:전체, N:선물, Y:옵션)
 	CtxAreaNK200 string // 연속조회키200
 	CtxAreaFK200 string // 연속조회검색조건200
 }
@@ -68,10 +68,10 @@ func (c *Client) MarketTime(ctx context.Context, params MarketTimeParams) (*Mark
 		TrID:     "OTFM2229R",
 		CustType: "P",
 		Query: map[string]string{
-			"FM_PDGR_CD":    params.FmPdgrCd,
-			"FM_CLAS_CD":    params.FmClasCd,
-			"FM_EXCG_CD":    params.FmExcgCd,
-			"OPT_YN":        params.OptYn,
+			"FM_PDGR_CD":     params.FmPdgrCd,
+			"FM_CLAS_CD":     params.FmClasCd,
+			"FM_EXCG_CD":     params.FmExcgCd,
+			"OPT_YN":         params.OptYn,
 			"CTX_AREA_NK200": params.CtxAreaNK200,
 			"CTX_AREA_FK200": params.CtxAreaFK200,
 		},

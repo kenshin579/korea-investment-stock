@@ -171,15 +171,15 @@ type OptCcnlOutput1 struct {
 // OptMonthlyCcnlData 는 해외옵션 월간 체결추이 응답 (output1 메타 + output2 배열).
 // output2[] 구조는 선물 MonthlyCcnl 과 동일 (CcnlOutput2Item).
 type OptMonthlyCcnlData struct {
-	Output1 OptCcnlOutput1   `json:"output1"`
+	Output1 OptCcnlOutput1    `json:"output1"`
 	Output2 []CcnlOutput2Item `json:"output2"`
 }
 
 type optMonthlyCcnlResponse struct {
-	RtCd    string           `json:"rt_cd"`
-	MsgCd   string           `json:"msg_cd"`
-	Msg1    string           `json:"msg1"`
-	Output1 OptCcnlOutput1   `json:"output1"`
+	RtCd    string            `json:"rt_cd"`
+	MsgCd   string            `json:"msg_cd"`
+	Msg1    string            `json:"msg1"`
+	Output1 OptCcnlOutput1    `json:"output1"`
 	Output2 []CcnlOutput2Item `json:"output2"`
 }
 
@@ -223,15 +223,15 @@ func (c *Client) OptMonthlyCcnl(ctx context.Context, params CcnlParams) (*OptMon
 
 // OptDailyCcnlData 는 해외옵션 일간 체결추이 응답 (output1 메타 + output2 배열).
 type OptDailyCcnlData struct {
-	Output1 OptCcnlOutput1   `json:"output1"`
+	Output1 OptCcnlOutput1    `json:"output1"`
 	Output2 []CcnlOutput2Item `json:"output2"`
 }
 
 type optDailyCcnlResponse struct {
-	RtCd    string           `json:"rt_cd"`
-	MsgCd   string           `json:"msg_cd"`
-	Msg1    string           `json:"msg1"`
-	Output1 OptCcnlOutput1   `json:"output1"`
+	RtCd    string            `json:"rt_cd"`
+	MsgCd   string            `json:"msg_cd"`
+	Msg1    string            `json:"msg1"`
+	Output1 OptCcnlOutput1    `json:"output1"`
 	Output2 []CcnlOutput2Item `json:"output2"`
 }
 
@@ -275,15 +275,15 @@ func (c *Client) OptDailyCcnl(ctx context.Context, params CcnlParams) (*OptDaily
 
 // OptWeeklyCcnlData 는 해외옵션 주간 체결추이 응답 (output1 메타 + output2 배열).
 type OptWeeklyCcnlData struct {
-	Output1 OptCcnlOutput1   `json:"output1"`
+	Output1 OptCcnlOutput1    `json:"output1"`
 	Output2 []CcnlOutput2Item `json:"output2"`
 }
 
 type optWeeklyCcnlResponse struct {
-	RtCd    string           `json:"rt_cd"`
-	MsgCd   string           `json:"msg_cd"`
-	Msg1    string           `json:"msg1"`
-	Output1 OptCcnlOutput1   `json:"output1"`
+	RtCd    string            `json:"rt_cd"`
+	MsgCd   string            `json:"msg_cd"`
+	Msg1    string            `json:"msg1"`
+	Output1 OptCcnlOutput1    `json:"output1"`
 	Output2 []CcnlOutput2Item `json:"output2"`
 }
 
@@ -326,15 +326,15 @@ func (c *Client) OptWeeklyCcnl(ctx context.Context, params CcnlParams) (*OptWeek
 
 // OptTickCcnlData 는 해외옵션 틱 체결추이 응답 (output1 메타 + output2 배열).
 type OptTickCcnlData struct {
-	Output1 OptCcnlOutput1   `json:"output1"`
+	Output1 OptCcnlOutput1    `json:"output1"`
 	Output2 []CcnlOutput2Item `json:"output2"`
 }
 
 type optTickCcnlResponse struct {
-	RtCd    string           `json:"rt_cd"`
-	MsgCd   string           `json:"msg_cd"`
-	Msg1    string           `json:"msg1"`
-	Output1 OptCcnlOutput1   `json:"output1"`
+	RtCd    string            `json:"rt_cd"`
+	MsgCd   string            `json:"msg_cd"`
+	Msg1    string            `json:"msg1"`
+	Output1 OptCcnlOutput1    `json:"output1"`
 	Output2 []CcnlOutput2Item `json:"output2"`
 }
 
@@ -408,10 +408,10 @@ type OptAskingPriceData struct {
 }
 
 type optAskingPriceResponse struct {
-	RtCd    string                     `json:"rt_cd"`
-	MsgCd   string                     `json:"msg_cd"`
-	Msg1    string                     `json:"msg1"`
-	Output1 OptAskingPriceOutput1      `json:"output1"`
+	RtCd    string                      `json:"rt_cd"`
+	MsgCd   string                      `json:"msg_cd"`
+	Msg1    string                      `json:"msg1"`
+	Output1 OptAskingPriceOutput1       `json:"output1"`
 	Output2 []OptAskingPriceOutput2Item `json:"output2"`
 }
 
