@@ -56,6 +56,10 @@ type dispatcher struct {
 	onCommodityFuturesTrade func(CommodityFuturesTradeEvent)
 	onCommodityFuturesAsk   func(CommodityFuturesAskEvent)
 
+	// Phase 11.7 — 해외선물옵션 실시간 (2)
+	onOverseasFuturesTrade func(OverseasFuturesTradeEvent)
+	onOverseasFuturesAsk   func(OverseasFuturesAskEvent)
+
 	onConnected  func()
 	onReconnect  func(attempt int)
 	onDisconnect func(error)
@@ -246,6 +250,19 @@ func (d *dispatcher) OnCommodityFuturesTrade(h func(CommodityFuturesTradeEvent))
 func (d *dispatcher) OnCommodityFuturesAsk(h func(CommodityFuturesAskEvent)) {
 	d.mu.Lock()
 	d.onCommodityFuturesAsk = h
+	d.mu.Unlock()
+}
+
+// Phase 11.7 — 해외선물옵션 실시간 등록 메서드 (2)
+
+func (d *dispatcher) OnOverseasFuturesTrade(h func(OverseasFuturesTradeEvent)) {
+	d.mu.Lock()
+	d.onOverseasFuturesTrade = h
+	d.mu.Unlock()
+}
+func (d *dispatcher) OnOverseasFuturesAsk(h func(OverseasFuturesAskEvent)) {
+	d.mu.Lock()
+	d.onOverseasFuturesAsk = h
 	d.mu.Unlock()
 }
 
@@ -519,6 +536,23 @@ func (d *dispatcher) RouteCommodityFuturesAsk(ev CommodityFuturesAskEvent) {
 	d.safeCall(func(h *dispatcher) {
 		if h.onCommodityFuturesAsk != nil {
 			h.onCommodityFuturesAsk(ev)
+		}
+	})
+}
+
+// Phase 11.7 — 해외선물옵션 실시간 라우팅 메서드 (2)
+
+func (d *dispatcher) RouteOverseasFuturesTrade(ev OverseasFuturesTradeEvent) {
+	d.safeCall(func(h *dispatcher) {
+		if h.onOverseasFuturesTrade != nil {
+			h.onOverseasFuturesTrade(ev)
+		}
+	})
+}
+func (d *dispatcher) RouteOverseasFuturesAsk(ev OverseasFuturesAskEvent) {
+	d.safeCall(func(h *dispatcher) {
+		if h.onOverseasFuturesAsk != nil {
+			h.onOverseasFuturesAsk(ev)
 		}
 	})
 }
