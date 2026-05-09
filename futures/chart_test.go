@@ -25,13 +25,13 @@ func TestClient_InquireTimeFuopchartprice(t *testing.T) {
 	)
 
 	got, err := client.InquireTimeFuopchartprice(context.Background(), futures.InquireTimeFuopchartpriceParams{
-		MarketCode:      "F",
-		Code:            "101S06",
-		HourClsCode:     "60",
-		PwDataIncuYn:    "N",
-		FakeTickIncuYn:  "N",
-		InputDate:       "20250509",
-		InputHour:       "141500",
+		MarketCode:     "F",
+		Code:           "101S06",
+		HourClsCode:    "60",
+		PwDataIncuYn:   "N",
+		FakeTickIncuYn: "N",
+		InputDate:      "20250509",
+		InputHour:      "141500",
 	})
 	require.NoError(t, err)
 	require.NotNil(t, got)

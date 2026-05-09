@@ -15,48 +15,48 @@ import (
 
 // InquireTimeFuopchartpriceOutput1 는 선물옵션 분봉조회 현재 상태 요약 (31 필드).
 type InquireTimeFuopchartpriceOutput1 struct {
-	FutsPrdyVrss         decimal.Decimal `json:"futs_prdy_vrss"`          // 선물 전일 대비
-	PrdyVrssSign         string          `json:"prdy_vrss_sign"`          // 전일 대비 부호
-	FutsPrdyCtrt         float64         `json:"futs_prdy_ctrt,string"`   // 선물 전일 대비율
-	FutsPrdyClpr         decimal.Decimal `json:"futs_prdy_clpr"`          // 선물 전일 종가
-	PrdyNmix             decimal.Decimal `json:"prdy_nmix"`               // 전일 지수
-	AcmlVol              int64           `json:"acml_vol,string"`         // 누적 거래량
-	AcmlTrPbmn           int64           `json:"acml_tr_pbmn,string"`     // 누적 거래 대금
-	HtsKorIsnm           string          `json:"hts_kor_isnm"`            // HTS 한글 종목명
-	FutsPrpr             decimal.Decimal `json:"futs_prpr"`               // 선물 현재가
-	FutsShrnIscd         string          `json:"futs_shrn_iscd"`          // 선물 단축 종목코드
-	PrdyVol              int64           `json:"prdy_vol,string"`         // 전일 거래량
-	FutsMxpr             decimal.Decimal `json:"futs_mxpr"`               // 선물 상한가
-	FutsLlam             decimal.Decimal `json:"futs_llam"`               // 선물 하한가
-	FutsOprc             decimal.Decimal `json:"futs_oprc"`               // 선물 시가
-	FutsHgpr             decimal.Decimal `json:"futs_hgpr"`               // 선물 최고가
-	FutsLwpr             decimal.Decimal `json:"futs_lwpr"`               // 선물 최저가
-	FutsPrdyOprc         decimal.Decimal `json:"futs_prdy_oprc"`          // 선물 전일 시가
-	FutsPrdyHgpr         decimal.Decimal `json:"futs_prdy_hgpr"`          // 선물 전일 최고가
-	FutsPrdyLwpr         decimal.Decimal `json:"futs_prdy_lwpr"`          // 선물 전일 최저가
-	FutsAskp             decimal.Decimal `json:"futs_askp"`               // 선물 매도호가
-	FutsBidp             decimal.Decimal `json:"futs_bidp"`               // 선물 매수호가
-	Basis                decimal.Decimal `json:"basis"`                   // 베이시스
-	Kospi200Nmix         decimal.Decimal `json:"kospi200_nmix"`           // KOSPI200 지수
-	Kospi200PrdyVrss     decimal.Decimal `json:"kospi200_prdy_vrss"`      // KOSPI200 전일 대비
+	FutsPrdyVrss         decimal.Decimal `json:"futs_prdy_vrss"`            // 선물 전일 대비
+	PrdyVrssSign         string          `json:"prdy_vrss_sign"`            // 전일 대비 부호
+	FutsPrdyCtrt         float64         `json:"futs_prdy_ctrt,string"`     // 선물 전일 대비율
+	FutsPrdyClpr         decimal.Decimal `json:"futs_prdy_clpr"`            // 선물 전일 종가
+	PrdyNmix             decimal.Decimal `json:"prdy_nmix"`                 // 전일 지수
+	AcmlVol              int64           `json:"acml_vol,string"`           // 누적 거래량
+	AcmlTrPbmn           int64           `json:"acml_tr_pbmn,string"`       // 누적 거래 대금
+	HtsKorIsnm           string          `json:"hts_kor_isnm"`              // HTS 한글 종목명
+	FutsPrpr             decimal.Decimal `json:"futs_prpr"`                 // 선물 현재가
+	FutsShrnIscd         string          `json:"futs_shrn_iscd"`            // 선물 단축 종목코드
+	PrdyVol              int64           `json:"prdy_vol,string"`           // 전일 거래량
+	FutsMxpr             decimal.Decimal `json:"futs_mxpr"`                 // 선물 상한가
+	FutsLlam             decimal.Decimal `json:"futs_llam"`                 // 선물 하한가
+	FutsOprc             decimal.Decimal `json:"futs_oprc"`                 // 선물 시가
+	FutsHgpr             decimal.Decimal `json:"futs_hgpr"`                 // 선물 최고가
+	FutsLwpr             decimal.Decimal `json:"futs_lwpr"`                 // 선물 최저가
+	FutsPrdyOprc         decimal.Decimal `json:"futs_prdy_oprc"`            // 선물 전일 시가
+	FutsPrdyHgpr         decimal.Decimal `json:"futs_prdy_hgpr"`            // 선물 전일 최고가
+	FutsPrdyLwpr         decimal.Decimal `json:"futs_prdy_lwpr"`            // 선물 전일 최저가
+	FutsAskp             decimal.Decimal `json:"futs_askp"`                 // 선물 매도호가
+	FutsBidp             decimal.Decimal `json:"futs_bidp"`                 // 선물 매수호가
+	Basis                decimal.Decimal `json:"basis"`                     // 베이시스
+	Kospi200Nmix         decimal.Decimal `json:"kospi200_nmix"`             // KOSPI200 지수
+	Kospi200PrdyVrss     decimal.Decimal `json:"kospi200_prdy_vrss"`        // KOSPI200 전일 대비
 	Kospi200PrdyCtrt     float64         `json:"kospi200_prdy_ctrt,string"` // KOSPI200 전일 대비율
-	Kospi200PrdyVrssSign string          `json:"kospi200_prdy_vrss_sign"` // KOSPI200 전일 대비 부호
-	HtsOtstStplQty       int64           `json:"hts_otst_stpl_qty,string"` // HTS 미결제 약정 수량
+	Kospi200PrdyVrssSign string          `json:"kospi200_prdy_vrss_sign"`   // KOSPI200 전일 대비 부호
+	HtsOtstStplQty       int64           `json:"hts_otst_stpl_qty,string"`  // HTS 미결제 약정 수량
 	OtstStplQtyIcdc      int64           `json:"otst_stpl_qty_icdc,string"` // 미결제 약정 수량 증감
-	TdayRltv             float64         `json:"tday_rltv,string"`        // 당일 체결강도
-	HtsThpr              decimal.Decimal `json:"hts_thpr"`                // HTS 이론가
-	Dprt                 float64         `json:"dprt,string"`             // 괴리율
+	TdayRltv             float64         `json:"tday_rltv,string"`          // 당일 체결강도
+	HtsThpr              decimal.Decimal `json:"hts_thpr"`                  // HTS 이론가
+	Dprt                 float64         `json:"dprt,string"`               // 괴리율
 }
 
 // InquireTimeFuopchartpriceOutput2Item 는 선물옵션 분봉 캔들 (8 필드).
 type InquireTimeFuopchartpriceOutput2Item struct {
-	StckBsopDate string          `json:"stck_bsop_date"` // 주식 영업 일자
-	StckCntgHour string          `json:"stck_cntg_hour"` // 주식 체결 시간
-	FutsPrpr     decimal.Decimal `json:"futs_prpr"`      // 선물 현재가
-	FutsOprc     decimal.Decimal `json:"futs_oprc"`      // 선물 시가
-	FutsHgpr     decimal.Decimal `json:"futs_hgpr"`      // 선물 최고가
-	FutsLwpr     decimal.Decimal `json:"futs_lwpr"`      // 선물 최저가
-	CntgVol      int64           `json:"cntg_vol,string"` // 체결 거래량
+	StckBsopDate string          `json:"stck_bsop_date"`      // 주식 영업 일자
+	StckCntgHour string          `json:"stck_cntg_hour"`      // 주식 체결 시간
+	FutsPrpr     decimal.Decimal `json:"futs_prpr"`           // 선물 현재가
+	FutsOprc     decimal.Decimal `json:"futs_oprc"`           // 선물 시가
+	FutsHgpr     decimal.Decimal `json:"futs_hgpr"`           // 선물 최고가
+	FutsLwpr     decimal.Decimal `json:"futs_lwpr"`           // 선물 최저가
+	CntgVol      int64           `json:"cntg_vol,string"`     // 체결 거래량
 	AcmlTrPbmn   int64           `json:"acml_tr_pbmn,string"` // 누적 거래 대금
 }
 
@@ -128,48 +128,48 @@ func (c *Client) InquireTimeFuopchartprice(ctx context.Context, params InquireTi
 
 // InquireDailyFuopchartpriceOutput1 는 선물옵션 기간별 시세 현재 상태 요약 (30 필드).
 type InquireDailyFuopchartpriceOutput1 struct {
-	FutsPrdyVrss         decimal.Decimal `json:"futs_prdy_vrss"`          // 전일 대비
-	PrdyVrssSign         string          `json:"prdy_vrss_sign"`          // 전일 대비 부호
-	FutsPrdyCtrt         float64         `json:"futs_prdy_ctrt,string"`   // 선물 전일 대비율
-	FutsPrdyClpr         decimal.Decimal `json:"futs_prdy_clpr"`          // 선물 전일 종가
-	AcmlVol              int64           `json:"acml_vol,string"`         // 누적 거래량
-	AcmlTrPbmn           int64           `json:"acml_tr_pbmn,string"`     // 누적 거래 대금
-	HtsKorIsnm           string          `json:"hts_kor_isnm"`            // HTS 한글 종목명
-	FutsPrpr             decimal.Decimal `json:"futs_prpr"`               // 현재가
-	FutsShrnIscd         string          `json:"futs_shrn_iscd"`          // 단축 종목코드
-	PrdyVol              int64           `json:"prdy_vol,string"`         // 전일 거래량
-	FutsMxpr             decimal.Decimal `json:"futs_mxpr"`               // 상한가
-	FutsLlam             decimal.Decimal `json:"futs_llam"`               // 하한가
-	FutsOprc             decimal.Decimal `json:"futs_oprc"`               // 시가
-	FutsHgpr             decimal.Decimal `json:"futs_hgpr"`               // 최고가
-	FutsLwpr             decimal.Decimal `json:"futs_lwpr"`               // 최저가
-	FutsPrdyOprc         decimal.Decimal `json:"futs_prdy_oprc"`          // 전일 시가
-	FutsPrdyHgpr         decimal.Decimal `json:"futs_prdy_hgpr"`          // 전일 최고가
-	FutsPrdyLwpr         decimal.Decimal `json:"futs_prdy_lwpr"`          // 전일 최저가
-	FutsAskp             decimal.Decimal `json:"futs_askp"`               // 매도호가
-	FutsBidp             decimal.Decimal `json:"futs_bidp"`               // 매수호가
-	Basis                decimal.Decimal `json:"basis"`                   // 베이시스
-	Kospi200Nmix         decimal.Decimal `json:"kospi200_nmix"`           // KOSPI200 지수
-	Kospi200PrdyVrss     decimal.Decimal `json:"kospi200_prdy_vrss"`      // KOSPI200 전일 대비
+	FutsPrdyVrss         decimal.Decimal `json:"futs_prdy_vrss"`            // 전일 대비
+	PrdyVrssSign         string          `json:"prdy_vrss_sign"`            // 전일 대비 부호
+	FutsPrdyCtrt         float64         `json:"futs_prdy_ctrt,string"`     // 선물 전일 대비율
+	FutsPrdyClpr         decimal.Decimal `json:"futs_prdy_clpr"`            // 선물 전일 종가
+	AcmlVol              int64           `json:"acml_vol,string"`           // 누적 거래량
+	AcmlTrPbmn           int64           `json:"acml_tr_pbmn,string"`       // 누적 거래 대금
+	HtsKorIsnm           string          `json:"hts_kor_isnm"`              // HTS 한글 종목명
+	FutsPrpr             decimal.Decimal `json:"futs_prpr"`                 // 현재가
+	FutsShrnIscd         string          `json:"futs_shrn_iscd"`            // 단축 종목코드
+	PrdyVol              int64           `json:"prdy_vol,string"`           // 전일 거래량
+	FutsMxpr             decimal.Decimal `json:"futs_mxpr"`                 // 상한가
+	FutsLlam             decimal.Decimal `json:"futs_llam"`                 // 하한가
+	FutsOprc             decimal.Decimal `json:"futs_oprc"`                 // 시가
+	FutsHgpr             decimal.Decimal `json:"futs_hgpr"`                 // 최고가
+	FutsLwpr             decimal.Decimal `json:"futs_lwpr"`                 // 최저가
+	FutsPrdyOprc         decimal.Decimal `json:"futs_prdy_oprc"`            // 전일 시가
+	FutsPrdyHgpr         decimal.Decimal `json:"futs_prdy_hgpr"`            // 전일 최고가
+	FutsPrdyLwpr         decimal.Decimal `json:"futs_prdy_lwpr"`            // 전일 최저가
+	FutsAskp             decimal.Decimal `json:"futs_askp"`                 // 매도호가
+	FutsBidp             decimal.Decimal `json:"futs_bidp"`                 // 매수호가
+	Basis                decimal.Decimal `json:"basis"`                     // 베이시스
+	Kospi200Nmix         decimal.Decimal `json:"kospi200_nmix"`             // KOSPI200 지수
+	Kospi200PrdyVrss     decimal.Decimal `json:"kospi200_prdy_vrss"`        // KOSPI200 전일 대비
 	Kospi200PrdyCtrt     float64         `json:"kospi200_prdy_ctrt,string"` // KOSPI200 전일 대비율
-	Kospi200PrdyVrssSign string          `json:"kospi200_prdy_vrss_sign"` // 전일 대비 부호
-	HtsOtstStplQty       int64           `json:"hts_otst_stpl_qty,string"` // HTS 미결제 약정 수량
+	Kospi200PrdyVrssSign string          `json:"kospi200_prdy_vrss_sign"`   // 전일 대비 부호
+	HtsOtstStplQty       int64           `json:"hts_otst_stpl_qty,string"`  // HTS 미결제 약정 수량
 	OtstStplQtyIcdc      int64           `json:"otst_stpl_qty_icdc,string"` // 미결제 약정 수량 증감
-	TdayRltv             float64         `json:"tday_rltv,string"`        // 당일 체결강도
-	HtsThpr              decimal.Decimal `json:"hts_thpr"`                // HTS 이론가
-	Dprt                 float64         `json:"dprt,string"`             // 괴리율
+	TdayRltv             float64         `json:"tday_rltv,string"`          // 당일 체결강도
+	HtsThpr              decimal.Decimal `json:"hts_thpr"`                  // HTS 이론가
+	Dprt                 float64         `json:"dprt,string"`               // 괴리율
 }
 
 // InquireDailyFuopchartpriceOutput2Item 는 선물옵션 기간별 시세 캔들 (8 필드).
 type InquireDailyFuopchartpriceOutput2Item struct {
-	StckBsopDate string          `json:"stck_bsop_date"` // 영업 일자
-	FutsPrpr     decimal.Decimal `json:"futs_prpr"`      // 현재가
-	FutsOprc     decimal.Decimal `json:"futs_oprc"`      // 시가
-	FutsHgpr     decimal.Decimal `json:"futs_hgpr"`      // 최고가
-	FutsLwpr     decimal.Decimal `json:"futs_lwpr"`      // 최저가
-	AcmlVol      int64           `json:"acml_vol,string"` // 누적 거래량
+	StckBsopDate string          `json:"stck_bsop_date"`      // 영업 일자
+	FutsPrpr     decimal.Decimal `json:"futs_prpr"`           // 현재가
+	FutsOprc     decimal.Decimal `json:"futs_oprc"`           // 시가
+	FutsHgpr     decimal.Decimal `json:"futs_hgpr"`           // 최고가
+	FutsLwpr     decimal.Decimal `json:"futs_lwpr"`           // 최저가
+	AcmlVol      int64           `json:"acml_vol,string"`     // 누적 거래량
 	AcmlTrPbmn   int64           `json:"acml_tr_pbmn,string"` // 누적 거래 대금
-	ModYn        string          `json:"mod_yn"`         // 변경 여부
+	ModYn        string          `json:"mod_yn"`              // 변경 여부
 }
 
 // InquireDailyFuopchartpriceData 는 선물옵션 기간별 시세 응답 (output1 + output2[]).

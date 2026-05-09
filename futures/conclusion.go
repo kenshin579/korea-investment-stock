@@ -18,20 +18,20 @@ import (
 // 주의: docs 한글명에 오기 존재 (hts_kor_isnm "영업 시간", futs_antc_cnpr "업종 지수 현재가" 등).
 // 필드명 기준으로 의미 해석.
 type ExpPriceTrendOutput1 struct {
-	HtsKorIsnm           string          `json:"hts_kor_isnm"`           // HTS 한글 종목명
-	FutsAntcCnpr         decimal.Decimal `json:"futs_antc_cnpr"`         // 선물 예상 체결가
-	AntcCntgVrssSign     string          `json:"antc_cntg_vrss_sign"`    // 예상 체결 대비 부호
-	FutsAntcCntgVrss     decimal.Decimal `json:"futs_antc_cntg_vrss"`    // 선물 예상 체결 대비
-	AntcCntgPrdyCtrt     float64         `json:"antc_cntg_prdy_ctrt,string"` // 예상 체결 전일 대비율
-	FutsSdpr             decimal.Decimal `json:"futs_sdpr"`              // 선물 기준가
+	HtsKorIsnm       string          `json:"hts_kor_isnm"`               // HTS 한글 종목명
+	FutsAntcCnpr     decimal.Decimal `json:"futs_antc_cnpr"`             // 선물 예상 체결가
+	AntcCntgVrssSign string          `json:"antc_cntg_vrss_sign"`        // 예상 체결 대비 부호
+	FutsAntcCntgVrss decimal.Decimal `json:"futs_antc_cntg_vrss"`        // 선물 예상 체결 대비
+	AntcCntgPrdyCtrt float64         `json:"antc_cntg_prdy_ctrt,string"` // 예상 체결 전일 대비율
+	FutsSdpr         decimal.Decimal `json:"futs_sdpr"`                  // 선물 기준가
 }
 
 // ExpPriceTrendOutput2Item 는 선물옵션 일중예상체결추이 시계열 (5 필드).
 type ExpPriceTrendOutput2Item struct {
-	StckCntgHour     string          `json:"stck_cntg_hour"`        // 주식 체결 시간
-	FutsAntcCnpr     decimal.Decimal `json:"futs_antc_cnpr"`        // 선물 예상 체결가
-	AntcCntgVrssSign string          `json:"antc_cntg_vrss_sign"`   // 예상 체결 대비 부호
-	FutsAntcCntgVrss decimal.Decimal `json:"futs_antc_cntg_vrss"`   // 선물 예상 체결 대비
+	StckCntgHour     string          `json:"stck_cntg_hour"`             // 주식 체결 시간
+	FutsAntcCnpr     decimal.Decimal `json:"futs_antc_cnpr"`             // 선물 예상 체결가
+	AntcCntgVrssSign string          `json:"antc_cntg_vrss_sign"`        // 예상 체결 대비 부호
+	FutsAntcCntgVrss decimal.Decimal `json:"futs_antc_cntg_vrss"`        // 선물 예상 체결 대비
 	AntcCntgPrdyCtrt float64         `json:"antc_cntg_prdy_ctrt,string"` // 예상 체결 전일 대비율
 }
 
@@ -68,8 +68,8 @@ func (c *Client) ExpPriceTrend(ctx context.Context, params ExpPriceTrendParams) 
 		TrID:     "FHPIF05110100",
 		CustType: "P",
 		Query: map[string]string{
-			"FID_INPUT_ISCD":           params.Code,
-			"FID_COND_MRKT_DIV_CODE":   params.MarketCode,
+			"FID_INPUT_ISCD":         params.Code,
+			"FID_COND_MRKT_DIV_CODE": params.MarketCode,
 		},
 	})
 	if err != nil {
