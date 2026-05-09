@@ -208,3 +208,38 @@ func TestDispatcher_Phase11_2Routers(t *testing.T) {
 	assert.Equal(t, int32(1), stockOptAsk.Load())
 	assert.Equal(t, int32(1), stockOptExpTrade.Load())
 }
+
+func TestDispatcher_Phase11_3Routers(t *testing.T) {
+	// Phase 11.3 — 지수선물옵션 + 상품선물 6 핸들러 라우팅 (4 base + 2 alias, 6 distinct slots).
+	d := newDispatcher()
+	var (
+		idxFutTrade  atomic.Int32
+		idxFutAsk    atomic.Int32
+		idxOptTrade  atomic.Int32
+		idxOptAsk    atomic.Int32
+		commFutTrade atomic.Int32
+		commFutAsk   atomic.Int32
+	)
+
+	d.OnIndexFuturesTrade(func(IndexFuturesTradeEvent) { idxFutTrade.Add(1) })
+	d.OnIndexFuturesAsk(func(IndexFuturesAskEvent) { idxFutAsk.Add(1) })
+	d.OnIndexOptionTrade(func(IndexOptionTradeEvent) { idxOptTrade.Add(1) })
+	d.OnIndexOptionAsk(func(IndexOptionAskEvent) { idxOptAsk.Add(1) })
+	d.OnCommodityFuturesTrade(func(CommodityFuturesTradeEvent) { commFutTrade.Add(1) })
+	d.OnCommodityFuturesAsk(func(CommodityFuturesAskEvent) { commFutAsk.Add(1) })
+
+	d.RouteIndexFuturesTrade(IndexFuturesTradeEvent{})
+	d.RouteIndexFuturesAsk(IndexFuturesAskEvent{})
+	d.RouteIndexOptionTrade(IndexOptionTradeEvent{})
+	d.RouteIndexOptionAsk(IndexOptionAskEvent{})
+	d.RouteCommodityFuturesTrade(CommodityFuturesTradeEvent{})
+	d.RouteCommodityFuturesAsk(CommodityFuturesAskEvent{})
+
+	// alias 라도 별도 슬롯 — Index 와 Commodity 각각 1번씩만
+	assert.Equal(t, int32(1), idxFutTrade.Load())
+	assert.Equal(t, int32(1), idxFutAsk.Load())
+	assert.Equal(t, int32(1), idxOptTrade.Load())
+	assert.Equal(t, int32(1), idxOptAsk.Load())
+	assert.Equal(t, int32(1), commFutTrade.Load())
+	assert.Equal(t, int32(1), commFutAsk.Load())
+}

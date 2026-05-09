@@ -48,6 +48,15 @@
 //	H0ZOASP0  주식 옵션 호가 (10단계)         SubscribeStockOptionAsk / OnStockOptionAsk
 //	H0ZOANC0  주식 옵션 예상체결              SubscribeStockOptionExpectTrade / OnStockOptionExpectTrade
 //
+// Phase 11.3 — 지수선물옵션 + 상품선물 실시간 6 endpoint (4 base + 2 alias, 모의 미지원):
+//
+//	H0IFCNT0  지수선물 체결                   SubscribeIndexFuturesTrade / OnIndexFuturesTrade
+//	H0IFASP0  지수선물 호가 (5단계)           SubscribeIndexFuturesAsk / OnIndexFuturesAsk
+//	H0IOCNT0  지수옵션 체결 (그릭스+AVRG_VLTL) SubscribeIndexOptionTrade / OnIndexOptionTrade
+//	H0IOASP0  지수옵션 호가 (5단계)           SubscribeIndexOptionAsk / OnIndexOptionAsk
+//	H0CFCNT0  상품선물 체결 (= IF alias)      SubscribeCommodityFuturesTrade / OnCommodityFuturesTrade
+//	H0CFASP0  상품선물 호가 (= IF alias)      SubscribeCommodityFuturesAsk / OnCommodityFuturesAsk
+//
 // 사용자는 root kis.Client 의 WS 필드로 접근.
 package websocket
 
