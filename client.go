@@ -43,12 +43,12 @@ type Client struct {
 	tokenMgr   *token.Manager
 	masterC    *mastercache.Cache // Phase 1.2 의 FetchKospi/Kosdaq Symbols 가 사용 예정
 
-	Domestic       *domestic.Client
-	Overseas       *overseas.Client
-	Bonds          *bonds.Client
-	Futures        *futures.Client
+	Domestic        *domestic.Client
+	Overseas        *overseas.Client
+	Bonds           *bonds.Client
+	Futures         *futures.Client
 	OverseasFutures *overseasfutures.Client
-	WS             *websocket.Client
+	WS              *websocket.Client
 }
 
 // Option 은 functional option.
