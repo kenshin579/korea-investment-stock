@@ -48,11 +48,26 @@ func (o *Options) defaults() {
 
 // TR_ID 상수 — Task 2 schema 분석으로 확정 (plan 의 추정 일부 정정).
 const (
+	// Phase 8 — KRX
 	trIDKrxTrade           = "H0STCNT0" // 실시간체결가 KRX
 	trIDKrxAsk             = "H0STASP0" // 실시간호가 KRX
 	trIDKrxExpectTrade     = "H0STANC0" // 실시간예상체결 KRX
-	trIDKrxOvernightTrade  = "H0STOUP0" // 시간외 실시간체결가 KRX (plan 의 H0STOAC0 정정)
-	trIDKrxOvernightExpect = "H0STOAC0" // 시간외 실시간예상체결 KRX (plan 의 H0STOAA0 정정)
+	trIDKrxOvernightTrade  = "H0STOUP0" // 시간외 실시간체결가 KRX
+	trIDKrxOvernightExpect = "H0STOAC0" // 시간외 실시간예상체결 KRX
+
+	// Phase 9 — NXT
+	trIDNxtTrade        = "H0NXCNT0" // 실시간체결가 NXT
+	trIDNxtAsk          = "H0NXASP0" // 실시간호가 NXT
+	trIDNxtExpectTrade  = "H0NXANC0" // 실시간예상체결 NXT
+	trIDNxtProgramTrade = "H0NXPGM0" // 실시간프로그램매매 NXT
+	trIDNxtMember       = "H0NXMBC0" // 실시간회원사 NXT
+
+	// Phase 9 — 통합
+	trIDUnifiedTrade        = "H0UNCNT0" // 실시간체결가 통합
+	trIDUnifiedAsk          = "H0UNASP0" // 실시간호가 통합
+	trIDUnifiedExpectTrade  = "H0UNANC0" // 실시간예상체결 통합
+	trIDUnifiedProgramTrade = "H0UNPGM0" // 실시간프로그램매매 통합
+	trIDUnifiedMember       = "H0UNMBC0" // 실시간회원사 통합
 )
 
 // Client 는 KIS WebSocket 진입점. kis.Client.WS 로 접근.
@@ -104,6 +119,40 @@ func (c *Client) SubscribeKrxOvernightExpect(symbols ...string) error {
 	return c.subscribe(trIDKrxOvernightExpect, symbols)
 }
 
+// Phase 9 — NXT Subscribe
+func (c *Client) SubscribeNxtTrade(symbols ...string) error {
+	return c.subscribe(trIDNxtTrade, symbols)
+}
+func (c *Client) SubscribeNxtAsk(symbols ...string) error {
+	return c.subscribe(trIDNxtAsk, symbols)
+}
+func (c *Client) SubscribeNxtExpectTrade(symbols ...string) error {
+	return c.subscribe(trIDNxtExpectTrade, symbols)
+}
+func (c *Client) SubscribeNxtProgramTrade(symbols ...string) error {
+	return c.subscribe(trIDNxtProgramTrade, symbols)
+}
+func (c *Client) SubscribeNxtMember(symbols ...string) error {
+	return c.subscribe(trIDNxtMember, symbols)
+}
+
+// Phase 9 — 통합 Subscribe
+func (c *Client) SubscribeUnifiedTrade(symbols ...string) error {
+	return c.subscribe(trIDUnifiedTrade, symbols)
+}
+func (c *Client) SubscribeUnifiedAsk(symbols ...string) error {
+	return c.subscribe(trIDUnifiedAsk, symbols)
+}
+func (c *Client) SubscribeUnifiedExpectTrade(symbols ...string) error {
+	return c.subscribe(trIDUnifiedExpectTrade, symbols)
+}
+func (c *Client) SubscribeUnifiedProgramTrade(symbols ...string) error {
+	return c.subscribe(trIDUnifiedProgramTrade, symbols)
+}
+func (c *Client) SubscribeUnifiedMember(symbols ...string) error {
+	return c.subscribe(trIDUnifiedMember, symbols)
+}
+
 // === Unsubscribe (대칭) ===
 
 func (c *Client) UnsubscribeKrxTrade(symbols ...string) error {
@@ -120,6 +169,40 @@ func (c *Client) UnsubscribeKrxOvernightTrade(symbols ...string) error {
 }
 func (c *Client) UnsubscribeKrxOvernightExpect(symbols ...string) error {
 	return c.unsubscribe(trIDKrxOvernightExpect, symbols)
+}
+
+// Phase 9 — NXT Unsubscribe
+func (c *Client) UnsubscribeNxtTrade(symbols ...string) error {
+	return c.unsubscribe(trIDNxtTrade, symbols)
+}
+func (c *Client) UnsubscribeNxtAsk(symbols ...string) error {
+	return c.unsubscribe(trIDNxtAsk, symbols)
+}
+func (c *Client) UnsubscribeNxtExpectTrade(symbols ...string) error {
+	return c.unsubscribe(trIDNxtExpectTrade, symbols)
+}
+func (c *Client) UnsubscribeNxtProgramTrade(symbols ...string) error {
+	return c.unsubscribe(trIDNxtProgramTrade, symbols)
+}
+func (c *Client) UnsubscribeNxtMember(symbols ...string) error {
+	return c.unsubscribe(trIDNxtMember, symbols)
+}
+
+// Phase 9 — 통합 Unsubscribe
+func (c *Client) UnsubscribeUnifiedTrade(symbols ...string) error {
+	return c.unsubscribe(trIDUnifiedTrade, symbols)
+}
+func (c *Client) UnsubscribeUnifiedAsk(symbols ...string) error {
+	return c.unsubscribe(trIDUnifiedAsk, symbols)
+}
+func (c *Client) UnsubscribeUnifiedExpectTrade(symbols ...string) error {
+	return c.unsubscribe(trIDUnifiedExpectTrade, symbols)
+}
+func (c *Client) UnsubscribeUnifiedProgramTrade(symbols ...string) error {
+	return c.unsubscribe(trIDUnifiedProgramTrade, symbols)
+}
+func (c *Client) UnsubscribeUnifiedMember(symbols ...string) error {
+	return c.unsubscribe(trIDUnifiedMember, symbols)
 }
 
 func (c *Client) subscribe(trID string, symbols []string) error {
@@ -174,6 +257,25 @@ func (c *Client) OnKrxOvernightTrade(h func(KrxOvernightTradeEvent)) {
 func (c *Client) OnKrxOvernightExpect(h func(KrxOvernightExpectEvent)) {
 	c.dispatcher.OnKrxOvernightExpect(h)
 }
+
+// Phase 9 — NXT/통합 Handler 위임 (10)
+func (c *Client) OnNxtTrade(h func(NxtTradeEvent))             { c.dispatcher.OnNxtTrade(h) }
+func (c *Client) OnUnifiedTrade(h func(UnifiedTradeEvent))     { c.dispatcher.OnUnifiedTrade(h) }
+func (c *Client) OnNxtAsk(h func(NxtAskEvent))                 { c.dispatcher.OnNxtAsk(h) }
+func (c *Client) OnUnifiedAsk(h func(UnifiedAskEvent))         { c.dispatcher.OnUnifiedAsk(h) }
+func (c *Client) OnNxtExpectTrade(h func(NxtExpectTradeEvent)) { c.dispatcher.OnNxtExpectTrade(h) }
+func (c *Client) OnUnifiedExpectTrade(h func(UnifiedExpectTradeEvent)) {
+	c.dispatcher.OnUnifiedExpectTrade(h)
+}
+func (c *Client) OnNxtProgramTrade(h func(NxtProgramTradeEvent)) {
+	c.dispatcher.OnNxtProgramTrade(h)
+}
+func (c *Client) OnUnifiedProgramTrade(h func(UnifiedProgramTradeEvent)) {
+	c.dispatcher.OnUnifiedProgramTrade(h)
+}
+func (c *Client) OnNxtMember(h func(NxtMemberEvent))         { c.dispatcher.OnNxtMember(h) }
+func (c *Client) OnUnifiedMember(h func(UnifiedMemberEvent)) { c.dispatcher.OnUnifiedMember(h) }
+
 func (c *Client) OnConnected(h func())            { c.dispatcher.OnConnected(h) }
 func (c *Client) OnReconnect(h func(attempt int)) { c.dispatcher.OnReconnect(h) }
 func (c *Client) OnDisconnect(h func(error))      { c.dispatcher.OnDisconnect(h) }
@@ -346,6 +448,101 @@ func (c *Client) routeRealtime(f frame) {
 		for _, ev := range evs {
 			c.dispatcher.RouteKrxOvernightExpect(ev)
 		}
+
+	// Phase 9 — NXT
+	case trIDNxtTrade:
+		evs, err := decodeAltMarketTrade(f)
+		if err != nil {
+			c.dispatcher.RouteError(err)
+			return
+		}
+		for _, ev := range evs {
+			c.dispatcher.RouteNxtTrade(ev)
+		}
+	case trIDNxtAsk:
+		evs, err := decodeAltMarketAsk(f)
+		if err != nil {
+			c.dispatcher.RouteError(err)
+			return
+		}
+		for _, ev := range evs {
+			c.dispatcher.RouteNxtAsk(ev)
+		}
+	case trIDNxtExpectTrade:
+		evs, err := decodeAltMarketExpectTrade(f)
+		if err != nil {
+			c.dispatcher.RouteError(err)
+			return
+		}
+		for _, ev := range evs {
+			c.dispatcher.RouteNxtExpectTrade(ev)
+		}
+	case trIDNxtProgramTrade:
+		evs, err := decodeProgramTrade(f)
+		if err != nil {
+			c.dispatcher.RouteError(err)
+			return
+		}
+		for _, ev := range evs {
+			c.dispatcher.RouteNxtProgramTrade(ev)
+		}
+	case trIDNxtMember:
+		evs, err := decodeMember(f)
+		if err != nil {
+			c.dispatcher.RouteError(err)
+			return
+		}
+		for _, ev := range evs {
+			c.dispatcher.RouteNxtMember(ev)
+		}
+
+	// Phase 9 — 통합
+	case trIDUnifiedTrade:
+		evs, err := decodeAltMarketTrade(f)
+		if err != nil {
+			c.dispatcher.RouteError(err)
+			return
+		}
+		for _, ev := range evs {
+			c.dispatcher.RouteUnifiedTrade(ev)
+		}
+	case trIDUnifiedAsk:
+		evs, err := decodeAltMarketAsk(f)
+		if err != nil {
+			c.dispatcher.RouteError(err)
+			return
+		}
+		for _, ev := range evs {
+			c.dispatcher.RouteUnifiedAsk(ev)
+		}
+	case trIDUnifiedExpectTrade:
+		evs, err := decodeAltMarketExpectTrade(f)
+		if err != nil {
+			c.dispatcher.RouteError(err)
+			return
+		}
+		for _, ev := range evs {
+			c.dispatcher.RouteUnifiedExpectTrade(ev)
+		}
+	case trIDUnifiedProgramTrade:
+		evs, err := decodeProgramTrade(f)
+		if err != nil {
+			c.dispatcher.RouteError(err)
+			return
+		}
+		for _, ev := range evs {
+			c.dispatcher.RouteUnifiedProgramTrade(ev)
+		}
+	case trIDUnifiedMember:
+		evs, err := decodeMember(f)
+		if err != nil {
+			c.dispatcher.RouteError(err)
+			return
+		}
+		for _, ev := range evs {
+			c.dispatcher.RouteUnifiedMember(ev)
+		}
+
 	default:
 		c.dispatcher.RouteError(ErrWSInvalidFrame)
 	}
