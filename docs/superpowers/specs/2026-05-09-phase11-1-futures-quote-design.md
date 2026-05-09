@@ -4,7 +4,7 @@
 **Goal:** 신규 도메인 `futures/` 도입. 국내선물옵션 시세/조회 11 EP REST 구현. 누적 121 → **132 REST + 17 WS = 149 endpoints**.
 **Out of Scope:** 국내선물옵션 실시간 (Phase 11.2~11.3, 20 EP), Trading (Phase 11.4, HIGH RISK 12 EP), 해외선물옵션 (Phase 11.5~).
 
-> **Lightweight spec**: Phase 6/7/9 패턴 — plan 작성 skip + 직접 구현. 새 sub-package `futures/` 스캐폴딩이 Phase 3.1 (bonds/) 패턴 그대로 재사용.
+> **Lightweight spec + 형식 plan**: 신규 sub-package `futures/` 스캐폴딩이 Phase 3.1 (bonds/) 패턴 그대로 재사용. bonds 도 plan 작성했던 전례라 본 phase 도 plan 작성 (writing-plans skill 호출).
 
 ---
 
@@ -18,7 +18,7 @@
 | 시작 sub-phase | 국내 시세 (Phase 11.1) | 해외 (11.5+) 와 실시간 (11.2~11.3) 은 후속 |
 | Sub-package 명 | `futures/` | bonds/ 패턴 일관, 짧고 단순. 옵션 포함 (yfinance/alpaca 등 관례) |
 | Phase 11.1 scope | 11 EP 모두 (수수료 포함) | Phase 9 (10 EP) 수준 |
-| 진행 절차 | lightweight spec + plan skip | Phase 6/7/9 와 동일 |
+| 진행 절차 | lightweight spec + 형식 plan 작성 | bonds/ 신규 sub-package 도입은 Phase 3.1 처럼 plan 가치 있음 |
 
 ---
 
@@ -96,18 +96,18 @@ root `client.go` 에 `Futures *futures.Client` 필드 추가 (`Bonds *bonds.Clie
 
 ## §6. 진행 절차
 
-Phase 6/7/9 패턴:
+Phase 3.1 (bonds/) 패턴 — 신규 sub-package 도입은 형식 plan 작성:
 
 1. ✅ design doc commit (이 단계)
-2. docs analyzer 단계: 11 EP 각각의 한투 docs 직접 분석 → path / TR_ID / 정확한 메서드명 / Query params / Output schema 확정
-3. testdata fixtures 작성 (11 fixtures)
-4. 신규 `futures/` package 스캐폴딩 — `client.go`, `doc.go`, `testhelper_test.go` (bonds 패턴 복사)
-5. 메서드 구현 + 테스트 (4 그룹: quote / chart / conclusion / board)
-   - 메서드 구현은 단순 task 라 단일 main agent 진행 또는 작은 batch subagent dispatch 가능
-6. example `examples/futures_basic/` (4-5 메서드 통합 시연)
-7. 문서 갱신 (CLAUDE.md / README.md / CHANGELOG.md / `futures/doc.go`)
-8. 최종 점검 (gofmt / vet / build / race / coverage ≥ 80%)
-9. PR + merge + tag v1.21.0 + GitHub Release
+2. **writing-plans skill 호출 → implementation plan 작성** (각 task verbatim code 포함)
+3. docs analyzer 단계: 11 EP 각각의 한투 docs 직접 분석 → path / TR_ID / 정확한 메서드명 / Query params / Output schema 확정 (plan 의 task 0 또는 분리)
+4. testdata fixtures 작성 (11 fixtures)
+5. 신규 `futures/` package 스캐폴딩 — `client.go`, `doc.go`, `testhelper_test.go` (bonds 패턴 복사)
+6. 메서드 구현 + 테스트 (4 그룹: quote / chart / conclusion / board) — plan 의 task 단위로 진행
+7. example `examples/futures_basic/` (4-5 메서드 통합 시연)
+8. 문서 갱신 (CLAUDE.md / README.md / CHANGELOG.md / `futures/doc.go`)
+9. 최종 점검 (gofmt / vet / build / race / coverage ≥ 80%)
+10. PR + merge + tag v1.21.0 + GitHub Release
 
 ---
 
