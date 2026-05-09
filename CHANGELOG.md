@@ -1,5 +1,36 @@
 # CHANGELOG
 
+## [1.24.0] - 2026-05-09
+
+### Added — Phase 11.5 (해외선물 시세/조회 10 EP, 신규 `overseasfutures/` sub-package)
+
+신규 도메인 `overseasfutures/` 도입. 해외선물 시세/조회 10 endpoint REST.
+
+- `OverseasFutures.InquirePrice` (HHDFC55010000) — 종목 현재가
+- `OverseasFutures.StockDetail` (HHDFC55010100) — 종목 상세
+- `OverseasFutures.InquireAskingPrice` (HHDFC86000000) — 호가 (output1+output2)
+- `OverseasFutures.SearchContractDetail` (HHDFC55200000) — 상품 기본 정보 (32 종목 bulk 조회)
+- `OverseasFutures.InquireTimeFuturechartprice` (HHDFC55020400) — 분봉 (output 역전 anomaly)
+- `OverseasFutures.MonthlyCcnl` (HHDFC55020300) — 월간 체결추이
+- `OverseasFutures.DailyCcnl` (HHDFC55020100) — 일간 체결추이
+- `OverseasFutures.WeeklyCcnl` (HHDFC55020000) — 주간 체결추이 (`ret_cnt` 필드 anomaly)
+- `OverseasFutures.TickCcnl` (HHDFC55020200) — 틱 체결추이
+- `OverseasFutures.InvestorUnpdTrend` (HHDDB95030000) — 미결제 추이
+- examples: `overseas_futures_basic` (4 메서드 시연)
+
+### Notes
+
+- **신규 sub-package `overseasfutures/`** (bonds + futures 패턴). root `Client.OverseasFutures *overseasfutures.Client`.
+- **base path**: `/uapi/overseas-futureoption/v1/` (해외주식의 `/uapi/overseas-stock/v1/` 와 다름).
+- **모든 EP 모의 미지원** — 실전 only.
+- **종목코드**: 해외선물 종목 코드 (예: ES/CL/GC) + 거래소/만기 별도 query 인자.
+- **EP2 InquireTimeFuturechartprice output 역전**: docs 가 `output2{}` 메타 + `output1[]` 분봉 array — 일반 패턴 (output1 메타 + output2 array) 와 반대. docs 그대로 보존.
+- **EP6 WeeklyCcnl `ret_cnt` 필드**: 다른 Ccnl EP 의 `tret_cnt` 와 다름. JSON 태그 정확.
+- **EP8 InquireAskingPrice `lowp_rice` 오타**: docs 명백한 오타. Go 필드 `LowpRice`, JSON 태그 `lowp_rice` 그대로.
+- **EP9/EP10 Optional fields**: 모든 응답 필드 `Required=N` — Go zero value 매핑 (포인터 미사용).
+- **Coverage**: overseasfutures package 87.2% (목표 ≥80%).
+- 누적 130 + 10 REST + 34 WS = **140 REST + 34 WS = 174 endpoints**.
+
 ## [1.23.0] - 2026-05-09
 
 ### Added — Phase 11.3 (WebSocket — 지수선물옵션 + 상품선물 실시간 6 EP)

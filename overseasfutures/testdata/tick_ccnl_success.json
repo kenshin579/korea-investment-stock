@@ -1,0 +1,77 @@
+{
+  "rt_cd": "0",
+  "msg_cd": "KIOK0000",
+  "msg1": "조회가 완료되었습니다.",
+  "output1": {
+    "tret_cnt": "5",
+    "last_n_cnt": "5",
+    "index_key": "20240402160023ESM24CME"
+  },
+  "output2": [
+    {
+      "data_date": "20240402",
+      "data_time": "160023",
+      "open_price": "5204.34",
+      "high_price": "5204.34",
+      "low_price": "5204.34",
+      "last_price": "5204.34",
+      "last_qntt": "5",
+      "vol": "1345678",
+      "prev_diff_flag": "5",
+      "prev_diff_price": "-68.41",
+      "prev_diff_rate": "-1.30"
+    },
+    {
+      "data_date": "20240402",
+      "data_time": "160018",
+      "open_price": "5204.59",
+      "high_price": "5204.59",
+      "low_price": "5204.59",
+      "last_price": "5204.59",
+      "last_qntt": "3",
+      "vol": "1345673",
+      "prev_diff_flag": "5",
+      "prev_diff_price": "-68.16",
+      "prev_diff_rate": "-1.29"
+    },
+    {
+      "data_date": "20240402",
+      "data_time": "160015",
+      "open_price": "5204.84",
+      "high_price": "5204.84",
+      "low_price": "5204.84",
+      "last_price": "5204.84",
+      "last_qntt": "8",
+      "vol": "1345670",
+      "prev_diff_flag": "5",
+      "prev_diff_price": "-67.91",
+      "prev_diff_rate": "-1.29"
+    },
+    {
+      "data_date": "20240402",
+      "data_time": "160009",
+      "open_price": "5205.25",
+      "high_price": "5205.25",
+      "low_price": "5205.25",
+      "last_price": "5205.25",
+      "last_qntt": "12",
+      "vol": "1345662",
+      "prev_diff_flag": "5",
+      "prev_diff_price": "-67.50",
+      "prev_diff_rate": "-1.28"
+    },
+    {
+      "data_date": "20240402",
+      "data_time": "160003",
+      "open_price": "5205.50",
+      "high_price": "5205.50",
+      "low_price": "5205.50",
+      "last_price": "5205.50",
+      "last_qntt": "7",
+      "vol": "1345650",
+      "prev_diff_flag": "5",
+      "prev_diff_price": "-67.25",
+      "prev_diff_rate": "-1.28"
+    }
+  ]
+}

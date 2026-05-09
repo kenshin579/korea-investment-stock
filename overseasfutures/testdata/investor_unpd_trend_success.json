@@ -1,0 +1,67 @@
+{
+  "rt_cd": "0",
+  "msg_cd": "KIOK0000",
+  "msg1": "조회가 완료되었습니다.",
+  "output1": {
+    "row_cnt": "3"
+  },
+  "output2": [
+    {
+      "prod_iscd": "ES",
+      "cftc_iscd": "13874A",
+      "bsop_date": "20240507",
+      "bidp_spec": "318456",
+      "askp_spec": "98765",
+      "spread_spec": "12345",
+      "bidp_hedge": "234567",
+      "askp_hedge": "123456",
+      "hts_otst_smtn": "2765432",
+      "bidp_missing": "5678",
+      "askp_missing": "4321",
+      "bidp_spec_cust": "98765",
+      "askp_spec_cust": "76543",
+      "spread_spec_cust": "3456",
+      "bidp_hedge_cust": "54321",
+      "askp_hedge_cust": "43210",
+      "cust_smtn": "654321"
+    },
+    {
+      "prod_iscd": "ES",
+      "cftc_iscd": "13874A",
+      "bsop_date": "20240430",
+      "bidp_spec": "315000",
+      "askp_spec": "97000",
+      "spread_spec": "12000",
+      "bidp_hedge": "230000",
+      "askp_hedge": "120000",
+      "hts_otst_smtn": "2750000",
+      "bidp_missing": "5500",
+      "askp_missing": "4200",
+      "bidp_spec_cust": "96000",
+      "askp_spec_cust": "75000",
+      "spread_spec_cust": "3300",
+      "bidp_hedge_cust": "52000",
+      "askp_hedge_cust": "42000",
+      "cust_smtn": "640000"
+    },
+    {
+      "prod_iscd": "ES",
+      "cftc_iscd": "13874A",
+      "bsop_date": "20240423",
+      "bidp_spec": "310000",
+      "askp_spec": "95000",
+      "spread_spec": "11500",
+      "bidp_hedge": "225000",
+      "askp_hedge": "118000",
+      "hts_otst_smtn": "2720000",
+      "bidp_missing": "5300",
+      "askp_missing": "4100",
+      "bidp_spec_cust": "94000",
+      "askp_spec_cust": "73000",
+      "spread_spec_cust": "3200",
+      "bidp_hedge_cust": "51000",
+      "askp_hedge_cust": "41000",
+      "cust_smtn": "630000"
+    }
+  ]
+}
