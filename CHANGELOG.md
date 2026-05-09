@@ -1,5 +1,26 @@
 # CHANGELOG
 
+## [1.26.0] - 2026-05-09
+
+### Added — Phase 11.7 (WebSocket — 해외선물옵션 실시간 시세 2 EP)
+
+WebSocket 인프라 (Phase 8/9/10/11.2/11.3) 그대로 재사용. 해외선물옵션 실시간 2 EP. 선물/옵션 통합 EP.
+
+- `WS.SubscribeOverseasFuturesTrade` / `OnOverseasFuturesTrade` — HDFFF020 체결가 (25 fields)
+- `WS.SubscribeOverseasFuturesAsk` / `OnOverseasFuturesAsk` — HDFFF010 호가 (35 fields, BID/ASK 5단계 교차 배열)
+- examples: `ws_overseas_futures_basic` (2 EP 시연)
+
+### Notes
+
+- **선물/옵션 통합 EP**: 두 EP 모두 단일 TR_ID 로 선물/옵션 모두 수신. 별도 선물 vs 옵션 EP 구분 없음.
+- **그릭스 미포함**: REST 응답 (Phase 11.6) 과 동일하게 실시간 응답에도 delta/gamma/vega/theta/rho/IV 미포함.
+- **국내선물옵션 (Phase 11.2/11.3) 와 schema distinct**: 종목코드 (`SERIES_CD` vs 국내 `FUTS_SHRN_ISCD`/`OPTN_SHRN_ISCD`), 시간 (RECV_DATE+RECV_TIME 분리 vs `BSOP_HOUR` HHMMSS), 호가 구조 (BID/ASK 교차 배열 vs 매도/매수 분리). alias 불가.
+- **호가 5단계 BID/ASK 교차 배열**: `(BID_QNTT_N, BID_NUM_N, BID_PRICE_N, ASK_QNTT_N, ASK_NUM_N, ASK_PRICE_N)` 반복 — 국내 (전체 매도 → 전체 매수) 와 다른 패턴.
+- **Endpoint URL**: `ws://ops.koreainvestment.com:21000` 기존 인프라 그대로.
+- **모든 EP 모의 미지원** — 실전 only.
+- **Coverage**: websocket 73.0% (목표 ≥70%).
+- 누적 150 REST + 34 + 2 WS = **150 REST + 36 WS = 186 endpoints**.
+
 ## [1.25.0] - 2026-05-09
 
 ### Added — Phase 11.6 (해외옵션 시세 9 + 공통 장운영시간 1 = 10 EP)

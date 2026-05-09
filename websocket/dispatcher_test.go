@@ -243,3 +243,21 @@ func TestDispatcher_Phase11_3Routers(t *testing.T) {
 	assert.Equal(t, int32(1), commFutTrade.Load())
 	assert.Equal(t, int32(1), commFutAsk.Load())
 }
+
+func TestDispatcher_Phase11_7Routers(t *testing.T) {
+	// Phase 11.7 — 해외선물옵션 2 핸들러 라우팅 검증.
+	d := newDispatcher()
+	var (
+		ovFutTrade atomic.Int32
+		ovFutAsk   atomic.Int32
+	)
+
+	d.OnOverseasFuturesTrade(func(OverseasFuturesTradeEvent) { ovFutTrade.Add(1) })
+	d.OnOverseasFuturesAsk(func(OverseasFuturesAskEvent) { ovFutAsk.Add(1) })
+
+	d.RouteOverseasFuturesTrade(OverseasFuturesTradeEvent{})
+	d.RouteOverseasFuturesAsk(OverseasFuturesAskEvent{})
+
+	assert.Equal(t, int32(1), ovFutTrade.Load())
+	assert.Equal(t, int32(1), ovFutAsk.Load())
+}

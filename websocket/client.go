@@ -93,6 +93,10 @@ const (
 	trIDIndexOptionAsk        = "H0IOASP0" // 지수옵션 실시간호가
 	trIDCommodityFuturesTrade = "H0CFCNT0" // 상품선물 실시간체결가 (alias: IndexFutures schema)
 	trIDCommodityFuturesAsk   = "H0CFASP0" // 상품선물 실시간호가   (alias: IndexFutures schema)
+
+	// Phase 11.7 — 해외선물옵션 실시간
+	trIDOverseasFuturesTrade = "HDFFF020" // 해외선물옵션 실시간체결가 (선물/옵션 통합)
+	trIDOverseasFuturesAsk   = "HDFFF010" // 해외선물옵션 실시간호가   (선물/옵션 통합)
 )
 
 // Client 는 KIS WebSocket 진입점. kis.Client.WS 로 접근.
@@ -242,6 +246,15 @@ func (c *Client) SubscribeCommodityFuturesAsk(symbols ...string) error {
 	return c.subscribe(trIDCommodityFuturesAsk, symbols)
 }
 
+// Phase 11.7 — 해외선물옵션 실시간 Subscribe
+// tr_key: 해외선물옵션 종목코드 6자리 (예: GCM24, 6AM24, ESM24)
+func (c *Client) SubscribeOverseasFuturesTrade(symbols ...string) error {
+	return c.subscribe(trIDOverseasFuturesTrade, symbols)
+}
+func (c *Client) SubscribeOverseasFuturesAsk(symbols ...string) error {
+	return c.subscribe(trIDOverseasFuturesAsk, symbols)
+}
+
 // === Unsubscribe (대칭) ===
 
 func (c *Client) UnsubscribeKrxTrade(symbols ...string) error {
@@ -355,6 +368,14 @@ func (c *Client) UnsubscribeCommodityFuturesTrade(symbols ...string) error {
 }
 func (c *Client) UnsubscribeCommodityFuturesAsk(symbols ...string) error {
 	return c.unsubscribe(trIDCommodityFuturesAsk, symbols)
+}
+
+// Phase 11.7 — 해외선물옵션 실시간 Unsubscribe
+func (c *Client) UnsubscribeOverseasFuturesTrade(symbols ...string) error {
+	return c.unsubscribe(trIDOverseasFuturesTrade, symbols)
+}
+func (c *Client) UnsubscribeOverseasFuturesAsk(symbols ...string) error {
+	return c.unsubscribe(trIDOverseasFuturesAsk, symbols)
 }
 
 func (c *Client) subscribe(trID string, symbols []string) error {
@@ -485,6 +506,14 @@ func (c *Client) OnCommodityFuturesTrade(h func(CommodityFuturesTradeEvent)) {
 }
 func (c *Client) OnCommodityFuturesAsk(h func(CommodityFuturesAskEvent)) {
 	c.dispatcher.OnCommodityFuturesAsk(h)
+}
+
+// Phase 11.7 — 해외선물옵션 실시간 Handler 위임 (2)
+func (c *Client) OnOverseasFuturesTrade(h func(OverseasFuturesTradeEvent)) {
+	c.dispatcher.OnOverseasFuturesTrade(h)
+}
+func (c *Client) OnOverseasFuturesAsk(h func(OverseasFuturesAskEvent)) {
+	c.dispatcher.OnOverseasFuturesAsk(h)
 }
 
 func (c *Client) OnConnected(h func())            { c.dispatcher.OnConnected(h) }
@@ -929,6 +958,26 @@ func (c *Client) routeRealtime(f frame) {
 		}
 		for _, ev := range evs {
 			c.dispatcher.RouteCommodityFuturesAsk(ev)
+		}
+
+	// Phase 11.7 — 해외선물옵션 실시간
+	case trIDOverseasFuturesTrade:
+		evs, err := decodeOverseasFuturesTrade(f)
+		if err != nil {
+			c.dispatcher.RouteError(err)
+			return
+		}
+		for _, ev := range evs {
+			c.dispatcher.RouteOverseasFuturesTrade(ev)
+		}
+	case trIDOverseasFuturesAsk:
+		evs, err := decodeOverseasFuturesAsk(f)
+		if err != nil {
+			c.dispatcher.RouteError(err)
+			return
+		}
+		for _, ev := range evs {
+			c.dispatcher.RouteOverseasFuturesAsk(ev)
 		}
 
 	default:
