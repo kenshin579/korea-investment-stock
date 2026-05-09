@@ -16,6 +16,7 @@ import (
 
 	"github.com/kenshin579/korea-investment-stock/bonds"
 	"github.com/kenshin579/korea-investment-stock/domestic"
+	"github.com/kenshin579/korea-investment-stock/futures"
 	"github.com/kenshin579/korea-investment-stock/internal/httpclient"
 	"github.com/kenshin579/korea-investment-stock/internal/mastercache"
 	"github.com/kenshin579/korea-investment-stock/internal/ratelimit"
@@ -44,6 +45,7 @@ type Client struct {
 	Domestic *domestic.Client
 	Overseas *overseas.Client
 	Bonds    *bonds.Client
+	Futures  *futures.Client
 	WS       *websocket.Client
 }
 
@@ -85,6 +87,7 @@ func NewClient(apiKey, apiSecret, accountNo string, opts ...Option) (*Client, er
 	c.Domestic = domestic.New(c.httpClient, c.masterC)
 	c.Overseas = overseas.New(c.httpClient, c.masterC)
 	c.Bonds = bonds.New(c.httpClient)
+	c.Futures = futures.New(c.httpClient)
 
 	// WebSocket endpoint: 실전 vs 모의투자
 	wsEndpoint := "ws://ops.koreainvestment.com:21000"
