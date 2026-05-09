@@ -204,6 +204,18 @@ func main() {
 | `Domestic.InquireTradedByCompany` | `ranking/traded-by-company` | FHPST01860000 |
 | `Domestic.InquireCreditByCompany` | `quotations/credit-by-company` | FHPST04770000 |
 
+### WebSocket — Phase 8 (v1.18.0)
+
+| Method | TR_ID | 설명 |
+|--------|-------|------|
+| `WS.SubscribeKrxTrade` / `OnKrxTrade` | H0STCNT0 | 국내주식 실시간체결가 (KRX) |
+| `WS.SubscribeKrxAsk` / `OnKrxAsk` | H0STASP0 | 국내주식 실시간호가 (KRX) |
+| `WS.SubscribeKrxExpectTrade` / `OnKrxExpectTrade` | H0STANC0 | 국내주식 실시간예상체결 (KRX) |
+| `WS.SubscribeKrxOvernightTrade` / `OnKrxOvernightTrade` | H0STOUP0 | 국내주식 시간외 실시간체결가 (KRX) |
+| `WS.SubscribeKrxOvernightExpect` / `OnKrxOvernightExpect` | H0STOAC0 | 국내주식 시간외 실시간예상체결 (KRX) |
+
+자동 재연결 + 구독 자동 복원 (exp backoff, max 10 attempts). 사용 예: `examples/ws_krx_basic/`.
+
 ### Bonds (장내채권) — Phase 3.1
 
 | Go 메서드 | path | TR_ID |
@@ -234,7 +246,7 @@ func main() {
 - ✅ 해외주식 (시세, 차트, 순위)
 - ✅ 장내채권 (시세, 발행정보, 호가, 기간별, 평균단가 — Phase 3.1)
 - ❌ 선물옵션 — 영구 제외
-- ❌ 실시간 WebSocket — 추후 별도 spec
+- ✅ 실시간 WebSocket — KRX 시세 5 endpoint (Phase 8; v1.18.0)
 - ❌ 주식 주문/잔고/예약주문 — 본 spec 에서 다루지 않음
 
 ## License

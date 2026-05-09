@@ -2,7 +2,7 @@
 
 Go client library for the Korea Investment Securities OpenAPI.
 
-> **Phase 7 — 헬퍼 4 메서드 (v1.17.0). 누적 121 메서드.**
+> **Phase 8 — WebSocket KRX 5 endpoint (v1.18.0). 누적 121 REST + 5 WS = 126 endpoints.**
 
 - Design spec: [`docs/superpowers/specs/2026-05-03-korea-investment-go-migration-design.md`](docs/superpowers/specs/2026-05-03-korea-investment-go-migration-design.md)
 - Phase 0 implementation plan: [`docs/superpowers/specs/2026-05-03-phase0-step1-implementation-plan.md`](docs/superpowers/specs/2026-05-03-phase0-step1-implementation-plan.md)
@@ -28,6 +28,8 @@ Go client library for the Korea Investment Securities OpenAPI.
 - Phase 5 design spec: [`docs/superpowers/specs/2026-05-07-phase5-etf-watchlist-design.md`](docs/superpowers/specs/2026-05-07-phase5-etf-watchlist-design.md)
 - Phase 6 design spec: [`docs/superpowers/specs/2026-05-08-phase6-financial-extension-design.md`](docs/superpowers/specs/2026-05-08-phase6-financial-extension-design.md)
 - Phase 7 design spec: [`docs/superpowers/specs/2026-05-08-phase7-helpers-design.md`](docs/superpowers/specs/2026-05-08-phase7-helpers-design.md)
+- Phase 8 design spec: [`docs/superpowers/specs/2026-05-09-phase8-websocket-design.md`](docs/superpowers/specs/2026-05-09-phase8-websocket-design.md)
+- Phase 8 implementation plan: [`docs/superpowers/plans/2026-05-09-phase8-websocket.md`](docs/superpowers/plans/2026-05-09-phase8-websocket.md)
 - Legacy Python: see `python-final` tag (commit `e3fc52f`); PyPI `korea-investment-stock` v0.19.0 deprecated.
 
 ## Stack
@@ -65,7 +67,9 @@ go mod tidy
 
 ## Out of Scope (Phase 0)
 
-선물옵션 · 장내채권 · 실시간 WebSocket · 주문/잔고/예약주문
+선물옵션 · 장내채권 · 주문/잔고/예약주문
+
+> 실시간 WebSocket (KRX 시세 5 EP): Phase 8 (v1.18.0) 에서 구현됨. NXT/통합/ELW/지수/해외/선물옵션 실시간 + 체결통보 → Phase 9+.
 
 ## Git Policy
 

@@ -1,0 +1,207 @@
+package websocket_test
+
+import (
+	"context"
+	"net/http"
+	"strings"
+	"sync/atomic"
+	"testing"
+	"time"
+
+	"github.com/jarcoal/httpmock"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
+	"github.com/kenshin579/korea-investment-stock/websocket"
+	"github.com/kenshin579/korea-investment-stock/websocket/internal/wsmock"
+)
+
+// approvalClient 는 httpmock 전용 HTTP 클라이언트.
+// http.DefaultClient 를 오염시키지 않아야 wslib.Dial 이 실제 TCP로 연결 가능.
+var approvalClient = &http.Client{}
+
+func setupApprovalMock(t *testing.T) {
+	t.Helper()
+	// ActivateNonDefault 로 approvalClient 만 intercept → DefaultClient(ws) 는 그대로.
+	httpmock.ActivateNonDefault(approvalClient)
+	t.Cleanup(func() { httpmock.DeactivateAndReset() })
+	httpmock.RegisterResponder(http.MethodPost, `=~/oauth2/Approval`,
+		httpmock.NewStringResponder(200, `{"approval_key":"test-approval-key-123"}`),
+	)
+}
+
+func newClient(t *testing.T, endpoint string) *websocket.Client {
+	t.Helper()
+	return websocket.NewClient(websocket.Options{
+		Endpoint:      endpoint,
+		BaseURL:       "https://api.example",
+		AppKey:        "appkey",
+		AppSecret:     "appsecret",
+		ReconnectMin:  10 * time.Millisecond,
+		ReconnectMax:  100 * time.Millisecond,
+		MaxReconnects: 5,
+		HTTPClient:    approvalClient, // httpmock 가 가로챔 (DefaultClient 는 건드리지 않음)
+	})
+}
+
+// samplePayload46 — h0stcnt0 fixture 와 동일 layout, 46 fields.
+func samplePayload46(symbol string) string {
+	return symbol + "^123929^73100^2^1500^2.09^72850^72500^73200^72400^73100^73000^150^123456^987654000000^5000^7345^2345^120.5^65000^85000^1^53.4^102.3^090030^2^600^102345^2^700^090015^5^200^20260509^11^N^15000^25000^150000^180000^65.5^110000^99.8^0^^72500"
+}
+
+func TestIntegration_HappyPath(t *testing.T) {
+	setupApprovalMock(t)
+
+	srv := wsmock.New(t)
+	defer srv.Close()
+
+	c := newClient(t, srv.URL())
+
+	var received atomic.Int32
+	c.OnKrxTrade(func(ev websocket.KrxTradeEvent) {
+		received.Add(1)
+		assert.Equal(t, "005930", ev.Symbol)
+	})
+
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	go c.Run(ctx)
+	require.NoError(t, srv.WaitConnected(ctx))
+
+	require.NoError(t, c.SubscribeKrxTrade("005930"))
+
+	// 클라이언트가 보낸 subscribe frame 확인
+	select {
+	case msg := <-srv.Received():
+		assert.Contains(t, msg, "H0STCNT0")
+		assert.Contains(t, msg, "005930")
+	case <-ctx.Done():
+		t.Fatal("did not receive subscribe frame")
+	}
+
+	// mock 가 realtime frame 송신
+	require.NoError(t, srv.SendRealtime(ctx, "H0STCNT0", samplePayload46("005930")))
+
+	require.Eventually(t, func() bool { return received.Load() > 0 }, 2*time.Second, 10*time.Millisecond)
+}
+
+func TestIntegration_Reconnect(t *testing.T) {
+	setupApprovalMock(t)
+
+	srv := wsmock.New(t)
+	defer srv.Close()
+
+	c := newClient(t, srv.URL())
+
+	var reconnects atomic.Int32
+	c.OnReconnect(func(att int) {
+		reconnects.Add(1)
+	})
+
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	go c.Run(ctx)
+	require.NoError(t, srv.WaitConnected(ctx))
+	require.NoError(t, c.SubscribeKrxTrade("005930"))
+
+	// 첫 subscribe drain
+	select {
+	case <-srv.Received():
+	case <-ctx.Done():
+		t.Fatal("first subscribe not received")
+	}
+
+	// mock 측에서 강제 close → SDK 재연결
+	srv.CloseConn()
+	require.NoError(t, srv.WaitConnected(ctx))
+
+	// 재연결 후 기존 구독 자동 복원 frame 검증
+	select {
+	case msg := <-srv.Received():
+		assert.Contains(t, msg, "H0STCNT0")
+		assert.Contains(t, msg, "005930")
+	case <-ctx.Done():
+		t.Fatal("did not receive resubscribe frame")
+	}
+
+	require.Eventually(t, func() bool { return reconnects.Load() > 0 }, 2*time.Second, 10*time.Millisecond)
+}
+
+func TestIntegration_ServerError(t *testing.T) {
+	setupApprovalMock(t)
+
+	srv := wsmock.New(t)
+	defer srv.Close()
+
+	c := newClient(t, srv.URL())
+
+	var got atomic.Value // error
+	c.OnError(func(err error) { got.Store(err) })
+
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	go c.Run(ctx)
+	require.NoError(t, srv.WaitConnected(ctx))
+
+	require.NoError(t, srv.SendText(ctx, `{"header":{"tr_id":"H0STCNT0"},"body":{"rt_cd":"1","msg_cd":"OPSP0001","msg1":"ALREADY IN SUBSCRIBE"}}`))
+
+	require.Eventually(t, func() bool { return got.Load() != nil }, 2*time.Second, 10*time.Millisecond)
+	err, _ := got.Load().(error)
+	require.NotNil(t, err)
+	wsErr, ok := err.(*websocket.WSServerError)
+	require.True(t, ok, "expected *WSServerError, got %T", err)
+	assert.Equal(t, "OPSP0001", wsErr.MsgCd)
+}
+
+func TestIntegration_PingPong(t *testing.T) {
+	setupApprovalMock(t)
+
+	srv := wsmock.New(t)
+	defer srv.Close()
+
+	c := newClient(t, srv.URL())
+
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	go c.Run(ctx)
+	require.NoError(t, srv.WaitConnected(ctx))
+
+	pingMsg := `{"header":{"tr_id":"PINGPONG"}}`
+	require.NoError(t, srv.SendText(ctx, pingMsg))
+
+	// 클라이언트가 echo 응답
+	select {
+	case msg := <-srv.Received():
+		// PING 메시지를 그대로 echo (SendText 가 동일 메시지 송신)
+		assert.True(t, strings.Contains(msg, "PINGPONG"))
+	case <-time.After(2 * time.Second):
+		t.Fatal("did not receive PONG echo")
+	}
+}
+
+func TestIntegration_GracefulShutdown(t *testing.T) {
+	setupApprovalMock(t)
+
+	srv := wsmock.New(t)
+	defer srv.Close()
+
+	c := newClient(t, srv.URL())
+
+	ctx, cancel := context.WithCancel(context.Background())
+	done := make(chan error, 1)
+	go func() { done <- c.Run(ctx) }()
+
+	require.NoError(t, srv.WaitConnected(context.Background()))
+
+	cancel()
+	select {
+	case err := <-done:
+		assert.ErrorIs(t, err, context.Canceled)
+	case <-time.After(2 * time.Second):
+		t.Fatal("Run did not return after ctx cancel")
+	}
+}
