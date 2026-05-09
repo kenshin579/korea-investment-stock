@@ -1,5 +1,24 @@
 # CHANGELOG
 
+## [1.20.0] - 2026-05-09
+
+### Added — Phase 10 (WebSocket — 해외주식 실시간 시세 2 endpoint)
+
+해외주식 실시간 시세 첫 cover. WebSocket 인프라 (Phase 8/9) 그대로 재사용.
+
+- `WS.SubscribeOverseasTrade` / `OnOverseasTrade` — 해외주식 실시간지연체결가 (HDFSCNT0, 26 fields)
+- `WS.SubscribeOverseasAsk` / `OnOverseasAsk` — 해외주식 실시간호가 (HDFSASP0, 17 fields, 1호가만)
+
+### Notes
+
+- **Symbol 형식**: `D`/`R` + 시장구분(3자리) + 종목코드 (예: `DNASAAPL`). 시장구분: NAS/NYS/AMS/TSE/HKS/SHS/SZS/HSX/HNX (BAY/BAQ/BAA = 미국 주간거래).
+- **`D` prefix**: 무료시세 (미국 0분지연 / 아시아 15분지연 / 중국은 신청 시 무료 실시간).
+- **`R` prefix**: 유료시세 + 미국 주간거래.
+- **호가는 1단계만**: 해외 시장은 1호가만 제공 (KRX 의 10단계와 다름). PBID1/PASK1/VBID1/VASK1 등.
+- **모든 응답 필드 String 으로 docs 표기**: KIS docs 가 모든 type 을 String 으로 명시. 본 라이브러리는 KRX 패턴 따라 가격→`decimal.Decimal`, 수량→`int64`, 비율→`float64` 매핑 (decoder 내부 변환).
+- **모든 EP 모의 미지원** — 실전 only.
+- 누적 121 REST + 17 WS = **138 endpoints**.
+
 ## [1.19.0] - 2026-05-09
 
 ### Added — Phase 9 (WebSocket — NXT/통합 변형 10 endpoint)

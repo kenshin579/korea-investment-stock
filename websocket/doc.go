@@ -6,6 +6,7 @@
 // 디자인:
 //   - Phase 8: docs/superpowers/specs/2026-05-09-phase8-websocket-design.md
 //   - Phase 9: docs/superpowers/specs/2026-05-09-phase9-websocket-nxt-unified-design.md
+//   - Phase 10: docs/superpowers/specs/2026-05-09-phase10-websocket-overseas-design.md
 //
 // Phase 8 — 인프라 + 국내주식 KRX 시세 5 endpoint:
 //
@@ -27,6 +28,11 @@
 //	H0UNPGM0  실시간프로그램매매 (통합)     SubscribeUnifiedProgramTrade / OnUnifiedProgramTrade
 //	H0NXMBC0  실시간회원사 (NXT)            SubscribeNxtMember / OnNxtMember
 //	H0UNMBC0  실시간회원사 (통합)           SubscribeUnifiedMember / OnUnifiedMember
+//
+// Phase 10 — 해외주식 실시간 시세 2 endpoint:
+//
+//	HDFSCNT0  해외주식 실시간지연체결가      SubscribeOverseasTrade / OnOverseasTrade
+//	HDFSASP0  해외주식 실시간호가 (1호가)    SubscribeOverseasAsk / OnOverseasAsk
 //
 // 사용자는 root kis.Client 의 WS 필드로 접근.
 package websocket
