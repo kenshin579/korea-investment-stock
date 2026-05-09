@@ -274,6 +274,11 @@ func samplePayloadOverseasTrade(symbol string) string {
 	return symbol + "^AAPL^4^20260509^260509^093015^260509^223015^195.32^196.50^194.80^195.85^2^0.53^0.27^195.83^195.86^1500^1200^150^25000000^4900000000^120000^150000^102.5^1"
 }
 
+// samplePayloadStockFuturesTrade — H0ZFCNT0 fixture 와 동일 layout, 49 fields.
+func samplePayloadStockFuturesTrade(symbol string) string {
+	return symbol + "^133500^73400^2^1500^2.09^73000^74500^72800^50^23456^171500000^73350^-50^-0.07^73500^73300^100^8900^30^133000^2^73350^133200^2^73400^133100^5^73200^52.30^115.80^-0.20^-10^1.50^73500^73300^120^180^300^450^-150^3500^5000^35000^45000^1.85^75000^71000^N"
+}
+
 // TestIntegration_OverseasTrade — Phase 10 해외주식 체결가 시나리오.
 func TestIntegration_OverseasTrade(t *testing.T) {
 	setupApprovalMock(t)
@@ -307,6 +312,42 @@ func TestIntegration_OverseasTrade(t *testing.T) {
 	}
 
 	require.NoError(t, srv.SendRealtime(ctx, "HDFSCNT0", samplePayloadOverseasTrade("DNASAAPL")))
+	require.Eventually(t, func() bool { return calls.Load() > 0 }, 2*time.Second, 10*time.Millisecond)
+}
+
+// TestIntegration_StockFuturesTrade — Phase 11.2 주식선물 체결가 시나리오.
+func TestIntegration_StockFuturesTrade(t *testing.T) {
+	setupApprovalMock(t)
+
+	srv := wsmock.New(t)
+	defer srv.Close()
+
+	c := newClient(t, srv.URL())
+
+	var calls atomic.Int32
+	c.OnStockFuturesTrade(func(ev websocket.StockFuturesTradeEvent) {
+		calls.Add(1)
+		assert.Equal(t, "KAK0F", ev.Symbol)
+		assert.Equal(t, "73400", ev.Price.String())
+	})
+
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	go c.Run(ctx)
+	require.NoError(t, srv.WaitConnected(ctx))
+
+	require.NoError(t, c.SubscribeStockFuturesTrade("KAK0F"))
+
+	select {
+	case msg := <-srv.Received():
+		assert.Contains(t, msg, "H0ZFCNT0")
+		assert.Contains(t, msg, "KAK0F")
+	case <-ctx.Done():
+		t.Fatal("did not receive stock futures subscribe frame")
+	}
+
+	require.NoError(t, srv.SendRealtime(ctx, "H0ZFCNT0", samplePayloadStockFuturesTrade("KAK0F")))
 	require.Eventually(t, func() bool { return calls.Load() > 0 }, 2*time.Second, 10*time.Millisecond)
 }
 
