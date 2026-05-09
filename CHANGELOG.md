@@ -1,5 +1,37 @@
 # CHANGELOG
 
+## [1.25.0] - 2026-05-09
+
+### Added — Phase 11.6 (해외옵션 시세 9 + 공통 장운영시간 1 = 10 EP)
+
+`overseasfutures/` sub-package 확장 (Phase 11.5 후속). 해외옵션 시세 9 EP + 해외선물옵션 공통 장운영시간 1 EP = 10 endpoint REST.
+
+- `OverseasFutures.OptPrice` (HHDFO55010000) — 옵션 종목 현재가
+- `OverseasFutures.OptDetail` (HHDFO55010100) — 옵션 종목 상세
+- `OverseasFutures.OptAskingPrice` (HHDFO86000000) — 옵션 호가
+- `OverseasFutures.SearchOptDetail` (HHDFO55200000) — 옵션 상품기본정보 (bulk)
+- `OverseasFutures.InquireTimeOptchartprice` (HHDFO55020400) — 옵션 분봉 (`= InquireTimeFuturechartpriceData` alias)
+- `OverseasFutures.OptMonthlyCcnl` (HHDFO55020300) — 옵션 월간 체결추이
+- `OverseasFutures.OptDailyCcnl` (HHDFO55020100) — 옵션 일간 체결추이
+- `OverseasFutures.OptWeeklyCcnl` (HHDFO55020000) — 옵션 주간 체결추이
+- `OverseasFutures.OptTickCcnl` (HHDFO55020200) — 옵션 틱 체결추이
+- `OverseasFutures.MarketTime` (OTFM2229R) — 해외선물옵션 공통 장운영시간
+- examples: `overseas_options_basic` (4 메서드 시연)
+
+### Notes
+
+- **TR_ID prefix**: 해외선물 (Phase 11.5) `HHDFC*` ↔ 해외옵션 `HHDFO*` (도메인 prefix 만 차이).
+- **알파벳 매핑**: 9 옵션 EP 모두 path `opt-*` (또는 `inquire-time-optchartprice`) → 메서드명 `Opt*` prefix 또는 `InquireTimeOpt*` (path 기반 PascalCase).
+- **EP1 InquireTimeOptchartprice alias**: schema 가 Phase 11.5 의 `InquireTimeFuturechartprice` 와 완전 동일 → `type InquireTimeOptchartpriceData = InquireTimeFuturechartpriceData`.
+- **EP3-EP6 (체결추이) 부분 alias**: output1 카운트 필드 옵션은 `ret_cnt` 통일, 선물은 `tret_cnt`/`ret_cnt` 혼재 → 옵션 전용 base struct `OptCcnlOutput1` + `CcnlOutput2Item` array element 공유.
+- **EP2/EP7/EP8/EP9 distinct**: SearchOptDetail (sub_exch_nm 차이), OptAskingPrice (sttl_price vs prev_price), OptDetail (sprd_srs_cd 차이), OptPrice (필드 순서 차이) — 선물 대응 EP 와 schema 다름.
+- **EP10 MarketTime**: output 키 `output[]` 직접 (output1/output2 패턴 아님).
+- **REST 응답에 옵션 그릭스 없음**: docs 분석 결과 9 EP 어디에도 delta/gamma/vega/theta/rho/IV 필드 미포함. 그릭스는 추후 실시간 (Phase 11.7) 또는 별도 EP 에서 가능.
+- **EP7 `lowp_rice` 오타**: Phase 11.5 EP8 동일 오타 — wire format 보존.
+- **모든 EP 모의 미지원** — 실전 only.
+- **Coverage**: overseasfutures package 86.8% (목표 ≥80%).
+- 누적 140 + 10 REST + 34 WS = **150 REST + 34 WS = 184 endpoints**.
+
 ## [1.24.0] - 2026-05-09
 
 ### Added — Phase 11.5 (해외선물 시세/조회 10 EP, 신규 `overseasfutures/` sub-package)
