@@ -1,5 +1,34 @@
 # CHANGELOG
 
+## [1.21.0] - 2026-05-09
+
+### Added — Phase 11.1 (국내선물옵션 시세/조회 9 EP, 신규 `futures/` sub-package)
+
+신규 도메인 `futures/` 도입. 국내선물옵션 시세/조회 9 endpoint REST 구현.
+
+- `Futures.InquirePrice` (FHMIF10000000) — 선물옵션 시세 (현재가, 모의 지원)
+- `Futures.InquireAskingPrice` (FHMIF10010000) — 선물옵션 시세호가 (모의 지원)
+- `Futures.InquireTimeFuopchartprice` (FHKIF03020200) — 선물옵션 분봉
+- `Futures.ExpPriceTrend` (FHPIF05110100) — 선물옵션 일중 예상체결추이
+- `Futures.InquireDailyFuopchartprice` (FHKIF03020100) — 선물옵션 일/주/월/년 차트 (모의 지원)
+- `Futures.DisplayBoardTop` (FHPIF05030000) — 국내선물 기초자산 전광판 top
+- `Futures.DisplayBoardFutures` (FHPIF05030200) — 옵션 전광판 선물
+- `Futures.DisplayBoardOptionList` (FHPIO056104C0) — 옵션 월물 리스트
+- `Futures.DisplayBoardCallput` (FHPIF05030100) — 옵션 전광판 콜/풋 (가장 복잡, 41 필드 × 2 arrays)
+- examples: `futures_basic` (4 메서드 통합 시연)
+
+### Notes
+
+- **신규 sub-package `futures/`** (bonds 패턴 참조). root `Client.Futures *futures.Client`.
+- **종목코드 형식**: 9자리 alphanumeric (예: `101W3000` 선물, `201X3300` 옵션). KRX 6자리와 다름. 현재 마스터파일 cache 미지원 — caller 가 정확한 활성 코드 입력 필요.
+- **MarketCode 인자 필수**: `FID_COND_MRKT_DIV_CODE` 가 default 없어 caller 가 입력 (`F` 선물 / `O` 옵션 / `JF` 선물 통합 / `JO` 옵션 통합 / `CF` 야간 등).
+- **Multi-output 처리**: EP1 (output1+2+3), EP2/EP3/EP6 (output1+output2 array), EP11 (콜+풋 분리 output1+output2). bonds 패턴 일관 매핑.
+- **EP11 콜풋 EP** 조회 속도 docs 명시 (느림). 1 호출 시 콜/풋 각각 최대 100건.
+- **모의 지원**: EP1, EP2, EP6 만 (3/9). 나머지 6 EP 실전 only.
+- **Phase 11.4 미룸**: EP4 (`InquireCcnlBstime`, CTFO5139R) + EP7 (`InquireDailyAmountFee`, CTFO6119R) 가 query 에 CANO/ACNT_PRDT_CD 필수 → 본 phase 의 시세/조회 scope 와 충돌. Phase 11.4 (Trading) 시점에 구현 (schema 는 `futures/testdata/_schemas.md` 에 보존).
+- **Coverage**: futures package 85.1% (목표 ≥80% 충족).
+- 누적 121 → 130 REST + 17 WS = **147 endpoints**.
+
 ## [1.20.0] - 2026-05-09
 
 ### Added — Phase 10 (WebSocket — 해외주식 실시간 시세 2 endpoint)
