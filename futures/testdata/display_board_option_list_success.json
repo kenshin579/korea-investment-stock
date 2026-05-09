@@ -1,0 +1,19 @@
+{
+  "rt_cd": "0",
+  "msg_cd": "KIOK0000",
+  "msg1": "조회가 완료되었습니다.",
+  "output1": [
+    {
+      "mtrt_yymm_code": "202506",
+      "mtrt_yymm": "202506"
+    },
+    {
+      "mtrt_yymm_code": "202509",
+      "mtrt_yymm": "202509"
+    },
+    {
+      "mtrt_yymm_code": "202512",
+      "mtrt_yymm": "202512"
+    }
+  ]
+}

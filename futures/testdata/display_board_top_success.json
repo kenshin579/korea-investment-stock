@@ -1,0 +1,28 @@
+{
+  "rt_cd": "0",
+  "msg_cd": "KIOK0000",
+  "msg1": "조회가 완료되었습니다.",
+  "output1": {
+    "unas_prpr": "360.50",
+    "unas_prdy_vrss": "1.25",
+    "unas_prdy_vrss_sign": "2",
+    "unas_prdy_ctrt": "0.35",
+    "unas_acml_vol": "523410",
+    "hts_kor_isnm": "KOSPI200선물",
+    "futs_prpr": "360.75",
+    "futs_prdy_vrss": "1.50",
+    "prdy_vrss_sign": "2",
+    "futs_prdy_ctrt": "0.42"
+  },
+  "output2": [
+    {
+      "hts_rmnn_dynu": "30"
+    },
+    {
+      "hts_rmnn_dynu": "93"
+    },
+    {
+      "hts_rmnn_dynu": "184"
+    }
+  ]
+}
