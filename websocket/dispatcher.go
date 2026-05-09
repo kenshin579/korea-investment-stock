@@ -35,6 +35,19 @@ type dispatcher struct {
 	onOverseasTrade func(OverseasTradeEvent)
 	onOverseasAsk   func(OverseasAskEvent)
 
+	// Phase 11.2 — 국내선물옵션 실시간 (11)
+	onKrxNightFuturesTrade      func(KrxNightFuturesTradeEvent)
+	onKrxNightFuturesAsk        func(KrxNightFuturesAskEvent)
+	onKrxNightOptionTrade       func(KrxNightOptionTradeEvent)
+	onKrxNightOptionAsk         func(KrxNightOptionAskEvent)
+	onKrxNightOptionExpectTrade func(KrxNightOptionExpectTradeEvent)
+	onStockFuturesTrade         func(StockFuturesTradeEvent)
+	onStockFuturesAsk           func(StockFuturesAskEvent)
+	onStockFuturesExpectTrade   func(StockFuturesExpectTradeEvent)
+	onStockOptionTrade          func(StockOptionTradeEvent)
+	onStockOptionAsk            func(StockOptionAskEvent)
+	onStockOptionExpectTrade    func(StockOptionExpectTradeEvent)
+
 	onConnected  func()
 	onReconnect  func(attempt int)
 	onDisconnect func(error)
@@ -134,6 +147,64 @@ func (d *dispatcher) OnOverseasTrade(h func(OverseasTradeEvent)) {
 func (d *dispatcher) OnOverseasAsk(h func(OverseasAskEvent)) {
 	d.mu.Lock()
 	d.onOverseasAsk = h
+	d.mu.Unlock()
+}
+
+// Phase 11.2 — 국내선물옵션 실시간 등록 메서드 (11)
+
+func (d *dispatcher) OnKrxNightFuturesTrade(h func(KrxNightFuturesTradeEvent)) {
+	d.mu.Lock()
+	d.onKrxNightFuturesTrade = h
+	d.mu.Unlock()
+}
+func (d *dispatcher) OnKrxNightFuturesAsk(h func(KrxNightFuturesAskEvent)) {
+	d.mu.Lock()
+	d.onKrxNightFuturesAsk = h
+	d.mu.Unlock()
+}
+func (d *dispatcher) OnKrxNightOptionTrade(h func(KrxNightOptionTradeEvent)) {
+	d.mu.Lock()
+	d.onKrxNightOptionTrade = h
+	d.mu.Unlock()
+}
+func (d *dispatcher) OnKrxNightOptionAsk(h func(KrxNightOptionAskEvent)) {
+	d.mu.Lock()
+	d.onKrxNightOptionAsk = h
+	d.mu.Unlock()
+}
+func (d *dispatcher) OnKrxNightOptionExpectTrade(h func(KrxNightOptionExpectTradeEvent)) {
+	d.mu.Lock()
+	d.onKrxNightOptionExpectTrade = h
+	d.mu.Unlock()
+}
+func (d *dispatcher) OnStockFuturesTrade(h func(StockFuturesTradeEvent)) {
+	d.mu.Lock()
+	d.onStockFuturesTrade = h
+	d.mu.Unlock()
+}
+func (d *dispatcher) OnStockFuturesAsk(h func(StockFuturesAskEvent)) {
+	d.mu.Lock()
+	d.onStockFuturesAsk = h
+	d.mu.Unlock()
+}
+func (d *dispatcher) OnStockFuturesExpectTrade(h func(StockFuturesExpectTradeEvent)) {
+	d.mu.Lock()
+	d.onStockFuturesExpectTrade = h
+	d.mu.Unlock()
+}
+func (d *dispatcher) OnStockOptionTrade(h func(StockOptionTradeEvent)) {
+	d.mu.Lock()
+	d.onStockOptionTrade = h
+	d.mu.Unlock()
+}
+func (d *dispatcher) OnStockOptionAsk(h func(StockOptionAskEvent)) {
+	d.mu.Lock()
+	d.onStockOptionAsk = h
+	d.mu.Unlock()
+}
+func (d *dispatcher) OnStockOptionExpectTrade(h func(StockOptionExpectTradeEvent)) {
+	d.mu.Lock()
+	d.onStockOptionExpectTrade = h
 	d.mu.Unlock()
 }
 
@@ -282,6 +353,86 @@ func (d *dispatcher) RouteOverseasAsk(ev OverseasAskEvent) {
 	d.safeCall(func(h *dispatcher) {
 		if h.onOverseasAsk != nil {
 			h.onOverseasAsk(ev)
+		}
+	})
+}
+
+// Phase 11.2 — 국내선물옵션 실시간 라우팅 메서드 (11)
+
+func (d *dispatcher) RouteKrxNightFuturesTrade(ev KrxNightFuturesTradeEvent) {
+	d.safeCall(func(h *dispatcher) {
+		if h.onKrxNightFuturesTrade != nil {
+			h.onKrxNightFuturesTrade(ev)
+		}
+	})
+}
+func (d *dispatcher) RouteKrxNightFuturesAsk(ev KrxNightFuturesAskEvent) {
+	d.safeCall(func(h *dispatcher) {
+		if h.onKrxNightFuturesAsk != nil {
+			h.onKrxNightFuturesAsk(ev)
+		}
+	})
+}
+func (d *dispatcher) RouteKrxNightOptionTrade(ev KrxNightOptionTradeEvent) {
+	d.safeCall(func(h *dispatcher) {
+		if h.onKrxNightOptionTrade != nil {
+			h.onKrxNightOptionTrade(ev)
+		}
+	})
+}
+func (d *dispatcher) RouteKrxNightOptionAsk(ev KrxNightOptionAskEvent) {
+	d.safeCall(func(h *dispatcher) {
+		if h.onKrxNightOptionAsk != nil {
+			h.onKrxNightOptionAsk(ev)
+		}
+	})
+}
+func (d *dispatcher) RouteKrxNightOptionExpectTrade(ev KrxNightOptionExpectTradeEvent) {
+	d.safeCall(func(h *dispatcher) {
+		if h.onKrxNightOptionExpectTrade != nil {
+			h.onKrxNightOptionExpectTrade(ev)
+		}
+	})
+}
+func (d *dispatcher) RouteStockFuturesTrade(ev StockFuturesTradeEvent) {
+	d.safeCall(func(h *dispatcher) {
+		if h.onStockFuturesTrade != nil {
+			h.onStockFuturesTrade(ev)
+		}
+	})
+}
+func (d *dispatcher) RouteStockFuturesAsk(ev StockFuturesAskEvent) {
+	d.safeCall(func(h *dispatcher) {
+		if h.onStockFuturesAsk != nil {
+			h.onStockFuturesAsk(ev)
+		}
+	})
+}
+func (d *dispatcher) RouteStockFuturesExpectTrade(ev StockFuturesExpectTradeEvent) {
+	d.safeCall(func(h *dispatcher) {
+		if h.onStockFuturesExpectTrade != nil {
+			h.onStockFuturesExpectTrade(ev)
+		}
+	})
+}
+func (d *dispatcher) RouteStockOptionTrade(ev StockOptionTradeEvent) {
+	d.safeCall(func(h *dispatcher) {
+		if h.onStockOptionTrade != nil {
+			h.onStockOptionTrade(ev)
+		}
+	})
+}
+func (d *dispatcher) RouteStockOptionAsk(ev StockOptionAskEvent) {
+	d.safeCall(func(h *dispatcher) {
+		if h.onStockOptionAsk != nil {
+			h.onStockOptionAsk(ev)
+		}
+	})
+}
+func (d *dispatcher) RouteStockOptionExpectTrade(ev StockOptionExpectTradeEvent) {
+	d.safeCall(func(h *dispatcher) {
+		if h.onStockOptionExpectTrade != nil {
+			h.onStockOptionExpectTrade(ev)
 		}
 	})
 }

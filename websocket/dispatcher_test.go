@@ -153,3 +153,58 @@ func TestDispatcher_Phase10Routers(t *testing.T) {
 	assert.Equal(t, int32(1), ovTrade.Load())
 	assert.Equal(t, int32(1), ovAsk.Load())
 }
+
+func TestDispatcher_Phase11_2Routers(t *testing.T) {
+	// Phase 11.2 — 국내선물옵션 11 핸들러 라우팅 검증.
+	d := newDispatcher()
+	var (
+		krxNightFutTrade    atomic.Int32
+		krxNightFutAsk      atomic.Int32
+		krxNightOptTrade    atomic.Int32
+		krxNightOptAsk      atomic.Int32
+		krxNightOptExpTrade atomic.Int32
+		stockFutTrade       atomic.Int32
+		stockFutAsk         atomic.Int32
+		stockFutExpTrade    atomic.Int32
+		stockOptTrade       atomic.Int32
+		stockOptAsk         atomic.Int32
+		stockOptExpTrade    atomic.Int32
+	)
+
+	d.OnKrxNightFuturesTrade(func(KrxNightFuturesTradeEvent) { krxNightFutTrade.Add(1) })
+	d.OnKrxNightFuturesAsk(func(KrxNightFuturesAskEvent) { krxNightFutAsk.Add(1) })
+	d.OnKrxNightOptionTrade(func(KrxNightOptionTradeEvent) { krxNightOptTrade.Add(1) })
+	d.OnKrxNightOptionAsk(func(KrxNightOptionAskEvent) { krxNightOptAsk.Add(1) })
+	d.OnKrxNightOptionExpectTrade(func(KrxNightOptionExpectTradeEvent) { krxNightOptExpTrade.Add(1) })
+	d.OnStockFuturesTrade(func(StockFuturesTradeEvent) { stockFutTrade.Add(1) })
+	d.OnStockFuturesAsk(func(StockFuturesAskEvent) { stockFutAsk.Add(1) })
+	d.OnStockFuturesExpectTrade(func(StockFuturesExpectTradeEvent) { stockFutExpTrade.Add(1) })
+	d.OnStockOptionTrade(func(StockOptionTradeEvent) { stockOptTrade.Add(1) })
+	d.OnStockOptionAsk(func(StockOptionAskEvent) { stockOptAsk.Add(1) })
+	d.OnStockOptionExpectTrade(func(StockOptionExpectTradeEvent) { stockOptExpTrade.Add(1) })
+
+	d.RouteKrxNightFuturesTrade(KrxNightFuturesTradeEvent{})
+	d.RouteKrxNightFuturesAsk(KrxNightFuturesAskEvent{})
+	d.RouteKrxNightOptionTrade(KrxNightOptionTradeEvent{})
+	d.RouteKrxNightOptionAsk(KrxNightOptionAskEvent{})
+	d.RouteKrxNightOptionExpectTrade(KrxNightOptionExpectTradeEvent{})
+	d.RouteStockFuturesTrade(StockFuturesTradeEvent{})
+	d.RouteStockFuturesAsk(StockFuturesAskEvent{})
+	d.RouteStockFuturesExpectTrade(StockFuturesExpectTradeEvent{})
+	d.RouteStockOptionTrade(StockOptionTradeEvent{})
+	d.RouteStockOptionAsk(StockOptionAskEvent{})
+	d.RouteStockOptionExpectTrade(StockOptionExpectTradeEvent{})
+
+	// 11개 핸들러 모두 정확히 1번 호출되어야 함
+	assert.Equal(t, int32(1), krxNightFutTrade.Load())
+	assert.Equal(t, int32(1), krxNightFutAsk.Load())
+	assert.Equal(t, int32(1), krxNightOptTrade.Load())
+	assert.Equal(t, int32(1), krxNightOptAsk.Load())
+	assert.Equal(t, int32(1), krxNightOptExpTrade.Load())
+	assert.Equal(t, int32(1), stockFutTrade.Load())
+	assert.Equal(t, int32(1), stockFutAsk.Load())
+	assert.Equal(t, int32(1), stockFutExpTrade.Load())
+	assert.Equal(t, int32(1), stockOptTrade.Load())
+	assert.Equal(t, int32(1), stockOptAsk.Load())
+	assert.Equal(t, int32(1), stockOptExpTrade.Load())
+}

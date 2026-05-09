@@ -72,6 +72,19 @@ const (
 	// Phase 10 — 해외주식
 	trIDOverseasTrade = "HDFSCNT0" // 해외주식 실시간지연체결가
 	trIDOverseasAsk   = "HDFSASP0" // 해외주식 실시간호가
+
+	// Phase 11.2 — 국내선물옵션 실시간
+	trIDKrxNightFuturesTrade      = "H0MFCNT0" // KRX야간선물 실시간종목체결
+	trIDKrxNightFuturesAsk        = "H0MFASP0" // KRX야간선물 실시간호가
+	trIDKrxNightOptionTrade       = "H0EUCNT0" // KRX야간옵션 실시간체결가
+	trIDKrxNightOptionAsk         = "H0EUASP0" // KRX야간옵션 실시간호가
+	trIDKrxNightOptionExpectTrade = "H0EUANC0" // KRX야간옵션 실시간예상체결
+	trIDStockFuturesTrade         = "H0ZFCNT0" // 주식선물 실시간체결가
+	trIDStockFuturesAsk           = "H0ZFASP0" // 주식선물 실시간호가
+	trIDStockFuturesExpectTrade   = "H0ZFANC0" // 주식선물 실시간예상체결
+	trIDStockOptionTrade          = "H0ZOCNT0" // 주식옵션 실시간체결가
+	trIDStockOptionAsk            = "H0ZOASP0" // 주식옵션 실시간호가
+	trIDStockOptionExpectTrade    = "H0ZOANC0" // 주식옵션 실시간예상체결
 )
 
 // Client 는 KIS WebSocket 진입점. kis.Client.WS 로 접근.
@@ -166,6 +179,41 @@ func (c *Client) SubscribeOverseasAsk(symbols ...string) error {
 	return c.subscribe(trIDOverseasAsk, symbols)
 }
 
+// Phase 11.2 — 국내선물옵션 실시간 Subscribe
+func (c *Client) SubscribeKrxNightFuturesTrade(symbols ...string) error {
+	return c.subscribe(trIDKrxNightFuturesTrade, symbols)
+}
+func (c *Client) SubscribeKrxNightFuturesAsk(symbols ...string) error {
+	return c.subscribe(trIDKrxNightFuturesAsk, symbols)
+}
+func (c *Client) SubscribeKrxNightOptionTrade(symbols ...string) error {
+	return c.subscribe(trIDKrxNightOptionTrade, symbols)
+}
+func (c *Client) SubscribeKrxNightOptionAsk(symbols ...string) error {
+	return c.subscribe(trIDKrxNightOptionAsk, symbols)
+}
+func (c *Client) SubscribeKrxNightOptionExpectTrade(symbols ...string) error {
+	return c.subscribe(trIDKrxNightOptionExpectTrade, symbols)
+}
+func (c *Client) SubscribeStockFuturesTrade(symbols ...string) error {
+	return c.subscribe(trIDStockFuturesTrade, symbols)
+}
+func (c *Client) SubscribeStockFuturesAsk(symbols ...string) error {
+	return c.subscribe(trIDStockFuturesAsk, symbols)
+}
+func (c *Client) SubscribeStockFuturesExpectTrade(symbols ...string) error {
+	return c.subscribe(trIDStockFuturesExpectTrade, symbols)
+}
+func (c *Client) SubscribeStockOptionTrade(symbols ...string) error {
+	return c.subscribe(trIDStockOptionTrade, symbols)
+}
+func (c *Client) SubscribeStockOptionAsk(symbols ...string) error {
+	return c.subscribe(trIDStockOptionAsk, symbols)
+}
+func (c *Client) SubscribeStockOptionExpectTrade(symbols ...string) error {
+	return c.subscribe(trIDStockOptionExpectTrade, symbols)
+}
+
 // === Unsubscribe (대칭) ===
 
 func (c *Client) UnsubscribeKrxTrade(symbols ...string) error {
@@ -224,6 +272,41 @@ func (c *Client) UnsubscribeOverseasTrade(symbols ...string) error {
 }
 func (c *Client) UnsubscribeOverseasAsk(symbols ...string) error {
 	return c.unsubscribe(trIDOverseasAsk, symbols)
+}
+
+// Phase 11.2 — 국내선물옵션 실시간 Unsubscribe
+func (c *Client) UnsubscribeKrxNightFuturesTrade(symbols ...string) error {
+	return c.unsubscribe(trIDKrxNightFuturesTrade, symbols)
+}
+func (c *Client) UnsubscribeKrxNightFuturesAsk(symbols ...string) error {
+	return c.unsubscribe(trIDKrxNightFuturesAsk, symbols)
+}
+func (c *Client) UnsubscribeKrxNightOptionTrade(symbols ...string) error {
+	return c.unsubscribe(trIDKrxNightOptionTrade, symbols)
+}
+func (c *Client) UnsubscribeKrxNightOptionAsk(symbols ...string) error {
+	return c.unsubscribe(trIDKrxNightOptionAsk, symbols)
+}
+func (c *Client) UnsubscribeKrxNightOptionExpectTrade(symbols ...string) error {
+	return c.unsubscribe(trIDKrxNightOptionExpectTrade, symbols)
+}
+func (c *Client) UnsubscribeStockFuturesTrade(symbols ...string) error {
+	return c.unsubscribe(trIDStockFuturesTrade, symbols)
+}
+func (c *Client) UnsubscribeStockFuturesAsk(symbols ...string) error {
+	return c.unsubscribe(trIDStockFuturesAsk, symbols)
+}
+func (c *Client) UnsubscribeStockFuturesExpectTrade(symbols ...string) error {
+	return c.unsubscribe(trIDStockFuturesExpectTrade, symbols)
+}
+func (c *Client) UnsubscribeStockOptionTrade(symbols ...string) error {
+	return c.unsubscribe(trIDStockOptionTrade, symbols)
+}
+func (c *Client) UnsubscribeStockOptionAsk(symbols ...string) error {
+	return c.unsubscribe(trIDStockOptionAsk, symbols)
+}
+func (c *Client) UnsubscribeStockOptionExpectTrade(symbols ...string) error {
+	return c.unsubscribe(trIDStockOptionExpectTrade, symbols)
 }
 
 func (c *Client) subscribe(trID string, symbols []string) error {
@@ -300,6 +383,41 @@ func (c *Client) OnUnifiedMember(h func(UnifiedMemberEvent)) { c.dispatcher.OnUn
 // Phase 10 — 해외주식 Handler 위임 (2)
 func (c *Client) OnOverseasTrade(h func(OverseasTradeEvent)) { c.dispatcher.OnOverseasTrade(h) }
 func (c *Client) OnOverseasAsk(h func(OverseasAskEvent))     { c.dispatcher.OnOverseasAsk(h) }
+
+// Phase 11.2 — 국내선물옵션 실시간 Handler 위임 (11)
+func (c *Client) OnKrxNightFuturesTrade(h func(KrxNightFuturesTradeEvent)) {
+	c.dispatcher.OnKrxNightFuturesTrade(h)
+}
+func (c *Client) OnKrxNightFuturesAsk(h func(KrxNightFuturesAskEvent)) {
+	c.dispatcher.OnKrxNightFuturesAsk(h)
+}
+func (c *Client) OnKrxNightOptionTrade(h func(KrxNightOptionTradeEvent)) {
+	c.dispatcher.OnKrxNightOptionTrade(h)
+}
+func (c *Client) OnKrxNightOptionAsk(h func(KrxNightOptionAskEvent)) {
+	c.dispatcher.OnKrxNightOptionAsk(h)
+}
+func (c *Client) OnKrxNightOptionExpectTrade(h func(KrxNightOptionExpectTradeEvent)) {
+	c.dispatcher.OnKrxNightOptionExpectTrade(h)
+}
+func (c *Client) OnStockFuturesTrade(h func(StockFuturesTradeEvent)) {
+	c.dispatcher.OnStockFuturesTrade(h)
+}
+func (c *Client) OnStockFuturesAsk(h func(StockFuturesAskEvent)) {
+	c.dispatcher.OnStockFuturesAsk(h)
+}
+func (c *Client) OnStockFuturesExpectTrade(h func(StockFuturesExpectTradeEvent)) {
+	c.dispatcher.OnStockFuturesExpectTrade(h)
+}
+func (c *Client) OnStockOptionTrade(h func(StockOptionTradeEvent)) {
+	c.dispatcher.OnStockOptionTrade(h)
+}
+func (c *Client) OnStockOptionAsk(h func(StockOptionAskEvent)) {
+	c.dispatcher.OnStockOptionAsk(h)
+}
+func (c *Client) OnStockOptionExpectTrade(h func(StockOptionExpectTradeEvent)) {
+	c.dispatcher.OnStockOptionExpectTrade(h)
+}
 
 func (c *Client) OnConnected(h func())            { c.dispatcher.OnConnected(h) }
 func (c *Client) OnReconnect(h func(attempt int)) { c.dispatcher.OnReconnect(h) }
@@ -586,6 +704,107 @@ func (c *Client) routeRealtime(f frame) {
 		}
 		for _, ev := range evs {
 			c.dispatcher.RouteOverseasAsk(ev)
+		}
+
+	// Phase 11.2 — 국내선물옵션 실시간
+	case trIDKrxNightFuturesTrade:
+		evs, err := decodeKrxNightFuturesTrade(f)
+		if err != nil {
+			c.dispatcher.RouteError(err)
+			return
+		}
+		for _, ev := range evs {
+			c.dispatcher.RouteKrxNightFuturesTrade(ev)
+		}
+	case trIDKrxNightFuturesAsk:
+		evs, err := decodeKrxNightFuturesAsk(f)
+		if err != nil {
+			c.dispatcher.RouteError(err)
+			return
+		}
+		for _, ev := range evs {
+			c.dispatcher.RouteKrxNightFuturesAsk(ev)
+		}
+	case trIDKrxNightOptionTrade:
+		evs, err := decodeKrxNightOptionTrade(f)
+		if err != nil {
+			c.dispatcher.RouteError(err)
+			return
+		}
+		for _, ev := range evs {
+			c.dispatcher.RouteKrxNightOptionTrade(ev)
+		}
+	case trIDKrxNightOptionAsk:
+		evs, err := decodeKrxNightOptionAsk(f)
+		if err != nil {
+			c.dispatcher.RouteError(err)
+			return
+		}
+		for _, ev := range evs {
+			c.dispatcher.RouteKrxNightOptionAsk(ev)
+		}
+	case trIDKrxNightOptionExpectTrade:
+		evs, err := decodeKrxNightOptionExpectTrade(f)
+		if err != nil {
+			c.dispatcher.RouteError(err)
+			return
+		}
+		for _, ev := range evs {
+			c.dispatcher.RouteKrxNightOptionExpectTrade(ev)
+		}
+	case trIDStockFuturesTrade:
+		evs, err := decodeStockFuturesTrade(f)
+		if err != nil {
+			c.dispatcher.RouteError(err)
+			return
+		}
+		for _, ev := range evs {
+			c.dispatcher.RouteStockFuturesTrade(ev)
+		}
+	case trIDStockFuturesAsk:
+		evs, err := decodeStockFuturesAsk(f)
+		if err != nil {
+			c.dispatcher.RouteError(err)
+			return
+		}
+		for _, ev := range evs {
+			c.dispatcher.RouteStockFuturesAsk(ev)
+		}
+	case trIDStockFuturesExpectTrade:
+		evs, err := decodeStockFuturesExpectTrade(f)
+		if err != nil {
+			c.dispatcher.RouteError(err)
+			return
+		}
+		for _, ev := range evs {
+			c.dispatcher.RouteStockFuturesExpectTrade(ev)
+		}
+	case trIDStockOptionTrade:
+		evs, err := decodeStockOptionTrade(f)
+		if err != nil {
+			c.dispatcher.RouteError(err)
+			return
+		}
+		for _, ev := range evs {
+			c.dispatcher.RouteStockOptionTrade(ev)
+		}
+	case trIDStockOptionAsk:
+		evs, err := decodeStockOptionAsk(f)
+		if err != nil {
+			c.dispatcher.RouteError(err)
+			return
+		}
+		for _, ev := range evs {
+			c.dispatcher.RouteStockOptionAsk(ev)
+		}
+	case trIDStockOptionExpectTrade:
+		evs, err := decodeStockOptionExpectTrade(f)
+		if err != nil {
+			c.dispatcher.RouteError(err)
+			return
+		}
+		for _, ev := range evs {
+			c.dispatcher.RouteStockOptionExpectTrade(ev)
 		}
 
 	default:
