@@ -183,6 +183,92 @@ func TestIntegration_PingPong(t *testing.T) {
 	}
 }
 
+// samplePayloadProgramTrade — H0NXPGM0 / H0UNPGM0 fixture 와 동일 layout, 11 fields.
+func samplePayloadProgramTrade(symbol string) string {
+	return symbol + "^123929^15000^1100000000^25000^1850000000^10000^750000000^5000^8000^3000"
+}
+
+// TestIntegration_NxtTrade_HappyPath — Phase 9 NXT 체결가 시나리오.
+// SubscribeNxtTrade → wsmock 이 H0NXCNT0 realtime frame 송신 → OnNxtTrade handler 호출 검증.
+func TestIntegration_NxtTrade_HappyPath(t *testing.T) {
+	setupApprovalMock(t)
+
+	srv := wsmock.New(t)
+	defer srv.Close()
+
+	c := newClient(t, srv.URL())
+
+	var nxtCalls atomic.Int32
+	var unCalls atomic.Int32
+	c.OnNxtTrade(func(ev websocket.NxtTradeEvent) {
+		nxtCalls.Add(1)
+		assert.Equal(t, "005930", ev.Symbol)
+	})
+	c.OnUnifiedTrade(func(ev websocket.UnifiedTradeEvent) {
+		// 검증용 — Nxt 와 Unified 가 별도 슬롯인지 확인
+		unCalls.Add(1)
+	})
+
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	go c.Run(ctx)
+	require.NoError(t, srv.WaitConnected(ctx))
+
+	require.NoError(t, c.SubscribeNxtTrade("005930"))
+
+	select {
+	case msg := <-srv.Received():
+		assert.Contains(t, msg, "H0NXCNT0")
+		assert.Contains(t, msg, "005930")
+	case <-ctx.Done():
+		t.Fatal("did not receive NXT subscribe frame")
+	}
+
+	// 동일 페이로드 layout (KRX 와 schema 호환). 22번 필드만 의미적으로 NXT 의 CNTG_CLS_CODE.
+	require.NoError(t, srv.SendRealtime(ctx, "H0NXCNT0", samplePayload46("005930")))
+
+	require.Eventually(t, func() bool { return nxtCalls.Load() > 0 }, 2*time.Second, 10*time.Millisecond)
+	// Unified handler 는 호출되지 않아야 함 (별도 슬롯)
+	assert.Equal(t, int32(0), unCalls.Load())
+}
+
+// TestIntegration_UnifiedProgramTrade — Phase 9 통합 프로그램매매 신규 EP 시나리오.
+func TestIntegration_UnifiedProgramTrade(t *testing.T) {
+	setupApprovalMock(t)
+
+	srv := wsmock.New(t)
+	defer srv.Close()
+
+	c := newClient(t, srv.URL())
+
+	var calls atomic.Int32
+	c.OnUnifiedProgramTrade(func(ev websocket.UnifiedProgramTradeEvent) {
+		calls.Add(1)
+		assert.Equal(t, "005930", ev.Symbol)
+		assert.Equal(t, int64(15000), ev.AskQuantity)
+		assert.Equal(t, int64(3000), ev.TotalNetQuantity)
+	})
+
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	go c.Run(ctx)
+	require.NoError(t, srv.WaitConnected(ctx))
+
+	require.NoError(t, c.SubscribeUnifiedProgramTrade("005930"))
+
+	select {
+	case msg := <-srv.Received():
+		assert.Contains(t, msg, "H0UNPGM0")
+	case <-ctx.Done():
+		t.Fatal("did not receive 통합 program-trade subscribe frame")
+	}
+
+	require.NoError(t, srv.SendRealtime(ctx, "H0UNPGM0", samplePayloadProgramTrade("005930")))
+	require.Eventually(t, func() bool { return calls.Load() > 0 }, 2*time.Second, 10*time.Millisecond)
+}
+
 func TestIntegration_GracefulShutdown(t *testing.T) {
 	setupApprovalMock(t)
 

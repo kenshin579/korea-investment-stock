@@ -216,6 +216,23 @@ func main() {
 
 자동 재연결 + 구독 자동 복원 (exp backoff, max 10 attempts). 사용 예: `examples/ws_krx_basic/`.
 
+### WebSocket — Phase 9 (v1.19.0) — NXT/통합 변형
+
+NXT (대체거래소) 와 통합 (KRX+NXT) 시장의 실시간 EP. NXT 와 통합은 schema 동일 (5 base struct + 10 type alias 패턴). 모든 EP 모의 미지원.
+
+| Method | TR_ID | 설명 |
+|--------|-------|------|
+| `WS.SubscribeNxtTrade` / `OnNxtTrade` | H0NXCNT0 | 실시간체결가 NXT |
+| `WS.SubscribeUnifiedTrade` / `OnUnifiedTrade` | H0UNCNT0 | 실시간체결가 통합 |
+| `WS.SubscribeNxtAsk` / `OnNxtAsk` | H0NXASP0 | 실시간호가 NXT (KMID/NMID 중간가 6 fields 포함) |
+| `WS.SubscribeUnifiedAsk` / `OnUnifiedAsk` | H0UNASP0 | 실시간호가 통합 (KMID/NMID 중간가 6 fields 포함) |
+| `WS.SubscribeNxtExpectTrade` / `OnNxtExpectTrade` | H0NXANC0 | 실시간예상체결 NXT (VI_STND_PRC 추가) |
+| `WS.SubscribeUnifiedExpectTrade` / `OnUnifiedExpectTrade` | H0UNANC0 | 실시간예상체결 통합 (VI_STND_PRC 추가) |
+| `WS.SubscribeNxtProgramTrade` / `OnNxtProgramTrade` | H0NXPGM0 | 실시간프로그램매매 NXT (신규 EP) |
+| `WS.SubscribeUnifiedProgramTrade` / `OnUnifiedProgramTrade` | H0UNPGM0 | 실시간프로그램매매 통합 (신규 EP) |
+| `WS.SubscribeNxtMember` / `OnNxtMember` | H0NXMBC0 | 실시간회원사 NXT (5단계 매도/매수 + 외국계 + 영문) |
+| `WS.SubscribeUnifiedMember` / `OnUnifiedMember` | H0UNMBC0 | 실시간회원사 통합 (5단계 매도/매수 + 외국계 + 영문) |
+
 ### Bonds (장내채권) — Phase 3.1
 
 | Go 메서드 | path | TR_ID |
@@ -246,7 +263,7 @@ func main() {
 - ✅ 해외주식 (시세, 차트, 순위)
 - ✅ 장내채권 (시세, 발행정보, 호가, 기간별, 평균단가 — Phase 3.1)
 - ❌ 선물옵션 — 영구 제외
-- ✅ 실시간 WebSocket — KRX 시세 5 endpoint (Phase 8; v1.18.0)
+- ✅ 실시간 WebSocket — KRX 시세 5 EP (Phase 8; v1.18.0) + NXT/통합 10 EP (Phase 9; v1.19.0)
 - ❌ 주식 주문/잔고/예약주문 — 본 spec 에서 다루지 않음
 
 ## License

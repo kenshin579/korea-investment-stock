@@ -19,6 +19,18 @@ type dispatcher struct {
 	onKrxOvernightTrade  func(KrxOvernightTradeEvent)
 	onKrxOvernightExpect func(KrxOvernightExpectEvent)
 
+	// Phase 9 — NXT/통합 (5 base type, 10 distinct handler 슬롯)
+	onNxtTrade            func(NxtTradeEvent)
+	onUnifiedTrade        func(UnifiedTradeEvent)
+	onNxtAsk              func(NxtAskEvent)
+	onUnifiedAsk          func(UnifiedAskEvent)
+	onNxtExpectTrade      func(NxtExpectTradeEvent)
+	onUnifiedExpectTrade  func(UnifiedExpectTradeEvent)
+	onNxtProgramTrade     func(NxtProgramTradeEvent)
+	onUnifiedProgramTrade func(UnifiedProgramTradeEvent)
+	onNxtMember           func(NxtMemberEvent)
+	onUnifiedMember       func(UnifiedMemberEvent)
+
 	onConnected  func()
 	onReconnect  func(attempt int)
 	onDisconnect func(error)
@@ -54,6 +66,60 @@ func (d *dispatcher) OnKrxOvernightExpect(h func(KrxOvernightExpectEvent)) {
 	d.onKrxOvernightExpect = h
 	d.mu.Unlock()
 }
+
+// Phase 9 — NXT/통합 등록 메서드 (10)
+
+func (d *dispatcher) OnNxtTrade(h func(NxtTradeEvent)) {
+	d.mu.Lock()
+	d.onNxtTrade = h
+	d.mu.Unlock()
+}
+func (d *dispatcher) OnUnifiedTrade(h func(UnifiedTradeEvent)) {
+	d.mu.Lock()
+	d.onUnifiedTrade = h
+	d.mu.Unlock()
+}
+func (d *dispatcher) OnNxtAsk(h func(NxtAskEvent)) {
+	d.mu.Lock()
+	d.onNxtAsk = h
+	d.mu.Unlock()
+}
+func (d *dispatcher) OnUnifiedAsk(h func(UnifiedAskEvent)) {
+	d.mu.Lock()
+	d.onUnifiedAsk = h
+	d.mu.Unlock()
+}
+func (d *dispatcher) OnNxtExpectTrade(h func(NxtExpectTradeEvent)) {
+	d.mu.Lock()
+	d.onNxtExpectTrade = h
+	d.mu.Unlock()
+}
+func (d *dispatcher) OnUnifiedExpectTrade(h func(UnifiedExpectTradeEvent)) {
+	d.mu.Lock()
+	d.onUnifiedExpectTrade = h
+	d.mu.Unlock()
+}
+func (d *dispatcher) OnNxtProgramTrade(h func(NxtProgramTradeEvent)) {
+	d.mu.Lock()
+	d.onNxtProgramTrade = h
+	d.mu.Unlock()
+}
+func (d *dispatcher) OnUnifiedProgramTrade(h func(UnifiedProgramTradeEvent)) {
+	d.mu.Lock()
+	d.onUnifiedProgramTrade = h
+	d.mu.Unlock()
+}
+func (d *dispatcher) OnNxtMember(h func(NxtMemberEvent)) {
+	d.mu.Lock()
+	d.onNxtMember = h
+	d.mu.Unlock()
+}
+func (d *dispatcher) OnUnifiedMember(h func(UnifiedMemberEvent)) {
+	d.mu.Lock()
+	d.onUnifiedMember = h
+	d.mu.Unlock()
+}
+
 func (d *dispatcher) OnConnected(h func()) {
 	d.mu.Lock()
 	d.onConnected = h
@@ -112,6 +178,80 @@ func (d *dispatcher) RouteKrxOvernightExpect(ev KrxOvernightExpectEvent) {
 		}
 	})
 }
+
+// Phase 9 — NXT/통합 라우팅 메서드 (10)
+
+func (d *dispatcher) RouteNxtTrade(ev NxtTradeEvent) {
+	d.safeCall(func(h *dispatcher) {
+		if h.onNxtTrade != nil {
+			h.onNxtTrade(ev)
+		}
+	})
+}
+func (d *dispatcher) RouteUnifiedTrade(ev UnifiedTradeEvent) {
+	d.safeCall(func(h *dispatcher) {
+		if h.onUnifiedTrade != nil {
+			h.onUnifiedTrade(ev)
+		}
+	})
+}
+func (d *dispatcher) RouteNxtAsk(ev NxtAskEvent) {
+	d.safeCall(func(h *dispatcher) {
+		if h.onNxtAsk != nil {
+			h.onNxtAsk(ev)
+		}
+	})
+}
+func (d *dispatcher) RouteUnifiedAsk(ev UnifiedAskEvent) {
+	d.safeCall(func(h *dispatcher) {
+		if h.onUnifiedAsk != nil {
+			h.onUnifiedAsk(ev)
+		}
+	})
+}
+func (d *dispatcher) RouteNxtExpectTrade(ev NxtExpectTradeEvent) {
+	d.safeCall(func(h *dispatcher) {
+		if h.onNxtExpectTrade != nil {
+			h.onNxtExpectTrade(ev)
+		}
+	})
+}
+func (d *dispatcher) RouteUnifiedExpectTrade(ev UnifiedExpectTradeEvent) {
+	d.safeCall(func(h *dispatcher) {
+		if h.onUnifiedExpectTrade != nil {
+			h.onUnifiedExpectTrade(ev)
+		}
+	})
+}
+func (d *dispatcher) RouteNxtProgramTrade(ev NxtProgramTradeEvent) {
+	d.safeCall(func(h *dispatcher) {
+		if h.onNxtProgramTrade != nil {
+			h.onNxtProgramTrade(ev)
+		}
+	})
+}
+func (d *dispatcher) RouteUnifiedProgramTrade(ev UnifiedProgramTradeEvent) {
+	d.safeCall(func(h *dispatcher) {
+		if h.onUnifiedProgramTrade != nil {
+			h.onUnifiedProgramTrade(ev)
+		}
+	})
+}
+func (d *dispatcher) RouteNxtMember(ev NxtMemberEvent) {
+	d.safeCall(func(h *dispatcher) {
+		if h.onNxtMember != nil {
+			h.onNxtMember(ev)
+		}
+	})
+}
+func (d *dispatcher) RouteUnifiedMember(ev UnifiedMemberEvent) {
+	d.safeCall(func(h *dispatcher) {
+		if h.onUnifiedMember != nil {
+			h.onUnifiedMember(ev)
+		}
+	})
+}
+
 func (d *dispatcher) RouteConnected() {
 	d.safeCall(func(h *dispatcher) {
 		if h.onConnected != nil {
