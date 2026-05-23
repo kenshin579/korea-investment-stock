@@ -44,5 +44,5 @@ func TestClient_InquirePriceDetail(t *testing.T) {
 	assert.True(t, d.Equal(res.Output.Last))
 	assert.Equal(t, "USD", res.Output.Curr)
 	assert.Equal(t, int64(85000000), res.Output.Tvol)
-	assert.InDelta(t, 29.45, res.Output.Perx, 0.001)
+	assert.InDelta(t, 29.45, float64(res.Output.Perx), 0.001)
 }

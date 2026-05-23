@@ -9,6 +9,7 @@ import (
 	"github.com/shopspring/decimal"
 
 	"github.com/kenshin579/korea-investment-stock/internal/httpclient"
+	"github.com/kenshin579/korea-investment-stock/kistypes"
 )
 
 // UpdownRate 은 해외주식_상승율_하락율 (HHDFS76290000) 응답.
@@ -38,13 +39,13 @@ type UpdownRateItem struct {
 	Last   decimal.Decimal `json:"last"`
 	Sign   string          `json:"sign"`
 	Diff   decimal.Decimal `json:"diff"`
-	Rate   float64         `json:"rate,string"`
+	Rate   kistypes.Float  `json:"rate"`
 	Tvol   int64           `json:"tvol,string"`
 	Pask   decimal.Decimal `json:"pask"`
 	Pbid   decimal.Decimal `json:"pbid"`
 	NBase  decimal.Decimal `json:"n_base"`
 	NDiff  decimal.Decimal `json:"n_diff"`
-	NRate  float64         `json:"n_rate,string"`
+	NRate  kistypes.Float  `json:"n_rate"`
 	Rank   int64           `json:"rank,string"`
 	Ename  string          `json:"ename"`
 	EOrdyn string          `json:"e_ordyn"`
@@ -128,11 +129,11 @@ type MarketCapItem struct {
 	Last   decimal.Decimal `json:"last"`        // 현재가
 	Sign   string          `json:"sign"`        // 기호
 	Diff   decimal.Decimal `json:"diff"`        // 대비
-	Rate   float64         `json:"rate,string"` // 등락율
+	Rate   kistypes.Float  `json:"rate"`        // 등락율
 	Tvol   int64           `json:"tvol,string"` // 거래량
 	Shar   int64           `json:"shar,string"` // 상장주식수
 	Tomv   decimal.Decimal `json:"tomv"`        // 시가총액
-	Grav   float64         `json:"grav,string"` // 비중
+	Grav   kistypes.Float  `json:"grav"`        // 비중
 	Rank   int64           `json:"rank,string"` // 순위
 	Ename  string          `json:"ename"`       // 영문종목명
 	EOrdyn string          `json:"e_ordyn"`     // 매매가능
@@ -201,7 +202,7 @@ type TradeVolItem struct {
 	Last   decimal.Decimal `json:"last"`          // 현재가
 	Sign   string          `json:"sign"`          // 기호
 	Diff   decimal.Decimal `json:"diff"`          // 대비
-	Rate   float64         `json:"rate,string"`   // 등락율
+	Rate   kistypes.Float  `json:"rate"`          // 등락율
 	Pask   decimal.Decimal `json:"pask"`          // 매도호가
 	Pbid   decimal.Decimal `json:"pbid"`          // 매수호가
 	Tvol   int64           `json:"tvol,string"`   // 거래량
@@ -287,7 +288,7 @@ type TradePbmnItem struct {
 	Last   decimal.Decimal `json:"last"`          // 현재가
 	Sign   string          `json:"sign"`          // 기호
 	Diff   decimal.Decimal `json:"diff"`          // 대비
-	Rate   float64         `json:"rate,string"`   // 등락율
+	Rate   kistypes.Float  `json:"rate"`          // 등락율
 	Pask   decimal.Decimal `json:"pask"`          // 매도호가
 	Pbid   decimal.Decimal `json:"pbid"`          // 매수호가
 	Tvol   int64           `json:"tvol,string"`   // 거래량
@@ -383,13 +384,13 @@ type VolumeSurgeItem struct {
 	Last   decimal.Decimal `json:"last"`          // 현재가
 	Sign   string          `json:"sign"`          // 기호
 	Diff   decimal.Decimal `json:"diff"`          // 대비
-	Rate   float64         `json:"rate,string"`   // 등락율
+	Rate   kistypes.Float  `json:"rate"`          // 등락율
 	Tvol   int64           `json:"tvol,string"`   // 거래량
 	Pask   decimal.Decimal `json:"pask"`          // 매도호가
 	Pbid   decimal.Decimal `json:"pbid"`          // 매수호가
 	NTvol  int64           `json:"n_tvol,string"` // 기준거래량
 	NDiff  decimal.Decimal `json:"n_diff"`        // 증가량
-	NRate  float64         `json:"n_rate,string"` // 증가율
+	NRate  kistypes.Float  `json:"n_rate"`        // 증가율
 	Enam   string          `json:"enam"`          // 영문종목명 — ename 아님
 	EOrdyn string          `json:"e_ordyn"`       // 매매가능
 }
@@ -465,12 +466,12 @@ type VolumePowerItem struct {
 	Last   decimal.Decimal `json:"last"`        // 현재가
 	Sign   string          `json:"sign"`        // 기호
 	Diff   decimal.Decimal `json:"diff"`        // 대비
-	Rate   float64         `json:"rate,string"` // 등락율
+	Rate   kistypes.Float  `json:"rate"`        // 등락율
 	Tvol   int64           `json:"tvol,string"` // 거래량
 	Pask   decimal.Decimal `json:"pask"`        // 매도호가
 	Pbid   decimal.Decimal `json:"pbid"`        // 매수호가
-	Tpow   float64         `json:"tpow,string"` // 당일체결강도
-	Powx   float64         `json:"powx,string"` // 체결강도
+	Tpow   kistypes.Float  `json:"tpow"`        // 당일체결강도
+	Powx   kistypes.Float  `json:"powx"`        // 체결강도
 	Enam   string          `json:"enam"`        // 영문종목명 — ename 아님
 	EOrdyn string          `json:"e_ordyn"`     // 매매가능
 }
@@ -543,22 +544,22 @@ type NewHighlow struct {
 //
 // 주의: 종목명 필드가 name/ename — VolumeSurge/VolumePower 의 knam/enam 와 다름.
 type NewHighlowItem struct {
-	Rsym   string          `json:"rsym"`          // 실시간조회심볼
-	Excd   string          `json:"excd"`          // 거래소코드
-	Symb   string          `json:"symb"`          // 종목코드
-	Name   string          `json:"name"`          // 종목명 (한글) — knam 아님
-	Last   decimal.Decimal `json:"last"`          // 현재가
-	Sign   string          `json:"sign"`          // 기호
-	Diff   decimal.Decimal `json:"diff"`          // 대비
-	Rate   float64         `json:"rate,string"`   // 등락율
-	Tvol   int64           `json:"tvol,string"`   // 거래량
-	Pask   decimal.Decimal `json:"pask"`          // 매도호가
-	Pbid   decimal.Decimal `json:"pbid"`          // 매수호가
-	NBase  decimal.Decimal `json:"n_base"`        // 기준가
-	NDiff  decimal.Decimal `json:"n_diff"`        // 기준가대비
-	NRate  float64         `json:"n_rate,string"` // 기준가대비율
-	Ename  string          `json:"ename"`         // 영문종목명 — enam 아님
-	EOrdyn string          `json:"e_ordyn"`       // 매매가능
+	Rsym   string          `json:"rsym"`        // 실시간조회심볼
+	Excd   string          `json:"excd"`        // 거래소코드
+	Symb   string          `json:"symb"`        // 종목코드
+	Name   string          `json:"name"`        // 종목명 (한글) — knam 아님
+	Last   decimal.Decimal `json:"last"`        // 현재가
+	Sign   string          `json:"sign"`        // 기호
+	Diff   decimal.Decimal `json:"diff"`        // 대비
+	Rate   kistypes.Float  `json:"rate"`        // 등락율
+	Tvol   int64           `json:"tvol,string"` // 거래량
+	Pask   decimal.Decimal `json:"pask"`        // 매도호가
+	Pbid   decimal.Decimal `json:"pbid"`        // 매수호가
+	NBase  decimal.Decimal `json:"n_base"`      // 기준가
+	NDiff  decimal.Decimal `json:"n_diff"`      // 기준가대비
+	NRate  kistypes.Float  `json:"n_rate"`      // 기준가대비율
+	Ename  string          `json:"ename"`       // 영문종목명 — enam 아님
+	EOrdyn string          `json:"e_ordyn"`     // 매매가능
 }
 
 // InquireNewHighlowParams 는 해외주식_신고/신저가 조회 파라미터.

@@ -46,7 +46,7 @@ func TestClient_InquireUpdownRate(t *testing.T) {
 	assert.Equal(t, "엔비디아", res.Output2[0].Name)
 	d, _ := decimal.NewFromString("920.45")
 	assert.True(t, d.Equal(res.Output2[0].Last))
-	assert.InDelta(t, 5.16, res.Output2[0].Rate, 0.001)
+	assert.InDelta(t, 5.16, float64(res.Output2[0].Rate), 0.001)
 }
 
 func TestClient_InquireMarketCap(t *testing.T) {
@@ -86,12 +86,12 @@ func TestClient_InquireMarketCap(t *testing.T) {
 	assert.Equal(t, "애플", res.Output2[0].Name)
 	d, _ := decimal.NewFromString("189.30")
 	assert.True(t, d.Equal(res.Output2[0].Last))
-	assert.InDelta(t, 1.34, res.Output2[0].Rate, 0.001)
+	assert.InDelta(t, 1.34, float64(res.Output2[0].Rate), 0.001)
 	assert.Equal(t, int64(55000000), res.Output2[0].Tvol)
 	assert.Equal(t, int64(15634232000), res.Output2[0].Shar)
 	tomv, _ := decimal.NewFromString("2958652560000")
 	assert.True(t, tomv.Equal(res.Output2[0].Tomv))
-	assert.InDelta(t, 6.85, res.Output2[0].Grav, 0.001)
+	assert.InDelta(t, 6.85, float64(res.Output2[0].Grav), 0.001)
 	assert.Equal(t, int64(1), res.Output2[0].Rank)
 	assert.Equal(t, "APPLE INC", res.Output2[0].Ename)
 }
@@ -221,7 +221,7 @@ func TestClient_InquireVolumeSurge(t *testing.T) {
 	assert.Equal(t, int64(8000000), res.Output2[0].NTvol)
 	ndiff, _ := decimal.NewFromString("47000000")
 	assert.True(t, ndiff.Equal(res.Output2[0].NDiff))
-	assert.InDelta(t, 587.50, res.Output2[0].NRate, 0.01)
+	assert.InDelta(t, 587.50, float64(res.Output2[0].NRate), 0.01)
 }
 
 func TestClient_InquireVolumePower(t *testing.T) {
@@ -260,8 +260,8 @@ func TestClient_InquireVolumePower(t *testing.T) {
 	assert.Equal(t, "APPLE INC", res.Output2[0].Enam)
 	d, _ := decimal.NewFromString("189.30")
 	assert.True(t, d.Equal(res.Output2[0].Last))
-	assert.InDelta(t, 143.25, res.Output2[0].Tpow, 0.01)
-	assert.InDelta(t, 138.90, res.Output2[0].Powx, 0.01)
+	assert.InDelta(t, 143.25, float64(res.Output2[0].Tpow), 0.01)
+	assert.InDelta(t, 138.90, float64(res.Output2[0].Powx), 0.01)
 }
 
 func TestClient_InquireNewHighlow(t *testing.T) {
@@ -308,7 +308,7 @@ func TestClient_InquireNewHighlow(t *testing.T) {
 	assert.True(t, nbase.Equal(res.Output2[0].NBase))
 	ndiff, _ := decimal.NewFromString("29.30")
 	assert.True(t, ndiff.Equal(res.Output2[0].NDiff))
-	assert.InDelta(t, 18.31, res.Output2[0].NRate, 0.01)
+	assert.InDelta(t, 18.31, float64(res.Output2[0].NRate), 0.01)
 }
 
 // EXCD required check tests — coverage 보강 (Phase 2.3 6 메서드 공통 가드).

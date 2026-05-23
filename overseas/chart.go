@@ -9,6 +9,7 @@ import (
 	"github.com/shopspring/decimal"
 
 	"github.com/kenshin579/korea-investment-stock/internal/httpclient"
+	"github.com/kenshin579/korea-investment-stock/kistypes"
 )
 
 // DailyPrice 는 해외주식_기간별시세 (HHDFS76240000) 응답.
@@ -30,7 +31,7 @@ type DailyPriceCandle struct {
 	Clos decimal.Decimal `json:"clos"`
 	Sign string          `json:"sign"`
 	Diff decimal.Decimal `json:"diff"`
-	Rate float64         `json:"rate,string"`
+	Rate kistypes.Float  `json:"rate"`
 	Open decimal.Decimal `json:"open"`
 	High decimal.Decimal `json:"high"`
 	Low  decimal.Decimal `json:"low"`
@@ -110,7 +111,7 @@ type DailyChartPrice struct {
 type DailyChartPriceSummary struct {
 	OvrsNmixPrdyVrss decimal.Decimal `json:"ovrs_nmix_prdy_vrss"`
 	PrdyVrssSign     string          `json:"prdy_vrss_sign"`
-	PrdyCtrt         float64         `json:"prdy_ctrt,string"`
+	PrdyCtrt         kistypes.Float  `json:"prdy_ctrt"`
 	OvrsNmixPrdyClpr decimal.Decimal `json:"ovrs_nmix_prdy_clpr"`
 	AcmlVol          int64           `json:"acml_vol,string"`
 	HtsKorIsnm       string          `json:"hts_kor_isnm"`
