@@ -43,7 +43,7 @@ func TestClient_InquirePrice(t *testing.T) {
 
 	assert.Equal(t, int64(1345678), got.Output1.Vol)
 	assert.Equal(t, "5", got.Output1.PrevDiffFlag)
-	assert.InDelta(t, -1.30, got.Output1.PrevDiffRate, 0.001)
+	assert.InDelta(t, -1.30, float64(got.Output1.PrevDiffRate), 0.001)
 
 	assert.Equal(t, int64(45), got.Output1.BidQntt)
 	assert.Equal(t, int64(38), got.Output1.AskQntt)
@@ -231,7 +231,7 @@ func TestClient_InquireAskingPrice(t *testing.T) {
 	assert.True(t, prevPrice.Equal(got.Output1.PrevPrice))
 
 	assert.Equal(t, int64(1345678), got.Output1.Vol)
-	assert.InDelta(t, -1.30, got.Output1.PrevDiffRate, 0.001)
+	assert.InDelta(t, -1.30, float64(got.Output1.PrevDiffRate), 0.001)
 	assert.Equal(t, "20240402", got.Output1.QuotDate)
 	assert.Equal(t, "160023", got.Output1.QuotTime)
 

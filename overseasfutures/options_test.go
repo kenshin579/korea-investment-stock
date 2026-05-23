@@ -62,7 +62,7 @@ func TestClient_InquireTimeOptchartprice(t *testing.T) {
 	assert.Equal(t, int64(120), candle0.LastQntt)
 	assert.Equal(t, int64(45230), candle0.Vol)
 	assert.Equal(t, "2", candle0.PrevDiffFlag)
-	assert.InDelta(t, 0.20, candle0.PrevDiffRate, 0.001)
+	assert.InDelta(t, 0.20, float64(candle0.PrevDiffRate), 0.001)
 
 	// 마지막 항목 확인
 	candle4 := got.Output1[4]
@@ -188,7 +188,7 @@ func TestClient_OptMonthlyCcnl(t *testing.T) {
 	assert.Equal(t, int64(0), item0.LastQntt)
 	assert.Equal(t, int64(523456), item0.Vol)
 	assert.Equal(t, "2", item0.PrevDiffFlag)
-	assert.InDelta(t, 4.52, item0.PrevDiffRate, 0.001)
+	assert.InDelta(t, 4.52, float64(item0.PrevDiffRate), 0.001)
 
 	// 마지막 항목
 	item4 := got.Output2[4]
@@ -241,7 +241,7 @@ func TestClient_OptDailyCcnl(t *testing.T) {
 	assert.True(t, lastPrice0.Equal(item0.LastPrice))
 
 	assert.Equal(t, "2", item0.PrevDiffFlag)
-	assert.InDelta(t, 0.60, item0.PrevDiffRate, 0.001)
+	assert.InDelta(t, 0.60, float64(item0.PrevDiffRate), 0.001)
 
 	// 마지막 항목
 	item4 := got.Output2[4]
@@ -294,7 +294,7 @@ func TestClient_OptWeeklyCcnl(t *testing.T) {
 	assert.True(t, lastPrice0.Equal(item0.LastPrice))
 
 	assert.Equal(t, "2", item0.PrevDiffFlag)
-	assert.InDelta(t, 2.38, item0.PrevDiffRate, 0.001)
+	assert.InDelta(t, 2.38, float64(item0.PrevDiffRate), 0.001)
 
 	// 마지막 항목
 	item4 := got.Output2[4]
@@ -400,7 +400,7 @@ func TestClient_OptAskingPrice(t *testing.T) {
 	assert.True(t, sttlPrice.Equal(got.Output1.SttlPrice))
 
 	assert.Equal(t, int64(45230), got.Output1.Vol)
-	assert.InDelta(t, 0.60, got.Output1.PrevDiffRate, 0.001)
+	assert.InDelta(t, 0.60, float64(got.Output1.PrevDiffRate), 0.001)
 	assert.Equal(t, "20240906", got.Output1.QuotDate)
 	assert.Equal(t, "160023", got.Output1.QuotTime)
 
@@ -527,7 +527,7 @@ func TestClient_OptPrice(t *testing.T) {
 
 	assert.Equal(t, int64(45230), got.Output1.Vol)
 	assert.Equal(t, "2", got.Output1.PrevDiffFlag)
-	assert.InDelta(t, 0.60, got.Output1.PrevDiffRate, 0.001)
+	assert.InDelta(t, 0.60, float64(got.Output1.PrevDiffRate), 0.001)
 
 	assert.Equal(t, int64(25), got.Output1.BidQntt)
 

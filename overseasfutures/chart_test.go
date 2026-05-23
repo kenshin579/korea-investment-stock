@@ -65,7 +65,7 @@ func TestClient_InquireTimeFuturechartprice(t *testing.T) {
 	assert.Equal(t, int64(145), candle0.LastQntt)
 	assert.Equal(t, int64(125430), candle0.Vol)
 	assert.Equal(t, "2", candle0.PrevDiffFlag)
-	assert.InDelta(t, 0.27, candle0.PrevDiffRate, 0.001)
+	assert.InDelta(t, 0.27, float64(candle0.PrevDiffRate), 0.001)
 
 	// 마지막 항목 확인
 	candle4 := got.Output1[4]
@@ -111,7 +111,7 @@ func TestClient_MonthlyCcnl(t *testing.T) {
 	assert.Equal(t, int64(0), item0.LastQntt)
 	assert.Equal(t, int64(1523456), item0.Vol)
 	assert.Equal(t, "2", item0.PrevDiffFlag)
-	assert.InDelta(t, 0.81, item0.PrevDiffRate, 0.001)
+	assert.InDelta(t, 0.81, float64(item0.PrevDiffRate), 0.001)
 
 	// 마지막 항목
 	item4 := got.Output2[4]
@@ -154,7 +154,7 @@ func TestClient_DailyCcnl(t *testing.T) {
 	assert.True(t, lastPrice0.Equal(item0.LastPrice))
 
 	assert.Equal(t, "5", item0.PrevDiffFlag)
-	assert.InDelta(t, -1.30, item0.PrevDiffRate, 0.001)
+	assert.InDelta(t, -1.30, float64(item0.PrevDiffRate), 0.001)
 }
 
 // ─── EP6: WeeklyCcnl ─────────────────────────────────────────────────────────
@@ -193,7 +193,7 @@ func TestClient_WeeklyCcnl(t *testing.T) {
 	assert.True(t, lastPrice0.Equal(item0.LastPrice))
 
 	assert.Equal(t, "5", item0.PrevDiffFlag)
-	assert.InDelta(t, -0.59, item0.PrevDiffRate, 0.001)
+	assert.InDelta(t, -0.59, float64(item0.PrevDiffRate), 0.001)
 }
 
 func TestClient_InquireTimeFuturechartprice_InvalidJSON(t *testing.T) {
