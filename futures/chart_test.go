@@ -43,8 +43,8 @@ func TestClient_InquireTimeFuopchartprice(t *testing.T) {
 	assert.Equal(t, int64(125430), got.Output1.AcmlVol)
 	assert.Equal(t, int64(310250), got.Output1.HtsOtstStplQty)
 	assert.Equal(t, "101S06", got.Output1.FutsShrnIscd)
-	assert.InDelta(t, 0.35, got.Output1.FutsPrdyCtrt, 0.001)
-	assert.InDelta(t, 55.20, got.Output1.TdayRltv, 0.001)
+	assert.InDelta(t, 0.35, float64(got.Output1.FutsPrdyCtrt), 0.001)
+	assert.InDelta(t, 55.20, float64(got.Output1.TdayRltv), 0.001)
 
 	// output2 array assertions
 	require.GreaterOrEqual(t, len(got.Output2), 1)
@@ -97,7 +97,7 @@ func TestClient_InquireDailyFuopchartprice(t *testing.T) {
 	assert.True(t, prpr.Equal(got.Output1.FutsPrpr))
 	assert.Equal(t, int64(125430), got.Output1.AcmlVol)
 	assert.Equal(t, int64(310250), got.Output1.HtsOtstStplQty)
-	assert.InDelta(t, 0.35, got.Output1.FutsPrdyCtrt, 0.001)
+	assert.InDelta(t, 0.35, float64(got.Output1.FutsPrdyCtrt), 0.001)
 
 	// output2 array assertions
 	require.GreaterOrEqual(t, len(got.Output2), 1)

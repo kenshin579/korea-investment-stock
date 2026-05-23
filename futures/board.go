@@ -9,22 +9,23 @@ import (
 	"github.com/shopspring/decimal"
 
 	"github.com/kenshin579/korea-investment-stock/internal/httpclient"
+	"github.com/kenshin579/korea-investment-stock/kistypes"
 )
 
 // ─── EP8: DisplayBoardTop ─────────────────────────────────────────────────────
 
 // DisplayBoardTopOutput1 는 국내선물 기초자산 + 선물 현재 시세 (10 필드).
 type DisplayBoardTopOutput1 struct {
-	UnasPrpr         decimal.Decimal `json:"unas_prpr"`             // 기초자산 현재가
-	UnasPrdyVrss     decimal.Decimal `json:"unas_prdy_vrss"`        // 기초자산 전일 대비
-	UnasPrdyVrssSign string          `json:"unas_prdy_vrss_sign"`   // 기초자산 전일 대비 부호
-	UnasPrdyCtrt     float64         `json:"unas_prdy_ctrt,string"` // 기초자산 전일 대비율
-	UnasAcmlVol      int64           `json:"unas_acml_vol,string"`  // 기초자산 누적 거래량
-	HtsKorIsnm       string          `json:"hts_kor_isnm"`          // HTS 한글 종목명
-	FutsPrpr         decimal.Decimal `json:"futs_prpr"`             // 선물 현재가
-	FutsPrdyVrss     decimal.Decimal `json:"futs_prdy_vrss"`        // 선물 전일 대비
-	PrdyVrssSign     string          `json:"prdy_vrss_sign"`        // 전일 대비 부호
-	FutsPrdyCtrt     float64         `json:"futs_prdy_ctrt,string"` // 선물 전일 대비율
+	UnasPrpr         decimal.Decimal `json:"unas_prpr"`            // 기초자산 현재가
+	UnasPrdyVrss     decimal.Decimal `json:"unas_prdy_vrss"`       // 기초자산 전일 대비
+	UnasPrdyVrssSign string          `json:"unas_prdy_vrss_sign"`  // 기초자산 전일 대비 부호
+	UnasPrdyCtrt     kistypes.Float  `json:"unas_prdy_ctrt"`       // 기초자산 전일 대비율
+	UnasAcmlVol      int64           `json:"unas_acml_vol,string"` // 기초자산 누적 거래량
+	HtsKorIsnm       string          `json:"hts_kor_isnm"`         // HTS 한글 종목명
+	FutsPrpr         decimal.Decimal `json:"futs_prpr"`            // 선물 현재가
+	FutsPrdyVrss     decimal.Decimal `json:"futs_prdy_vrss"`       // 선물 전일 대비
+	PrdyVrssSign     string          `json:"prdy_vrss_sign"`       // 전일 대비 부호
+	FutsPrdyCtrt     kistypes.Float  `json:"futs_prdy_ctrt"`       // 선물 전일 대비율
 }
 
 // DisplayBoardTopOutput2Item 는 월물별 잔존일수 항목 (1 필드).
@@ -98,26 +99,26 @@ func (c *Client) DisplayBoardTop(ctx context.Context, params DisplayBoardTopPara
 
 // DisplayBoardFuturesItem 는 선물 월물별 시세 항목 (20 필드).
 type DisplayBoardFuturesItem struct {
-	FutsShrnIscd     string          `json:"futs_shrn_iscd"`             // 선물 단축 종목코드
-	HtsKorIsnm       string          `json:"hts_kor_isnm"`               // HTS 한글 종목명
-	FutsPrpr         decimal.Decimal `json:"futs_prpr"`                  // 선물 현재가
-	FutsPrdyVrss     decimal.Decimal `json:"futs_prdy_vrss"`             // 선물 전일 대비
-	PrdyVrssSign     string          `json:"prdy_vrss_sign"`             // 전일 대비 부호
-	FutsPrdyCtrt     float64         `json:"futs_prdy_ctrt,string"`      // 선물 전일 대비율
-	HtsThpr          decimal.Decimal `json:"hts_thpr"`                   // HTS 이론가
-	AcmlVol          int64           `json:"acml_vol,string"`            // 누적 거래량
-	FutsAskp         decimal.Decimal `json:"futs_askp"`                  // 선물 매도호가
-	FutsBidp         decimal.Decimal `json:"futs_bidp"`                  // 선물 매수호가
-	HtsOtstStplQty   int64           `json:"hts_otst_stpl_qty,string"`   // HTS 미결제 약정 수량
-	FutsHgpr         decimal.Decimal `json:"futs_hgpr"`                  // 선물 최고가
-	FutsLwpr         decimal.Decimal `json:"futs_lwpr"`                  // 선물 최저가
-	HtsRmnnDynu      string          `json:"hts_rmnn_dynu"`              // HTS 잔존 일수
-	TotalAskpRsqn    int64           `json:"total_askp_rsqn,string"`     // 총 매도호가 잔량
-	TotalBidpRsqn    int64           `json:"total_bidp_rsqn,string"`     // 총 매수호가 잔량
-	FutsAntcCnpr     decimal.Decimal `json:"futs_antc_cnpr"`             // 선물 예상체결가
-	FutsAntcCntgVrss decimal.Decimal `json:"futs_antc_cntg_vrss"`        // 선물 예상체결대비
-	AntcCntgVrssSign string          `json:"antc_cntg_vrss_sign"`        // 예상 체결 대비 부호
-	AntcCntgPrdyCtrt float64         `json:"antc_cntg_prdy_ctrt,string"` // 예상 체결 전일 대비율
+	FutsShrnIscd     string          `json:"futs_shrn_iscd"`           // 선물 단축 종목코드
+	HtsKorIsnm       string          `json:"hts_kor_isnm"`             // HTS 한글 종목명
+	FutsPrpr         decimal.Decimal `json:"futs_prpr"`                // 선물 현재가
+	FutsPrdyVrss     decimal.Decimal `json:"futs_prdy_vrss"`           // 선물 전일 대비
+	PrdyVrssSign     string          `json:"prdy_vrss_sign"`           // 전일 대비 부호
+	FutsPrdyCtrt     kistypes.Float  `json:"futs_prdy_ctrt"`           // 선물 전일 대비율
+	HtsThpr          decimal.Decimal `json:"hts_thpr"`                 // HTS 이론가
+	AcmlVol          int64           `json:"acml_vol,string"`          // 누적 거래량
+	FutsAskp         decimal.Decimal `json:"futs_askp"`                // 선물 매도호가
+	FutsBidp         decimal.Decimal `json:"futs_bidp"`                // 선물 매수호가
+	HtsOtstStplQty   int64           `json:"hts_otst_stpl_qty,string"` // HTS 미결제 약정 수량
+	FutsHgpr         decimal.Decimal `json:"futs_hgpr"`                // 선물 최고가
+	FutsLwpr         decimal.Decimal `json:"futs_lwpr"`                // 선물 최저가
+	HtsRmnnDynu      string          `json:"hts_rmnn_dynu"`            // HTS 잔존 일수
+	TotalAskpRsqn    int64           `json:"total_askp_rsqn,string"`   // 총 매도호가 잔량
+	TotalBidpRsqn    int64           `json:"total_bidp_rsqn,string"`   // 총 매수호가 잔량
+	FutsAntcCnpr     decimal.Decimal `json:"futs_antc_cnpr"`           // 선물 예상체결가
+	FutsAntcCntgVrss decimal.Decimal `json:"futs_antc_cntg_vrss"`      // 선물 예상체결대비
+	AntcCntgVrssSign string          `json:"antc_cntg_vrss_sign"`      // 예상 체결 대비 부호
+	AntcCntgPrdyCtrt kistypes.Float  `json:"antc_cntg_prdy_ctrt"`      // 예상 체결 전일 대비율
 }
 
 // DisplayBoardFuturesData 는 국내옵션전광판 선물 응답 (output1[]).
@@ -245,47 +246,47 @@ func (c *Client) DisplayBoardOptionList(ctx context.Context, params DisplayBoard
 //
 // output1 (콜옵션) / output2 (풋옵션) 가 동일 구조이므로 하나의 struct 재사용.
 type DisplayBoardCallputItem struct {
-	Acpr             decimal.Decimal `json:"acpr"`                       // 행사가
-	UnchPrpr         decimal.Decimal `json:"unch_prpr"`                  // 환산 현재가
-	OptnShrnIscd     string          `json:"optn_shrn_iscd"`             // 옵션 단축 종목코드
-	OptnPrpr         decimal.Decimal `json:"optn_prpr"`                  // 옵션 현재가
-	OptnPrdyVrss     decimal.Decimal `json:"optn_prdy_vrss"`             // 옵션 전일 대비
-	PrdyVrssSign     string          `json:"prdy_vrss_sign"`             // 전일 대비 부호
-	OptnPrdyCtrt     float64         `json:"optn_prdy_ctrt,string"`      // 옵션 전일 대비율
-	OptnBidp         decimal.Decimal `json:"optn_bidp"`                  // 옵션 매수호가
-	OptnAskp         decimal.Decimal `json:"optn_askp"`                  // 옵션 매도호가
-	TmvlVal          decimal.Decimal `json:"tmvl_val"`                   // 시간가치 값
-	NmixSdpr         decimal.Decimal `json:"nmix_sdpr"`                  // 지수 기준가
-	AcmlVol          int64           `json:"acml_vol,string"`            // 누적 거래량
-	SelnRsqn         int64           `json:"seln_rsqn,string"`           // 매도 잔량
-	ShnuRsqn         int64           `json:"shnu_rsqn,string"`           // 매수 잔량
-	AcmlTrPbmn       int64           `json:"acml_tr_pbmn,string"`        // 누적 거래 대금
-	HtsOtstStplQty   int64           `json:"hts_otst_stpl_qty,string"`   // HTS 미결제 약정 수량
-	OtstStplQtyIcdc  int64           `json:"otst_stpl_qty_icdc,string"`  // 미결제 약정 수량 증감
-	DeltaVal         float64         `json:"delta_val,string"`           // 델타 값
-	Gama             float64         `json:"gama,string"`                // 감마
-	Vega             float64         `json:"vega,string"`                // 베가
-	Theta            float64         `json:"theta,string"`               // 세타
-	Rho              float64         `json:"rho,string"`                 // 로우
-	HtsIntsVltl      float64         `json:"hts_ints_vltl,string"`       // HTS 내재 변동성
-	InvlVal          decimal.Decimal `json:"invl_val"`                   // 내재가치 값
-	Esdg             float64         `json:"esdg,string"`                // 괴리도
-	Dprt             float64         `json:"dprt,string"`                // 괴리율
-	HistVltl         float64         `json:"hist_vltl,string"`           // 역사적 변동성
-	HtsThpr          decimal.Decimal `json:"hts_thpr"`                   // HTS 이론가
-	OptnOprc         decimal.Decimal `json:"optn_oprc"`                  // 옵션 시가
-	OptnHgpr         decimal.Decimal `json:"optn_hgpr"`                  // 옵션 최고가
-	OptnLwpr         decimal.Decimal `json:"optn_lwpr"`                  // 옵션 최저가
-	OptnMxpr         decimal.Decimal `json:"optn_mxpr"`                  // 옵션 상한가
-	OptnLlam         decimal.Decimal `json:"optn_llam"`                  // 옵션 하한가
-	AtmClsName       string          `json:"atm_cls_name"`               // ATM 구분 명
-	RgbfVrssIcdc     string          `json:"rgbf_vrss_icdc"`             // 직전 대비 증감
-	TotalAskpRsqn    int64           `json:"total_askp_rsqn,string"`     // 총 매도호가 잔량
-	TotalBidpRsqn    int64           `json:"total_bidp_rsqn,string"`     // 총 매수호가 잔량
-	FutsAntcCnpr     decimal.Decimal `json:"futs_antc_cnpr"`             // 선물 예상체결가
-	FutsAntcCntgVrss decimal.Decimal `json:"futs_antc_cntg_vrss"`        // 선물 예상체결대비
-	AntcCntgVrssSign string          `json:"antc_cntg_vrss_sign"`        // 예상 체결 대비 부호
-	AntcCntgPrdyCtrt float64         `json:"antc_cntg_prdy_ctrt,string"` // 예상 체결 전일 대비율
+	Acpr             decimal.Decimal `json:"acpr"`                      // 행사가
+	UnchPrpr         decimal.Decimal `json:"unch_prpr"`                 // 환산 현재가
+	OptnShrnIscd     string          `json:"optn_shrn_iscd"`            // 옵션 단축 종목코드
+	OptnPrpr         decimal.Decimal `json:"optn_prpr"`                 // 옵션 현재가
+	OptnPrdyVrss     decimal.Decimal `json:"optn_prdy_vrss"`            // 옵션 전일 대비
+	PrdyVrssSign     string          `json:"prdy_vrss_sign"`            // 전일 대비 부호
+	OptnPrdyCtrt     kistypes.Float  `json:"optn_prdy_ctrt"`            // 옵션 전일 대비율
+	OptnBidp         decimal.Decimal `json:"optn_bidp"`                 // 옵션 매수호가
+	OptnAskp         decimal.Decimal `json:"optn_askp"`                 // 옵션 매도호가
+	TmvlVal          decimal.Decimal `json:"tmvl_val"`                  // 시간가치 값
+	NmixSdpr         decimal.Decimal `json:"nmix_sdpr"`                 // 지수 기준가
+	AcmlVol          int64           `json:"acml_vol,string"`           // 누적 거래량
+	SelnRsqn         int64           `json:"seln_rsqn,string"`          // 매도 잔량
+	ShnuRsqn         int64           `json:"shnu_rsqn,string"`          // 매수 잔량
+	AcmlTrPbmn       int64           `json:"acml_tr_pbmn,string"`       // 누적 거래 대금
+	HtsOtstStplQty   int64           `json:"hts_otst_stpl_qty,string"`  // HTS 미결제 약정 수량
+	OtstStplQtyIcdc  int64           `json:"otst_stpl_qty_icdc,string"` // 미결제 약정 수량 증감
+	DeltaVal         kistypes.Float  `json:"delta_val"`                 // 델타 값
+	Gama             kistypes.Float  `json:"gama"`                      // 감마
+	Vega             kistypes.Float  `json:"vega"`                      // 베가
+	Theta            kistypes.Float  `json:"theta"`                     // 세타
+	Rho              kistypes.Float  `json:"rho"`                       // 로우
+	HtsIntsVltl      kistypes.Float  `json:"hts_ints_vltl"`             // HTS 내재 변동성
+	InvlVal          decimal.Decimal `json:"invl_val"`                  // 내재가치 값
+	Esdg             kistypes.Float  `json:"esdg"`                      // 괴리도
+	Dprt             kistypes.Float  `json:"dprt"`                      // 괴리율
+	HistVltl         kistypes.Float  `json:"hist_vltl"`                 // 역사적 변동성
+	HtsThpr          decimal.Decimal `json:"hts_thpr"`                  // HTS 이론가
+	OptnOprc         decimal.Decimal `json:"optn_oprc"`                 // 옵션 시가
+	OptnHgpr         decimal.Decimal `json:"optn_hgpr"`                 // 옵션 최고가
+	OptnLwpr         decimal.Decimal `json:"optn_lwpr"`                 // 옵션 최저가
+	OptnMxpr         decimal.Decimal `json:"optn_mxpr"`                 // 옵션 상한가
+	OptnLlam         decimal.Decimal `json:"optn_llam"`                 // 옵션 하한가
+	AtmClsName       string          `json:"atm_cls_name"`              // ATM 구분 명
+	RgbfVrssIcdc     string          `json:"rgbf_vrss_icdc"`            // 직전 대비 증감
+	TotalAskpRsqn    int64           `json:"total_askp_rsqn,string"`    // 총 매도호가 잔량
+	TotalBidpRsqn    int64           `json:"total_bidp_rsqn,string"`    // 총 매수호가 잔량
+	FutsAntcCnpr     decimal.Decimal `json:"futs_antc_cnpr"`            // 선물 예상체결가
+	FutsAntcCntgVrss decimal.Decimal `json:"futs_antc_cntg_vrss"`       // 선물 예상체결대비
+	AntcCntgVrssSign string          `json:"antc_cntg_vrss_sign"`       // 예상 체결 대비 부호
+	AntcCntgPrdyCtrt kistypes.Float  `json:"antc_cntg_prdy_ctrt"`       // 예상 체결 전일 대비율
 }
 
 // DisplayBoardCallputData 는 국내옵션전광판 콜풋 응답 (output1[] 콜 + output2[] 풋).
