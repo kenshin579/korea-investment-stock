@@ -9,6 +9,7 @@ import (
 	"github.com/shopspring/decimal"
 
 	"github.com/kenshin579/korea-investment-stock/internal/httpclient"
+	"github.com/kenshin579/korea-investment-stock/kistypes"
 )
 
 // ─── 공통: CcnlParams ────────────────────────────────────────────────────────
@@ -29,17 +30,17 @@ type CcnlParams struct {
 
 // CcnlOutput2Item 는 해외선물 체결추이 배열 항목 공통 구조 (11 필드).
 type CcnlOutput2Item struct {
-	DataDate      string          `json:"data_date"`             // 일자
-	DataTime      string          `json:"data_time"`             // 시각
-	OpenPrice     decimal.Decimal `json:"open_price"`            // 시가
-	HighPrice     decimal.Decimal `json:"high_price"`            // 고가
-	LowPrice      decimal.Decimal `json:"low_price"`             // 저가
-	LastPrice     decimal.Decimal `json:"last_price"`            // 체결가격
-	LastQntt      int64           `json:"last_qntt,string"`      // 체결수량
-	Vol           int64           `json:"vol,string"`            // 누적거래수량
-	PrevDiffFlag  string          `json:"prev_diff_flag"`        // 전일대비구분
-	PrevDiffPrice decimal.Decimal `json:"prev_diff_price"`       // 전일대비가격
-	PrevDiffRate  float64         `json:"prev_diff_rate,string"` // 전일대비율
+	DataDate      string          `json:"data_date"`        // 일자
+	DataTime      string          `json:"data_time"`        // 시각
+	OpenPrice     decimal.Decimal `json:"open_price"`       // 시가
+	HighPrice     decimal.Decimal `json:"high_price"`       // 고가
+	LowPrice      decimal.Decimal `json:"low_price"`        // 저가
+	LastPrice     decimal.Decimal `json:"last_price"`       // 체결가격
+	LastQntt      int64           `json:"last_qntt,string"` // 체결수량
+	Vol           int64           `json:"vol,string"`       // 누적거래수량
+	PrevDiffFlag  string          `json:"prev_diff_flag"`   // 전일대비구분
+	PrevDiffPrice decimal.Decimal `json:"prev_diff_price"`  // 전일대비가격
+	PrevDiffRate  kistypes.Float  `json:"prev_diff_rate"`   // 전일대비율
 }
 
 // ─── EP2: InquireTimeFuturechartprice ────────────────────────────────────────

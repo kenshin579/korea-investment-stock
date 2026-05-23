@@ -33,7 +33,7 @@ func TestClient_InquirePrice(t *testing.T) {
 	assert.Equal(t, int64(125430), got.Output1.AcmlVol)
 	assert.Equal(t, int64(310250), got.Output1.HtsOtstStplQty)
 	assert.Equal(t, "20250612", got.Output1.FutsLastTrDate)
-	assert.InDelta(t, 0.35, got.Output1.FutsPrdyCtrt, 0.001)
+	assert.InDelta(t, 0.35, float64(got.Output1.FutsPrdyCtrt), 0.001)
 
 	// output2 assertions
 	assert.Equal(t, "코스피200", got.Output2.HtsKorIsnm)

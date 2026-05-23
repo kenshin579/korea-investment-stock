@@ -36,12 +36,12 @@ func TestClient_DisplayBoardTop(t *testing.T) {
 	unasPrpr, _ := decimal.NewFromString("360.50")
 	assert.True(t, unasPrpr.Equal(got.Output1.UnasPrpr))
 	assert.Equal(t, "2", got.Output1.UnasPrdyVrssSign)
-	assert.InDelta(t, 0.35, got.Output1.UnasPrdyCtrt, 0.001)
+	assert.InDelta(t, 0.35, float64(got.Output1.UnasPrdyCtrt), 0.001)
 	assert.Equal(t, int64(523410), got.Output1.UnasAcmlVol)
 	futsPrpr, _ := decimal.NewFromString("360.75")
 	assert.True(t, futsPrpr.Equal(got.Output1.FutsPrpr))
 	assert.Equal(t, "2", got.Output1.PrdyVrssSign)
-	assert.InDelta(t, 0.42, got.Output1.FutsPrdyCtrt, 0.001)
+	assert.InDelta(t, 0.42, float64(got.Output1.FutsPrdyCtrt), 0.001)
 
 	// output2 assertions — 월물별 잔존일수 (hts_rmnn_dynu 1 필드)
 	require.Len(t, got.Output2, 3)
@@ -77,7 +77,7 @@ func TestClient_DisplayBoardFutures(t *testing.T) {
 	assert.Equal(t, int64(310250), item.HtsOtstStplQty)
 	assert.Equal(t, "30", item.HtsRmnnDynu)
 	assert.Equal(t, int64(1250), item.TotalAskpRsqn)
-	assert.InDelta(t, 0.43, item.AntcCntgPrdyCtrt, 0.001)
+	assert.InDelta(t, 0.43, float64(item.AntcCntgPrdyCtrt), 0.001)
 
 	// second item
 	item2 := got.Output1[1]
@@ -132,11 +132,11 @@ func TestClient_DisplayBoardCallput(t *testing.T) {
 	optnPrpr, _ := decimal.NewFromString("4.25")
 	assert.True(t, optnPrpr.Equal(call.OptnPrpr))
 	assert.Equal(t, "2", call.PrdyVrssSign)
-	assert.InDelta(t, 13.33, call.OptnPrdyCtrt, 0.001)
+	assert.InDelta(t, 13.33, float64(call.OptnPrdyCtrt), 0.001)
 	assert.Equal(t, int64(12500), call.AcmlVol)
 	assert.Equal(t, int64(8250), call.HtsOtstStplQty)
-	assert.InDelta(t, 0.5421, call.DeltaVal, 0.0001)
-	assert.InDelta(t, 18.25, call.HtsIntsVltl, 0.01)
+	assert.InDelta(t, 0.5421, float64(call.DeltaVal), 0.0001)
+	assert.InDelta(t, 18.25, float64(call.HtsIntsVltl), 0.01)
 	assert.Equal(t, "ATM", call.AtmClsName)
 	assert.Equal(t, int64(980), call.TotalAskpRsqn)
 	antcCnpr, _ := decimal.NewFromString("360.80")
@@ -155,8 +155,8 @@ func TestClient_DisplayBoardCallput(t *testing.T) {
 	assert.True(t, acprPut.Equal(put.Acpr))
 	assert.Equal(t, "301V06360", put.OptnShrnIscd)
 	assert.Equal(t, "5", put.PrdyVrssSign)
-	assert.InDelta(t, -0.4579, put.DeltaVal, 0.0001)
-	assert.InDelta(t, -0.0298, put.Rho, 0.0001)
+	assert.InDelta(t, -0.4579, float64(put.DeltaVal), 0.0001)
+	assert.InDelta(t, -0.0298, float64(put.Rho), 0.0001)
 	assert.Equal(t, "ATM", put.AtmClsName)
 }
 

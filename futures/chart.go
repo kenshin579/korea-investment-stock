@@ -9,6 +9,7 @@ import (
 	"github.com/shopspring/decimal"
 
 	"github.com/kenshin579/korea-investment-stock/internal/httpclient"
+	"github.com/kenshin579/korea-investment-stock/kistypes"
 )
 
 // ─── EP3: InquireTimeFuopchartprice ──────────────────────────────────────────
@@ -17,7 +18,7 @@ import (
 type InquireTimeFuopchartpriceOutput1 struct {
 	FutsPrdyVrss         decimal.Decimal `json:"futs_prdy_vrss"`            // 선물 전일 대비
 	PrdyVrssSign         string          `json:"prdy_vrss_sign"`            // 전일 대비 부호
-	FutsPrdyCtrt         float64         `json:"futs_prdy_ctrt,string"`     // 선물 전일 대비율
+	FutsPrdyCtrt         kistypes.Float  `json:"futs_prdy_ctrt"`            // 선물 전일 대비율
 	FutsPrdyClpr         decimal.Decimal `json:"futs_prdy_clpr"`            // 선물 전일 종가
 	PrdyNmix             decimal.Decimal `json:"prdy_nmix"`                 // 전일 지수
 	AcmlVol              int64           `json:"acml_vol,string"`           // 누적 거래량
@@ -39,13 +40,13 @@ type InquireTimeFuopchartpriceOutput1 struct {
 	Basis                decimal.Decimal `json:"basis"`                     // 베이시스
 	Kospi200Nmix         decimal.Decimal `json:"kospi200_nmix"`             // KOSPI200 지수
 	Kospi200PrdyVrss     decimal.Decimal `json:"kospi200_prdy_vrss"`        // KOSPI200 전일 대비
-	Kospi200PrdyCtrt     float64         `json:"kospi200_prdy_ctrt,string"` // KOSPI200 전일 대비율
+	Kospi200PrdyCtrt     kistypes.Float  `json:"kospi200_prdy_ctrt"`        // KOSPI200 전일 대비율
 	Kospi200PrdyVrssSign string          `json:"kospi200_prdy_vrss_sign"`   // KOSPI200 전일 대비 부호
 	HtsOtstStplQty       int64           `json:"hts_otst_stpl_qty,string"`  // HTS 미결제 약정 수량
 	OtstStplQtyIcdc      int64           `json:"otst_stpl_qty_icdc,string"` // 미결제 약정 수량 증감
-	TdayRltv             float64         `json:"tday_rltv,string"`          // 당일 체결강도
+	TdayRltv             kistypes.Float  `json:"tday_rltv"`                 // 당일 체결강도
 	HtsThpr              decimal.Decimal `json:"hts_thpr"`                  // HTS 이론가
-	Dprt                 float64         `json:"dprt,string"`               // 괴리율
+	Dprt                 kistypes.Float  `json:"dprt"`                      // 괴리율
 }
 
 // InquireTimeFuopchartpriceOutput2Item 는 선물옵션 분봉 캔들 (8 필드).
@@ -130,7 +131,7 @@ func (c *Client) InquireTimeFuopchartprice(ctx context.Context, params InquireTi
 type InquireDailyFuopchartpriceOutput1 struct {
 	FutsPrdyVrss         decimal.Decimal `json:"futs_prdy_vrss"`            // 전일 대비
 	PrdyVrssSign         string          `json:"prdy_vrss_sign"`            // 전일 대비 부호
-	FutsPrdyCtrt         float64         `json:"futs_prdy_ctrt,string"`     // 선물 전일 대비율
+	FutsPrdyCtrt         kistypes.Float  `json:"futs_prdy_ctrt"`            // 선물 전일 대비율
 	FutsPrdyClpr         decimal.Decimal `json:"futs_prdy_clpr"`            // 선물 전일 종가
 	AcmlVol              int64           `json:"acml_vol,string"`           // 누적 거래량
 	AcmlTrPbmn           int64           `json:"acml_tr_pbmn,string"`       // 누적 거래 대금
@@ -151,13 +152,13 @@ type InquireDailyFuopchartpriceOutput1 struct {
 	Basis                decimal.Decimal `json:"basis"`                     // 베이시스
 	Kospi200Nmix         decimal.Decimal `json:"kospi200_nmix"`             // KOSPI200 지수
 	Kospi200PrdyVrss     decimal.Decimal `json:"kospi200_prdy_vrss"`        // KOSPI200 전일 대비
-	Kospi200PrdyCtrt     float64         `json:"kospi200_prdy_ctrt,string"` // KOSPI200 전일 대비율
+	Kospi200PrdyCtrt     kistypes.Float  `json:"kospi200_prdy_ctrt"`        // KOSPI200 전일 대비율
 	Kospi200PrdyVrssSign string          `json:"kospi200_prdy_vrss_sign"`   // 전일 대비 부호
 	HtsOtstStplQty       int64           `json:"hts_otst_stpl_qty,string"`  // HTS 미결제 약정 수량
 	OtstStplQtyIcdc      int64           `json:"otst_stpl_qty_icdc,string"` // 미결제 약정 수량 증감
-	TdayRltv             float64         `json:"tday_rltv,string"`          // 당일 체결강도
+	TdayRltv             kistypes.Float  `json:"tday_rltv"`                 // 당일 체결강도
 	HtsThpr              decimal.Decimal `json:"hts_thpr"`                  // HTS 이론가
-	Dprt                 float64         `json:"dprt,string"`               // 괴리율
+	Dprt                 kistypes.Float  `json:"dprt"`                      // 괴리율
 }
 
 // InquireDailyFuopchartpriceOutput2Item 는 선물옵션 기간별 시세 캔들 (8 필드).

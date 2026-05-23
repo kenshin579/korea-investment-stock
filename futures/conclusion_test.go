@@ -38,7 +38,7 @@ func TestClient_ExpPriceTrend(t *testing.T) {
 	assert.Equal(t, "2", got.Output1.AntcCntgVrssSign)
 	antcVrss, _ := decimal.NewFromString("2.50")
 	assert.True(t, antcVrss.Equal(got.Output1.FutsAntcCntgVrss))
-	assert.InDelta(t, 0.70, got.Output1.AntcCntgPrdyCtrt, 0.001)
+	assert.InDelta(t, 0.70, float64(got.Output1.AntcCntgPrdyCtrt), 0.001)
 	sdpr, _ := decimal.NewFromString("361.25")
 	assert.True(t, sdpr.Equal(got.Output1.FutsSdpr))
 

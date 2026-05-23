@@ -1,5 +1,19 @@
 # CHANGELOG
 
+## [1.27.0] - 2026-05-23
+
+### Fixed
+- 해외 응답의 부호(`+`) 붙은 등락 문자열(`"+1.26"`) 파싱 실패 수정. `float64,string` 태그는
+  JSON number 의 leading `+` 를 거부해 해외 quote/chart 가 상승 값에서 전부 깨졌다. 빈 문자열
+  `""` 도 동일 실패였다.
+
+### Changed (BREAKING — response struct field types)
+- `overseas`/`overseasfutures`/`futures` 패키지의 `float64,string` 응답 필드(약 62개)를
+  신규 `kistypes.Float` 타입으로 교체. 소비자는 `float64(x.Field)` 변환 필요(컴파일 타임 노출).
+
+### Added
+- `kistypes` 패키지 — `+`/`-`/빈 문자열을 허용하는 tolerant `Float` 타입.
+
 ## [1.26.0] - 2026-05-09
 
 ### Added — Phase 11.7 (WebSocket — 해외선물옵션 실시간 시세 2 EP)

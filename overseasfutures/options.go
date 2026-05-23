@@ -9,6 +9,7 @@ import (
 	"github.com/shopspring/decimal"
 
 	"github.com/kenshin579/korea-investment-stock/internal/httpclient"
+	"github.com/kenshin579/korea-investment-stock/kistypes"
 )
 
 // ─── EP1: InquireTimeOptchartprice ───────────────────────────────────────────
@@ -379,16 +380,16 @@ func (c *Client) OptTickCcnl(ctx context.Context, params CcnlParams) (*OptTickCc
 // OptAskingPriceOutput1 는 해외옵션 호가 현재 시세 요약 (10 필드).
 // DISTINCT: 선물 InquireAskingPrice 대비 output1[5] 가 sttl_price(정산가) vs prev_price(전일종가).
 type OptAskingPriceOutput1 struct {
-	OpenPrice     decimal.Decimal `json:"open_price"`            // 시가
-	HighPrice     decimal.Decimal `json:"high_price"`            // 고가
-	LowpRice      decimal.Decimal `json:"lowp_rice"`             // 저가 (docs 오타 그대로 보존)
-	LastPrice     decimal.Decimal `json:"last_price"`            // 현재가
-	SttlPrice     decimal.Decimal `json:"sttl_price"`            // 정산가 (옵션 추가 필드 — 선물 prev_price 와 상이)
-	Vol           int64           `json:"vol,string"`            // 거래량
-	PrevDiffPrice decimal.Decimal `json:"prev_diff_price"`       // 전일대비가
-	PrevDiffRate  float64         `json:"prev_diff_rate,string"` // 전일대비율
-	QuotDate      string          `json:"quot_date"`             // 호가수신일자
-	QuotTime      string          `json:"quot_time"`             // 호가수신시각
+	OpenPrice     decimal.Decimal `json:"open_price"`      // 시가
+	HighPrice     decimal.Decimal `json:"high_price"`      // 고가
+	LowpRice      decimal.Decimal `json:"lowp_rice"`       // 저가 (docs 오타 그대로 보존)
+	LastPrice     decimal.Decimal `json:"last_price"`      // 현재가
+	SttlPrice     decimal.Decimal `json:"sttl_price"`      // 정산가 (옵션 추가 필드 — 선물 prev_price 와 상이)
+	Vol           int64           `json:"vol,string"`      // 거래량
+	PrevDiffPrice decimal.Decimal `json:"prev_diff_price"` // 전일대비가
+	PrevDiffRate  kistypes.Float  `json:"prev_diff_rate"`  // 전일대비율
+	QuotDate      string          `json:"quot_date"`       // 호가수신일자
+	QuotTime      string          `json:"quot_time"`       // 호가수신시각
 }
 
 // OptAskingPriceOutput2Item 는 해외옵션 호가 레벨 (6 필드).
@@ -521,37 +522,37 @@ func (c *Client) OptDetail(ctx context.Context, code string) (*OptDetailData, er
 // DISTINCT: 선물 InquirePrice 대비 필드 순서/구성 상이. proc_date/proc_time 앞에 위치.
 // sttl_price Required=N (Optional).
 type OptPriceOutput1 struct {
-	ProcDate      string          `json:"proc_date"`             // 최종처리일자
-	ProcTime      string          `json:"proc_time"`             // 최종처리시각
-	OpenPrice     decimal.Decimal `json:"open_price"`            // 시가
-	HighPrice     decimal.Decimal `json:"high_price"`            // 고가
-	LowPrice      decimal.Decimal `json:"low_price"`             // 저가
-	LastPrice     decimal.Decimal `json:"last_price"`            // 현재가
-	Vol           int64           `json:"vol,string"`            // 누적거래수량
-	PrevDiffFlag  string          `json:"prev_diff_flag"`        // 전일대비구분
-	PrevDiffPrice decimal.Decimal `json:"prev_diff_price"`       // 전일대비가격
-	PrevDiffRate  float64         `json:"prev_diff_rate,string"` // 전일대비율
-	BidQntt       int64           `json:"bid_qntt,string"`       // 매수1수량
-	BidPrice      decimal.Decimal `json:"bid_price"`             // 매수1호가
-	AskQntt       int64           `json:"ask_qntt,string"`       // 매도1수량
-	AskPrice      decimal.Decimal `json:"ask_price"`             // 매도1호가
-	TrstMgn       decimal.Decimal `json:"trst_mgn"`              // 증거금
-	ExchCd        string          `json:"exch_cd"`               // 거래소코드
-	CrcCd         string          `json:"crc_cd"`                // 거래통화
-	TrdFrDate     string          `json:"trd_fr_date"`           // 상장일
-	ExprDate      string          `json:"expr_date"`             // 만기일
-	TrdToDate     string          `json:"trd_to_date"`           // 최종거래일
-	RemnCnt       string          `json:"remn_cnt"`              // 잔존일수
-	LastQntt      int64           `json:"last_qntt,string"`      // 체결량
-	TotAskQntt    int64           `json:"tot_ask_qntt,string"`   // 총매도잔량
-	TotBidQntt    int64           `json:"tot_bid_qntt,string"`   // 총매수잔량
-	TickSize      decimal.Decimal `json:"tick_size"`             // 틱사이즈
-	OpenDate      string          `json:"open_date"`             // 장개시일자
-	OpenTime      string          `json:"open_time"`             // 장개시시각
-	CloseDate     string          `json:"close_date"`            // 장종료일자
-	CloseTime     string          `json:"close_time"`            // 장종료시각
-	Sbsnsdate     string          `json:"sbsnsdate"`             // 영업일자
-	SttlPrice     decimal.Decimal `json:"sttl_price"`            // 정산가 (Optional — Required=N)
+	ProcDate      string          `json:"proc_date"`           // 최종처리일자
+	ProcTime      string          `json:"proc_time"`           // 최종처리시각
+	OpenPrice     decimal.Decimal `json:"open_price"`          // 시가
+	HighPrice     decimal.Decimal `json:"high_price"`          // 고가
+	LowPrice      decimal.Decimal `json:"low_price"`           // 저가
+	LastPrice     decimal.Decimal `json:"last_price"`          // 현재가
+	Vol           int64           `json:"vol,string"`          // 누적거래수량
+	PrevDiffFlag  string          `json:"prev_diff_flag"`      // 전일대비구분
+	PrevDiffPrice decimal.Decimal `json:"prev_diff_price"`     // 전일대비가격
+	PrevDiffRate  kistypes.Float  `json:"prev_diff_rate"`      // 전일대비율
+	BidQntt       int64           `json:"bid_qntt,string"`     // 매수1수량
+	BidPrice      decimal.Decimal `json:"bid_price"`           // 매수1호가
+	AskQntt       int64           `json:"ask_qntt,string"`     // 매도1수량
+	AskPrice      decimal.Decimal `json:"ask_price"`           // 매도1호가
+	TrstMgn       decimal.Decimal `json:"trst_mgn"`            // 증거금
+	ExchCd        string          `json:"exch_cd"`             // 거래소코드
+	CrcCd         string          `json:"crc_cd"`              // 거래통화
+	TrdFrDate     string          `json:"trd_fr_date"`         // 상장일
+	ExprDate      string          `json:"expr_date"`           // 만기일
+	TrdToDate     string          `json:"trd_to_date"`         // 최종거래일
+	RemnCnt       string          `json:"remn_cnt"`            // 잔존일수
+	LastQntt      int64           `json:"last_qntt,string"`    // 체결량
+	TotAskQntt    int64           `json:"tot_ask_qntt,string"` // 총매도잔량
+	TotBidQntt    int64           `json:"tot_bid_qntt,string"` // 총매수잔량
+	TickSize      decimal.Decimal `json:"tick_size"`           // 틱사이즈
+	OpenDate      string          `json:"open_date"`           // 장개시일자
+	OpenTime      string          `json:"open_time"`           // 장개시시각
+	CloseDate     string          `json:"close_date"`          // 장종료일자
+	CloseTime     string          `json:"close_time"`          // 장종료시각
+	Sbsnsdate     string          `json:"sbsnsdate"`           // 영업일자
+	SttlPrice     decimal.Decimal `json:"sttl_price"`          // 정산가 (Optional — Required=N)
 }
 
 // OptPriceData 는 해외옵션 현재가 응답 (output1 단일).
