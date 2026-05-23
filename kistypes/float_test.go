@@ -25,6 +25,9 @@ func TestFloat_UnmarshalJSON(t *testing.T) {
 		{"null", `null`, 0, false},
 		{"zero", `"0"`, 0, false},
 		{"invalid", `"abc"`, 0, true},
+		{"nan", `"NaN"`, 0, true},
+		{"inf", `"Inf"`, 0, true},
+		{"neg inf", `"-Inf"`, 0, true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

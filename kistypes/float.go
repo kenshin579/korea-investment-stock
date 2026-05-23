@@ -2,6 +2,8 @@
 package kistypes
 
 import (
+	"fmt"
+	"math"
 	"strconv"
 	"strings"
 )
@@ -31,6 +33,9 @@ func (f *Float) UnmarshalJSON(b []byte) error {
 	v, err := strconv.ParseFloat(s, 64)
 	if err != nil {
 		return err
+	}
+	if math.IsNaN(v) || math.IsInf(v, 0) {
+		return fmt.Errorf("kistypes.Float: non-finite value %q", s)
 	}
 	*f = Float(v)
 	return nil
