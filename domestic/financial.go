@@ -93,19 +93,19 @@ type IncomeStatement struct {
 
 // IncomeStatementItem 은 손익계산서 응답의 한 행.
 type IncomeStatementItem struct {
-	StacYymm     string `json:"stac_yymm"`             // 결산 년월
-	SaleAccount  int64  `json:"sale_account,string"`   // 매출액
-	SaleCost     int64  `json:"sale_cost,string"`      // 매출 원가
-	SaleTotlPrfi int64  `json:"sale_totl_prfi,string"` // 매출 총 이익
-	DeprCost     string `json:"depr_cost"`             // 감가상각비 (출력 안 되면 "99.99" — string 그대로)
-	SellMang     string `json:"sell_mang"`             // 판매 및 관리비 (출력 안 되면 "99.99")
-	BsopPrti     int64  `json:"bsop_prti,string"`      // 영업 이익
-	BsopNonErnn  string `json:"bsop_non_ernn"`         // 영업 외 수익 (출력 안 되면 "99.99")
-	BsopNonExpn  string `json:"bsop_non_expn"`         // 영업 외 비용 (출력 안 되면 "99.99")
-	OpPrfi       int64  `json:"op_prfi,string"`        // 경상 이익
-	SpecPrfi     int64  `json:"spec_prfi,string"`      // 특별 이익
-	SpecLoss     int64  `json:"spec_loss,string"`      // 특별 손실
-	ThtrNtin     int64  `json:"thtr_ntin,string"`      // 당기순이익
+	StacYymm     string          `json:"stac_yymm"`      // 결산 년월
+	SaleAccount  decimal.Decimal `json:"sale_account"`   // 매출액
+	SaleCost     decimal.Decimal `json:"sale_cost"`      // 매출 원가
+	SaleTotlPrfi decimal.Decimal `json:"sale_totl_prfi"` // 매출 총 이익
+	DeprCost     string          `json:"depr_cost"`      // 감가상각비 (출력 안 되면 "99.99")
+	SellMang     string          `json:"sell_mang"`      // 판매 및 관리비 (출력 안 되면 "99.99")
+	BsopPrti     decimal.Decimal `json:"bsop_prti"`      // 영업 이익
+	BsopNonErnn  string          `json:"bsop_non_ernn"`  // 영업 외 수익 (출력 안 되면 "99.99")
+	BsopNonExpn  string          `json:"bsop_non_expn"`  // 영업 외 비용 (출력 안 되면 "99.99")
+	OpPrfi       decimal.Decimal `json:"op_prfi"`        // 경상 이익
+	SpecPrfi     decimal.Decimal `json:"spec_prfi"`      // 특별 이익
+	SpecLoss     decimal.Decimal `json:"spec_loss"`      // 특별 손실
+	ThtrNtin     decimal.Decimal `json:"thtr_ntin"`      // 당기순이익
 }
 
 // InquireIncomeStatementParams 는 손익계산서 조회 파라미터.
@@ -150,17 +150,17 @@ type BalanceSheet struct {
 
 // BalanceSheetItem 은 대차대조표 응답의 한 행.
 type BalanceSheetItem struct {
-	StacYymm  string `json:"stac_yymm"`         // 결산 년월
-	Cras      int64  `json:"cras,string"`       // 유동자산
-	Fxas      int64  `json:"fxas,string"`       // 고정자산
-	TotalAset int64  `json:"total_aset,string"` // 자산총계
-	FlowLblt  int64  `json:"flow_lblt,string"`  // 유동부채
-	FixLblt   int64  `json:"fix_lblt,string"`   // 고정부채
-	TotalLblt int64  `json:"total_lblt,string"` // 부채총계
-	Cpfn      int64  `json:"cpfn,string"`       // 자본금
-	CfpSurp   string `json:"cfp_surp"`          // 자본 잉여금 (출력 안 되면 "99.99")
-	PrfiSurp  string `json:"prfi_surp"`         // 이익 잉여금 (출력 안 되면 "99.99")
-	TotalCptl int64  `json:"total_cptl,string"` // 자본총계
+	StacYymm  string          `json:"stac_yymm"`  // 결산 년월
+	Cras      decimal.Decimal `json:"cras"`       // 유동자산
+	Fxas      decimal.Decimal `json:"fxas"`       // 고정자산
+	TotalAset decimal.Decimal `json:"total_aset"` // 자산총계
+	FlowLblt  decimal.Decimal `json:"flow_lblt"`  // 유동부채
+	FixLblt   decimal.Decimal `json:"fix_lblt"`   // 고정부채
+	TotalLblt decimal.Decimal `json:"total_lblt"` // 부채총계
+	Cpfn      decimal.Decimal `json:"cpfn"`       // 자본금
+	CfpSurp   string          `json:"cfp_surp"`   // 자본 잉여금 (출력 안 되면 "99.99")
+	PrfiSurp  string          `json:"prfi_surp"`  // 이익 잉여금 (출력 안 되면 "99.99")
+	TotalCptl decimal.Decimal `json:"total_cptl"` // 자본총계
 }
 
 // InquireBalanceSheetParams 는 대차대조표 조회 파라미터.
