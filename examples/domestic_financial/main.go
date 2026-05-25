@@ -51,7 +51,7 @@ func main() {
 			fmt.Println("  ... (이하 생략)")
 			break
 		}
-		fmt.Printf("  %s: 매출=%d 영업이익=%d 당기순이익=%d (백만원)\n",
+		fmt.Printf("  %s: 매출=%s 영업이익=%s 당기순이익=%s (백만원)\n",
 			item.StacYymm, item.SaleAccount, item.BsopPrti, item.ThtrNtin)
 	}
 
@@ -68,7 +68,7 @@ func main() {
 			fmt.Println("  ... (이하 생략)")
 			break
 		}
-		fmt.Printf("  %s: 자산=%d 부채=%d 자본=%d (백만원)\n",
+		fmt.Printf("  %s: 자산=%s 부채=%s 자본=%s (백만원)\n",
 			item.StacYymm, item.TotalAset, item.TotalLblt, item.TotalCptl)
 	}
 

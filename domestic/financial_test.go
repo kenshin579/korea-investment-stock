@@ -89,10 +89,10 @@ func TestClient_InquireIncomeStatement(t *testing.T) {
 
 	require.Len(t, res.Output, 1)
 	assert.Equal(t, "202412", res.Output[0].StacYymm)
-	assert.Equal(t, int64(279600000), res.Output[0].SaleAccount)
-	assert.Equal(t, int64(176000000), res.Output[0].SaleCost)
-	assert.Equal(t, int64(32830000), res.Output[0].BsopPrti)
-	assert.Equal(t, int64(23456000), res.Output[0].ThtrNtin)
+	assert.True(t, decimal.NewFromInt(279600000).Equal(res.Output[0].SaleAccount))
+	assert.True(t, decimal.NewFromInt(176000000).Equal(res.Output[0].SaleCost))
+	assert.True(t, decimal.NewFromInt(32830000).Equal(res.Output[0].BsopPrti))
+	assert.True(t, decimal.NewFromInt(23456000).Equal(res.Output[0].ThtrNtin))
 }
 
 func TestClient_InquireBalanceSheet(t *testing.T) {
@@ -114,10 +114,10 @@ func TestClient_InquireBalanceSheet(t *testing.T) {
 
 	require.Len(t, res.Output, 1)
 	assert.Equal(t, "202412", res.Output[0].StacYymm)
-	assert.Equal(t, int64(189000000), res.Output[0].Cras)
-	assert.Equal(t, int64(434000000), res.Output[0].TotalAset)
-	assert.Equal(t, int64(94000000), res.Output[0].TotalLblt)
-	assert.Equal(t, int64(340000000), res.Output[0].TotalCptl)
+	assert.True(t, decimal.NewFromInt(189000000).Equal(res.Output[0].Cras))
+	assert.True(t, decimal.NewFromInt(434000000).Equal(res.Output[0].TotalAset))
+	assert.True(t, decimal.NewFromInt(94000000).Equal(res.Output[0].TotalLblt))
+	assert.True(t, decimal.NewFromInt(340000000).Equal(res.Output[0].TotalCptl))
 }
 
 func TestClient_InquireProfitRatio(t *testing.T) {
