@@ -86,3 +86,4 @@ go mod tidy
 
 - Never commit directly to `main`. Always feature branch.
 - Tags: `v0.x.y` for Go releases. `python-final` for legacy Python reference.
+- Release: `./scripts/release.sh vX.Y.Z` — main/clean/sync 검증 → build/vet/test → 모듈 zip 검증 → `git tag` + push → `gh release create --generate-notes` (태그 + GitHub Release 동시 생성).
