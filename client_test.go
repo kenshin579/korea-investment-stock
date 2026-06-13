@@ -3,11 +3,14 @@ package kis
 import (
 	"context"
 	"net/http"
+	"path/filepath"
 	"testing"
 
 	"github.com/jarcoal/httpmock"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/kenshin579/korea-investment-stock/internal/token"
 )
 
 func TestNewClient_RequiresAllParams(t *testing.T) {
@@ -51,8 +54,11 @@ func TestNewClient_TokenIssue(t *testing.T) {
 			"access_token_token_expired": "2099-12-31 23:59:59"
 		}`))
 
+	// 격리된 빈 토큰 저장소 주입 — 사용자 실제 캐시(~/.cache/kis/token.json)에
+	// 의존하지 않고 mock 발급 경로를 타도록 한다.
 	c, err := NewClient("k", "s", "acc",
 		WithHTTPClient(&http.Client{Transport: httpmock.DefaultTransport}),
+		WithTokenStorage(token.NewFileStorage(filepath.Join(t.TempDir(), "tok.json"))),
 	)
 	require.NoError(t, err)
 	tok, err := c.IssueAccessToken(context.Background())

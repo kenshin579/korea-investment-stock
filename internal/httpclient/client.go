@@ -153,8 +153,8 @@ func (c *Client) Do(ctx context.Context, req *Request) (*Response, error) {
 		return nil, err
 	}
 
-	// 토큰 만료 → 1회 재발급 후 재시도
-	if resp != nil && isTokenExpired(resp) {
+	// 토큰 무효/만료 → 1회 재발급 후 재시도
+	if resp != nil && isTokenError(resp) {
 		newBearer, refErr := c.cfg.TokenMgr.Refresh(ctx)
 		if refErr != nil {
 			return nil, refErr
@@ -210,6 +210,19 @@ func (c *Client) send(ctx context.Context, req *Request, bearer string) (*Respon
 			continue
 		}
 
+		// 한투는 비즈니스 오류(토큰 무효 EGW00121 / 만료 EGW00123 등)도 HTTP 500 +
+		// JSON body 로 반환하는 경우가 있다. body 가 한투 응답(rt_cd 포함)이면 상태코드와
+		// 무관하게 그대로 반환해 Do() 의 토큰 refresh / APIError 처리에 맡긴다.
+		// (그렇지 않으면 결정적 토큰 오류를 일시적 5xx 로 오인해 헛되이 재시도한다.)
+		raw := httpResp.Body()
+		var resp Response
+		jsonErr := json.Unmarshal(raw, &resp)
+		if jsonErr == nil && resp.RtCode != "" {
+			resp.Raw = raw
+			return &resp, nil
+		}
+
+		// 한투 JSON 이 아닌 5xx/429 → 일시적 전송 오류로 보고 재시도.
 		if httpResp.StatusCode() >= 500 || httpResp.StatusCode() == http.StatusTooManyRequests {
 			lastHTTPErr = fmt.Errorf("HTTP %d", httpResp.StatusCode())
 			if attempt == c.cfg.Retries {
@@ -225,10 +238,9 @@ func (c *Client) send(ctx context.Context, req *Request, bearer string) (*Respon
 			continue
 		}
 
-		raw := httpResp.Body()
-		var resp Response
-		if err := json.Unmarshal(raw, &resp); err != nil {
-			return nil, fmt.Errorf("kis: parse: %w (body=%s)", err, string(raw))
+		// 2xx 인데 한투 JSON 파싱 실패.
+		if jsonErr != nil {
+			return nil, fmt.Errorf("kis: parse: %w (body=%s)", jsonErr, string(raw))
 		}
 		resp.Raw = raw
 		return &resp, nil
@@ -236,9 +248,17 @@ func (c *Client) send(ctx context.Context, req *Request, bearer string) (*Respon
 	return nil, errors.New("unreachable")
 }
 
-func isTokenExpired(r *Response) bool {
-	// 한투는 만료 시 msg_cd 가 EGW00123 또는 메시지에 "기간이 만료된 token" 포함.
-	return r.MsgCode == "EGW00123" || strings.Contains(r.Msg1, "기간이 만료된 token")
+// isTokenError 는 응답이 토큰 재발급으로 회복 가능한 인증 오류인지 판정한다.
+// 한투는 두 가지를 구분한다(둘 다 refresh 로 회복):
+//   - 만료: msg_cd EGW00123 또는 "기간이 만료된 token" (HTTP 200 으로 오기도 함)
+//   - 무효: msg_cd EGW00121 또는 "유효하지 않은 token" (HTTP 500 으로 오기도 함)
+func isTokenError(r *Response) bool {
+	switch r.MsgCode {
+	case "EGW00123", "EGW00121":
+		return true
+	}
+	return strings.Contains(r.Msg1, "기간이 만료된 token") ||
+		strings.Contains(r.Msg1, "유효하지 않은 token")
 }
 
 func backoff(attempt int) time.Duration {
