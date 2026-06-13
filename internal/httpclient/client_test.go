@@ -124,6 +124,32 @@ func TestClient_Do_Retry5xx(t *testing.T) {
 	assert.Equal(t, int64(2), calls.Load(), "5xx → retry")
 }
 
+// 실제 한투는 "유효하지 않은 token"(EGW00121) 을 HTTP 500 + JSON body 로 반환한다.
+// send() 가 이를 단순 5xx 로 보고 blind retry 하면 refresh 기회를 잃는다.
+// → 토큰 오류 body 면 1회 refresh 후 재시도해야 한다 (blind 3회 재시도 X).
+func TestClient_Do_InvalidTokenHTTP500AutoRefresh(t *testing.T) {
+	tm := &stubTokenMgr{bearer: "Bearer T"}
+	c := newTestClient(t, tm)
+	calls := atomic.Int64{}
+	httpmock.RegisterResponder(http.MethodGet, "=~/inquire-price",
+		func(req *http.Request) (*http.Response, error) {
+			calls.Add(1)
+			if req.Header.Get("Authorization") == "Bearer T-refreshed" {
+				return httpmock.NewStringResponse(200, `{"rt_cd":"0","msg_cd":"OK","msg1":"ok"}`), nil
+			}
+			// 오래된 토큰 → 한투가 HTTP 500 + EGW00121
+			return httpmock.NewStringResponse(500, `{"rt_cd":"1","msg_cd":"EGW00121","msg1":"유효하지 않은 token 입니다."}`), nil
+		})
+
+	resp, err := c.Do(context.Background(), &Request{
+		Method: http.MethodGet, Path: "/inquire-price", TrID: "FHKST01010100",
+	})
+	require.NoError(t, err)
+	assert.Equal(t, "0", resp.RtCode)
+	assert.Equal(t, int64(2), calls.Load(), "500 invalid-token → refresh 후 1회 재시도 (blind 5xx 재시도 아님)")
+	assert.GreaterOrEqual(t, tm.calls.Load(), int64(2), "token Get + Refresh 모두 호출")
+}
+
 func TestClient_Do_TokenError(t *testing.T) {
 	tm := &errorTokenMgr{err: errors.New("oauth down")}
 	c := newTestClient(t, tm)
