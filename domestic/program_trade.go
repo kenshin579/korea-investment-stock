@@ -41,6 +41,12 @@ type ProgramTradeByStockDailyItem struct {
 	WholNtbyTrPbmnIcdc2 int64           `json:"whol_ntby_tr_pbmn_icdc2,string"` // 전체 순매수 거래대금 증감 (trailing "2")
 }
 
+// UnmarshalJSON 은 KIS 무거래 종목의 빈 문자열 숫자 필드를 0 으로 관용 파싱한다.
+func (x *ProgramTradeByStockDailyItem) UnmarshalJSON(b []byte) error {
+	type alias ProgramTradeByStockDailyItem
+	return decodeLenientNumbers(b, (*alias)(x))
+}
+
 // InquireProgramTradeByStockDailyParams 는 종목별 프로그램매매추이(일별) 조회 파라미터.
 //
 // BaseDate: KIS docs 예시가 "002" prefix 포함 ("0020240308") — 호출자가 raw string 그대로 전달.
