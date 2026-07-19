@@ -167,6 +167,18 @@ type InvestorTradeByStockDailyItem struct {
 	EtcOrgtShnuTrPbmn int64 `json:"etc_orgt_shnu_tr_pbmn,string"`
 }
 
+// UnmarshalJSON 은 KIS 무거래 종목의 빈 문자열 숫자 필드를 0 으로 관용 파싱한다.
+func (x *InvestorTradeByStockDailySummary) UnmarshalJSON(b []byte) error {
+	type alias InvestorTradeByStockDailySummary
+	return decodeLenientNumbers(b, (*alias)(x))
+}
+
+// UnmarshalJSON 은 KIS 무거래 종목의 빈 문자열 숫자 필드를 0 으로 관용 파싱한다.
+func (x *InvestorTradeByStockDailyItem) UnmarshalJSON(b []byte) error {
+	type alias InvestorTradeByStockDailyItem
+	return decodeLenientNumbers(b, (*alias)(x))
+}
+
 // InquireInvestorTradeByStockDailyParams 는 종목별 투자자매매동향(일별) 조회 파라미터.
 type InquireInvestorTradeByStockDailyParams struct {
 	MarketCode string // FID_COND_MRKT_DIV_CODE — "J":KRX, "NX":NXT, "UN":통합. 빈 값=>"J"

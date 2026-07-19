@@ -55,6 +55,28 @@ func TestClient_InquireInvestorTradeByStockDaily(t *testing.T) {
 	assert.Equal(t, int64(-100000), res.Output2[0].OrgnNtbyQty)
 }
 
+func TestClient_InquireInvestorTradeByStockDaily_EmptyNumericFields(t *testing.T) {
+	httpmock.Activate()
+	defer httpmock.DeactivateAndReset()
+
+	httpmock.RegisterResponder(
+		http.MethodGet,
+		`=~/quotations/investor-trade-by-stock-daily`,
+		httpmock.NewStringResponder(200, loadFixtureString(t, "investor_trade_by_stock_daily_empty_fields.json")),
+	)
+
+	c := newTestClient(t)
+	res, err := c.InquireInvestorTradeByStockDaily(context.Background(), domestic.InquireInvestorTradeByStockDailyParams{
+		Symbol:   "F77200039",
+		BaseDate: "20260713",
+	})
+	require.NoError(t, err)
+	require.NotNil(t, res)
+	assert.True(t, res.Output1.StckPrpr.Equal(decimal.Zero))
+	assert.True(t, res.Output2[0].StckClpr.Equal(decimal.Zero))
+	assert.Equal(t, int64(0), res.Output2[0].FrgnNtbyQty)
+}
+
 func TestClient_InquireInvestorTimeByMarket(t *testing.T) {
 	httpmock.Activate()
 	defer httpmock.DeactivateAndReset()
