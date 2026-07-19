@@ -1,6 +1,7 @@
 package domestic
 
 import (
+	"bytes"
 	"encoding/json"
 	"reflect"
 	"strings"
@@ -22,6 +23,10 @@ var zeroKeyCache sync.Map
 func decodeLenientNumbers(data []byte, target any) error {
 	zeros := numericZeroKeys(reflect.TypeOf(target).Elem())
 	if len(zeros) == 0 {
+		return json.Unmarshal(data, target)
+	}
+	// 빈 문자열이 아예 없으면(대다수 정상 응답) map 왕복 없이 바로 디코드.
+	if !bytes.Contains(data, []byte(`""`)) {
 		return json.Unmarshal(data, target)
 	}
 	var m map[string]json.RawMessage
@@ -52,6 +57,7 @@ func isEmptyOrNull(raw json.RawMessage) bool {
 
 // numericZeroKeys 는 구조체 t 의 숫자 필드 json 키 -> 0 치환 바이트 맵을 반환한다(캐시).
 // decimal 및 ,string 숫자는 따옴표 "0", 평문 숫자는 bare 0 으로 치환한다.
+// 주의: 최상위(flat) 필드만 검사한다. 현재 대상 리프 구조체들은 모두 평면 구조라 충분하다.
 func numericZeroKeys(t reflect.Type) map[string]json.RawMessage {
 	if v, ok := zeroKeyCache.Load(t); ok {
 		return v.(map[string]json.RawMessage)
