@@ -27,7 +27,6 @@ func (i *Int) UnmarshalJSON(b []byte) error {
 		*i = 0
 		return nil
 	}
-	s = strings.TrimPrefix(s, "+")
 	v, err := strconv.ParseInt(s, 10, 64)
 	if err != nil {
 		return err
