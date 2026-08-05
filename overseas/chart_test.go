@@ -85,3 +85,24 @@ func TestClient_InquireDailyChartPrice(t *testing.T) {
 	require.Len(t, res.Output2, 2)
 	assert.Equal(t, "20260505", res.Output2[0].StckBsopDate)
 }
+
+func TestClient_InquireDailyChartPrice_BondEmptyVolume(t *testing.T) {
+	httpmock.Activate()
+	defer httpmock.DeactivateAndReset()
+
+	httpmock.RegisterResponder(
+		http.MethodGet,
+		`=~/quotations/inquire-daily-chartprice`,
+		httpmock.NewStringResponder(200, loadFixtureString(t, "daily_chart_price_bond_empty.json")),
+	)
+
+	c := newTestClient(t)
+	res, err := c.InquireDailyChartPrice(context.Background(), overseas.InquireDailyChartPriceParams{
+		MarketCode: "I", Symbol: "Y0202", FromDate: "20260729", ToDate: "20260805", Period: "D",
+	})
+	require.NoError(t, err)
+	assert.Equal(t, int64(0), int64(res.Output1.AcmlVol)) // "" → 0
+	require.Len(t, res.Output2, 1)
+	assert.Equal(t, int64(0), int64(res.Output2[0].AcmlVol))
+	assert.Equal(t, "4.12", res.Output2[0].OvrsNmixPrpr.String())
+}

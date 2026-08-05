@@ -113,11 +113,11 @@ type DailyChartPriceSummary struct {
 	PrdyVrssSign     string          `json:"prdy_vrss_sign"`
 	PrdyCtrt         kistypes.Float  `json:"prdy_ctrt"`
 	OvrsNmixPrdyClpr decimal.Decimal `json:"ovrs_nmix_prdy_clpr"`
-	AcmlVol          int64           `json:"acml_vol,string"`
+	AcmlVol          kistypes.Int    `json:"acml_vol"`
 	HtsKorIsnm       string          `json:"hts_kor_isnm"`
 	OvrsNmixPrpr     decimal.Decimal `json:"ovrs_nmix_prpr"`
 	StckShrnIscd     string          `json:"stck_shrn_iscd"`
-	PrdyVol          int64           `json:"prdy_vol,string"`
+	PrdyVol          kistypes.Int    `json:"prdy_vol"`
 	OvrsProdOprc     decimal.Decimal `json:"ovrs_prod_oprc"`
 	OvrsProdHgpr     decimal.Decimal `json:"ovrs_prod_hgpr"`
 	OvrsProdLwpr     decimal.Decimal `json:"ovrs_prod_lwpr"`
@@ -130,7 +130,7 @@ type DailyChartPriceCandle struct {
 	OvrsNmixOprc decimal.Decimal `json:"ovrs_nmix_oprc"`
 	OvrsNmixHgpr decimal.Decimal `json:"ovrs_nmix_hgpr"`
 	OvrsNmixLwpr decimal.Decimal `json:"ovrs_nmix_lwpr"`
-	AcmlVol      int64           `json:"acml_vol,string"`
+	AcmlVol      kistypes.Int    `json:"acml_vol"`
 	ModYn        string          `json:"mod_yn"`
 }
 
