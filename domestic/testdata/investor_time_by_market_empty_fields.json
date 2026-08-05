@@ -4,12 +4,12 @@
   "msg1": "정상처리 되었습니다.",
   "output": [
     {
-      "frgn_seln_vol": "5000000",
+      "frgn_seln_vol": "",
       "frgn_shnu_vol": "4876544",
       "frgn_ntby_qty": "-123456",
       "frgn_seln_tr_pbmn": "379500",
       "frgn_shnu_tr_pbmn": "370143",
-      "frgn_ntby_tr_pbmn": "-9357",
+      "frgn_ntby_tr_pbmn": "903",
       "prsn_seln_vol": "10000000",
       "prsn_shnu_vol": "10234567",
       "prsn_ntby_qty": "234567",

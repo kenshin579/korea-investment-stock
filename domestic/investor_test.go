@@ -102,9 +102,54 @@ func TestClient_InquireInvestorTimeByMarket(t *testing.T) {
 	assert.Equal(t, "KSP", capturedQuery.Get("fid_input_iscd"))
 	assert.Equal(t, "0001", capturedQuery.Get("fid_input_iscd_2"))
 
-	assert.Equal(t, int64(5000000), res.Output.FrgnSelnVol)
-	assert.Equal(t, int64(-123456), res.Output.FrgnNtbyQty)
-	assert.Equal(t, int64(234567), res.Output.PrsnNtbyQty)
+	require.Len(t, res.Output, 1)
+	assert.Equal(t, int64(5000000), res.Output[0].FrgnSelnVol)
+	assert.Equal(t, int64(-123456), res.Output[0].FrgnNtbyQty)
+	assert.Equal(t, int64(234567), res.Output[0].PrsnNtbyQty)
+}
+
+func TestClient_InquireInvestorTimeByMarket_EmptyNumericFields(t *testing.T) {
+	httpmock.Activate()
+	defer httpmock.DeactivateAndReset()
+
+	httpmock.RegisterResponder(
+		http.MethodGet,
+		`=~/quotations/inquire-investor-time-by-market`,
+		httpmock.NewStringResponder(200, loadFixtureString(t, "investor_time_by_market_empty_fields.json")),
+	)
+
+	c := newTestClient(t)
+	res, err := c.InquireInvestorTimeByMarket(context.Background(), domestic.InquireInvestorTimeByMarketParams{
+		Market:  "KSP",
+		SubCode: "0001",
+	})
+	require.NoError(t, err)
+	require.Len(t, res.Output, 1)
+	assert.Equal(t, int64(0), res.Output[0].FrgnSelnVol) // "" → 0
+	assert.Equal(t, int64(903), res.Output[0].FrgnNtbyTrPbmn)
+}
+
+// TestClient_InquireInvestorTimeByMarket_EmptyOutput 은 output 이 빈 배열로 내려올 때
+// 에러 없이 길이 0 슬라이스를 반환하는지 검증한다. 다운스트림이 Output[0] 을 인덱싱하므로
+// "호출자가 길이를 확인해야 한다"는 계약을 테스트로 고정한다.
+func TestClient_InquireInvestorTimeByMarket_EmptyOutput(t *testing.T) {
+	httpmock.Activate()
+	defer httpmock.DeactivateAndReset()
+
+	httpmock.RegisterResponder(
+		http.MethodGet,
+		`=~/quotations/inquire-investor-time-by-market`,
+		httpmock.NewStringResponder(200, loadFixtureString(t, "investor_time_by_market_empty_output.json")),
+	)
+
+	c := newTestClient(t)
+	res, err := c.InquireInvestorTimeByMarket(context.Background(), domestic.InquireInvestorTimeByMarketParams{
+		Market:  "KSP",
+		SubCode: "0001",
+	})
+	require.NoError(t, err)
+	require.NotNil(t, res)
+	assert.Len(t, res.Output, 0)
 }
 
 func TestClient_InquireInvestorDailyByMarket(t *testing.T) {

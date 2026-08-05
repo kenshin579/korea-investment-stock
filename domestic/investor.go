@@ -330,10 +330,11 @@ func (c *Client) InquireInvestorDailyByMarket(ctx context.Context, params Inquir
 // 한투 docs: docs/api/국내주식/시장별_투자자매매동향(시세).md
 // path: /uapi/domestic-stock/v1/quotations/inquire-investor-time-by-market
 type InvestorTimeByMarket struct {
-	Output InvestorTimeByMarketSnapshot `json:"output"`
+	Output []InvestorTimeByMarketSnapshot `json:"output"`
 }
 
-// InvestorTimeByMarketSnapshot 은 응답의 output (단일 객체, 시세).
+// InvestorTimeByMarketSnapshot 은 응답의 output 배열 원소(시세). 실측(2026-08-05) 상 output 은 배열이며
+// 통상 원소 1개를 담아 내려온다.
 //
 // 13 type 의 (ntby_qty/seln_vol/shnu_vol/seln_tr_pbmn/shnu_tr_pbmn/ntby_tr_pbmn) = 6 fields × 13 = 78 fields.
 // 일부 type 은 vol 표기. KIS docs 의 line 113~180+ 모든 필드 1:1 매핑.
@@ -425,6 +426,12 @@ type InvestorTimeByMarketSnapshot struct {
 	EtcOrgtSelnTrPbmn int64 `json:"etc_orgt_seln_tr_pbmn,string"`
 	EtcOrgtShnuTrPbmn int64 `json:"etc_orgt_shnu_tr_pbmn,string"`
 	EtcOrgtNtbyTrPbmn int64 `json:"etc_orgt_ntby_tr_pbmn,string"`
+}
+
+// UnmarshalJSON 은 KIS 가 일부 숫자 필드를 빈 문자열로 내려줄 때 0 으로 관용 파싱한다.
+func (x *InvestorTimeByMarketSnapshot) UnmarshalJSON(b []byte) error {
+	type alias InvestorTimeByMarketSnapshot
+	return decodeLenientNumbers(b, (*alias)(x))
 }
 
 // InquireInvestorTimeByMarketParams 는 시장별 투자자매매동향(시세) 조회 파라미터.
