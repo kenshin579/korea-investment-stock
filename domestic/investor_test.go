@@ -102,9 +102,31 @@ func TestClient_InquireInvestorTimeByMarket(t *testing.T) {
 	assert.Equal(t, "KSP", capturedQuery.Get("fid_input_iscd"))
 	assert.Equal(t, "0001", capturedQuery.Get("fid_input_iscd_2"))
 
-	assert.Equal(t, int64(5000000), res.Output.FrgnSelnVol)
-	assert.Equal(t, int64(-123456), res.Output.FrgnNtbyQty)
-	assert.Equal(t, int64(234567), res.Output.PrsnNtbyQty)
+	require.Len(t, res.Output, 1)
+	assert.Equal(t, int64(5000000), res.Output[0].FrgnSelnVol)
+	assert.Equal(t, int64(-123456), res.Output[0].FrgnNtbyQty)
+	assert.Equal(t, int64(234567), res.Output[0].PrsnNtbyQty)
+}
+
+func TestClient_InquireInvestorTimeByMarket_EmptyNumericFields(t *testing.T) {
+	httpmock.Activate()
+	defer httpmock.DeactivateAndReset()
+
+	httpmock.RegisterResponder(
+		http.MethodGet,
+		`=~/quotations/inquire-investor-time-by-market`,
+		httpmock.NewStringResponder(200, loadFixtureString(t, "investor_time_by_market_empty_fields.json")),
+	)
+
+	c := newTestClient(t)
+	res, err := c.InquireInvestorTimeByMarket(context.Background(), domestic.InquireInvestorTimeByMarketParams{
+		Market:  "KSP",
+		SubCode: "0001",
+	})
+	require.NoError(t, err)
+	require.Len(t, res.Output, 1)
+	assert.Equal(t, int64(0), res.Output[0].FrgnSelnVol) // "" → 0
+	assert.Equal(t, int64(903), res.Output[0].FrgnNtbyTrPbmn)
 }
 
 func TestClient_InquireInvestorDailyByMarket(t *testing.T) {
