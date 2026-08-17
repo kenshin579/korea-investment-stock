@@ -70,24 +70,55 @@ func TestInquireChkHoliday(t *testing.T) {
 
 	c := newTestClient(t)
 	res, err := c.InquireChkHoliday(context.Background(), domestic.InquireChkHolidayParams{
-		BassDt:    "20260507",
+		BassDt:    "20260817",
 		CtxAreaNk: "",
 		CtxAreaFk: "",
 	})
 	require.NoError(t, err)
-	require.NotNil(t, res.Output)
 
 	// non-FID UPPERCASE wire param keys 검증
-	assert.Equal(t, "20260507", capturedQuery.Get("BASS_DT"))
+	assert.Equal(t, "20260817", capturedQuery.Get("BASS_DT"))
 	assert.Empty(t, capturedQuery.Get("FID_INPUT_DATE_1"), "BASS_DT 파라미터만 사용해야 함 (FID_ 아님)")
 
-	out := res.Output
-	assert.Equal(t, "20260507", out.Bassdt)
-	assert.Equal(t, "04", out.WdayDvsnCd)
-	assert.Equal(t, "Y", out.BzdyYn)
-	assert.Equal(t, "Y", out.TrDayYn)
-	assert.Equal(t, "Y", out.OpndYn)
-	assert.Equal(t, "Y", out.SttlDayYn)
+	// output 은 배열이다. BASS_DT 하루가 아니라 그 날짜부터의 달력을 페이지로 돌려준다.
+	// 예전 픽스처는 output 을 단일 객체로 적어놨고 타입도 그에 맞춰져 있어서,
+	// 테스트는 통과하는데 실제 호출은 "cannot unmarshal array into Go struct field" 로
+	// 깨졌다. 실측 응답 형태로 고정한다.
+	require.Len(t, res.Output, 4)
+
+	// 첫 항목이 BASS_DT 인 것은 관측된 동작일 뿐이라 순서에 의존하지 않고 날짜로 찾는다.
+	find := func(bassDt string) *domestic.ChkHolidayItem {
+		for i := range res.Output {
+			if res.Output[i].Bassdt == bassDt {
+				return &res.Output[i]
+			}
+		}
+		return nil
+	}
+
+	// 2026-08-17(월)은 공휴일 — 영업일도 개장일도 아니다.
+	closed := find("20260817")
+	require.NotNil(t, closed)
+	assert.Equal(t, "02", closed.WdayDvsnCd)
+	assert.Equal(t, "N", closed.BzdyYn)
+	assert.Equal(t, "N", closed.OpndYn)
+	assert.Equal(t, "N", closed.SttlDayYn)
+	assert.Equal(t, "Y", closed.TrDayYn, "거래일여부는 개장일여부와 다르다 — 증권 업무 가능일 기준")
+
+	// 2026-08-18(화)은 정상 개장일.
+	open := find("20260818")
+	require.NotNil(t, open)
+	assert.Equal(t, "03", open.WdayDvsnCd)
+	assert.Equal(t, "Y", open.BzdyYn)
+	assert.Equal(t, "Y", open.OpndYn)
+
+	// 주말(토)도 개장일이 아니다.
+	sat := find("20260822")
+	require.NotNil(t, sat)
+	assert.Equal(t, "N", sat.OpndYn)
+
+	// 페이지가 더 남았다는 신호. 우리가 필요한 날짜가 1페이지에 있으면 연속조회는 불필요하다.
+	assert.Contains(t, res.Msg1, "조회가 계속됩니다")
 }
 
 func TestInquireViStatus(t *testing.T) {

@@ -97,7 +97,7 @@ type InquireChkHolidayParams struct {
 	CtxAreaFk string // CTX_AREA_FK (Y): 연속조회키 (공란 가능)
 }
 
-// ChkHolidayItem 은 휴장일 조회 단일 응답 객체.
+// ChkHolidayItem 은 휴장일 조회 응답의 한 행(하루).
 // wire key "bass_dt" → Go 필드 Bassdt.
 type ChkHolidayItem struct {
 	Bassdt     string `json:"bass_dt"`      // 기준일자 YYYYMMDD
@@ -109,17 +109,25 @@ type ChkHolidayItem struct {
 }
 
 // InquireChkHolidayResponse 는 휴장일 조회 응답.
+//
+// Output 은 **배열**이다. BASS_DT 하루가 아니라 그 날짜부터의 달력을 페이지 단위로
+// 돌려주며(실측 1페이지 24건), 더 남았으면 Msg1 이 "조회가 계속됩니다.." 가 된다.
+// KIS 공식 문서는 output 을 `Object` 로 적어놨지만 실제 응답은 Object Array 다.
+//
+// 따라서 호출부는 **원하는 날짜를 Bassdt 로 찾아야 한다.** 배열 순서에 의존하지 말 것 —
+// 첫 항목이 BASS_DT 인 것은 관측된 동작일 뿐 문서화된 보장이 아니다.
 type InquireChkHolidayResponse struct {
-	RtCd   string          `json:"rt_cd"`
-	MsgCd  string          `json:"msg_cd"`
-	Msg1   string          `json:"msg1"`
-	Output *ChkHolidayItem `json:"output"`
+	RtCd   string           `json:"rt_cd"`
+	MsgCd  string           `json:"msg_cd"`
+	Msg1   string           `json:"msg1"`
+	Output []ChkHolidayItem `json:"output"`
 }
 
 // InquireChkHoliday 는 휴장일을 조회한다 (CTCA0903R).
 //
 // 주의: 단시간 다수 호출 자제 (KIS docs 권장 1일 1회).
 // 파라미터명이 FID_ 접두어 없는 비표준 UPPERCASE 형식임에 유의 (BASS_DT/CTX_AREA_NK/CTX_AREA_FK).
+// 응답 Output 이 배열이라는 점은 InquireChkHolidayResponse 주석 참고.
 func (c *Client) InquireChkHoliday(ctx context.Context, params InquireChkHolidayParams) (*InquireChkHolidayResponse, error) {
 	resp, err := c.http.Do(ctx, &httpclient.Request{
 		Method: http.MethodGet,

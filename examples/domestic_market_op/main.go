@@ -55,18 +55,27 @@ func main() {
 	// ── EP5: 휴장일 조회 (CTCA0903R) ────────────────────────────────────────
 	// 주의: 단시간 다수 호출 자제 (KIS docs 권장 1일 1회).
 	// 파라미터명이 FID_ 접두어 없는 비표준 UPPERCASE 형식 (BASS_DT/CTX_AREA_NK/CTX_AREA_FK).
+	// output 은 배열이다 — BASS_DT 하루가 아니라 그 날짜부터의 달력을 페이지로 돌려준다.
+	bassDt := "20260817"
 	holiday, err := client.Domestic.InquireChkHoliday(ctx, domestic.InquireChkHolidayParams{
-		BassDt:    "20260507", // 조회기준일 YYYYMMDD
+		BassDt:    bassDt, // 조회기준일 YYYYMMDD
 		CtxAreaNk: "",
 		CtxAreaFk: "",
 	})
 	if err != nil {
 		log.Printf("[EP5] InquireChkHoliday error: %v", err)
-	} else if holiday.Output != nil {
-		out := holiday.Output
-		fmt.Printf("\n=== [EP5] 휴장일 조회 (%s) ===\n", out.Bassdt)
-		fmt.Printf("  요일구분=%s 영업일=%s 거래일=%s 개장일=%s 결제일=%s\n",
-			out.WdayDvsnCd, out.BzdyYn, out.TrDayYn, out.OpndYn, out.SttlDayYn)
+	} else {
+		fmt.Printf("\n=== [EP5] 휴장일 조회 (기준일 %s, %d건) ===\n", bassDt, len(holiday.Output))
+		// 배열 순서에 의존하지 말고 원하는 날짜를 찾는다.
+		for _, out := range holiday.Output {
+			if out.Bassdt != bassDt {
+				continue
+			}
+			fmt.Printf("  %s 요일구분=%s 영업일=%s 거래일=%s 개장일=%s 결제일=%s\n",
+				out.Bassdt, out.WdayDvsnCd, out.BzdyYn, out.TrDayYn, out.OpndYn, out.SttlDayYn)
+			// 장이 열려 시세가 갱신되는 날인지는 개장일여부(opnd_yn)로 판단한다.
+			fmt.Printf("  → 개장일? %v\n", out.OpndYn == "Y")
+		}
 	}
 
 	// ── EP6: 변동성완화장치(VI) 현황 (FHPST01390000) ─────────────────────────
