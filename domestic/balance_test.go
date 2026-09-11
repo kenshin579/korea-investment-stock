@@ -3,6 +3,7 @@ package domestic_test
 import (
 	"context"
 	"net/http"
+	"strings"
 	"testing"
 
 	"github.com/jarcoal/httpmock"
@@ -72,6 +73,43 @@ func TestClient_InquireBalance_Empty(t *testing.T) {
 	assert.Equal(t, int64(0), int64(res.Output2[0].CmaEvluAmt), `"" → 0`)
 	assert.Equal(t, 0.0, float64(res.Output2[0].AsstIcdcErngRt), `"" → 0`)
 	assert.Equal(t, "", res.TrCont, "헤더 없으면 빈 값 = 마지막")
+}
+
+// KIS 는 예고 없이 숫자 포맷을 바꾼 전례가 있다. pchs_amt 같은 kistypes.Int 필드 하나가
+// "700000.00" 처럼 소수점이 붙어 와도 전체 응답 파싱이 깨지지 않아야 한다.
+func TestClient_InquireBalance_IntegralDecimalAmount(t *testing.T) {
+	httpmock.Activate()
+	defer httpmock.DeactivateAndReset()
+
+	fixture := loadFixtureString(t, "inquire_balance_success.json")
+	modified := strings.Replace(fixture, `"pchs_amt": "700000"`, `"pchs_amt": "700000.00"`, 1)
+	require.Contains(t, modified, `"pchs_amt": "700000.00"`, "치환이 실제로 적용됐는지 확인")
+	require.NotEqual(t, fixture, modified)
+
+	httpmock.RegisterResponder(http.MethodGet, `=~/trading/inquire-balance`,
+		httpmock.NewStringResponder(200, modified))
+
+	c := newTestClient(t)
+	res, err := c.InquireBalance(context.Background(), domestic.InquireBalanceParams{})
+	require.NoError(t, err)
+	require.Len(t, res.Output1, 2)
+	assert.Equal(t, int64(700000), int64(res.Output1[0].PchsAmt))
+}
+
+// 모의투자 도메인(openapivts)이면 TR ID 가 VTTC8434R 로 바뀐다.
+func TestClient_InquireBalance_PaperTrID(t *testing.T) {
+	httpmock.Activate()
+	defer httpmock.DeactivateAndReset()
+
+	httpmock.RegisterResponder(http.MethodGet, `=~/trading/inquire-balance`,
+		func(req *http.Request) (*http.Response, error) {
+			assert.Equal(t, "VTTC8434R", req.Header.Get("tr_id"), "모의투자 TR ID")
+			return httpmock.NewStringResponse(200, loadFixtureString(t, "inquire_balance_empty.json")), nil
+		})
+
+	c := newPaperTestClient(t)
+	_, err := c.InquireBalance(context.Background(), domestic.InquireBalanceParams{})
+	require.NoError(t, err)
 }
 
 func TestClient_InquireBalance_ParamsOverride(t *testing.T) {

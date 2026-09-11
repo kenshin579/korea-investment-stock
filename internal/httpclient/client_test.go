@@ -237,6 +237,28 @@ func TestClient_Account(t *testing.T) {
 	assert.Equal(t, "01", prdt)
 }
 
+func TestClient_IsPaper(t *testing.T) {
+	paper := New(Config{
+		BaseURL:   "https://openapivts.koreainvestment.com:29443",
+		AppKey:    "ak",
+		AppSecret: "as",
+		AccountNo: "12345678-01",
+		Limiter:   ratelimit.New(1000),
+		TokenMgr:  &stubTokenMgr{bearer: "b"},
+	})
+	assert.True(t, paper.IsPaper(), "openapivts 도메인은 모의투자")
+
+	real := New(Config{
+		BaseURL:   "https://openapi.koreainvestment.com:9443",
+		AppKey:    "ak",
+		AppSecret: "as",
+		AccountNo: "12345678-01",
+		Limiter:   ratelimit.New(1000),
+		TokenMgr:  &stubTokenMgr{bearer: "b"},
+	})
+	assert.False(t, real.IsPaper(), "openapi 도메인은 실전")
+}
+
 func TestHasNext(t *testing.T) {
 	assert.True(t, HasNext("F"))
 	assert.True(t, HasNext("M"))

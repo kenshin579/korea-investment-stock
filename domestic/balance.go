@@ -10,14 +10,20 @@ import (
 	"github.com/kenshin579/korea-investment-stock/kistypes"
 )
 
-// Balance 는 주식잔고조회 (TTTC8434R) 응답.
+// 주식잔고조회 TR ID. 실전/모의가 다르다.
+const (
+	trIDBalanceReal  = "TTTC8434R"
+	trIDBalancePaper = "VTTC8434R"
+)
+
+// Balance 는 주식잔고조회 (TTTC8434R/VTTC8434R) 응답.
 //
 // 한투 docs: docs/api/국내주식/주식잔고조회.md
 // path: /uapi/domestic-stock/v1/trading/inquire-balance
 //
-// 한 번의 호출에 최대 50건. 더 있으면 TrCont 가 "F"/"M" 이고 CtxAreaFk100/CtxAreaNk100 을
+// 한 번의 호출에 실전 최대 50건(모의 20건). 더 있으면 TrCont 가 "F"/"M" 이고 CtxAreaFk100/CtxAreaNk100 을
 // 다음 호출 파라미터로 넘긴다. 당일 전량 매도한 종목은 HldgQty 0 으로 남아 있을 수 있다(D-2 이후 사라짐).
-// 모의투자(VTTC8434R)는 지원하지 않는다 — 실전 TR 고정.
+// 모의투자 도메인(WithPaperEnv)이면 VTTC8434R 로 자동 분기한다(모의는 한 번에 최대 20건).
 type Balance struct {
 	Output1      []BalanceItem    `json:"output1"`        // 보유 종목
 	Output2      []BalanceSummary `json:"output2"`        // 계좌 요약 (1행)
@@ -109,19 +115,23 @@ func balanceParamOr(v, def string) string {
 	return v
 }
 
-// InquireBalance 는 주식잔고조회 1페이지 호출 (최대 50건).
+// InquireBalance 는 주식잔고조회 1페이지 호출 (실전 최대 50건, 모의 20건).
 //
 // 한투 docs: docs/api/국내주식/주식잔고조회.md
-// path: /uapi/domestic-stock/v1/trading/inquire-balance (TTTC8434R)
+// path: /uapi/domestic-stock/v1/trading/inquire-balance (실전 TTTC8434R, 모의 VTTC8434R)
 func (c *Client) InquireBalance(ctx context.Context, params InquireBalanceParams) (*Balance, error) {
 	cano, prdtCd, err := c.http.Account()
 	if err != nil {
 		return nil, err
 	}
+	trID := trIDBalanceReal
+	if c.http.IsPaper() {
+		trID = trIDBalancePaper
+	}
 	resp, err := c.http.Do(ctx, &httpclient.Request{
 		Method: http.MethodGet,
 		Path:   "/uapi/domestic-stock/v1/trading/inquire-balance",
-		TrID:   "TTTC8434R",
+		TrID:   trID,
 		TrCont: params.TrCont,
 		Query: map[string]string{
 			"CANO":                  cano,

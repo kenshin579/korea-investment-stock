@@ -16,6 +16,7 @@ type Int int64
 //   - "null" / 빈 입력 → 0
 //   - 따옴표로 감싼 정수 문자열: "+123", "-45", "123", ""(→0)
 //   - 따옴표 없는 JSON number: 678
+//   - 소수점 이하가 모두 0 인 정수 문자열: "123.00" (→123). "123.45" 는 에러
 func (i *Int) UnmarshalJSON(b []byte) error {
 	s := strings.TrimSpace(string(b))
 	if s == "" || s == "null" {
@@ -29,8 +30,27 @@ func (i *Int) UnmarshalJSON(b []byte) error {
 	}
 	v, err := strconv.ParseInt(s, 10, 64)
 	if err != nil {
+		if dot := strings.IndexByte(s, '.'); dot >= 0 {
+			intPart, fracPart := s[:dot], s[dot+1:]
+			if fracPart != "" && isAllZero(fracPart) {
+				if v2, err2 := strconv.ParseInt(intPart, 10, 64); err2 == nil {
+					*i = Int(v2)
+					return nil
+				}
+			}
+		}
 		return err
 	}
 	*i = Int(v)
 	return nil
+}
+
+// isAllZero 는 s 가 비어있지 않고 모두 '0' 문자로만 구성됐는지 확인한다.
+func isAllZero(s string) bool {
+	for i := 0; i < len(s); i++ {
+		if s[i] != '0' {
+			return false
+		}
+	}
+	return true
 }

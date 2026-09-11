@@ -283,6 +283,11 @@ func backoff(attempt int) time.Duration {
 // HasNext 는 응답 헤더 tr_cont 가 "다음 데이터 있음"(F/M) 인지 판정한다. D/E/빈 값은 마지막 페이지.
 func HasNext(trCont string) bool { return trCont == "F" || trCont == "M" }
 
+// IsPaper 는 모의투자 도메인(openapivts)으로 설정됐는지 반환한다. 실전/모의 TR ID 가 다른 API 가 분기에 쓴다.
+func (c *Client) IsPaper() bool {
+	return strings.Contains(c.cfg.BaseURL, "openapivts.")
+}
+
 // Account 는 설정된 계좌번호를 CANO(종합계좌번호 8자리)와 ACNT_PRDT_CD(계좌상품코드 2자리)로 나눈다.
 // 계좌·주문 계열 API 의 쿼리 파라미터에 쓴다.
 func (c *Client) Account() (cano, prdtCd string, err error) {
