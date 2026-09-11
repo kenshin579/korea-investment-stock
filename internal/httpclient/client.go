@@ -289,7 +289,7 @@ func (c *Client) Account() (cano, prdtCd string, err error) {
 	return SplitAccountNo(c.cfg.AccountNo)
 }
 
-// SplitAccountNo 는 "12345678-01" 또는 "1234567801" 형태의 계좌번호를 8-2 로 나눈다.
+// SplitAccountNo 는 "12345678-01" 또는 "1234567801" 형태(숫자만)의 계좌번호를 8-2 로 나눈다.
 func SplitAccountNo(accountNo string) (cano, prdtCd string, err error) {
 	s := strings.TrimSpace(accountNo)
 	if i := strings.IndexByte(s, '-'); i >= 0 {
@@ -297,8 +297,22 @@ func SplitAccountNo(accountNo string) (cano, prdtCd string, err error) {
 	} else if len(s) == 10 {
 		cano, prdtCd = s[:8], s[8:]
 	}
-	if len(cano) != 8 || len(prdtCd) != 2 {
-		return "", "", fmt.Errorf("kis: account number must be 8-2 form like 12345678-01, got %q", accountNo)
+	if len(cano) != 8 || len(prdtCd) != 2 || !allDigits(cano) || !allDigits(prdtCd) {
+		return "", "", fmt.Errorf("kis: account number must be 8-2 digits like 12345678-01 (got %d chars)", len(s))
 	}
 	return cano, prdtCd, nil
+}
+
+// allDigits 는 s 가 비어있지 않고 모두 ASCII 숫자인지 확인한다.
+func allDigits(s string) bool {
+	if s == "" {
+		return false
+	}
+	for i := 0; i < len(s); i++ {
+		b := s[i]
+		if b < '0' || b > '9' {
+			return false
+		}
+	}
+	return true
 }

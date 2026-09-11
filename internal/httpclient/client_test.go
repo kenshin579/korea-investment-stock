@@ -192,6 +192,7 @@ func TestClient_Do_TrContEmptyNotSent(t *testing.T) {
 	c := newTestClient(t, tm)
 	httpmock.RegisterResponder(http.MethodGet, "=~/inquire-balance",
 		func(req *http.Request) (*http.Response, error) {
+			// net/http 는 헤더 키를 canonical 형태(Tr_cont)로 저장한다
 			_, has := req.Header["Tr_cont"]
 			assert.False(t, has, "초기 조회는 tr_cont 헤더를 보내지 않는다")
 			return httpmock.NewStringResponse(200, `{"rt_cd":"0","msg_cd":"OK","msg1":"ok"}`), nil
@@ -212,6 +213,9 @@ func TestSplitAccountNo(t *testing.T) {
 		{"1234-01", "", "", true},
 		{"12345678-1", "", "", true},
 		{"", "", "", true},
+		{"abcdefgh-01", "", "", true},
+		{"1234567a-01", "", "", true},
+		{"12345678-0a", "", "", true},
 	}
 	for _, tc := range cases {
 		cano, prdt, err := SplitAccountNo(tc.in)
@@ -239,4 +243,30 @@ func TestHasNext(t *testing.T) {
 	assert.False(t, HasNext("D"))
 	assert.False(t, HasNext("E"))
 	assert.False(t, HasNext(""))
+}
+
+// 토큰 재발급(1회 재시도) 경로에서도 tr_cont 요청 헤더가 재전송되고, 최종 응답의 tr_cont
+// 헤더가 정상적으로 캡처되는지 확인한다.
+func TestClient_Do_TrContSurvivesTokenRefresh(t *testing.T) {
+	tm := &stubTokenMgr{bearer: "Bearer T"}
+	c := newTestClient(t, tm)
+	calls := atomic.Int64{}
+	httpmock.RegisterResponder(http.MethodGet, "=~/inquire-balance",
+		func(req *http.Request) (*http.Response, error) {
+			assert.Equal(t, "N", req.Header.Get("tr_cont"), "재시도 요청에도 tr_cont 전달")
+			n := calls.Add(1)
+			if n == 1 {
+				return httpmock.NewStringResponse(200, `{"rt_cd":"1","msg_cd":"EGW00123","msg1":"기간이 만료된 token 입니다"}`), nil
+			}
+			resp := httpmock.NewStringResponse(200, `{"rt_cd":"0","msg_cd":"OK","msg1":"ok"}`)
+			resp.Header.Set("tr_cont", "M")
+			return resp, nil
+		})
+
+	resp, err := c.Do(context.Background(), &Request{
+		Method: http.MethodGet, Path: "/inquire-balance", TrID: "TTTC8434R", TrCont: "N",
+	})
+	require.NoError(t, err)
+	assert.Equal(t, "0", resp.RtCode)
+	assert.Equal(t, "M", resp.TrCont, "재발급 후 최종 응답 tr_cont 캡처")
 }
