@@ -2,6 +2,7 @@ package domestic_test
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"strings"
 	"testing"
@@ -144,6 +145,7 @@ func TestClient_InquireBalanceAll_FollowsTrCont(t *testing.T) {
 			switch calls {
 			case 1:
 				assert.Equal(t, "", req.Header.Get("tr_cont"))
+				assert.Equal(t, "", q.Get("CTX_AREA_FK100"))
 				assert.Equal(t, "", q.Get("CTX_AREA_NK100"))
 				resp := httpmock.NewStringResponse(200, loadFixtureString(t, "inquire_balance_page1.json"))
 				resp.Header.Set("tr_cont", "M")
@@ -162,7 +164,7 @@ func TestClient_InquireBalanceAll_FollowsTrCont(t *testing.T) {
 
 	c := newTestClient(t)
 	// 호출자가 커서를 넣어도 첫 페이지부터 다시 읽는다.
-	res, err := c.InquireBalanceAll(context.Background(), domestic.InquireBalanceParams{TrCont: "N", CtxAreaNk100: "junk"})
+	res, err := c.InquireBalanceAll(context.Background(), domestic.InquireBalanceParams{TrCont: "N", CtxAreaFk100: "junk", CtxAreaNk100: "junk"})
 	require.NoError(t, err)
 	assert.Equal(t, 2, calls)
 	require.Len(t, res.Output1, 3, "1 + 2 건 이어 붙임")
@@ -190,9 +192,13 @@ func TestClient_InquireBalanceAll_SinglePage(t *testing.T) {
 func TestClient_InquireBalanceAll_PageCap(t *testing.T) {
 	httpmock.Activate()
 	defer httpmock.DeactivateAndReset()
+	calls := 0
 	httpmock.RegisterResponder(http.MethodGet, `=~/trading/inquire-balance`,
 		func(req *http.Request) (*http.Response, error) {
-			resp := httpmock.NewStringResponse(200, loadFixtureString(t, "inquire_balance_page1.json"))
+			calls++
+			// 커서가 매번 바뀌어야 새 미전진 가드를 통과해 상한(100)까지 도달한다.
+			body := strings.Replace(loadFixtureString(t, "inquire_balance_page1.json"), "NK-PAGE1", fmt.Sprintf("NK-%d", calls), 1)
+			resp := httpmock.NewStringResponse(200, body)
 			resp.Header.Set("tr_cont", "M") // 영원히 다음 있음
 			return resp, nil
 		})
@@ -201,5 +207,42 @@ func TestClient_InquireBalanceAll_PageCap(t *testing.T) {
 	_, err := c.InquireBalanceAll(context.Background(), domestic.InquireBalanceParams{})
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "exceeded")
-	assert.Equal(t, 100, httpmock.GetTotalCallCount())
+	assert.Equal(t, 100, calls)
+}
+
+func TestClient_InquireBalanceAll_CursorNotAdvancing(t *testing.T) {
+	httpmock.Activate()
+	defer httpmock.DeactivateAndReset()
+	httpmock.RegisterResponder(http.MethodGet, `=~/trading/inquire-balance`,
+		func(req *http.Request) (*http.Response, error) {
+			resp := httpmock.NewStringResponse(200, loadFixtureString(t, "inquire_balance_success.json")) // 커서 ""
+			resp.Header.Set("tr_cont", "M")
+			return resp, nil
+		})
+	c := newTestClient(t)
+	_, err := c.InquireBalanceAll(context.Background(), domestic.InquireBalanceParams{})
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "cursor did not advance")
+	assert.Equal(t, 1, httpmock.GetTotalCallCount())
+}
+
+func TestClient_InquireBalanceAll_PageErrorHasContext(t *testing.T) {
+	httpmock.Activate()
+	defer httpmock.DeactivateAndReset()
+	calls := 0
+	httpmock.RegisterResponder(http.MethodGet, `=~/trading/inquire-balance`,
+		func(req *http.Request) (*http.Response, error) {
+			calls++
+			if calls == 1 {
+				resp := httpmock.NewStringResponse(200, loadFixtureString(t, "inquire_balance_page1.json"))
+				resp.Header.Set("tr_cont", "M")
+				return resp, nil
+			}
+			return httpmock.NewStringResponse(200, `{"rt_cd":"1","msg_cd":"EGW00002","msg1":"서버 에러"}`), nil
+		})
+	c := newTestClient(t)
+	_, err := c.InquireBalanceAll(context.Background(), domestic.InquireBalanceParams{})
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "page 2")
+	assert.Contains(t, err.Error(), "EGW00002")
 }

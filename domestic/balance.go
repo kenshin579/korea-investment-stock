@@ -169,13 +169,14 @@ const maxBalancePages = 100
 // InquireBalanceAll 은 연속조회(tr_cont)를 따라가며 보유 종목 전체를 모은다.
 // params 의 TrCont/CtxArea* 는 무시하고 첫 페이지부터 읽는다.
 // Output1 은 모든 페이지를 이어 붙이고, Output2·CtxArea*·TrCont 는 마지막 페이지 값이다.
+// 중간 페이지 실패 시 부분 결과 없이 error 만 반환한다.
 func (c *Client) InquireBalanceAll(ctx context.Context, params InquireBalanceParams) (*Balance, error) {
 	params.TrCont, params.CtxAreaFk100, params.CtxAreaNk100 = "", "", ""
 	var all *Balance
 	for page := 0; page < maxBalancePages; page++ {
 		res, err := c.InquireBalance(ctx, params)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("kis: InquireBalanceAll: page %d: %w", page+1, err)
 		}
 		if all == nil {
 			all = res
@@ -186,6 +187,9 @@ func (c *Client) InquireBalanceAll(ctx context.Context, params InquireBalancePar
 		}
 		if !httpclient.HasNext(res.TrCont) {
 			return all, nil
+		}
+		if res.CtxAreaFk100 == params.CtxAreaFk100 && res.CtxAreaNk100 == params.CtxAreaNk100 {
+			return nil, fmt.Errorf("kis: InquireBalanceAll: tr_cont=%q but cursor did not advance (page %d)", res.TrCont, page+1)
 		}
 		params.TrCont, params.CtxAreaFk100, params.CtxAreaNk100 = "N", res.CtxAreaFk100, res.CtxAreaNk100
 	}
