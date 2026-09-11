@@ -24,6 +24,11 @@ func TestInt_UnmarshalJSON(t *testing.T) {
 		{"null", `null`, 0, false},
 		{"따옴표 없는 number", `678`, 678, false},
 		{"숫자 아님", `"abc"`, 0, true},
+		{"소수점 이하 0 (정수)", `"123.00"`, 123, false},
+		{"음수 + 소수점 이하 0", `"-45.0"`, -45, false},
+		{"플러스 부호 + 소수점 이하 0", `"+7.000"`, 7, false},
+		{"소수점 이하 0 아님", `"123.45"`, 0, true},
+		{"지수 표기 미허용", `"1e3"`, 0, true},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {

@@ -9,6 +9,7 @@
 - `daily_price_success.json` — 해외주식_기간별시세 (HHDFS76240000) 정상 응답
 - `daily_chart_price_success.json` — 해외주식 종목/지수/환율 기간별시세 (FHKST03030100) 정상 응답
 - `updown_rate_success.json` — 해외주식_상승율_하락율 (HHDFS76290000) 정상 응답
+- `inquire_balance_success.json` / `inquire_balance_page1.json` — 해외주식 잔고 (TTTS3012R) 정상 / 연속조회 첫 페이지. 계좌·종목·금액 모두 합성.
 
 각 JSON의 필드는 `docs/api/해외주식/<API>.md`의 응답 필드 정의에 1:1 매핑. 값은 합성 (실제 시세 아님).
 

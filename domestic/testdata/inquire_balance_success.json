@@ -1,0 +1,14 @@
+{
+  "rt_cd": "0",
+  "msg_cd": "KIOK0510",
+  "msg1": "조회가 완료되었습니다",
+  "ctx_area_fk100": "",
+  "ctx_area_nk100": "",
+  "output1": [
+    {"pdno": "005930", "prdt_name": "삼성전자", "trad_dvsn_name": "현금", "bfdy_buy_qty": "0", "bfdy_sll_qty": "0", "thdt_buyqty": "0", "thdt_sll_qty": "0", "hldg_qty": "10", "ord_psbl_qty": "10", "pchs_avg_pric": "70000.0000", "pchs_amt": "700000", "prpr": "75000", "evlu_amt": "750000", "evlu_pfls_amt": "50000", "evlu_pfls_rt": "7.14", "evlu_erng_rt": "0.00000000", "loan_dt": "", "loan_amt": "0", "stln_slng_chgs": "0", "expd_dt": "", "fltt_rt": "1.35000000", "bfdy_cprs_icdc": "1000", "item_mgna_rt_name": "40%", "grta_rt_name": "", "sbst_pric": "52500", "stck_loan_unpr": "0.0000"},
+    {"pdno": "379780", "prdt_name": "RISE 미국S&P500", "trad_dvsn_name": "현금", "bfdy_buy_qty": "0", "bfdy_sll_qty": "0", "thdt_buyqty": "0", "thdt_sll_qty": "0", "hldg_qty": "3", "ord_psbl_qty": "3", "pchs_avg_pric": "20000.0000", "pchs_amt": "60000", "prpr": "22000", "evlu_amt": "66000", "evlu_pfls_amt": "6000", "evlu_pfls_rt": "10.00", "evlu_erng_rt": "0.00000000", "loan_dt": "", "loan_amt": "0", "stln_slng_chgs": "0", "expd_dt": "", "fltt_rt": "-0.45000000", "bfdy_cprs_icdc": "-100", "item_mgna_rt_name": "20%", "grta_rt_name": "", "sbst_pric": "15400", "stck_loan_unpr": "0.0000"}
+  ],
+  "output2": [
+    {"dnca_tot_amt": "100000", "nxdy_excc_amt": "100000", "prvs_rcdl_excc_amt": "100000", "cma_evlu_amt": "0", "bfdy_buy_amt": "0", "thdt_buy_amt": "0", "nxdy_auto_rdpt_amt": "0", "bfdy_sll_amt": "0", "thdt_sll_amt": "0", "d2_auto_rdpt_amt": "0", "bfdy_tlex_amt": "0", "thdt_tlex_amt": "0", "tot_loan_amt": "0", "scts_evlu_amt": "816000", "tot_evlu_amt": "916000", "nass_amt": "916000", "fncg_gld_auto_rdpt_yn": "", "pchs_amt_smtl_amt": "760000", "evlu_amt_smtl_amt": "816000", "evlu_pfls_smtl_amt": "56000", "tot_stln_slng_chgs": "0", "bfdy_tot_asst_evlu_amt": "910000", "asst_icdc_amt": "6000", "asst_icdc_erng_rt": "0.00000000"}
+  ]
+}

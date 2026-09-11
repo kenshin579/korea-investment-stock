@@ -18,6 +18,7 @@ import (
 )
 
 const testBaseURL = "https://openapi.koreainvestment.com:9443"
+const testPaperBaseURL = "https://openapivts.koreainvestment.com:29443"
 
 // loadFixture 는 testdata/<name> 파일 byte 를 로드.
 func loadFixture(t *testing.T, name string) []byte {
@@ -45,6 +46,26 @@ func newTestClient(t *testing.T) *domestic.Client {
 	httpClient := &http.Client{Transport: httpmock.DefaultTransport}
 	httpcli := httpclient.New(httpclient.Config{
 		BaseURL:    testBaseURL,
+		AppKey:     "test-key",
+		AppSecret:  "test-secret",
+		AccountNo:  "00000000-00",
+		Limiter:    ratelimit.New(1000),
+		TokenMgr:   stubTokenManager{},
+		Retries:    0,
+		Timeout:    5 * time.Second,
+		HTTPClient: httpClient,
+	})
+	master := mastercache.New(t.TempDir(), time.Hour)
+	return domestic.New(httpcli, master)
+}
+
+// newPaperTestClient 는 newTestClient 와 동일하지만 모의투자 도메인(openapivts)으로 설정된
+// domestic.Client 를 생성한다. 실전/모의 TR ID 분기 테스트 전용.
+func newPaperTestClient(t *testing.T) *domestic.Client {
+	t.Helper()
+	httpClient := &http.Client{Transport: httpmock.DefaultTransport}
+	httpcli := httpclient.New(httpclient.Config{
+		BaseURL:    testPaperBaseURL,
 		AppKey:     "test-key",
 		AppSecret:  "test-secret",
 		AccountNo:  "00000000-00",

@@ -9,6 +9,7 @@
 - `stock_info_success.json` — 주식기본조회 (CTPF1002R) 정상 응답
 - `daily_chart_success.json` — 국내주식기간별시세 (FHKST03010100) 정상 응답
 - `minute_chart_success.json` — 주식당일분봉조회 (FHKST03010200) 정상 응답
+- `inquire_balance_success.json` / `inquire_balance_empty.json` / `inquire_balance_page1.json` — 주식잔고조회 (TTTC8434R) 정상 / 보유 없음(빈 문자열 숫자) / 연속조회 첫 페이지(커서 포함). 계좌·종목·금액 모두 합성.
 
 각 JSON 의 필드는 `docs/api/국내주식/<API>.md` 의 응답 필드 정의에 1:1 매핑. 값은 합성 (실제 시세 아님).
 

@@ -1,0 +1,12 @@
+{
+  "rt_cd": "0",
+  "msg_cd": "KIOK0510",
+  "msg1": "조회가 완료되었습니다",
+  "ctx_area_fk200": "",
+  "ctx_area_nk200": "",
+  "output1": [
+    {"cano": "00000000", "acnt_prdt_cd": "00", "prdt_type_cd": "512", "ovrs_pdno": "AAPL", "ovrs_item_name": "APPLE INC", "frcr_evlu_pfls_amt": "+120.50000000", "evlu_pfls_rt": "+6.02", "pchs_avg_pric": "200.00000000", "ovrs_cblc_qty": "10", "ord_psbl_qty": "10", "frcr_pchs_amt1": "2000.00000000", "ovrs_stck_evlu_amt": "2120.50000000", "now_pric2": "212.05000000", "tr_crcy_cd": "USD", "ovrs_excg_cd": "NASD", "loan_type_cd": "00", "loan_dt": "", "expd_dt": ""},
+    {"cano": "00000000", "acnt_prdt_cd": "00", "prdt_type_cd": "512", "ovrs_pdno": "O", "ovrs_item_name": "REALTY INCOME CORP", "frcr_evlu_pfls_amt": "-15.00000000", "evlu_pfls_rt": "-2.50", "pchs_avg_pric": "60.00000000", "ovrs_cblc_qty": "10", "ord_psbl_qty": "10", "frcr_pchs_amt1": "600.00000000", "ovrs_stck_evlu_amt": "585.00000000", "now_pric2": "58.50000000", "tr_crcy_cd": "USD", "ovrs_excg_cd": "NYSE", "loan_type_cd": "00", "loan_dt": "", "expd_dt": ""}
+  ],
+  "output2": {"frcr_pchs_amt1": "2600.00000000", "ovrs_rlzt_pfls_amt": "0.00000000", "ovrs_tot_pfls": "+105.50000000", "rlzt_erng_rt": "0.00000000", "tot_evlu_pfls_amt": "+105.50000000", "tot_pftrt": "+4.05", "frcr_buy_amt_smtl1": "2600.00000000", "ovrs_rlzt_pfls_amt2": "0.00000000", "frcr_buy_amt_smtl2": "2600.00000000"}
+}
