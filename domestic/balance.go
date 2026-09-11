@@ -22,7 +22,8 @@ const (
 // path: /uapi/domestic-stock/v1/trading/inquire-balance
 //
 // 한 번의 호출에 실전 최대 50건(모의 20건). 더 있으면 TrCont 가 "F"/"M" 이고 CtxAreaFk100/CtxAreaNk100 을
-// 다음 호출 파라미터로 넘긴다. 당일 전량 매도한 종목은 HldgQty 0 으로 남아 있을 수 있다(D-2 이후 사라짐).
+// 다음 호출 파라미터로 넘긴다. 전체를 한 번에 받으려면 InquireBalanceAll 을 쓴다.
+// 당일 전량 매도한 종목은 HldgQty 0 으로 남아 있을 수 있다(D-2 이후 사라짐).
 // 모의투자 도메인(WithPaperEnv)이면 VTTC8434R 로 자동 분기한다(모의는 한 번에 최대 20건).
 type Balance struct {
 	Output1      []BalanceItem    `json:"output1"`        // 보유 종목
@@ -95,6 +96,7 @@ type BalanceSummary struct {
 // 빈 값은 한투 기본값으로 채운다: AfhrFlprYn "N", InqrDvsn "02"(종목별), UnprDvsn "01",
 // FundSttlIcldYn "N", FncgAmtAutoRdptYn "N", PrcsDvsn "00"(전일매매포함).
 // 연속조회는 이전 응답의 CtxAreaFk100/CtxAreaNk100 과 TrCont "N" 을 넘긴다.
+// InquireBalanceAll 은 CtxAreaFk100/CtxAreaNk100/TrCont 를 무시하고 첫 페이지부터 읽는다.
 type InquireBalanceParams struct {
 	AfhrFlprYn        string // AFHR_FLPR_YN — N: 기본, Y: 시간외단일가, X: NXT 정규장
 	InqrDvsn          string // INQR_DVSN — 01: 대출일별, 02: 종목별
@@ -158,4 +160,34 @@ func (c *Client) InquireBalance(ctx context.Context, params InquireBalanceParams
 	}
 	res.TrCont = resp.TrCont
 	return &res, nil
+}
+
+// maxBalancePages 는 연속조회 상한. 50건 × 100 = 5,000 종목 — 실계좌에서 도달할 수 없는 값이며
+// 한투가 tr_cont 를 잘못 주는 경우의 무한 루프 방지용.
+const maxBalancePages = 100
+
+// InquireBalanceAll 은 연속조회(tr_cont)를 따라가며 보유 종목 전체를 모은다.
+// params 의 TrCont/CtxArea* 는 무시하고 첫 페이지부터 읽는다.
+// Output1 은 모든 페이지를 이어 붙이고, Output2·CtxArea*·TrCont 는 마지막 페이지 값이다.
+func (c *Client) InquireBalanceAll(ctx context.Context, params InquireBalanceParams) (*Balance, error) {
+	params.TrCont, params.CtxAreaFk100, params.CtxAreaNk100 = "", "", ""
+	var all *Balance
+	for page := 0; page < maxBalancePages; page++ {
+		res, err := c.InquireBalance(ctx, params)
+		if err != nil {
+			return nil, err
+		}
+		if all == nil {
+			all = res
+		} else {
+			all.Output1 = append(all.Output1, res.Output1...)
+			all.Output2 = res.Output2
+			all.CtxAreaFk100, all.CtxAreaNk100, all.TrCont = res.CtxAreaFk100, res.CtxAreaNk100, res.TrCont
+		}
+		if !httpclient.HasNext(res.TrCont) {
+			return all, nil
+		}
+		params.TrCont, params.CtxAreaFk100, params.CtxAreaNk100 = "N", res.CtxAreaFk100, res.CtxAreaNk100
+	}
+	return nil, fmt.Errorf("kis: InquireBalanceAll: exceeded %d pages", maxBalancePages)
 }

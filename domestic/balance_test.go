@@ -131,3 +131,75 @@ func TestClient_InquireBalance_ParamsOverride(t *testing.T) {
 	})
 	require.NoError(t, err)
 }
+
+func TestClient_InquireBalanceAll_FollowsTrCont(t *testing.T) {
+	httpmock.Activate()
+	defer httpmock.DeactivateAndReset()
+
+	calls := 0
+	httpmock.RegisterResponder(http.MethodGet, `=~/trading/inquire-balance`,
+		func(req *http.Request) (*http.Response, error) {
+			calls++
+			q := req.URL.Query()
+			switch calls {
+			case 1:
+				assert.Equal(t, "", req.Header.Get("tr_cont"))
+				assert.Equal(t, "", q.Get("CTX_AREA_NK100"))
+				resp := httpmock.NewStringResponse(200, loadFixtureString(t, "inquire_balance_page1.json"))
+				resp.Header.Set("tr_cont", "M")
+				return resp, nil
+			case 2:
+				assert.Equal(t, "N", req.Header.Get("tr_cont"), "2페이지는 tr_cont=N")
+				assert.Equal(t, "FK-PAGE1", q.Get("CTX_AREA_FK100"), "이전 응답 커서 전달")
+				assert.Equal(t, "NK-PAGE1", q.Get("CTX_AREA_NK100"))
+				resp := httpmock.NewStringResponse(200, loadFixtureString(t, "inquire_balance_success.json"))
+				resp.Header.Set("tr_cont", "D")
+				return resp, nil
+			}
+			t.Fatalf("unexpected call #%d", calls)
+			return nil, nil
+		})
+
+	c := newTestClient(t)
+	// 호출자가 커서를 넣어도 첫 페이지부터 다시 읽는다.
+	res, err := c.InquireBalanceAll(context.Background(), domestic.InquireBalanceParams{TrCont: "N", CtxAreaNk100: "junk"})
+	require.NoError(t, err)
+	assert.Equal(t, 2, calls)
+	require.Len(t, res.Output1, 3, "1 + 2 건 이어 붙임")
+	assert.Equal(t, "000660", res.Output1[0].Pdno)
+	assert.Equal(t, "005930", res.Output1[1].Pdno)
+	assert.Equal(t, "379780", res.Output1[2].Pdno)
+	require.Len(t, res.Output2, 1, "요약은 마지막 페이지 것")
+	assert.Equal(t, int64(916000), int64(res.Output2[0].TotEvluAmt))
+	assert.Equal(t, "D", res.TrCont)
+}
+
+func TestClient_InquireBalanceAll_SinglePage(t *testing.T) {
+	httpmock.Activate()
+	defer httpmock.DeactivateAndReset()
+	httpmock.RegisterResponder(http.MethodGet, `=~/trading/inquire-balance`,
+		httpmock.NewStringResponder(200, loadFixtureString(t, "inquire_balance_success.json")))
+
+	c := newTestClient(t)
+	res, err := c.InquireBalanceAll(context.Background(), domestic.InquireBalanceParams{})
+	require.NoError(t, err)
+	assert.Len(t, res.Output1, 2)
+	assert.Equal(t, 1, httpmock.GetTotalCallCount(), "tr_cont 헤더 없음 = 1페이지로 끝")
+}
+
+func TestClient_InquireBalanceAll_PageCap(t *testing.T) {
+	httpmock.Activate()
+	defer httpmock.DeactivateAndReset()
+	httpmock.RegisterResponder(http.MethodGet, `=~/trading/inquire-balance`,
+		func(req *http.Request) (*http.Response, error) {
+			resp := httpmock.NewStringResponse(200, loadFixtureString(t, "inquire_balance_page1.json"))
+			resp.Header.Set("tr_cont", "M") // 영원히 다음 있음
+			return resp, nil
+		})
+
+	c := newTestClient(t)
+	_, err := c.InquireBalanceAll(context.Background(), domestic.InquireBalanceParams{})
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "exceeded")
+	assert.Equal(t, 100, httpmock.GetTotalCallCount())
+}
