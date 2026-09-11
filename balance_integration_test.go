@@ -15,12 +15,13 @@ import (
 
 // TestIntegration_InquireBalance 는 실계좌 잔고 실호출. KOREA_INVESTMENT_* env 필요.
 // 실행: go test -tags integration -run TestIntegration_InquireBalance -v .
-// 금액·종목은 로그에 남기지 않는다(개수만).
+// 성공 시 개수·tr_cont 만 로그한다(금액·종목 없음). 실패 시 SDK 에러에 응답 본문이 포함될 수 있다.
 func TestIntegration_InquireBalance(t *testing.T) {
-	c, err := kis.NewClientFromEnv()
-	if err != nil {
+	if _, err := kis.LoadConfigFromEnv(); err != nil {
 		t.Skipf("skip: %v", err)
 	}
+	c, err := kis.NewClientFromEnv()
+	require.NoError(t, err)
 	ctx := context.Background()
 
 	dom, err := c.Domestic.InquireBalanceAll(ctx, domestic.InquireBalanceParams{})

@@ -26,6 +26,7 @@ const (
 // 다음 호출 파라미터로 넘긴다. 전체를 한 번에 받으려면 InquireBalanceAll 을 쓴다.
 // 금액·수량은 거래 통화(TrCrcyCd) 기준 외화이며 원화 환산은 없다. 미니스탁 잔고는 포함되지 않는다.
 // 모의투자 도메인(WithPaperEnv)이면 VTTS3012R 로 자동 분기한다.
+// 미국 주간거래 가능 종목은 주간 시간대에 손익·평가금액·현재가가 HTS(주간시세)와 다를 수 있다(API 는 야간시세).
 type Balance struct {
 	Output1      []BalanceItem  `json:"output1"`        // 보유 종목
 	Output2      BalanceSummary `json:"output2"`        // 계좌 요약 (단일 객체 — 국내와 다름)
@@ -35,6 +36,7 @@ type Balance struct {
 }
 
 // BalanceItem 은 보유 종목 1건 (output1). 숫자는 부호(+/-)·빈 문자열을 허용하는 kistypes.Float.
+// 수량(OvrsCblcQty/OrdPsblQty)은 소수점 주식이 가능해 Float 이다.
 type BalanceItem struct {
 	Cano            string         `json:"cano"`               // 종합계좌번호
 	AcntPrdtCd      string         `json:"acnt_prdt_cd"`       // 계좌상품코드
@@ -46,7 +48,7 @@ type BalanceItem struct {
 	PchsAvgPric     kistypes.Float `json:"pchs_avg_pric"`      // 매입평균가격 (외화)
 	OvrsCblcQty     kistypes.Float `json:"ovrs_cblc_qty"`      // 해외잔고수량
 	OrdPsblQty      kistypes.Float `json:"ord_psbl_qty"`       // 주문가능수량
-	FrcrPchsAmt1    kistypes.Float `json:"frcr_pchs_amt1"`     // 외화매입금액
+	FrcrPchsAmt1    kistypes.Float `json:"frcr_pchs_amt1"`     // 외화매입금액1
 	OvrsStckEvluAmt kistypes.Float `json:"ovrs_stck_evlu_amt"` // 해외주식평가금액 (외화)
 	NowPric2        kistypes.Float `json:"now_pric2"`          // 현재가
 	TrCrcyCd        string         `json:"tr_crcy_cd"`         // 거래통화코드 USD/HKD/CNY/JPY/VND
@@ -73,7 +75,7 @@ type BalanceSummary struct {
 // OvrsExcgCd 와 TrCrcyCd 는 필수 — 실전 미국 전체는 ("NASD", "USD").
 // InquireBalanceAll 은 CtxAreaFk200/CtxAreaNk200/TrCont 를 무시하고 첫 페이지부터 읽는다.
 type InquireBalanceParams struct {
-	OvrsExcgCd   string // OVRS_EXCG_CD (필수) — 실전: NASD 미국전체 / NAS 나스닥 / NYSE / AMEX · 공통: SEHK / SHAA / SZAA / TKSE / HASE / VNSE
+	OvrsExcgCd   string // OVRS_EXCG_CD (필수) — 실전: NASD 미국전체 / NAS 나스닥 / NYSE / AMEX · 공통: SEHK / SHAA / SZAA / TKSE / HASE / VNSE · 모의: NASD 나스닥 / NYSE / AMEX (NAS 없음)
 	TrCrcyCd     string // TR_CRCY_CD (필수) — USD / HKD / CNY / JPY / VND
 	CtxAreaFk200 string // CTX_AREA_FK200 — 연속조회. 첫 조회 빈 값
 	CtxAreaNk200 string // CTX_AREA_NK200 — 연속조회. 첫 조회 빈 값
