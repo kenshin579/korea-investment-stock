@@ -111,6 +111,8 @@ type Request struct {
 	Body   any               // POST body (JSON 직렬화)
 	// CustType: P (개인), B (법인). 빈 문자열이면 미지정.
 	CustType string
+	// TrCont: 연속조회 헤더 tr_cont. 다음 페이지 조회 시 "N". 빈 문자열이면 미전송(초기 조회).
+	TrCont string
 }
 
 // Response 는 한투 API 응답을 정규화한 결과.
@@ -122,6 +124,8 @@ type Response struct {
 	Output1 json.RawMessage `json:"output1"`
 	Output2 json.RawMessage `json:"output2"`
 	Raw     []byte          `json:"-"`
+	// TrCont 는 응답 헤더 tr_cont. F/M: 다음 데이터 있음, D/E: 마지막. HasNext 로 판정.
+	TrCont string `json:"-"`
 }
 
 // APIError 는 한투 응답의 rt_cd != "0" 케이스 — internal 패키지 전용.
@@ -187,6 +191,9 @@ func (c *Client) send(ctx context.Context, req *Request, bearer string) (*Respon
 		if req.CustType != "" {
 			r.SetHeader("custtype", req.CustType)
 		}
+		if req.TrCont != "" {
+			r.SetHeader("tr_cont", req.TrCont)
+		}
 		if len(req.Query) > 0 {
 			r.SetQueryParams(req.Query)
 		}
@@ -215,10 +222,12 @@ func (c *Client) send(ctx context.Context, req *Request, bearer string) (*Respon
 		// 무관하게 그대로 반환해 Do() 의 토큰 refresh / APIError 처리에 맡긴다.
 		// (그렇지 않으면 결정적 토큰 오류를 일시적 5xx 로 오인해 헛되이 재시도한다.)
 		raw := httpResp.Body()
+		trCont := httpResp.Header().Get("tr_cont")
 		var resp Response
 		jsonErr := json.Unmarshal(raw, &resp)
 		if jsonErr == nil && resp.RtCode != "" {
 			resp.Raw = raw
+			resp.TrCont = trCont
 			return &resp, nil
 		}
 
@@ -243,6 +252,7 @@ func (c *Client) send(ctx context.Context, req *Request, bearer string) (*Respon
 			return nil, fmt.Errorf("kis: parse: %w (body=%s)", jsonErr, string(raw))
 		}
 		resp.Raw = raw
+		resp.TrCont = trCont
 		return &resp, nil
 	}
 	return nil, errors.New("unreachable")
@@ -268,4 +278,27 @@ func backoff(attempt int) time.Duration {
 		d *= 2
 	}
 	return d
+}
+
+// HasNext 는 응답 헤더 tr_cont 가 "다음 데이터 있음"(F/M) 인지 판정한다. D/E/빈 값은 마지막 페이지.
+func HasNext(trCont string) bool { return trCont == "F" || trCont == "M" }
+
+// Account 는 설정된 계좌번호를 CANO(종합계좌번호 8자리)와 ACNT_PRDT_CD(계좌상품코드 2자리)로 나눈다.
+// 계좌·주문 계열 API 의 쿼리 파라미터에 쓴다.
+func (c *Client) Account() (cano, prdtCd string, err error) {
+	return SplitAccountNo(c.cfg.AccountNo)
+}
+
+// SplitAccountNo 는 "12345678-01" 또는 "1234567801" 형태의 계좌번호를 8-2 로 나눈다.
+func SplitAccountNo(accountNo string) (cano, prdtCd string, err error) {
+	s := strings.TrimSpace(accountNo)
+	if i := strings.IndexByte(s, '-'); i >= 0 {
+		cano, prdtCd = s[:i], s[i+1:]
+	} else if len(s) == 10 {
+		cano, prdtCd = s[:8], s[8:]
+	}
+	if len(cano) != 8 || len(prdtCd) != 2 {
+		return "", "", fmt.Errorf("kis: account number must be 8-2 form like 12345678-01, got %q", accountNo)
+	}
+	return cano, prdtCd, nil
 }
