@@ -25,5 +25,10 @@
 //   - InquireRightsByIce    — 해외주식 권리종합 (HHDFS78330900) — output1 only
 //   - InquirePeriodRights   — 해외주식 기간별권리조회 (CTRGT011R) — CTX cursor
 //
+// 계좌 잔고 (v1.32.0) — 조회 전용, 주문 없음
+//
+//   - InquireBalance     — 해외주식 잔고 1페이지 (실전 최대 100건) (TTTS3012R, 모의 VTTS3012R) — OvrsExcgCd/TrCrcyCd 필수, output2 단일 객체
+//   - InquireBalanceAll  — tr_cont + CTX_AREA_*200 연속조회로 전체 수집
+//
 // 사용자는 root kis.Client 의 Overseas 필드로 접근.
 package overseas

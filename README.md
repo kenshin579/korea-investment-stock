@@ -329,6 +329,25 @@ NXT (대체거래소) 와 통합 (KRX+NXT) 시장의 실시간 EP. NXT 와 통�
 | `OverseasFutures.OptTickCcnl` | `quotations/opt-tick-ccnl` | HHDFO55020200 |
 | `OverseasFutures.MarketTime` | `quotations/market-time` | OTFM2229R |
 
+### 계좌 잔고 조회 — v1.32.0 (조회 전용)
+
+계좌번호는 `NewClient(..., accountNo)` / `KOREA_INVESTMENT_ACCOUNT_NO` 의 값을 자동으로 `CANO`/`ACNT_PRDT_CD` 로 나눠 보낸다. 모의투자(`WithPaperEnv`)면 TR ID 가 자동 분기된다.
+
+| 메서드 | TR | 설명 |
+|---|---|---|
+| `Domestic.InquireBalance` | TTTC8434R | 주식잔고조회 1페이지(실전 50건). `Output2[0]` 에 예수금·총평가 |
+| `Domestic.InquireBalanceAll` | TTTC8434R | `tr_cont` 연속조회로 전체 |
+| `Overseas.InquireBalance` | TTTS3012R | 해외주식 잔고 1페이지(실전 100건). `OvrsExcgCd`(실전 미국 전체 `NASD`)·`TrCrcyCd` 필수, 외화 기준 |
+| `Overseas.InquireBalanceAll` | TTTS3012R | 연속조회로 전체 |
+
+```go
+dom, _ := client.Domestic.InquireBalanceAll(ctx, domestic.InquireBalanceParams{})
+ovs, _ := client.Overseas.InquireBalanceAll(ctx, overseas.InquireBalanceParams{OvrsExcgCd: "NASD", TrCrcyCd: "USD"})
+```
+
+예제: `go run ./examples/account_balance`. 실호출 테스트: `go test -tags integration -run TestIntegration_InquireBalance -v .`
+주문·예약주문은 여전히 범위 밖.
+
 ### Futures (국내선물옵션) — Phase 11.1
 
 종목코드 9자리 alphanumeric (예: `101W3000` 선물, `201X3300` 옵션). MarketCode 인자 caller 가 입력 (`F`/`O`/`JF`/`JO`/`CF` 등).
@@ -364,7 +383,8 @@ NXT (대체거래소) 와 통합 (KRX+NXT) 시장의 실시간 EP. NXT 와 통�
 - ✅ 국내선물옵션 시세/조회 9 EP (Phase 11.1; v1.21.0). 실시간 Phase 11.2/11.3 완료, Trading Phase 11.4 예정.
 - ✅ 해외선물옵션 시세/조회 20 EP (Phase 11.5+11.6; v1.24.0~v1.25.0). 해외 실시간 11.7 / 해외 Trading 11.8 후속.
 - ✅ 실시간 WebSocket — KRX 5 EP (Phase 8; v1.18.0) + NXT/통합 10 EP (Phase 9; v1.19.0) + 해외주식 시세 2 EP (Phase 10; v1.20.0) + 국내선물옵션 11 EP (Phase 11.2; v1.22.0) + 지수선물옵션+상품선물 6 EP (Phase 11.3; v1.23.0) + 해외선물옵션 2 EP (Phase 11.7; v1.26.0)
-- ❌ 주식 주문/잔고/예약주문 — 본 spec 에서 다루지 않음
+- ✅ 주식 잔고 조회 (국내·해외, v1.32.0) — 조회 전용
+- ❌ 주식 주문/예약주문 — 본 spec 에서 다루지 않음
 
 ## License
 

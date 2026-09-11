@@ -212,5 +212,17 @@
 //	EP4 5 query 중 2 개 hardcoded (fid_cond_scr_div_code/fid_cond_mrkt_div_code)
 //	모든 EP 모의투자 미지원
 //
+// 계좌 잔고 (v1.32.0) — 조회 전용, 주문 없음
+//
+//	InquireBalance     — 주식잔고조회 1페이지 (실전 50건/모의 20건)  TTTC8434R (모의 VTTC8434R)
+//	InquireBalanceAll  — tr_cont 연속조회로 전체 수집
+//
+// Anomalies (잔고):
+//
+//	계좌번호(CANO/ACNT_PRDT_CD)는 Client 설정값을 httpclient.Account() 로 분리해 자동 주입
+//	연속조회는 응답 헤더 tr_cont(F/M 다음 있음, D/E 마지막) + ctx_area_fk100/nk100 커서
+//	숫자 필드는 kistypes.Int/Float (빈 문자열·부호·"123.00" 허용) — decimal 미사용
+//	모의투자 도메인(WithPaperEnv)이면 TR 자동 분기
+//
 // 사용자는 root kis.Client 의 Domestic 필드로 접근.
 package domestic

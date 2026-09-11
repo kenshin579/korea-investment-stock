@@ -1,5 +1,21 @@
 # CHANGELOG
 
+## [1.32.0] - 2026-09-12
+
+### Added — 계좌 잔고 조회 (조회 전용, 2 REST EP)
+- `Domestic.InquireBalance` / `InquireBalanceAll` — 주식잔고조회 (TTTC8434R, 모의 VTTC8434R), 50건 페이지 + `tr_cont` 연속조회
+- `Overseas.InquireBalance` / `InquireBalanceAll` — 해외주식 잔고 (TTTS3012R, 모의 VTTS3012R), 100건 페이지, `OvrsExcgCd`/`TrCrcyCd` 필수
+- `internal/httpclient`: `Request.TrCont`(요청 헤더) / `Response.TrCont`(응답 헤더) / `Client.Account()` 계좌번호 8-2 분리(숫자 검증) / `IsPaper()` / `HasNext()`
+- examples: `account_balance`. 루트 `balance_integration_test.go` (`-tags integration`)
+
+### Changed
+- `kistypes.Int` 가 소수부가 0 인 문자열(`"123.00"`)을 정수로 받는다. `"123.45"` 는 여전히 에러.
+
+### Notes
+- 연속조회 루프는 100 페이지 상한 + 커서 미전진 가드. 중간 페이지 실패 시 부분 결과 없이 error.
+- 잔고 숫자 필드는 `kistypes.Int`/`Float` — 빈 문자열·부호 허용. 해외는 외화 기준(원화 환산 없음).
+- 누적 152 REST + 36 WS = 188 endpoints.
+
 ## [1.27.0] - 2026-05-23
 
 ### Fixed

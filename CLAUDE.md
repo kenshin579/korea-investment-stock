@@ -2,7 +2,7 @@
 
 Go client library for the Korea Investment Securities OpenAPI.
 
-> **Phase 11.7 — 해외선물옵션 실시간 2 WS (v1.26.0). 누적 150 REST + 36 WS = 186 endpoints.**
+> **v1.32.0 — 계좌 잔고 조회 2 REST (국내 TTTC8434R · 해외 TTTS3012R, 모의 TR 자동 분기). 누적 152 REST + 36 WS = 188 endpoints.** 이전: Phase 11.7 해외선물옵션 실시간 2 WS (v1.26.0).
 
 - Design spec: [`docs/superpowers/specs/2026-05-03-korea-investment-go-migration-design.md`](docs/superpowers/specs/2026-05-03-korea-investment-go-migration-design.md)
 - Phase 0 implementation plan: [`docs/superpowers/specs/2026-05-03-phase0-step1-implementation-plan.md`](docs/superpowers/specs/2026-05-03-phase0-step1-implementation-plan.md)
@@ -66,6 +66,7 @@ go build ./...
 go vet ./...
 go test ./...
 go mod tidy
+go test -tags integration -run TestIntegration_InquireBalance -v .   # 실계좌 잔고 실호출 (KOREA_INVESTMENT_* env)
 ```
 
 ## Conventions
@@ -76,7 +77,7 @@ go mod tidy
 
 ## Out of Scope (Phase 0)
 
-선물옵션 · 장내채권 · 주문/잔고/예약주문
+선물옵션 · 장내채권 · 주문/예약주문 (잔고 조회는 v1.32.0 에서 추가 — domestic/balance.go, overseas/balance.go)
 
 > 실시간 WebSocket: Phase 8 (v1.18.0) — KRX 5 EP. Phase 9 (v1.19.0) — NXT/통합 10 EP. Phase 10 (v1.20.0) — 해외주식 시세 2 EP. Phase 11.2 (v1.22.0) — 국내선물옵션 11 EP. Phase 11.3 (v1.23.0) — 지수선물옵션+상품선물 6 EP. Phase 11.7 (v1.26.0) — 해외선물옵션 2 EP.
 > 선물옵션 (REST): Phase 11.1 (v1.21.0) — 국내선물옵션 시세 9 EP (`futures/`). Phase 11.5 (v1.24.0) + 11.6 (v1.25.0) — 해외선물옵션 시세 20 EP (`overseasfutures/`).
