@@ -36,8 +36,8 @@ func main() {
 		fmt.Printf("  예수금=%d 유가평가=%d 총평가=%d\n", int64(s.DncaTotAmt), int64(s.SctsEvluAmt), int64(s.TotEvluAmt))
 	}
 
-	// 모의투자(WithPaperEnv)는 거래소 코드 체계가 다르다(NASD=나스닥, NAS 없음) — overseas.InquireBalanceParams 참고.
 	// 2. 해외주식 잔고 — 실전 미국 전체(NASD) + USD
+	// 모의투자(WithPaperEnv)는 거래소 코드 체계가 다르다(NASD=나스닥, NAS 없음) — overseas.InquireBalanceParams 참고.
 	ovs, err := client.Overseas.InquireBalanceAll(ctx, overseas.InquireBalanceParams{OvrsExcgCd: "NASD", TrCrcyCd: "USD"})
 	if err != nil {
 		log.Fatalf("Overseas.InquireBalanceAll: %v", err)

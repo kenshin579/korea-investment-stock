@@ -248,7 +248,7 @@ func TestClient_IsPaper(t *testing.T) {
 	})
 	assert.True(t, paper.IsPaper(), "openapivts 도메인은 모의투자")
 
-	real := New(Config{
+	live := New(Config{
 		BaseURL:   "https://openapi.koreainvestment.com:9443",
 		AppKey:    "ak",
 		AppSecret: "as",
@@ -256,7 +256,7 @@ func TestClient_IsPaper(t *testing.T) {
 		Limiter:   ratelimit.New(1000),
 		TokenMgr:  &stubTokenMgr{bearer: "b"},
 	})
-	assert.False(t, real.IsPaper(), "openapi 도메인은 실전")
+	assert.False(t, live.IsPaper(), "openapi 도메인은 실전")
 }
 
 func TestHasNext(t *testing.T) {

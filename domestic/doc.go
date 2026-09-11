@@ -219,7 +219,7 @@
 //
 // Anomalies (잔고):
 //
-//	계좌번호(CANO/ACNT_PRDT_CD)는 Client 설정값을 httpclient.Account() 로 분리해 자동 주입
+//	계좌번호(CANO/ACNT_PRDT_CD)는 Client 설정값(accountNo)에서 자동 분리해 주입
 //	연속조회는 응답 헤더 tr_cont(F/M 다음 있음, D/E 마지막) + ctx_area_fk100/nk100 커서
 //	숫자 필드는 kistypes.Int/Float (빈 문자열·부호·"123.00" 허용) — decimal 미사용
 //	모의투자 도메인(WithPaperEnv)이면 TR 자동 분기

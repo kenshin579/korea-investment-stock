@@ -24,7 +24,7 @@ const (
 // 한 번의 호출에 실전 최대 50건(모의 20건). 더 있으면 TrCont 가 "F"/"M" 이고 CtxAreaFk100/CtxAreaNk100 을
 // 다음 호출 파라미터로 넘긴다. 전체를 한 번에 받으려면 InquireBalanceAll 을 쓴다.
 // 당일 전량 매도한 종목은 HldgQty 0 으로 남아 있을 수 있다(D-2 이후 사라짐).
-// 모의투자 도메인(WithPaperEnv)이면 VTTC8434R 로 자동 분기한다(모의는 한 번에 최대 20건).
+// 모의투자 도메인(WithPaperEnv)이면 VTTC8434R 로 자동 분기한다.
 type Balance struct {
 	Output1      []BalanceItem    `json:"output1"`        // 보유 종목
 	Output2      []BalanceSummary `json:"output2"`        // 계좌 요약 (1행)
