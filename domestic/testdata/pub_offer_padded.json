@@ -32,6 +32,21 @@
       "pub_bf_cap": "      870241",
       "pub_af_cap": "       40000",
       "assign_stk_qty": "           0"
+    },
+    {
+      "record_date": "20260916",
+      "sht_cd": "486510",
+      "isin_name": "글로벌테크놀로지",
+      "fix_subscr_pri": "       10000",
+      "face_value": "000000500",
+      "subscr_dt": "2026/09/16 ~ 2026/09/17",
+      "pay_dt": "2026/09/21",
+      "refund_dt": "2026/09/21",
+      "list_dt": "",
+      "lead_mgr": "한국투자증권",
+      "pub_bf_cap": "     7753072",
+      "pub_af_cap": "      500000",
+      "assign_stk_qty": "     1000000"
     }
   ]
 }

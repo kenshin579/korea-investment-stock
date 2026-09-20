@@ -48,54 +48,75 @@ type PubOfferItem struct {
 	AssignStkQty int64           `json:"assign_stk_qty,string"` // 당사(한투) 배정물량
 }
 
-// pubOfferFields 는 PubOfferItem 과 같은 필드를 갖되 UnmarshalJSON 을 물려받지 않는
-// 별칭이다. 아래 UnmarshalJSON 이 자기 자신을 무한히 부르지 않게 한다.
+// padded 는 KIS 가 주는 값을 원문 그대로 받아둔다. 문자열이든 맨 숫자든 상관없다.
 //
-// 위 다섯 숫자 필드의 json 태그(fix_subscr_pri 등)를 "-" 로 지우고 싶어질 수 있는데
-// (아래 raw 구조체가 어차피 같은 이름의 string 필드를 depth 0 에서 다시 선언하니
-// "중복"으로 보인다) 그러면 안 된다. encoding/json 은 이름 충돌을 depth 로 푼다 —
-// raw 의 depth-0 string 필드가 이겨서 역직렬화는 원래대로 그쪽을 타지만, 원래 태그가
-// 없으면 json.Marshal(PubOfferItem{...}) 이 이 다섯 필드를 조용히 빠뜨리게 된다.
-// 이 라이브러리는 태그 버전으로 배포되는 공개 API 라 그 회귀는 여기서가 아니라
-// 쓰는 쪽에서만 드러난다. 태그는 유지한다 — TestPubOfferItem_MarshalKeepsNumbers 참고.
-//
-// int64 세 필드(pub_bf_cap 등)는 ",string" 옵션도 그대로 유지한다 — 이게 빠지면
-// Marshal 이 맨 숫자(bare number)를 내보내는데, 위 raw 구조체는 그 자리를 string
-// 으로 받으므로 라운드트립이 "cannot unmarshal number into ... of type string" 으로
-// 깨진다. decimal.Decimal 두 필드는 기본이 이미 따옴표 붙은 문자열이라 옵션이 없다.
-type pubOfferFields PubOfferItem
+// raw 구조체가 이 필드들을 그냥 string 으로 선언하면 맨 숫자가 왔을 때 항목
+// **전체**가 깨진다 — 이 UnmarshalJSON 이 없애려던 바로 그 실패 방식이다.
+type padded string
+
+// UnmarshalJSON 은 따옴표를 벗기기만 한다. 값 해석(trim·콤마 제거·숫자 변환)은
+// parsePaddedDecimal/parsePaddedInt64 가 한다.
+func (p *padded) UnmarshalJSON(b []byte) error {
+	*p = padded(strings.Trim(strings.TrimSpace(string(b)), `"`))
+	return nil
+}
 
 // UnmarshalJSON 은 KIS 가 주는 패딩된 숫자 문자열을 받아낸다.
 //
-// KIS 는 숫자를 고정폭 문자열로 준다 — 공백 좌측 패딩("       19500") 또는
-// 0 패딩("000000500"). 기본 디코더는 여기서 필드 하나가 아니라 **구조체 전체**를
-// 포기하므로, 공모가 하나 때문에 종목명·청약기간·주간사까지 전부 날아간다.
-// 그래서 숫자 필드만 문자열로 받아 trim 후 변환한다.
+// 공백 좌측 패딩("       19500")이 문제다 — 표준 JSON 숫자 문법이 아니라서
+// decimal.Decimal / int64,string 디코더가 필드 하나에서 실패하면 구조체
+// **전체**를 포기한다. 그래서 공모가 하나 때문에 종목명·청약기간·주간사까지
+// 전부 날아간다. 0 패딩("000000500")도 실 응답에 섞여 있지만 무해하다 —
+// decimal.NewFromString 과 strconv.ParseInt 둘 다 앞자리 0 을 그냥 읽는다.
+//
+// 그래서 숫자 필드만 원문 그대로(padded) 받아 trim 후 변환한다.
 func (p *PubOfferItem) UnmarshalJSON(data []byte) error {
+	// type alias 는 raw 가 이 UnmarshalJSON 을 다시 부르지 않게 하는 repo 관용구
+	// (domestic/investor.go, domestic/program_trade.go 와 동일 패턴).
+	//
+	// 반드시 값으로 embed 한다 — *alias 로 바꾸면 "avoid the copy" 처럼 자연스러워
+	// 보이지만, encoding/json 이 "cannot set embedded pointer to unexported struct
+	// type" 으로 런타임에 깨진다. compile 타임 신호가 없다.
+	//
+	// 아래 다섯 필드가 alias 의 depth-1 필드와 이름이 겹치는데, 이건 "중복"이
+	// 아니라 의도다 — encoding/json 은 이름 충돌을 depth 로 풀어서 이 depth-0
+	// padded 필드가 이긴다. PubOfferItem 자체의 json 태그(fix_subscr_pri 등)를
+	// 여기 맞춰 "-" 로 지우고 싶어질 수 있는데 그러면 안 된다: 그 태그가 없으면
+	// json.Marshal(PubOfferItem{...}) 이 이 다섯 필드를 조용히 빠뜨리게 된다.
+	// 태그는 유지한다 — TestPubOfferItem_MarshalKeepsNumbers 참고.
+	type alias PubOfferItem
 	var raw struct {
-		pubOfferFields
-		FixSubscrPri string `json:"fix_subscr_pri"`
-		FaceValue    string `json:"face_value"`
-		PubBfCap     string `json:"pub_bf_cap"`
-		PubAfCap     string `json:"pub_af_cap"`
-		AssignStkQty string `json:"assign_stk_qty"`
+		alias
+		FixSubscrPri padded `json:"fix_subscr_pri"`
+		FaceValue    padded `json:"face_value"`
+		PubBfCap     padded `json:"pub_bf_cap"`
+		PubAfCap     padded `json:"pub_af_cap"`
+		AssignStkQty padded `json:"assign_stk_qty"`
 	}
 	if err := json.Unmarshal(data, &raw); err != nil {
 		return err
 	}
-	*p = PubOfferItem(raw.pubOfferFields)
-	p.FixSubscrPri = paddedDecimal(raw.FixSubscrPri)
-	p.FaceValue = paddedDecimal(raw.FaceValue)
-	p.PubBfCap = paddedInt64(raw.PubBfCap)
-	p.PubAfCap = paddedInt64(raw.PubAfCap)
-	p.AssignStkQty = paddedInt64(raw.AssignStkQty)
+	*p = PubOfferItem(raw.alias)
+	p.FixSubscrPri = parsePaddedDecimal(string(raw.FixSubscrPri))
+	p.FaceValue = parsePaddedDecimal(string(raw.FaceValue))
+	p.PubBfCap = parsePaddedInt64(string(raw.PubBfCap))
+	p.PubAfCap = parsePaddedInt64(string(raw.PubAfCap))
+	p.AssignStkQty = parsePaddedInt64(string(raw.AssignStkQty))
 	return nil
 }
 
-// paddedDecimal 은 공백·0 패딩 숫자 문자열을 decimal 로 만든다.
-// 빈 값과 숫자가 아닌 값은 0 이다 — KIS 가 "-" 나 공백만 주는 칸이 있다.
-func paddedDecimal(s string) decimal.Decimal {
-	t := strings.TrimSpace(s)
+// parsePaddedDecimal 은 공백 좌측 패딩(그리고 흔히 섞여 오는 0 패딩·천단위 콤마)
+// 숫자 문자열을 decimal 로 만든다. 빈 값과 숫자가 아닌 값은 0 이다 — KIS 가 "-"
+// 나 공백만 주는 칸이 있다. 0 은 이미 "공모가 미확정" 등 자연스러운 값이라
+// 에러를 반환하지 않는다 — 여기서 에러를 내면 InquirePubOffer 의
+// json.Unmarshal(resp.Raw, &res) 를 타고 올라가 행 하나 때문에 응답 전체가
+// 깨진다. 그게 바로 이 파일이 없애려는 실패 방식이다.
+//
+// domestic/lenient.go 의 decodeLenientNumbers 와 헷갈리지 말 것 — 그건 빈
+// 문자열("") 숫자를 0 으로 바꾸는 다른 문제(거래정지 종목)를 다룬다. 공백
+// 패딩은 다루지 않는다. 여기 두 helper 가 이 파일만의 별도 대응이다.
+func parsePaddedDecimal(s string) decimal.Decimal {
+	t := cleanPaddedNumber(s)
 	if t == "" {
 		return decimal.Zero
 	}
@@ -106,9 +127,10 @@ func paddedDecimal(s string) decimal.Decimal {
 	return d
 }
 
-// paddedInt64 는 공백·0 패딩 정수 문자열을 int64 로 만든다.
-func paddedInt64(s string) int64 {
-	t := strings.TrimSpace(s)
+// parsePaddedInt64 는 공백 좌측 패딩(그리고 0 패딩·천단위 콤마) 정수 문자열을
+// int64 로 만든다. 실패 시 0 처리 이유는 parsePaddedDecimal 과 같다.
+func parsePaddedInt64(s string) int64 {
+	t := cleanPaddedNumber(s)
 	if t == "" {
 		return 0
 	}
@@ -117,6 +139,16 @@ func paddedInt64(s string) int64 {
 		return 0
 	}
 	return n
+}
+
+// cleanPaddedNumber 는 좌우 공백을 trim 하고 천단위 콤마를 제거한다.
+//
+// 콤마를 지우지 않으면 "19,500" 이 파싱 실패로 조용히 0 이 된다 — 나머지 필드는
+// 멀쩡히 채워지는 행에서 공모가만 틀려 보이는, 소비자가 알아챌 수 없는 손상이다.
+// 콤마 제거는 그 손상을 정상 파싱으로 바꾼다. 진짜 빈 값·"-" 같은 sentinel 만
+// 0 fallback 을 타야 한다.
+func cleanPaddedNumber(s string) string {
+	return strings.ReplaceAll(strings.TrimSpace(s), ",", "")
 }
 
 // InquirePubOfferParams 는 공모주청약일정 조회 파라미터.
