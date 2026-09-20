@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"regexp"
 	"strconv"
 	"strings"
 
@@ -48,16 +49,25 @@ type PubOfferItem struct {
 	AssignStkQty int64           `json:"assign_stk_qty,string"` // 당사(한투) 배정물량
 }
 
-// padded 는 KIS 가 주는 값을 원문 그대로 받아둔다. 문자열이든 맨 숫자든 상관없다.
+// paddedNumber 는 KIS 가 주는 값을 원문 그대로 받아둔다. 문자열이든 맨 숫자든
+// 상관없다.
 //
 // raw 구조체가 이 필드들을 그냥 string 으로 선언하면 맨 숫자가 왔을 때 항목
 // **전체**가 깨진다 — 이 UnmarshalJSON 이 없애려던 바로 그 실패 방식이다.
-type padded string
+//
+// 숫자 필드 전용이다. JSON 이스케이프(`\"`, `\\`, `\uXXXX`)를 풀지 않으므로
+// 문자열 필드에는 쓰면 안 된다 — 이 다섯 필드는 KIS 가 ASCII 숫자·공백만
+// 보내서 문제되지 않는다. 예를 들어 `"\t19500"` 은 이 타입에서 그대로
+// "\t19500" 로 남아 parsePaddedInt64 가 파싱에 실패해 0 이 되지만, 일반
+// string 필드였다면 encoding/json 이 이스케이프를 풀어 "\t19500"(tab 문자)
+// 으로 정확히 unmarshal 했을 것이다. 종목명·주간사처럼 실제로 공백 패딩되는
+// 문자열 필드에 이 타입을 재사용하지 말 것.
+type paddedNumber string
 
 // UnmarshalJSON 은 따옴표를 벗기기만 한다. 값 해석(trim·콤마 제거·숫자 변환)은
 // parsePaddedDecimal/parsePaddedInt64 가 한다.
-func (p *padded) UnmarshalJSON(b []byte) error {
-	*p = padded(strings.Trim(strings.TrimSpace(string(b)), `"`))
+func (p *paddedNumber) UnmarshalJSON(b []byte) error {
+	*p = paddedNumber(strings.Trim(strings.TrimSpace(string(b)), `"`))
 	return nil
 }
 
@@ -69,7 +79,7 @@ func (p *padded) UnmarshalJSON(b []byte) error {
 // 전부 날아간다. 0 패딩("000000500")도 실 응답에 섞여 있지만 무해하다 —
 // decimal.NewFromString 과 strconv.ParseInt 둘 다 앞자리 0 을 그냥 읽는다.
 //
-// 그래서 숫자 필드만 원문 그대로(padded) 받아 trim 후 변환한다.
+// 그래서 숫자 필드만 원문 그대로(paddedNumber) 받아 trim 후 변환한다.
 func (p *PubOfferItem) UnmarshalJSON(data []byte) error {
 	// type alias 는 raw 가 이 UnmarshalJSON 을 다시 부르지 않게 하는 repo 관용구
 	// (domestic/investor.go, domestic/program_trade.go 와 동일 패턴).
@@ -80,18 +90,18 @@ func (p *PubOfferItem) UnmarshalJSON(data []byte) error {
 	//
 	// 아래 다섯 필드가 alias 의 depth-1 필드와 이름이 겹치는데, 이건 "중복"이
 	// 아니라 의도다 — encoding/json 은 이름 충돌을 depth 로 풀어서 이 depth-0
-	// padded 필드가 이긴다. PubOfferItem 자체의 json 태그(fix_subscr_pri 등)를
+	// paddedNumber 필드가 이긴다. PubOfferItem 자체의 json 태그(fix_subscr_pri 등)를
 	// 여기 맞춰 "-" 로 지우고 싶어질 수 있는데 그러면 안 된다: 그 태그가 없으면
 	// json.Marshal(PubOfferItem{...}) 이 이 다섯 필드를 조용히 빠뜨리게 된다.
 	// 태그는 유지한다 — TestPubOfferItem_MarshalKeepsNumbers 참고.
 	type alias PubOfferItem
 	var raw struct {
 		alias
-		FixSubscrPri padded `json:"fix_subscr_pri"`
-		FaceValue    padded `json:"face_value"`
-		PubBfCap     padded `json:"pub_bf_cap"`
-		PubAfCap     padded `json:"pub_af_cap"`
-		AssignStkQty padded `json:"assign_stk_qty"`
+		FixSubscrPri paddedNumber `json:"fix_subscr_pri"`
+		FaceValue    paddedNumber `json:"face_value"`
+		PubBfCap     paddedNumber `json:"pub_bf_cap"`
+		PubAfCap     paddedNumber `json:"pub_af_cap"`
+		AssignStkQty paddedNumber `json:"assign_stk_qty"`
 	}
 	if err := json.Unmarshal(data, &raw); err != nil {
 		return err
@@ -141,14 +151,28 @@ func parsePaddedInt64(s string) int64 {
 	return n
 }
 
-// cleanPaddedNumber 는 좌우 공백을 trim 하고 천단위 콤마를 제거한다.
+// thousandsGrouped — "19,500" · "1,234,567" 처럼 제대로 끊긴 것만 받는다.
 //
-// 콤마를 지우지 않으면 "19,500" 이 파싱 실패로 조용히 0 이 된다 — 나머지 필드는
-// 멀쩡히 채워지는 행에서 공모가만 틀려 보이는, 소비자가 알아챌 수 없는 손상이다.
-// 콤마 제거는 그 손상을 정상 파싱으로 바꾼다. 진짜 빈 값·"-" 같은 sentinel 만
-// 0 fallback 을 타야 한다.
+// 콤마를 조건 없이 벗기면 "1,2,3" 이 123 이 된다. 0 은 이 도메인에서 "미확정" 으로
+// 읽히지만 123 은 진짜 가격으로 읽히므로, 망가진 입력을 그럴듯한 값으로 바꾸는 쪽이
+// 더 나쁘다. KIS 가 이 필드에 콤마를 보내는 것을 관측한 적은 없다 — 방어일 뿐이라
+// 방어가 새 구멍을 내지 않게 좁게 잡는다.
+var thousandsGrouped = regexp.MustCompile(`^-?\d{1,3}(,\d{3})+$`)
+
+// cleanPaddedNumber 는 좌우 공백을 trim 하고, 올바른 천단위 콤마 구분("19,500")일
+// 때만 콤마를 제거한다.
+//
+// "19,500" 을 그냥 두면 파싱 실패로 조용히 0 이 된다 — 나머지 필드는 멀쩡히
+// 채워지는 행에서 공모가만 틀려 보이는, 소비자가 알아챌 수 없는 손상이다. 다만
+// "1,2,3" 처럼 콤마 위치가 틀린 입력에서까지 콤마를 지우면 그 자체로 새로운
+// 손상(123 이라는 그럴듯한 값)을 만든다 — thousandsGrouped 에 안 걸리면 콤마를
+// 그대로 둬서 파싱을 실패시키고 0 fallback(= 미확정)으로 자기 신원을 밝히게 한다.
 func cleanPaddedNumber(s string) string {
-	return strings.ReplaceAll(strings.TrimSpace(s), ",", "")
+	t := strings.TrimSpace(s)
+	if thousandsGrouped.MatchString(t) {
+		t = strings.ReplaceAll(t, ",", "")
+	}
+	return t
 }
 
 // InquirePubOfferParams 는 공모주청약일정 조회 파라미터.
