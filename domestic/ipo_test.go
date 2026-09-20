@@ -2,6 +2,7 @@ package domestic_test
 
 import (
 	"context"
+	"encoding/json"
 	"net/http"
 	"net/url"
 	"testing"
@@ -53,7 +54,9 @@ func TestClient_InquirePubOffer(t *testing.T) {
 
 // TestClient_InquirePubOffer_PaddedNumbers 는 실 API 응답 모양을 그대로 넣는다.
 // KIS 는 숫자를 공백(좌측 패딩) 또는 0 패딩 문자열로 준다. 2026-09-20 실측:
-//   fix_subscr_pri "       19500" · face_value "000000500" · assign_stk_qty "           0"
+//
+//	fix_subscr_pri "       19500" · face_value "000000500" · assign_stk_qty "           0"
+//
 // 기존 픽스처는 "30000" 처럼 깨끗해서 이 사고를 잡지 못했다.
 func TestClient_InquirePubOffer_PaddedNumbers(t *testing.T) {
 	httpmock.Activate()
@@ -89,4 +92,29 @@ func TestClient_InquirePubOffer_PaddedNumbers(t *testing.T) {
 	// 상장 전 임시 종목코드는 6자리 숫자가 아니다.
 	assert.Equal(t, "0035S0", res.Output1[1].ShtCd)
 	assert.Equal(t, decimal.NewFromInt(18000), res.Output1[1].FixSubscrPri)
+}
+
+// TestPubOfferItem_MarshalKeepsNumbers 는 UnmarshalJSON 을 붙이면서 직렬화를
+// 깨뜨리지 않았는지 본다. 숫자 필드에 json:"-" 를 달면 역직렬화는 멀쩡한데
+// json.Marshal 이 그 필드들을 조용히 빠뜨린다 — 라이브러리를 쓰는 쪽에서만
+// 드러나는 종류의 회귀라 여기서 붙잡는다.
+func TestPubOfferItem_MarshalKeepsNumbers(t *testing.T) {
+	item := domestic.PubOfferItem{
+		ShtCd:        "468670",
+		FixSubscrPri: decimal.NewFromInt(19500),
+		FaceValue:    decimal.NewFromInt(500),
+		PubBfCap:     5063824,
+		PubAfCap:     150000,
+		AssignStkQty: 0,
+	}
+	b, err := json.Marshal(item)
+	require.NoError(t, err)
+
+	var back domestic.PubOfferItem
+	require.NoError(t, json.Unmarshal(b, &back))
+	assert.Equal(t, item.FixSubscrPri, back.FixSubscrPri)
+	assert.Equal(t, item.FaceValue, back.FaceValue)
+	assert.Equal(t, item.PubBfCap, back.PubBfCap)
+	assert.Equal(t, item.PubAfCap, back.PubAfCap)
+	assert.Equal(t, item.AssignStkQty, back.AssignStkQty)
 }
