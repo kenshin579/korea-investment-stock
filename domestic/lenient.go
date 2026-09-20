@@ -20,6 +20,14 @@ var zeroKeyCache sync.Map
 // 내려줄 때 파싱 실패를 막는다. target(구조체 포인터)의 숫자 필드(decimal.Decimal 및
 // 정수/실수)에 한해 JSON 값이 "" 또는 null 이면 0 으로 치환한 뒤 표준 디코드한다.
 // 문자열 필드는 절대 변형하지 않는다.
+//
+// 공백 좌측 패딩("       19500" 처럼 숫자 앞에 공백이 낀 경우)은 다루지 않는다 —
+// 그건 별개 문제이고 domestic/ipo.go 의 parsePaddedDecimal/parsePaddedInt64 를 보라.
+// 이 함수가 쓰이는 4개 구조체(InvestorTradeByStockDailySummary/Item,
+// InvestorTimeByMarketSnapshot, ProgramTradeByStockDailyItem)도 원리상 똑같이
+// 공백 패딩에 노출돼 있을 수 있지만 감사(audit)된 적이 없다 — 만약 이 구조체들
+// 중 하나에서 언젠가 패딩된 acml_vol 같은 게 나타나면, ipo.go 의 helper 를
+// 복붙하지 말고 이 함수를 일반화하는 걸 먼저 검토할 것(별도 리뷰가 필요한 변경).
 func decodeLenientNumbers(data []byte, target any) error {
 	zeros := numericZeroKeys(reflect.TypeOf(target).Elem())
 	if len(zeros) == 0 {
