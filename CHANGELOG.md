@@ -1,5 +1,18 @@
 # CHANGELOG
 
+## [1.34.0] - 2026-10-16
+
+### Fixed
+- `Domestic.InquireIntstockMultprice`(관심종목 멀티 시세, FHKST11300006)가 실 응답을 파싱하지 못하던 문제.
+  한투 문서는 `output` 을 Object 로 적었지만 실 응답은 **배열**(입력 30종목 → 30행, 입력 순서)이라
+  호출이 늘 `cannot unmarshal array` 로 실패했다. 픽스처가 문서대로 객체라 테스트만 통과하고 있었다.
+- 시세 없는 종목(거래 종료 등)은 행을 빼지 않고 모든 필드가 빈 문자열인 행으로 자리를 채운다 —
+  `decodeLenientNumbers` 로 숫자 필드를 0 으로 받아 행 하나가 응답 전체를 깨지 않게 했다.
+
+### Changed (BREAKING — response struct field type)
+- `IntstockMultprice.Output` 이 `IntstockMultpriceData` → `[]IntstockMultpriceData`. 이전 타입으로는
+  실 호출이 한 번도 성공할 수 없었으므로 동작하던 소비자는 없다.
+
 ## [1.32.0] - 2026-09-12
 
 ### Added — 계좌 잔고 조회 (조회 전용, 2 REST EP)

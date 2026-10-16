@@ -107,9 +107,14 @@ func main() {
 	if err != nil {
 		log.Printf("InquireIntstockMultprice 오류: %v", err)
 	} else {
-		fmt.Printf("[6] 관심종목 멀티 시세 (배치): %s (%s) 현재가=%s 전일대비=%.2f%%\n",
-			mtp.Output.InterKorIsnm, mtp.Output.InterShrnIscd,
-			mtp.Output.Inter2Prpr, mtp.Output.PrdyCtrt)
+		// 행은 입력 순서대로 온다. 시세 없는 종목은 빈 행(InterShrnIscd == "")이다.
+		for _, o := range mtp.Output {
+			if o.InterShrnIscd == "" {
+				continue
+			}
+			fmt.Printf("[6] 관심종목 멀티 시세 (배치): %s (%s) 현재가=%s 전일대비=%.2f%%\n",
+				o.InterKorIsnm, o.InterShrnIscd, o.Inter2Prpr, o.PrdyCtrt)
+		}
 	}
 
 	// 7. InquireIntstockStocklistByGroup — 관심종목 그룹별 종목조회 (HHKCM113004C6)
