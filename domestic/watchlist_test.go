@@ -35,6 +35,8 @@ func TestClient_InquireIntstockMultprice(t *testing.T) {
 	})
 	require.NoError(t, err)
 	require.NotNil(t, res)
+	require.Len(t, res.Output, 1)
+	out := res.Output[0]
 
 	// query param 검증 — 30쌍 번호 키
 	assert.Equal(t, "J", capturedQuery.Get("FID_COND_MRKT_DIV_CODE_1"))
@@ -43,41 +45,82 @@ func TestClient_InquireIntstockMultprice(t *testing.T) {
 	assert.Equal(t, "000660", capturedQuery.Get("FID_INPUT_ISCD_2"))
 
 	// output 필드 검증
-	assert.Equal(t, "코스피", res.Output.KospiKosdaqClsName)
-	assert.Equal(t, "장중", res.Output.MrktTrtmClsName)
-	assert.Equal(t, "005930", res.Output.InterShrnIscd)
-	assert.Equal(t, "삼성전자", res.Output.InterKorIsnm)
+	assert.Equal(t, "코스피", out.KospiKosdaqClsName)
+	assert.Equal(t, "장중", out.MrktTrtmClsName)
+	assert.Equal(t, "005930", out.InterShrnIscd)
+	assert.Equal(t, "삼성전자", out.InterKorIsnm)
 
 	prpr, _ := decimal.NewFromString("57800")
-	assert.True(t, prpr.Equal(res.Output.Inter2Prpr))
+	assert.True(t, prpr.Equal(out.Inter2Prpr))
 
 	vrss, _ := decimal.NewFromString("-300")
-	assert.True(t, vrss.Equal(res.Output.Inter2PrdyVrss))
+	assert.True(t, vrss.Equal(out.Inter2PrdyVrss))
 
-	assert.Equal(t, "5", res.Output.PrdyVrssSign)
-	assert.InDelta(t, -0.52, res.Output.PrdyCtrt, 0.001)
-	assert.Equal(t, int64(18234567), res.Output.AcmlVol)
+	assert.Equal(t, "5", out.PrdyVrssSign)
+	assert.InDelta(t, -0.52, out.PrdyCtrt, 0.001)
+	assert.Equal(t, int64(18234567), out.AcmlVol)
 
 	oprc, _ := decimal.NewFromString("57600")
-	assert.True(t, oprc.Equal(res.Output.Inter2Oprc))
+	assert.True(t, oprc.Equal(out.Inter2Oprc))
 
 	hgpr, _ := decimal.NewFromString("58200")
-	assert.True(t, hgpr.Equal(res.Output.Inter2Hgpr))
+	assert.True(t, hgpr.Equal(out.Inter2Hgpr))
 
-	assert.Equal(t, int64(345678), res.Output.SelnRsqn)
-	assert.Equal(t, int64(234567), res.Output.ShnuRsqn)
-	assert.Equal(t, int64(3456789), res.Output.TotalAskpRsqn)
-	assert.Equal(t, int64(2345678), res.Output.TotalBidpRsqn)
-	assert.Equal(t, int64(1054321098765), res.Output.AcmlTrPbmn)
+	assert.Equal(t, int64(345678), out.SelnRsqn)
+	assert.Equal(t, int64(234567), out.ShnuRsqn)
+	assert.Equal(t, int64(3456789), out.TotalAskpRsqn)
+	assert.Equal(t, int64(2345678), out.TotalBidpRsqn)
+	assert.Equal(t, int64(1054321098765), out.AcmlTrPbmn)
 
 	sdpr, _ := decimal.NewFromString("58100")
-	assert.True(t, sdpr.Equal(res.Output.Inter2Sdpr))
+	assert.True(t, sdpr.Equal(out.Inter2Sdpr))
 
 	antcVrss, _ := decimal.NewFromString("-100")
-	assert.True(t, antcVrss.Equal(res.Output.IntrAntcCntgVrss))
-	assert.Equal(t, "5", res.Output.IntrAntcCntgVrssSign)
-	assert.InDelta(t, -0.17, res.Output.IntrAntcCntgPrdyCtrt, 0.001)
-	assert.Equal(t, int64(123456), res.Output.IntrAntcVol)
+	assert.True(t, antcVrss.Equal(out.IntrAntcCntgVrss))
+	assert.Equal(t, "5", out.IntrAntcCntgVrssSign)
+	assert.InDelta(t, -0.17, out.IntrAntcCntgPrdyCtrt, 0.001)
+	assert.Equal(t, int64(123456), out.IntrAntcVol)
+}
+
+// 실 응답(2026-10-16, 30종목: ETF 10 · 코스닥 10 · 코스피 10). 다섯째 0036D0 은 거래가 끝난
+// ETF 라 모든 필드가 빈 문자열인 행으로 온다 — 이 행 하나가 응답 전체를 깨면 안 된다.
+func TestClient_InquireIntstockMultprice_RealResponse(t *testing.T) {
+	httpmock.Activate()
+	defer httpmock.DeactivateAndReset()
+	httpmock.RegisterResponder(
+		http.MethodGet,
+		`=~/quotations/intstock-multprice`,
+		httpmock.NewStringResponder(200, loadFixtureString(t, "intstock_multprice_real30.json")),
+	)
+
+	c := newTestClient(t)
+	res, err := c.InquireIntstockMultprice(context.Background(), domestic.InquireIntstockMultpriceParams{
+		MarketCodes: []string{"J"},
+		Symbols:     []string{"0008T0"},
+	})
+	require.NoError(t, err)
+	require.Len(t, res.Output, 30)
+
+	first := res.Output[0]
+	assert.Equal(t, "0008T0", first.InterShrnIscd)
+	assert.True(t, decimal.NewFromInt(16140).Equal(first.Inter2Prpr))
+	assert.True(t, decimal.NewFromInt(1065).Equal(first.Inter2PrdyVrss))
+	assert.InDelta(t, 7.06, first.PrdyCtrt, 0.001)
+	assert.True(t, decimal.NewFromInt(15075).Equal(first.Inter2PrdyClpr))
+
+	empty := res.Output[4]
+	assert.Equal(t, "", empty.InterShrnIscd)
+	assert.True(t, empty.Inter2Prpr.IsZero())
+	assert.Zero(t, empty.PrdyCtrt)
+	assert.Zero(t, empty.AcmlVol)
+
+	// 하락 종목은 대비가 음수 문자열로 온다(부호 코드와 별개로 값 자체에 부호가 있다).
+	down := res.Output[3]
+	assert.Equal(t, "0026E0", down.InterShrnIscd)
+	assert.True(t, decimal.NewFromInt(-25).Equal(down.Inter2PrdyVrss))
+	assert.InDelta(t, -0.22, down.PrdyCtrt, 0.001)
+
+	assert.Equal(t, "000815", res.Output[29].InterShrnIscd)
 }
 
 func TestClient_InquireIntstockStocklistByGroup(t *testing.T) {

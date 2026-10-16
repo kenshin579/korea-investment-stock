@@ -16,10 +16,14 @@ import (
 // 한투 docs: docs/api/국내주식/관심종목멀티시세.md
 // path: /uapi/domestic-stock/v1/quotations/intstock-multprice
 //
-// 30종목 batch 입력 (FID_COND_MRKT_DIV_CODE_1..30 + FID_INPUT_ISCD_1..30),
-// 단일 output 객체 반환.
+// 30종목 batch 입력 (FID_COND_MRKT_DIV_CODE_1..30 + FID_INPUT_ISCD_1..30).
+//
+// 한투 문서는 output 을 Object 로 적어 두었지만 실 응답은 **배열**이다(2026-10-16 실측,
+// 30종목 → 30행). 행은 입력 순서대로 온다. 시세가 없는 종목(상장폐지·거래 종료 등)은
+// 행을 빼지 않고 **모든 필드가 빈 문자열인 행**으로 자리를 채운다 — 그 행은
+// InterShrnIscd 가 "" 이고 숫자 필드는 0 이다. 종목코드로 맞출 때는 이 행을 건너뛸 것.
 type IntstockMultprice struct {
-	Output IntstockMultpriceData `json:"output"`
+	Output []IntstockMultpriceData `json:"output"`
 }
 
 // IntstockMultpriceData 는 관심종목 멀티 시세 응답의 output object (29 fields).
@@ -53,6 +57,13 @@ type IntstockMultpriceData struct {
 	IntrAntcCntgPrdyCtrt float64         `json:"intr_antc_cntg_prdy_ctrt,string"` // 관심 예상 체결 전일 대비율
 	IntrAntcVol          int64           `json:"intr_antc_vol,string"`            // 관심 예상 거래량
 	Inter2Sdpr           decimal.Decimal `json:"inter2_sdpr"`                     // 관심2 기준가
+}
+
+// UnmarshalJSON 은 시세 없는 종목의 빈 문자열 행을 0 으로 관용 파싱한다. 없으면 행 하나가
+// 30종목 응답 전체를 실패시킨다.
+func (x *IntstockMultpriceData) UnmarshalJSON(b []byte) error {
+	type alias IntstockMultpriceData
+	return decodeLenientNumbers(b, (*alias)(x))
 }
 
 // InquireIntstockMultpriceParams 는 관심종목 멀티 시세 조회 파라미터.
