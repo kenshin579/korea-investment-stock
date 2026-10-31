@@ -1,5 +1,21 @@
 # CHANGELOG
 
+## [1.35.0] - 2026-11-01
+
+### Fixed
+- `Overseas.InquirePeriodRights`(해외주식 기간별권리조회, CTRGT011R)가 다음 페이지를 받을 수 없던 문제.
+  한투 문서는 "tr_cont 를 이용한 다음조회 불가" 라고 적었지만, 실 응답은 100행씩 끊고 응답 헤더 `tr_cont` "M" 과
+  본문 `ctx_area_nk50`/`ctx_area_fk50` 커서를 준다. 응답 구조체가 커서·tr_cont 를 버려서 101행째부터는 받을 길이 없었다.
+  다음 페이지는 커서를 그대로 돌려보내면서 **요청 헤더 `tr_cont: N`** 을 붙여야 나온다(커서만 보내면 첫 페이지가 되풀이된다,
+  2026-11-01 실측).
+
+### Added
+- `PeriodRights.CtxAreaNk50` / `CtxAreaFk50` / `TrCont`, `InquirePeriodRightsParams.TrCont`.
+- `Overseas.InquirePeriodRightsAll` — 연속조회를 따라가며 기간 전체를 모은다(1000 페이지 상한 + 커서 미전진 가드,
+  중간 페이지 실패 시 부분 결과 없이 error). 종목(PDNO)을 비우면 그 기간 시장 전체 배당(미국·홍콩·일본 등 섞임)이 온다 —
+  2026-09 한 달 배당(`RGHT_TYPE_CD=03`, 현지기준일)이 2,923행·30페이지.
+- 실 응답 픽스처 `period_rights_page1.json` · `period_rights_last.json` · `period_rights_nodata.json`(KIER2520 은 rt_cd 0).
+
 ## [1.34.0] - 2026-10-16
 
 ### Fixed
