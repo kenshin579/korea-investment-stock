@@ -1,0 +1,53 @@
+{
+  "ctx_area_nk50": "                                                  ",
+  "ctx_area_fk50": "03!^02!^20260901!^20260930!^!^                    ",
+  "output": [
+    {
+      "bass_dt": "20261001",
+      "rght_type_cd": "03",
+      "pdno": "TDAX",
+      "prdt_name": "TDAQ LIFT ETF",
+      "prdt_type_cd": "529",
+      "std_pdno": "US26923W3631",
+      "acpl_bass_dt": "20260930",
+      "sbsc_strt_dt": "",
+      "sbsc_end_dt": "",
+      "cash_alct_rt": "8.6590000000",
+      "stck_alct_rt": "0.000000000000",
+      "crcy_cd": "USD",
+      "crcy_cd2": "",
+      "crcy_cd3": "",
+      "crcy_cd4": "",
+      "alct_frcr_unpr": "0.08659",
+      "stkp_dvdn_frcr_amt2": "0.00000",
+      "stkp_dvdn_frcr_amt3": "0.00000",
+      "stkp_dvdn_frcr_amt4": "0.00000",
+      "dfnt_yn": "Y"
+    },
+    {
+      "bass_dt": "20261001",
+      "rght_type_cd": "03",
+      "pdno": "TFII",
+      "prdt_name": "TFI INTERNATIONAL INC",
+      "prdt_type_cd": "513",
+      "std_pdno": "CA87241L1094",
+      "acpl_bass_dt": "20260930",
+      "sbsc_strt_dt": "",
+      "sbsc_end_dt": "",
+      "cash_alct_rt": "47.0000000000",
+      "stck_alct_rt": "0.000000000000",
+      "crcy_cd": "USD",
+      "crcy_cd2": "",
+      "crcy_cd3": "",
+      "crcy_cd4": "",
+      "alct_frcr_unpr": "0.47000",
+      "stkp_dvdn_frcr_amt2": "0.00000",
+      "stkp_dvdn_frcr_amt3": "0.00000",
+      "stkp_dvdn_frcr_amt4": "0.00000",
+      "dfnt_yn": "Y"
+    }
+  ],
+  "rt_cd": "0",
+  "msg_cd": "KIOK0460",
+  "msg1": "조회 되었습니다. (마지막 자료)                                                  "
+}

@@ -129,6 +129,7 @@ func main() {
 | `Overseas.InquireBrknewsTitle` | `overseas-price/v1/quotations/brknews-title` | FHKST01011801 |
 | `Overseas.InquireRightsByIce` | `overseas-price/v1/quotations/rights-by-ice` | HHDFS78330900 |
 | `Overseas.InquirePeriodRights` | `overseas-price/v1/quotations/period-rights` | CTRGT011R |
+| `Overseas.InquirePeriodRightsAll` | `overseas-price/v1/quotations/period-rights` | CTRGT011R — `tr_cont` 연속조회로 기간 전체 (종목 비우면 시장 전체) |
 | `Domestic.InquireIndexDailyPrice` | `quotations/inquire-index-daily-price` | FHPUP02120000 |
 | `Domestic.InquireIndexTimeprice` | `quotations/inquire-index-timeprice` | FHPUP02110200 |
 | `Domestic.InquireIndexTickprice` | `quotations/inquire-index-tickprice` | FHPUP02110100 |
